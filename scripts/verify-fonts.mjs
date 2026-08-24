@@ -2,22 +2,23 @@
 /**
  * Glyph-coverage gate for the studio theme.
  *
- * The studio theme's faces come from the owner's Framer theme, which is an
- * English-language furniture site. Its own rendering proves nothing about
- * Latin Extended, and every shop in this network sells in Slovenian, where
- * č/š/ž appear in ordinary retail words — "Košarica", "Dostava in montaža",
- * "Pogosta vprašanja". A missing glyph does not error: the browser silently
- * falls back per-character, so one word renders in two typefaces and nobody
- * notices until a customer does.
+ * Every shop in this network sells in Slovenian, where č/š/ž appear in
+ * ordinary retail words — "Košarica", "Dostava in montaža", "Pogosta
+ * vprašanja". A missing glyph does not error: the browser silently falls back
+ * per-character, so one word renders in two typefaces and nobody notices until
+ * a customer does.
+ *
+ * This gate is why the theme does NOT use the source's own faces. Clash
+ * Display and Satoshi are Fontshare faces whose Slovenian coverage could not
+ * be established from any reachable source, and an English furniture site's
+ * rendering is no evidence. They were replaced with the closest verified
+ * faces by measured proportion (docs/STUDIO-BASELINE.md §1).
  *
  * This script downloads each face actually used and asserts that every
  * character Slovenian needs is present in its cmap. It must pass before any
  * shop flips `live: true`.
  *
- * It needs network access to fontshare.com and fonts.googleapis.com. The
- * environment this theme was transcribed in had neither (egress is
- * allowlisted), which is exactly why the check is a script rather than a
- * claim in a document.
+ * It needs network access to fonts.googleapis.com.
  *
  * Usage: node scripts/verify-fonts.mjs
  */
@@ -39,15 +40,17 @@ const REQUIRED = {
 };
 
 const FACES = [
-  { family: "Clash Display", weights: [500, 700], source: "fontshare" },
-  { family: "Satoshi", weights: [400, 500, 700], source: "fontshare" },
+  { family: "Chivo", weights: [400, 500, 700], source: "google" },
+  { family: "Plus Jakarta Sans", weights: [400, 500, 700], source: "google" },
   { family: "DM Sans", weights: [400, 500], source: "google" },
 ];
 
-const FONTSHARE_CSS =
-  "https://api.fontshare.com/v2/css?f[]=clash-display@500,700&f[]=satoshi@400,500,700&display=swap";
+// The theme's real request, so this checks what actually ships rather than a
+// second list that can drift from tokens.ts.
 const GOOGLE_CSS =
-  "https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..500&display=swap";
+  "https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;700" +
+  "&family=DM+Sans:opsz,wght@9..40,400..500" +
+  "&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap";
 
 // A modern UA gets woff2 rather than a legacy fallback format.
 const UA =
@@ -65,12 +68,18 @@ function facesFromCss(css) {
   const out = [];
   for (const block of css.match(/@font-face\s*\{[^}]*\}/g) || []) {
     const fam = (block.match(/font-family:\s*['"]?([^;'"]+)/) || [])[1];
-    const weight = (block.match(/font-weight:\s*(\d+)/) || [])[1];
+    // A variable font is served as ONE face with a weight RANGE
+    // ("font-weight: 400 500"), not one block per weight. Matching the first
+    // number only would report every other weight as unserved.
+    const wRaw = (block.match(/font-weight:\s*([\d\s]+)/) || [])[1];
     const url = (block.match(/url\(['"]?([^'")]+\.woff2)/) || [])[1];
     const style = (block.match(/font-style:\s*(\w+)/) || [])[1] || "normal";
     const range = (block.match(/unicode-range:\s*([^;}]+)/) || [])[1] || "";
     if (fam && url && style === "normal") {
-      out.push({ family: fam.trim(), weight: weight || "?", url, range: range.trim() });
+      const nums = (wRaw || "").trim().split(/\s+/).map(Number).filter((n) => !Number.isNaN(n));
+      const lo = nums.length ? nums[0] : 400;
+      const hi = nums.length > 1 ? nums[nums.length - 1] : lo;
+      out.push({ family: fam.trim(), wLo: lo, wHi: hi, url, range: range.trim() });
     }
   }
   return out;
@@ -114,14 +123,11 @@ async function main() {
 
   let css;
   try {
-    css = {
-      fontshare: await fetchText(FONTSHARE_CSS),
-      google: await fetchText(GOOGLE_CSS),
-    };
+    css = { google: await fetchText(GOOGLE_CSS) };
   } catch (err) {
-    console.error("Could not reach the font services: " + err.message);
+    console.error("Could not reach the font service: " + err.message);
     console.error(
-      "\nThis gate needs egress to api.fontshare.com and fonts.googleapis.com.\n" +
+      "\nThis gate needs egress to fonts.googleapis.com.\n" +
         "Run it from an environment that has both. Do NOT mark a shop live on\n" +
         "the assumption that coverage is fine — that is the failure this exists\n" +
         "to prevent."
@@ -142,7 +148,7 @@ async function main() {
     }
 
     for (const w of face.weights) {
-      const hit = declared.filter((d) => String(d.weight) === String(w));
+      const hit = declared.filter((d) => w >= d.wLo && w <= d.wHi);
       if (!hit.length) {
         console.log("   weight " + w + ": FAIL — not served");
         failed++;

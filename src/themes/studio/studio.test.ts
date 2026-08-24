@@ -44,16 +44,23 @@ describe("studio renders a self-consistent sheet", () => {
     });
   }
 
-  it("ships the transcribed faces, not the measured ones", async () => {
+  it("ships verified faces from a single origin", async () => {
     const html = await render("savna").text();
-    expect(html).toContain("Clash Display");
-    expect(html).toContain("Satoshi");
-    expect(html).toContain("api.fontshare.com");
+    // CSS comments are part of the emitted sheet, and they discuss the faces
+    // we replaced. Assert against what actually renders, not the prose.
+    const sheet = html.replace(/\/\*[\s\S]*?\*\//g, "");
+
+    expect(sheet).toContain("Chivo");
+    expect(sheet).toContain("Plus Jakarta Sans");
+    // One font origin, and no face whose Slovenian coverage we could not prove.
+    expect(sheet).not.toContain("fontshare");
+    expect(sheet).not.toContain("Clash Display");
+    expect(sheet).not.toContain("Satoshi");
     // Bricolage Grotesque and Fragment Mono are declared in the source's font
     // block but used zero times in its stylesheet. Loading them would cost
     // real LCP for faces that never paint.
-    expect(html).not.toContain("Bricolage");
-    expect(html).not.toContain("Fragment Mono");
+    expect(sheet).not.toContain("Bricolage");
+    expect(sheet).not.toContain("Fragment Mono");
   });
 
   // Scoped to studio's own sheet, not the rendered page: --stretch and

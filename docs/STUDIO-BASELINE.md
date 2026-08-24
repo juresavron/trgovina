@@ -55,38 +55,78 @@ context; `cls.mjs` dumps every rule for a class across breakpoints). If a
 value is not in this document's provenance, it was not in the source, and it
 is ours to justify rather than to attribute.
 
-### Open, and blocking launch
+### Resolved: the faces are substituted, on purpose
 
-- **Glyph coverage is unverified.** Clash Display and Satoshi are Fontshare
-  faces, and nothing in the source proves they carry č/š/ž — it is an English
-  furniture site. Every shop here sells in Slovenian. `scripts/verify-fonts.mjs`
-  is the gate; it needs egress this environment does not have. **No shop goes
-  live until it passes.**
-- **The two faces are loaded from a third-party CDN.** That is two extra
-  render-blocking origins, against a project whose whole thesis is LCP. The fix
-  is to vendor the four woff2 files and serve them same-origin — also blocked
-  on egress.
+The source sets display type in **Clash Display** and prose in **Satoshi** —
+both Fontshare faces, neither on Google Fonts. **We do not use them.**
+
+Every shop here sells in Slovenian, so č/š/ž appear in ordinary retail words,
+and nothing reachable proved those faces carry them; the source is an English
+furniture site, so its own rendering is no evidence. A missing glyph does not
+error — the browser falls back per character, so one word renders in two
+typefaces. Shipping that on a storefront headline is worse than shipping a
+face that is 95% as close and certainly correct.
+
+The replacements were picked on measurement, not resemblance — see §1. Both
+gates now pass:
+
+- `scripts/verify-fonts.mjs` — every required character is in a served subset
+  for all three faces at every weight used.
+- The two render-blocking third-party origins are down to one. The Fontshare
+  stylesheet is gone, which closes the debt docs/SEO.md §4 recorded.
+
+If the owner obtains Clash Display and Satoshi with confirmed latin-ext
+coverage and wants them back, it is a two-line change in `tokens.ts` (the
+href and the `--f-*` stacks) plus a re-run of the font gate.
 
 ---
 
 ## 1. Type system
 
-| Role | Face | Weights used |
-| --- | --- | --- |
-| Display (h1–h6) | **Clash Display** | 500 (700 available, unused) |
-| Prose | **Satoshi** | 400, 500 |
-| Label / eyebrow | **DM Sans** | 500 |
+| Role | Source face | **What we ship** | Weights |
+| --- | --- | --- | --- |
+| Display (h1–h6) | Clash Display | **Chivo** | 500 |
+| Prose | Satoshi | **Plus Jakarta Sans** | 400, 500 |
+| Label / eyebrow | DM Sans | **DM Sans** (unchanged) | 500 |
 
-Clash Display and Satoshi are Fontshare (Indian Type Foundry) faces, loaded in
-the source from Framer's Fontshare mirror as one file each, no `unicode-range`
-subsetting. Only DM Sans comes from Google.
+### How the replacements were chosen
+
+Not by eye. The source page carries Framer `metric-override` fallbacks that
+describe each real face relative to Arial, so the true proportions are
+recoverable: `metric/em = override × size-adjust`. Running that on DM Sans —
+the one face of the three we can also download — reproduces its real TTF
+metrics to four decimal places, which is what makes the other two trustworthy.
+
+| Face | ascent | descent | line-gap | line box |
+| --- | --- | --- | --- | --- |
+| **Clash Display** (source) | 0.890 | 0.250 | 0.090 | 1.230 |
+| Chivo | 0.940 | 0.250 | 0.000 | 1.190 |
+| **Satoshi** (source) | 1.010 | 0.240 | 0.100 | 1.350 |
+| Plus Jakarta Sans | 1.038 | 0.222 | 0.000 | 1.260 |
+
+This matters beyond taste: the ramp below is calibrated to the source (92px at
+1.04 leading), so a face with a different ascent puts a different amount of ink
+in the same line box. Chivo matches Clash Display's descent exactly and its
+x-height to three decimals; Plus Jakarta Sans is the closest verified face to
+Satoshi's unusually tall ascent.
+
+The line-gap column is a non-issue: every leading in this theme is set
+explicitly in em, so `line-gap` — which only affects `line-height: normal` —
+never applies.
+
+Specimen with the full ranking and the alternates considered:
+<https://claude.ai/code/artifact/1640ac21-c764-4632-9298-89b0749c6006>
 
 ### The ramp, exactly
 
 Three tiers, at the source's own breakpoints: **≥1200px**, **810–1199px**,
 **≤809px**. Sizes are `desktop / tablet / phone`.
 
-| Role | Face | Size | Weight | Tracking | Leading | Colour |
+The Face column names the **source** face, kept as provenance; our substitute
+takes the same role and the same numbers — Chivo wherever it says Clash
+Display, Plus Jakarta Sans wherever it says Satoshi.
+
+| Role | Source face | Size | Weight | Tracking | Leading | Colour |
 | --- | --- | --- | --- | --- | --- | --- |
 | h1 | Clash Display | 92 / 64 / 44 | 500 | 0em | 1.04em | `#151515` |
 | h2 | Clash Display | 60 / 50 / 38 | 500 | 0em | 1.13 / 1.1 / 1.13em | `#151515` |

@@ -76,7 +76,7 @@ export const THEME_CATALOG: Record<ThemeKey, ThemeCatalogEntry> = {
 
   /**
    * STUDIO — poster commerce, transcribed from the owner's FURNEXA Framer
-   * theme: a dark chrome bar over a white page, Clash Display statements set
+   * theme: a dark chrome bar over a white page, display statements set
    * open and light (weight 500, positive tracking), a scrolling USP marquee,
    * and photography-first construction. Not monochrome — the source carries an
    * amber accent with cream and coral companions, spent sparingly on badges
@@ -88,7 +88,7 @@ export const THEME_CATALOG: Record<ThemeKey, ThemeCatalogEntry> = {
     voice: "Plakatna in fotografska — tipografija kot naslovnica, jantar kot poudarek.",
     surface: "light",
     radius: { card: "8px", control: "4px" },
-    displayFont: "Clash Display",
+    displayFont: "Chivo",
     recommendedFor: ["wellness", "neutral"],
     composition: {
       /**

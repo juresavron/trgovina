@@ -376,5 +376,35 @@ const SHEET = `
   }
 `;
 
+/**
+ * Strip the sheet down to what a browser needs.
+ *
+ * The stylesheet is inlined into every document's <head>, so it is both
+ * render-blocking and part of the HTML payload — it is charged twice against
+ * the budget in docs/SEO.md §4. These modules are heavily commented on
+ * purpose (the comments carry the design rationale and the provenance for
+ * transcribed values), and measured on the studio theme those comments were
+ * 66 KB of a 154 KB sheet: 43% of what every visitor downloaded before
+ * anything could paint, to read prose written for us.
+ *
+ * So comments live in the source and never reach the wire. This runs once at
+ * module scope, not per request.
+ *
+ * Deliberately conservative. It removes comments and collapses runs of
+ * whitespace to a single space; it does NOT strip the space around calc()
+ * operators (where a space is significant), inside selector combinators, or
+ * between the parts of a shorthand. A smaller sheet is not worth a rule that
+ * silently stops applying.
+ */
+function minify(css: string): string {
+  return css
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/\s+/g, " ")
+    .replace(/\s*([{;,])\s*/g, "$1")
+    .replace(/\s*}\s*/g, "}")
+    .replace(/;}/g, "}")
+    .trim();
+}
+
 /** Studio tokens + its section modules are appended at integration. */
-export const BASE_CSS = SHOP_ACCENTS + "\n" + SHEET + STUDIO_CSS;
+export const BASE_CSS = minify(SHOP_ACCENTS + "\n" + SHEET + STUDIO_CSS);

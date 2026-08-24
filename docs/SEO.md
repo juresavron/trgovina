@@ -81,29 +81,28 @@ Rendered server-side, per shop, from `ShopConfig` + catalog rows:
 - Budget enforced in CI (Lighthouse against the workers.dev QA host); a red
   budget blocks deploy exactly like a failing test.
 
-### Known debt: the studio theme's fonts violate this section
+### Resolved: studio's fonts, and the inlined sheet
 
-The studio theme currently loads its faces from **two third-party origins** —
-Google (DM Sans) and Fontshare (Clash Display, Satoshi) — as render-blocking
-stylesheets. That is two extra DNS+TLS handshakes on the critical path, which
-is exactly the pattern this budget exists to forbid, and it will not hit
-LCP < 1.5 s on mid-range mobile.
+Two things this section had flagged are now closed.
 
-It is interim, for one reason: Clash Display and Satoshi are not on Google
-Fonts, and the environment the theme was transcribed in has allowlisted egress
-that blocks fontshare.com, so the woff2 files could not be vendored. The fix,
-before any studio shop goes live:
+**Font origins: two down to one.** Studio used to load Clash Display and
+Satoshi from Fontshare alongside DM Sans from Google — two render-blocking
+third-party stylesheets. Those faces were replaced with verified Google
+equivalents (docs/STUDIO-BASELINE.md §1), so the theme now makes a single
+font request. The change was forced by Slovenian glyph coverage rather than by
+performance, but it pays here too.
 
-1. Download the four faces (Clash Display 500, Satoshi 400/500, DM Sans 400/500).
-2. Subset to latin + latin-ext — the source ships each face unsubsetted in one
-   file, which is wasteful for a Slovenian storefront.
-3. Serve same-origin from the Worker, `font-display: swap`, with a single
-   `<link rel=preload>` for the face that paints the LCP element.
-4. Delete both third-party origins and their preconnects.
+**The inlined stylesheet.** The sheet is inlined into every document's head,
+so it is render-blocking *and* part of the HTML payload — charged twice. These
+modules are heavily commented by design, and measurement showed 66 KB of a
+154 KB sheet was comments: 43% of what every visitor downloaded before
+anything could paint, to read prose written for us. Comments are now stripped
+at module scope and never reach the wire (94 KB, and `src/render/size.test.ts`
+fails the build above 100 KB).
 
-`scripts/verify-fonts.mjs` gates the related question — whether those faces
-carry č/š/ž at all — and must pass first, since it may change which faces we
-vendor.
+Still open: 94 KB of inline CSS is heavy even compressed, and every page ships
+every theme's rules. Emitting only the active theme's CSS is the next
+reduction, worth ~88 KB on non-studio pages.
 
 ## 5. E-E-A-T for a store that ships pallets
 

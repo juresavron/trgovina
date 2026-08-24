@@ -19,21 +19,44 @@
  */
 
 /**
- * Clash Display and Satoshi are Fontshare (Indian Type Foundry) faces, not
- * Google Fonts — the source loads them from Framer's Fontshare mirror. Only
- * DM Sans comes from Google. We self-host the two Fontshare faces (their
- * licence permits web embedding); this href covers the Google half only.
+ * THE FACES ARE SUBSTITUTED, DELIBERATELY. The source sets its display type in
+ * Clash Display and its prose in Satoshi — both Fontshare (Indian Type
+ * Foundry) faces, neither on Google Fonts. We do not use them, for one reason
+ * that is not negotiable: every shop here sells in Slovenian, so č/š/ž appear
+ * in ordinary retail words ("Košarica", "Dostava in montaža"), and nothing
+ * available proves those faces carry them. The source is an English furniture
+ * site, so its own rendering is no evidence. A missing glyph does not error —
+ * the browser falls back per character, so one word renders in two typefaces.
+ * Shipping that on a storefront's headline is worse than shipping a face that
+ * is 95% as close and certainly correct.
  *
- * GLYPH COVERAGE IS AN UNVERIFIED LAUNCH GATE. Slovenian needs č/š/ž/Č/Š/Ž and
- * these storefronts are entirely Slovenian. The source is an English furniture
- * site, so its own rendering proves nothing about latin-ext. Egress here is
- * allowlisted and fontshare.com is blocked, so coverage could not be confirmed
- * in-session. scripts/verify-fonts.mjs is the gate — it must pass before any
- * shop goes live. Until then --f-display and --f-body carry a latin-ext-safe
- * fallback so a missing glyph degrades to a near neighbour rather than tofu.
+ * The replacements were chosen on measurement, not resemblance. The source
+ * page carries Framer metric-override fallbacks that describe each real face
+ * relative to Arial, so its true proportions are recoverable: metric/em =
+ * override x size-adjust. That arithmetic reproduces DM Sans's real metrics to
+ * four decimals, which is what makes the other two trustworthy:
+ *
+ *   Clash Display   ascent 0.890  descent 0.250  line-gap 0.090
+ *   Satoshi         ascent 1.010  descent 0.240  line-gap 0.100
+ *
+ * Chivo (0.940 / 0.250) and Plus Jakarta Sans (1.038 / 0.222) are the closest
+ * verified faces on those numbers. This matters beyond taste: the ramp below
+ * is calibrated to the source (92px at 1.04 leading), so a face with a
+ * different ascent puts a different amount of ink in the same line box.
+ *
+ * The specimen the owner picked from, with the full ranking and the method:
+ * https://claude.ai/code/artifact/1640ac21-c764-4632-9298-89b0749c6006
+ *
+ * Switching faces is a two-line change — this href and the --f-* stacks below.
+ * scripts/verify-fonts.mjs re-checks glyph coverage and must pass first.
+ *
+ * One origin, not three: this also retires the render-blocking Fontshare
+ * stylesheet that docs/SEO.md §4 called out as debt.
  */
 export const STUDIO_FONTS_HREF =
-  "https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..500&display=swap";
+  "https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;700" +
+  "&family=DM+Sans:opsz,wght@9..40,400..500" +
+  "&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap";
 
 export const STUDIO_TOKENS = `
   :root[data-theme="studio"] {
@@ -190,8 +213,11 @@ export const STUDIO_TOKENS = `
     --gap-3xl: 80px;
 
     /* ---- Type ------------------------------------------------------------ */
-    --f-display: "Clash Display", "Archivo", "Helvetica Neue", sans-serif;
-    --f-body: "Satoshi", "DM Sans", system-ui, sans-serif;
+    /* Chivo stands in for Clash Display, Plus Jakarta Sans for Satoshi — see
+     * the header. Fallbacks are latin-ext-capable too, so a failed webfont
+     * still renders šumniki rather than tofu. */
+    --f-display: "Chivo", "Archivo", "Helvetica Neue", sans-serif;
+    --f-body: "Plus Jakarta Sans", "DM Sans", system-ui, sans-serif;
     --f-label: "DM Sans", system-ui, sans-serif;
     --w-display: 500;
     --w-display-bold: 700;
