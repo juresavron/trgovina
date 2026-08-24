@@ -8,12 +8,26 @@
  * prototype-stage substitute; production self-hosts subsets (docs/DESIGN.md).
  */
 import { STUDIO_TOKENS } from "../themes/studio/tokens";
+import { STUDIO_EFFECTS_CSS } from "../themes/studio/effects";
+import { SHOPS } from "../tenants";
+
+/**
+ * Shop accent identities, generated from ShopConfig rather than hand-written.
+ *
+ * These were a hardcoded block until shops 5 and 6 shipped with no entry and
+ * silently lost their accent: `oklch(L var(--c) var(--hue))` with undefined
+ * custom properties is an invalid color, so every accented surface fell back.
+ * Deriving them keeps the kernel's promise that adding a shop is one config
+ * file — a CSS edit you can forget is not a promise.
+ */
+const SHOP_ACCENTS = Object.values(SHOPS)
+  .map(
+    (s) =>
+      `  :root[data-shop="${s.key}"] { --hue: ${s.design.accentHue}; --c: ${s.design.accentChroma}; }`,
+  )
+  .join("\n");
 
 const SHEET = `
-  :root[data-shop="savna"]  { --hue: 55;  --c: 0.12; }
-  :root[data-shop="kad"]    { --hue: 235; --c: 0.10; }
-  :root[data-shop="bazen"]  { --hue: 210; --c: 0.09; }
-  :root[data-shop="fotelj"] { --hue: 40;  --c: 0.11; }
 
   :root[data-theme="zarja"] {
     --bg: #171210; --bg-alt: #1d1713; --surface: #231c16; --surface2: #2a221b;
@@ -359,4 +373,5 @@ const SHEET = `
 `;
 
 /** Studio tokens + its section modules are appended at integration. */
-export const BASE_CSS = SHEET + STUDIO_TOKENS;
+export const BASE_CSS =
+  SHOP_ACCENTS + "\n" + SHEET + STUDIO_TOKENS + STUDIO_EFFECTS_CSS;

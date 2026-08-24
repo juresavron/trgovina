@@ -3,6 +3,8 @@ import { savna } from "./savna";
 import { kad } from "./kad";
 import { bazen } from "./bazen";
 import { fotelj } from "./fotelj";
+import { kopalna } from "./kopalna";
+import { biljard } from "./biljard";
 
 export type { ShopConfig, InternalRouteKey } from "./types";
 export { isValidStatementDescriptor, isValidRouteSlug } from "./types";
@@ -13,6 +15,8 @@ export const SHOPS: Record<string, ShopConfig> = {
   kad,
   bazen,
   fotelj,
+  kopalna,
+  biljard,
 };
 
 /**

@@ -3,6 +3,8 @@ import { savnaContent } from "./savna";
 import { kadContent } from "./kad";
 import { bazenContent } from "./bazen";
 import { foteljContent } from "./fotelj";
+import { kopalnaContent } from "./kopalna";
+import { biljardContent } from "./biljard";
 
 export type { ShopContent, ProductCard, UtilCard, ArtKey } from "./types";
 
@@ -12,4 +14,6 @@ export const CONTENT: Record<string, ShopContent> = {
   kad: kadContent,
   bazen: bazenContent,
   fotelj: foteljContent,
+  kopalna: kopalnaContent,
+  biljard: biljardContent,
 };

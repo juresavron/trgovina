@@ -105,6 +105,54 @@ const ART: Record<ArtKey, string> = {
     '<rect x="40" y="163" width="16" height="7" rx="2" fill="var(--ink)" opacity="0.45"/>' +
     '<rect x="184" y="163" width="16" height="7" rx="2" fill="var(--ink)" opacity="0.45"/>' +
     '</svg>',
+  bathtub:
+    // Side elevation of a freestanding slipper tub: the silhouette IS the
+    // product here (it is bought as an object, not a fixture), so the rim
+    // curve and the floor-standing tap carry the whole read.
+    '<svg viewBox="0 0 240 190" aria-hidden="true">' +
+    '<defs><linearGradient id="gb" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.5"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.2"/></linearGradient></defs>' +
+    // floor-standing tap and riser
+    '<path d="M196 150 V72 q0 -12 -12 -12 h-14" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="4" fill="none" stroke-linecap="round"/>' +
+    '<rect x="188" y="150" width="16" height="6" rx="2" fill="var(--ink)" opacity="0.4"/>' +
+    // tub body: high back, low front, soft slipper curve
+    '<path d="M34 78 q0 -14 18 -14 q60 0 108 0 q16 0 16 12 l-6 56 q-3 24 -34 24 H72 q-31 0 -34 -24 Z" fill="url(#gb)"/>' +
+    // rim + inner shadow
+    '<path d="M34 78 q0 -14 18 -14 q60 0 108 0 q16 0 16 12" stroke="var(--acc)" stroke-opacity="0.75" stroke-width="6" fill="none" stroke-linecap="round"/>' +
+    '<path d="M50 82 q54 -6 122 0 l-5 46 q-2 18 -26 18 H79 q-24 0 -26 -18 Z" fill="var(--bg)" opacity="0.4"/>' +
+    // waterline
+    '<path d="M60 104 q12 -5 24 0 t24 0 t24 0 t24 0" stroke="var(--ink)" stroke-opacity="0.28" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
+    // plinth
+    '<rect x="62" y="156" width="96" height="8" rx="3" fill="var(--ink)" opacity="0.35"/>' +
+    '</svg>',
+  billiard:
+    // Three-quarter view: rails, six pockets and the rack. Drawn from above at
+    // a slight angle because that is how a table is actually judged — a flat
+    // side elevation reads as a bench.
+    '<svg viewBox="0 0 240 190" aria-hidden="true">' +
+    '<defs><linearGradient id="gbl" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.62"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.3"/></linearGradient></defs>' +
+    // legs
+    '<rect x="40" y="132" width="14" height="34" rx="3" fill="var(--ink)" opacity="0.42"/>' +
+    '<rect x="186" y="132" width="14" height="34" rx="3" fill="var(--ink)" opacity="0.42"/>' +
+    // outer rail frame
+    '<path d="M26 58 L214 58 L200 140 L40 140 Z" fill="var(--ink)" opacity="0.4"/>' +
+    // baize bed
+    '<path d="M40 68 L200 68 L189 130 L51 130 Z" fill="url(#gbl)"/>' +
+    // six pockets
+    '<g fill="var(--ink)" opacity="0.62">' +
+    '<ellipse cx="42" cy="68" rx="7" ry="4.5"/><ellipse cx="120" cy="66" rx="7" ry="4.5"/><ellipse cx="198" cy="68" rx="7" ry="4.5"/>' +
+    '<ellipse cx="52" cy="130" rx="7.5" ry="5"/><ellipse cx="120" cy="132" rx="7.5" ry="5"/><ellipse cx="188" cy="130" rx="7.5" ry="5"/>' +
+    "</g>" +
+    // racked balls + cue ball
+    '<g fill="var(--bg)" opacity="0.85">' +
+    '<circle cx="150" cy="92" r="4"/><circle cx="158" cy="97" r="4"/><circle cx="142" cy="97" r="4"/>' +
+    '<circle cx="166" cy="102" r="4"/><circle cx="150" cy="102" r="4"/><circle cx="134" cy="102" r="4"/>' +
+    "</g>" +
+    '<circle cx="76" cy="104" r="4.5" fill="var(--ink)" opacity="0.75"/>' +
+    // cue resting across the rail
+    '<path d="M30 150 L206 96" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="3" stroke-linecap="round"/>' +
+    "</svg>",
   chair:
     '<svg viewBox="0 0 240 190" aria-hidden="true">' +
     '<defs><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1">' +

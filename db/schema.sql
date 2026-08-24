@@ -414,7 +414,9 @@ insert into public.shops (id, domain, name, is_live, order_prefix) values
   ('savna', 'infrardeca-savna.si', 'Infrardeča Savna', false, 'SAV'),
   ('kad', 'ledena-kad.si', 'Ledena Kad', false, 'KAD'),
   ('bazen', 'masazni-bazen.si', 'Masažni Bazen', false, 'BAZ'),
-  ('fotelj', 'masazni-fotelj.si', 'Masažni Fotelj', false, 'FOT');
+  ('fotelj', 'masazni-fotelj.si', 'Masažni Fotelj', false, 'FOT'),
+  ('kopalna', 'prostostojeca-kad.si', 'Prostostoječa Kad', false, 'KOP'),
+  ('biljard', 'biljardna-miza.si', 'Biljardna Miza', false, 'BIL');
 
 insert into public.shop_order_seq (shop_id) values
-  ('savna'), ('kad'), ('bazen'), ('fotelj');
+  ('savna'), ('kad'), ('bazen'), ('fotelj'), ('kopalna'), ('biljard');
