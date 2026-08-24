@@ -95,6 +95,53 @@ const DECORATIVE = [
   ["--on-invert-16", "--ink-invert", "on-dark hairline"],
 ];
 
+/* ---- The per-shop accent -----------------------------------------------
+ * --acc and --acc-text are oklch() with the hue and chroma supplied per shop,
+ * so a fixed table cannot check them: each shop resolves to a different colour
+ * and a yellow hue behaves very differently from a blue one at the same
+ * lightness. We convert oklch to sRGB here and check every shop's real values.
+ * This is the part of the palette most likely to fail quietly, because adding
+ * a shop is a one-line config change that no one thinks of as a design edit. */
+
+function oklchToRgb(L, C, hDeg) {
+  const h = (hDeg * Math.PI) / 180;
+  const a = C * Math.cos(h);
+  const b = C * Math.sin(h);
+
+  const l_ = L + 0.3963377774 * a + 0.2158037573 * b;
+  const m_ = L - 0.1055613458 * a - 0.0638541728 * b;
+  const s_ = L - 0.0894841775 * a - 1.291485548 * b;
+
+  const l = l_ ** 3, m = m_ ** 3, s = s_ ** 3;
+
+  const lr = +4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s;
+  const lg = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
+  const lb = -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s;
+
+  const enc = (v) => {
+    const c = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(Math.max(v, 0), 1 / 2.4) - 0.055;
+    return Math.round(Math.min(1, Math.max(0, c)) * 255);
+  };
+  const hex = (n) => n.toString(16).padStart(2, "0");
+  return "#" + hex(enc(lr)) + hex(enc(lg)) + hex(enc(lb));
+}
+
+/** Read every shop's accent straight from its tenant config. */
+function shopAccents() {
+  const dir = path.join(ROOT, "src/tenants");
+  const out = [];
+  for (const f of fs.readdirSync(dir)) {
+    if (!f.endsWith(".ts") || f === "types.ts" || f === "index.ts") continue;
+    const src = fs.readFileSync(path.join(dir, f), "utf8");
+    const hue = src.match(/accentHue:\s*([\d.]+)/);
+    const chroma = src.match(/accentChroma:\s*([\d.]+)/);
+    if (hue && chroma) {
+      out.push({ shop: f.replace(/\.ts$/, ""), hue: Number(hue[1]), chroma: Number(chroma[1]) });
+    }
+  }
+  return out;
+}
+
 let failed = 0;
 console.log("STUDIO CONTRAST GATE\n");
 console.log("pair".padEnd(28) + "ratio".padStart(7) + "  floor   result");
@@ -123,8 +170,33 @@ for (const [fgTok, bgTok, why] of DECORATIVE) {
   console.log(fgTok.padEnd(28) + r.toFixed(2).padStart(7) + "   " + why);
 }
 
+// --acc-text carries copy, so 4.5:1. --acc is only ever a focus ring in this
+// theme, which 1.4.11 holds to 3:1 — but it must clear that on BOTH grounds a
+// ring can land on, the page and the panel.
+console.log("\nper-shop accent (oklch resolved to sRGB)");
+console.log("-".repeat(60));
+console.log("shop".padEnd(10) + "acc-text/page".padStart(14) + "acc/page".padStart(11) + "acc/panel".padStart(11) + "   result");
+const page = token("--bg");
+const panel = token("--bg-alt");
+for (const { shop, hue, chroma } of shopAccents()) {
+  const accText = oklchToRgb(0.45, chroma, hue);
+  const acc = oklchToRgb(0.62, chroma, hue);
+  const rText = ratio(accText, page);
+  const rRingPage = ratio(acc, page);
+  const rRingPanel = ratio(acc, panel);
+  const ok = rText >= 4.5 && rRingPage >= 3 && rRingPanel >= 3;
+  if (!ok) failed++;
+  console.log(
+    shop.padEnd(10) +
+      rText.toFixed(2).padStart(14) +
+      rRingPage.toFixed(2).padStart(11) +
+      rRingPanel.toFixed(2).padStart(11) +
+      "   " + (ok ? "pass" : "FAIL")
+  );
+}
+
 if (failed) {
   console.error("\n" + failed + " pair(s) below floor — studio palette is not shippable.");
   process.exit(1);
 }
-console.log("\nAll " + CHECKS.length + " text/UI pairs clear their floor.");
+console.log("\nAll " + CHECKS.length + " fixed pairs and every shop accent clear their floor.");
