@@ -1,0 +1,42 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "trgovina",
+  "compatibility_date": "2026-08-01",
+  "main": "src/worker.ts",
+
+  // Keep the *.workers.dev deployment alive — QA target and fallback URL,
+  // same convention as fans-network and ocenagor-landing. With a `routes`
+  // array present but no `workers_dev` key, Cloudflare infers `false` on the
+  // next deploy and silently disables trgovina.worldfans.workers.dev.
+  "workers_dev": true,
+
+  // GOING LIVE (per shop — the onlyworld staged pattern):
+  //
+  // 1. Register the domain FRESH, add the zone to THIS Cloudflare account,
+  //    point the registrar at Cloudflare's nameservers, wait until Active.
+  //    ⚠️ Never add a route for a zone that is not Active in this account:
+  //    wrangler fails the whole deploy with error 10082, taking every live
+  //    shop's deploy down with it.
+  // 2. Uncomment the shop's pair below — both lines, www is not implied.
+  // 3. Deploy. Pre-live shops serve 503 + noindex, so attaching early is
+  //    safe and warms TLS.
+  // 4. Zone Redirect Rule: 301 www.<domain>/* → https://<domain>/$1, and
+  //    SSL/TLS → Always Use HTTPS. Deliberately not done in the worker.
+  // 5. When launch gates pass: set live: true in src/tenants/<shop>.ts,
+  //    is_live = true on the shops row, redeploy. GSC + Bing + sitemap.
+  //
+  // "routes": [
+  //   { "pattern": "infrardeca-savna.si", "custom_domain": true },
+  //   { "pattern": "www.infrardeca-savna.si", "custom_domain": true },
+  //   { "pattern": "ledena-kad.si", "custom_domain": true },
+  //   { "pattern": "www.ledena-kad.si", "custom_domain": true },
+  //   { "pattern": "masazni-bazen.si", "custom_domain": true },
+  //   { "pattern": "www.masazni-bazen.si", "custom_domain": true },
+  //   { "pattern": "masazni-fotelj.si", "custom_domain": true },
+  //   { "pattern": "www.masazni-fotelj.si", "custom_domain": true }
+  // ],
+
+  "observability": {
+    "enabled": true
+  }
+}

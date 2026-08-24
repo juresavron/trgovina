@@ -1,0 +1,62 @@
+name: Deploy trgovina
+
+# Manually triggered deploy (Actions tab -> "Deploy trgovina" -> Run
+# workflow). Deliberately NOT automatic on push — a human presses the button,
+# same convention as fans-network and ocenagor-landing.
+#
+# Required repo secret (Settings -> Secrets and variables -> Actions):
+#   CLOUDFLARE_API_TOKEN — token from the "Edit Cloudflare Workers" template.
+#     The same token used by the fans-network / ocenagor-landing workflows
+#     works here; it is account-scoped. Zone-level DNS permission becomes
+#     necessary only once custom domains are attached.
+on:
+  workflow_dispatch:
+
+env:
+  # Public identifier, not a secret — same account as fans-network.
+  CLOUDFLARE_ACCOUNT_ID: a92371cf91375ec80a58c86db49c4cdb
+
+  # QA + fallback host. No custom domains are routed yet (all four shops are
+  # pre-live; see wrangler.jsonc for the go-live steps and the 10082 doctrine).
+  WORKERS_DEV_HOST: "trgovina.worldfans.workers.dev"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Tests (freight engine + renderer invariants)
+        run: npm test
+
+      - name: Deploy to Cloudflare Workers
+        run: npx wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # The renderer changes with every code change, so content assertions are
+      # an honest deploy check for this worker (no static _redirects layer —
+      # the file that twice needed a version stamp on ocenagor-landing).
+      - name: Smoke test — QA host serves the storefront, noindexed
+        run: |
+          set -euo pipefail
+          for i in 1 2 3 4 5; do
+            code=$(curl -s -o /tmp/home.html -w "%{http_code}" "https://${WORKERS_DEV_HOST}/") && [ "$code" = "200" ] && break
+            echo "attempt $i: HTTP $code — retrying"; sleep 5
+          done
+          [ "$code" = "200" ] || { echo "workers.dev host did not come up"; exit 1; }
+          grep -q "Infrardeča savna" /tmp/home.html
+          curl -s -D - -o /dev/null "https://${WORKERS_DEV_HOST}/" | grep -i "x-robots-tag: noindex"
+          curl -s "https://${WORKERS_DEV_HOST}/?shop=kad" | grep -q "Ledena kad"
+          curl -s "https://${WORKERS_DEV_HOST}/robots.txt" | grep -q "Disallow: /"
+          echo "smoke OK"

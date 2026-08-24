@@ -31,6 +31,13 @@ const DEV_HOST_PATTERNS: RegExp[] = [
   /\.workers\.dev$/i,
 ];
 
+/** True for QA/preview hosts — they get the dev switcher and hard noindex. */
+export function isDevHost(host: string | null | undefined): boolean {
+  if (!host) return false;
+  const bare = host.trim().toLowerCase().replace(/:\d+$/, "");
+  return DEV_HOST_PATTERNS.some((p) => p.test(bare));
+}
+
 const byHost = new Map<string, ShopConfig>();
 for (const s of Object.values(SHOPS)) {
   byHost.set(s.domain, s);
