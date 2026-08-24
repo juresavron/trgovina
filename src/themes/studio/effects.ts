@@ -1,23 +1,43 @@
 /**
  * STUDIO motion layer — the source theme's effects, rebuilt in CSS.
  *
- * The original is a Framer site: its motion runs on a React animation runtime
- * that ships hundreds of kilobytes and blocks first paint. We reproduce the
- * *behaviour* with CSS only, because the storefront's LCP budget (docs/SEO.md
- * §4) is the reason it outranks the incumbents in the first place. Everything
- * here costs zero JavaScript.
+ * WHAT THE SOURCE ACTUALLY DOES. Transcribing its stylesheet settles a
+ * question worth recording: the source has essentially no CSS motion. Its
+ * 231 KB sheet holds two @keyframes (both Framer internals — an input caret
+ * blink and an unused "pulse") and exactly one transition, `color .15s`.
+ * Every visible effect is JavaScript: Framer emits `.hover` variant classes
+ * and its React runtime animates between them, with `will-change: transform`
+ * hints as the tell.
  *
- * Effects reproduced:
- *  1. scroll-reveal on section entry            → animation-timeline: view()
- *  2. marquee ticker, seamless loop             → keyframe translate on a doubled track
- *  3. counter-scrolling wordmark band           → same, opposite direction
- *  4. product lift + shadow bloom on hover      → transform/box-shadow transition
- *  5. media zoom inside a fixed frame           → scale on an overflow-clipped child
- *  6. card frame darkening to black on hover    → border-color transition
- *  7. arrow nudge on hover                      → translate on the glyph
- *  8. underline wipe on text links              → background-size transition
- *  9. sticky chrome shrink past the hero        → animation-timeline: scroll()
- * 10. hero panel stagger on load                → delayed entry animation
+ * So this module is a REIMPLEMENTATION, not a transcription, and deliberately
+ * so — that runtime is hundreds of kilobytes that block first paint, and the
+ * storefront's LCP budget (docs/SEO.md §4) is the reason these shops can
+ * outrank the incumbents at all. We copy the behaviour and pay none of the
+ * cost. Everything here is zero JavaScript.
+ *
+ * The seven hover variants the source does declare are the ground truth for
+ * which effects are real: a nav underline growing to width:100%, the primary
+ * button's label stack sliding to flex-end, and an arrow shifting inside its
+ * frame. Those are reproduced below (8, 9, 7). The rest are ours, and are
+ * marked as such.
+ *
+ * Effects:
+ *  1. scroll-reveal on section entry            → animation-timeline: view()   [ours]
+ *  2. marquee ticker, seamless loop             → translate on a doubled track [source]
+ *  3. counter-scrolling wordmark band           → same, opposite direction     [source]
+ *  4. product lift + shadow bloom on hover      → transform/box-shadow         [ours]
+ *  5. media zoom inside a fixed frame           → scale on a clipped child     [ours]
+ *  6. card frame darkening on hover             → border-color transition      [ours]
+ *  7. arrow nudge on hover                      → translate on the glyph       [source]
+ *  8. underline wipe on text links              → background-size transition   [source]
+ *  9. button label roll on hover                → translate on a doubled stack [source]
+ * 10. hero panel stagger on load                → delayed entry animation      [ours]
+ *
+ * A previous revision had a scroll-driven chrome shrink here. It was removed:
+ * the source's header is `position: relative`, ours is not sticky either, so
+ * it animated the height of a bar already scrolling out of view — and
+ * animating `height` triggers layout on every frame, which risks CLS on the
+ * one metric this project is built around.
  *
  * Scroll-driven animation (`animation-timeline`) is progressively enhanced:
  * where it is unsupported the element simply renders in its final state,
@@ -139,17 +159,24 @@ export const STUDIO_EFFECTS_CSS = `
   :root[data-theme="studio"] .st-wipe:hover,
   :root[data-theme="studio"] .st-wipe:focus-visible { background-size: 100% 1px; }
 
-  /* ---- 9. Chrome shrink past the hero ------------------------------------ */
-  @supports (animation-timeline: scroll()) {
-    :root[data-theme="studio"] .st-chrome {
-      animation: st-shrink linear both;
-      animation-timeline: scroll();
-      animation-range: 0 220px;
-    }
+  /* ---- 9. Button label roll ----------------------------------------------
+     The source's primary button holds two identical label rows in a clipped
+     box; on hover the stack slides up so the second row replaces the first.
+     In the source this is a Framer variant (.hover moves the stack from
+     top to flex-end) driven by JS. Here it is a transform on a doubled
+     stack, which needs no script and stays on the compositor.
+
+     The button must set overflow:hidden and the stack must hold exactly two
+     rows of equal height for -50% to land the second row where the first
+     began. */
+  :root[data-theme="studio"] .st-roll { overflow: hidden; position: relative; }
+  :root[data-theme="studio"] .st-roll-stack {
+    display: grid;
+    transition: transform 0.42s cubic-bezier(0.22, 0.61, 0.36, 1);
   }
-  @keyframes st-shrink {
-    from { height: var(--chrome-h); }
-    to   { height: calc(var(--chrome-h) * 0.72); }
+  :root[data-theme="studio"] .st-roll:hover .st-roll-stack,
+  :root[data-theme="studio"] .st-roll:focus-visible .st-roll-stack {
+    transform: translateY(-50%);
   }
 
   /* ---- 10. Hero stagger on load ------------------------------------------ */
@@ -165,8 +192,7 @@ export const STUDIO_EFFECTS_CSS = `
   @media (prefers-reduced-motion: reduce) {
     :root[data-theme="studio"] .st-reveal,
     :root[data-theme="studio"] .st-reveal-slow,
-    :root[data-theme="studio"] .st-enter > *,
-    :root[data-theme="studio"] .st-chrome {
+    :root[data-theme="studio"] .st-enter > * {
       animation: none;
       opacity: 1;
       transform: none;
@@ -183,6 +209,10 @@ export const STUDIO_EFFECTS_CSS = `
     :root[data-theme="studio"] .st-lift,
     :root[data-theme="studio"] .st-zoom > *,
     :root[data-theme="studio"] .st-arrow-svg,
+    :root[data-theme="studio"] .st-roll-stack,
     :root[data-theme="studio"] .st-wipe { transition: none; }
+    /* The roll's second row must never be the one left showing. */
+    :root[data-theme="studio"] .st-roll:hover .st-roll-stack,
+    :root[data-theme="studio"] .st-roll:focus-visible .st-roll-stack { transform: none; }
   }
 `;

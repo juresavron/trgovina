@@ -75,18 +75,20 @@ export const THEME_CATALOG: Record<ThemeKey, ThemeCatalogEntry> = {
   },
 
   /**
-   * STUDIO — poster commerce, ported from the owner's FURNEXA Framer theme:
-   * black chrome bar over a white page, oversized expanded-grotesk
-   * statements, a scrolling USP marquee, near-monochrome with the shop
-   * accent used only as punctuation. Photography-first by construction.
+   * STUDIO — poster commerce, transcribed from the owner's FURNEXA Framer
+   * theme: a dark chrome bar over a white page, Clash Display statements set
+   * open and light (weight 500, positive tracking), a scrolling USP marquee,
+   * and photography-first construction. Not monochrome — the source carries an
+   * amber accent with cream and coral companions, spent sparingly on badges
+   * and status. Exact values: docs/STUDIO-BASELINE.md §0–§3.
    */
   studio: {
     key: "studio",
     name: "Studio",
-    voice: "Črno-bela, plakatna, fotografska — tipografija kot naslovnica.",
+    voice: "Plakatna in fotografska — tipografija kot naslovnica, jantar kot poudarek.",
     surface: "light",
-    radius: { card: "12px", control: "0px" },
-    displayFont: "Bricolage Grotesque",
+    radius: { card: "8px", control: "4px" },
+    displayFont: "Clash Display",
     recommendedFor: ["wellness", "neutral"],
     composition: {
       home: ["hero", "marquee", "products", "trust", "moat", "reviews", "guides"],
