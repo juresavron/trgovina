@@ -55,8 +55,14 @@ jobs:
             echo "attempt $i: HTTP $code — retrying"; sleep 5
           done
           [ "$code" = "200" ] || { echo "workers.dev host did not come up"; exit 1; }
+          # Capture-then-grep, never `curl | grep -q`: under pipefail, grep -q
+          # exits on first match, curl takes a write error (23) and the
+          # pipeline reports failure for a check that PASSED.
           grep -q "Infrardeča savna" /tmp/home.html
-          curl -s -D - -o /dev/null "https://${WORKERS_DEV_HOST}/" | grep -i "x-robots-tag: noindex"
-          curl -s "https://${WORKERS_DEV_HOST}/?shop=kad" | grep -q "Ledena kad"
-          curl -s "https://${WORKERS_DEV_HOST}/robots.txt" | grep -q "Disallow: /"
+          curl -s -D /tmp/headers.txt -o /dev/null "https://${WORKERS_DEV_HOST}/"
+          grep -qi "x-robots-tag: noindex" /tmp/headers.txt
+          curl -s -o /tmp/kad.html "https://${WORKERS_DEV_HOST}/?shop=kad"
+          grep -q "Ledena kad" /tmp/kad.html
+          curl -s -o /tmp/robots.txt "https://${WORKERS_DEV_HOST}/robots.txt"
+          grep -q "Disallow: /" /tmp/robots.txt
           echo "smoke OK"
