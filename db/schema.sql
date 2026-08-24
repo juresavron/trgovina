@@ -19,7 +19,7 @@
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
--- Shops — FK anchor. id matches ShopConfig.key ('savna', 'krio').
+-- Shops — FK anchor. id matches ShopConfig.key ('savna', 'kad', 'bazen', 'fotelj').
 -- ---------------------------------------------------------------------------
 create table public.shops (
   id text primary key,
@@ -66,6 +66,9 @@ create table public.products (
   -- '230V' vs '400V' decides whether an electrician visit gates installation —
   -- surfaced on the PDP, not discovered on delivery day.
   power_requirement text,
+  -- Shipping volume per unit (owner's container math and outbound freight
+  -- quoting read the same figure — 1.45–4.40 m3 across the launch catalog).
+  volume_m3 numeric(6, 2) check (volume_m3 > 0),
   capacity_persons integer check (capacity_persons > 0),
   lead_time_days integer not null default 14 check (lead_time_days >= 0),
   sort integer not null default 0,
@@ -408,7 +411,10 @@ create policy reviews_public_read on public.reviews
 -- Seed the pilots (matches src/tenants/*.ts keys).
 -- ---------------------------------------------------------------------------
 insert into public.shops (id, domain, name, is_live, order_prefix) values
-  ('savna', 'finskasavna.si', 'Finska Savna', false, 'SAV'),
-  ('krio', 'kriokomora.si', 'Kriokomora', false, 'KRIO');
+  ('savna', 'infrardeca-savna.si', 'Infrardeča Savna', false, 'SAV'),
+  ('kad', 'ledena-kad.si', 'Ledena Kad', false, 'KAD'),
+  ('bazen', 'masazni-bazen.si', 'Masažni Bazen', false, 'BAZ'),
+  ('fotelj', 'masazni-fotelj.si', 'Masažni Fotelj', false, 'FOT');
 
-insert into public.shop_order_seq (shop_id) values ('savna'), ('krio');
+insert into public.shop_order_seq (shop_id) values
+  ('savna'), ('kad'), ('bazen'), ('fotelj');

@@ -1,14 +1,18 @@
 import type { ShopConfig } from "./types";
 import { savna } from "./savna";
-import { krio } from "./krio";
+import { kad } from "./kad";
+import { bazen } from "./bazen";
+import { fotelj } from "./fotelj";
 
-export type { ShopConfig, InternalRouteKey, DesignMode } from "./types";
+export type { ShopConfig, InternalRouteKey } from "./types";
 export { isValidStatementDescriptor, isValidRouteSlug } from "./types";
 
 /** All shops, keyed by shop key. Adding a shop = adding one entry. */
 export const SHOPS: Record<string, ShopConfig> = {
   savna,
-  krio,
+  kad,
+  bazen,
+  fotelj,
 };
 
 /**

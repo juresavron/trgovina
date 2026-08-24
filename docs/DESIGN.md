@@ -29,26 +29,16 @@ theme. The page must feel like the room the product will live in.
    design constraint from sketch one (see SEO.md §4), not an optimization
    pass.
 
-## One skeleton, two souls
+## The theme system
 
-Layout, grid, rhythm and the component set are identical network-wide —
-that's the kernel. Each shop wears one of two **design modes**
-(`ShopConfig.design.mode`), so siblings read as different companies without
-forking a line of layout code:
-
-| | `warm` (savna) | `crisp` (krio) |
-| --- | --- | --- |
-| Display face | **Fraunces** (variable, optical sizing) | **Archivo** (Expanded, variable width) |
-| Text/UI face | Hanken Grotesk | Hanken Grotesk |
-| Label/spec face | system mono (spec pins, meta rows) | system mono |
-| Surfaces | deep charcoal-browns `oklch(0.22 0.01 40)` | glacial near-whites `oklch(0.97 0.005 230)` |
-| Accent | ember amber, hue 55 | cold cyan-blue, hue 225 |
-| Imagery | cedar, steam, low warm light | fog, frost, high-key cold light |
-| Voice | sensory, unhurried | precise, clinical, performance-led |
-
-Accent colors are oklch `(fixed-L, chroma≤0.14, per-shop hue)` — the
-onlyworld discipline: lightness ramps are owned by the theme layer so every
-shop passes WCAG contrast automatically, both themes.
+Design is structured as a **theme catalog** (`src/themes/`) — the
+architecture is specified in [`docs/THEMES.md`](THEMES.md) and ported from
+the proven 26-theme system in `simple-site-11a8fbdb`. In short: a shared
+kernel (section vocabulary, 6-rung type scale, palette math) under named
+themes (`zarja`, `lednik`, `salon`) that own surfaces, typography voice,
+edge policy and composition; each shop picks a theme and contributes only
+its accent hue/chroma and content. Accent lightness rungs are fixed by the
+palette factory so every shop/theme pairing passes measured contrast.
 
 In production fonts are self-hosted, subset to `latin-ext` (č š ž), loaded
 with metric-compatible (`size-adjust`) fallbacks → CLS 0. The design
@@ -79,10 +69,12 @@ StickyBuyBar · ShowroomInvite.
 
 ## Photography direction (per shop, never shared)
 
-- **savna**: dusk exteriors with lit interiors; steam; hands on cedar; one
-  human presence, never stock-smiley. Warm 3200K practicals.
-- **krio**: fog rolling off an open chamber; frost detail on the door seal;
-  athlete mid-session; clinical daylight 5600K+.
+- **savna**: dusk interiors, warm panel glow, hands on wood; one human
+  presence, never stock-smiley. Warm 3200K practicals.
+- **kad**: breath fog over open water, frost on the rim, a swimmer's exhale;
+  clinical daylight 5600K+.
+- **bazen**: terrace at golden hour, water texture close-ups, family scale.
+- **fotelj**: living-room evening light, leather/fabric detail, reading lamp.
 - Every product gets: 1 hero atmosphere, 1 straight-on catalog shot, 3–5
   detail crops, 1 installation-in-progress (trust), 1 in-situ customer shot.
 - No stock photography on money pages. Ever. It is instantly recognizable

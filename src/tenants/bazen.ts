@@ -1,26 +1,25 @@
 import type { ShopConfig } from "./types";
 
 /**
- * Shop #1 — infrared saunas. Two launch products (2p · 1.45 m³ · pallet,
- * 4p · 2.20 m³ · pallet_xl), landed costs €605/€653 — see docs/CATALOG.md.
- * Wears ZARJA (ember editorial) with an amber accent.
+ * Shop #3 — acrylic hot tubs. Launch product: 5-person acrylic tub
+ * (4.40 m³ · pallet_xl · landed €737 — docs/CATALOG.md). Wears SALON
+ * (bright gallery) with a warm aqua accent.
  *
- * ⚠️ DOMAIN IS A PLACEHOLDER until registered. Fresh registration only;
- * never route a zone that is not Active in OUR Cloudflare account (10082).
+ * ⚠️ DOMAIN IS A PLACEHOLDER until registered (10082 doctrine).
  */
-export const savna: ShopConfig = {
-  key: "savna",
-  domain: "infrardeca-savna.si",
-  siteUrl: "https://infrardeca-savna.si",
-  name: "Infrardeča Savna",
-  wordmark: ["Infra", "Savna"],
+export const bazen: ShopConfig = {
+  key: "bazen",
+  domain: "masazni-bazen.si",
+  siteUrl: "https://masazni-bazen.si",
+  name: "Masažni Bazen",
+  wordmark: ["Masažni", "Bazen"],
   live: false,
 
   keyword: {
-    primary: "infrardeča savna",
-    accusative: "infrardečo savno",
-    plural: "infrardeče savne",
-    category: "savne",
+    primary: "masažni bazen",
+    accusative: "masažni bazen",
+    plural: "masažni bazeni",
+    category: "bazeni",
   },
 
   locale: {
@@ -36,16 +35,16 @@ export const savna: ShopConfig = {
   addressCountry: "SI",
 
   design: {
-    theme: "zarja",
-    accentHue: 55, // ember amber
-    accentChroma: 0.12,
-    themeColor: "#171210",
+    theme: "salon",
+    accentHue: 200, // warm aqua
+    accentChroma: 0.09,
+    themeColor: "#faf7f2",
   },
 
-  // FILL BEFORE LIVE — launch-readiness gates check these are non-placeholder.
+  // FILL BEFORE LIVE.
   contact: {
     phone: "+386 00 000 000",
-    email: "info@infrardeca-savna.si",
+    email: "info@masazni-bazen.si",
     address: { street: "TODO", zip: "0000", city: "TODO" },
   },
   company: {
@@ -53,14 +52,14 @@ export const savna: ShopConfig = {
     vatId: "SI00000000",
   },
 
-  stripe: { statementDescriptor: "INFRARDECA-SAVNA.SI" },
+  stripe: { statementDescriptor: "MASAZNI-BAZEN.SI" },
 
   socials: {},
 
   routeSlugs: {
     "/": "/",
-    "/products": "/savne",
-    "/product": "/savna",
+    "/products": "/bazeni",
+    "/product": "/bazen",
     "/compare": "/primerjava",
     "/guide": "/vodnik",
     "/guides": "/vodniki",

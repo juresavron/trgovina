@@ -1,26 +1,25 @@
 import type { ShopConfig } from "./types";
 
 /**
- * Shop #1 — infrared saunas. Two launch products (2p · 1.45 m³ · pallet,
- * 4p · 2.20 m³ · pallet_xl), landed costs €605/€653 — see docs/CATALOG.md.
- * Wears ZARJA (ember editorial) with an amber accent.
+ * Shop #2 — cold plunge tubs. Launch product: plunge with chiller
+ * (1.50 m³ · two_man · landed €991 — docs/CATALOG.md). Wears LEDNIK
+ * (glacial precision) with an ice-blue accent.
  *
- * ⚠️ DOMAIN IS A PLACEHOLDER until registered. Fresh registration only;
- * never route a zone that is not Active in OUR Cloudflare account (10082).
+ * ⚠️ DOMAIN IS A PLACEHOLDER until registered (10082 doctrine).
  */
-export const savna: ShopConfig = {
-  key: "savna",
-  domain: "infrardeca-savna.si",
-  siteUrl: "https://infrardeca-savna.si",
-  name: "Infrardeča Savna",
-  wordmark: ["Infra", "Savna"],
+export const kad: ShopConfig = {
+  key: "kad",
+  domain: "ledena-kad.si",
+  siteUrl: "https://ledena-kad.si",
+  name: "Ledena Kad",
+  wordmark: ["Ledena", "Kad"],
   live: false,
 
   keyword: {
-    primary: "infrardeča savna",
-    accusative: "infrardečo savno",
-    plural: "infrardeče savne",
-    category: "savne",
+    primary: "ledena kad",
+    accusative: "ledeno kad",
+    plural: "ledene kadi",
+    category: "hladna terapija",
   },
 
   locale: {
@@ -36,16 +35,16 @@ export const savna: ShopConfig = {
   addressCountry: "SI",
 
   design: {
-    theme: "zarja",
-    accentHue: 55, // ember amber
-    accentChroma: 0.12,
-    themeColor: "#171210",
+    theme: "lednik",
+    accentHue: 225, // glacial blue
+    accentChroma: 0.1,
+    themeColor: "#f3f6f9",
   },
 
-  // FILL BEFORE LIVE — launch-readiness gates check these are non-placeholder.
+  // FILL BEFORE LIVE.
   contact: {
     phone: "+386 00 000 000",
-    email: "info@infrardeca-savna.si",
+    email: "info@ledena-kad.si",
     address: { street: "TODO", zip: "0000", city: "TODO" },
   },
   company: {
@@ -53,14 +52,14 @@ export const savna: ShopConfig = {
     vatId: "SI00000000",
   },
 
-  stripe: { statementDescriptor: "INFRARDECA-SAVNA.SI" },
+  stripe: { statementDescriptor: "LEDENA-KAD.SI" },
 
   socials: {},
 
   routeSlugs: {
     "/": "/",
-    "/products": "/savne",
-    "/product": "/savna",
+    "/products": "/ledene-kadi",
+    "/product": "/kad",
     "/compare": "/primerjava",
     "/guide": "/vodnik",
     "/guides": "/vodniki",

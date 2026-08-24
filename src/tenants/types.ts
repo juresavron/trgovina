@@ -15,6 +15,8 @@
  * term without sharing a visible line of copy.
  */
 
+import type { ThemeKey } from "../themes/catalog";
+
 /** Internal (English) route paths — the canonical file-route tree. */
 export type InternalRouteKey =
   | "/" // home: THE keyword landing page
@@ -36,18 +38,6 @@ export type InternalRouteKey =
   | "/privacy"
   | "/cookies"
   | "/withdrawal"; // 14-day right-of-withdrawal notice (mandatory, EU distance selling)
-
-/**
- * The two design souls one skeleton can wear. Layout, grid, rhythm and
- * component set are identical network-wide; the mode swaps typography voice
- * and surface treatment so sibling shops read as different companies:
- *
- *  - "warm":  editorial serif display, deep charcoal surfaces, ember accents.
- *             Sauna, hot tubs, anything cedar-and-steam.
- *  - "crisp": grotesk display, near-white surfaces, glacial accents.
- *             Cryo chambers, cold plunge, recovery tech.
- */
-export type DesignMode = "warm" | "crisp";
 
 export type ShopConfig = {
   /** Stable shop key — matches shops.id in the database ('savna', 'krio', …). */
@@ -111,11 +101,15 @@ export type ShopConfig = {
   /** schema.org PostalAddress addressCountry ('SI'). */
   addressCountry: string;
 
-  /** Design tokens. Lightness ramps are fixed by the theme layer (styles.css)
-   *  so every shop passes contrast in both themes — same discipline as
-   *  onlyworld's themeTokens, extended with the mode switch. */
+  /**
+   * Design: which theme from src/themes/catalog.ts this shop wears, plus its
+   * accent identity. Themes own layout, composition and typography voice;
+   * the shop owns hue and chroma — lightness rungs are fixed by the palette
+   * factory so every shop/theme pairing passes contrast (see
+   * src/themes/shared/palette.ts and docs/THEMES.md).
+   */
   design: {
-    mode: DesignMode;
+    theme: ThemeKey;
     /** oklch hue angle, 0–360. */
     accentHue: number;
     /** oklch chroma. Keep within 0.09–0.14. */
