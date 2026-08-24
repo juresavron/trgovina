@@ -35,10 +35,19 @@ export const bazen: ShopConfig = {
   addressCountry: "SI",
 
   design: {
-    theme: "salon",
+    theme: "studio",
     accentHue: 200, // warm aqua
     accentChroma: 0.09,
     themeColor: "#faf7f2",
+    /**
+     * The largest ticket and the biggest installation. Models first, because
+     * the buyer is still choosing a size, then delivery and the trust block
+     * before anything technical.
+     *
+     * Six shops now share one theme, so this order is what keeps them from
+     * rendering the same page (docs/SEO.md §6).
+     */
+    composition: ["hero", "marquee", "products", "moat", "trust", "stats", "reviews", "guides"],
   },
 
   // FILL BEFORE LIVE.

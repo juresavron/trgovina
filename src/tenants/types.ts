@@ -16,6 +16,7 @@
  */
 
 import type { ThemeKey } from "../themes/catalog";
+import type { SectionKey } from "../themes/shared/sections";
 
 /** Internal (English) route paths — the canonical file-route tree. */
 export type InternalRouteKey =
@@ -116,6 +117,25 @@ export type ShopConfig = {
     accentChroma: number;
     /** Browser theme-color. */
     themeColor: string;
+    /**
+     * Home-page act order, overriding the theme's default preset.
+     *
+     * THIS IS AN ANTI-DOORWAY CONTROL, not a styling convenience. docs/THEMES.md
+     * and the catalog have always described composition as shop-overridable,
+     * but nothing implemented it — so every shop wearing a theme rendered that
+     * theme's exact section order. One theme across the network then means six
+     * shops with identical page structure, differing only in hue and copy,
+     * which is the site-network footprint docs/SEO.md §6 exists to prevent.
+     *
+     * A shop that sets this must mean it: the order should follow how THAT
+     * product is actually sold (a considered ritual purchase leads with the
+     * delivery promise; a technical one leads with specs), not be shuffled for
+     * the sake of looking different.
+     *
+     * Every theme can render every key, so any order is safe. Length is capped
+     * by MAX_SECTIONS_PER_PAGE at the render site.
+     */
+    composition?: SectionKey[];
   };
 
   /**

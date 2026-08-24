@@ -1,6 +1,7 @@
 import type { ShopConfig } from "../tenants/types";
 import type { ShopContent } from "../content/types";
 import { THEME_CATALOG, type ThemeKey } from "../themes/catalog";
+import { MAX_SECTIONS_PER_PAGE } from "../themes/shared/sections";
 import { SHOPS } from "../tenants";
 import { BASE_CSS } from "./css";
 import {
@@ -150,7 +151,11 @@ export function buildCtx(shop: ShopConfig, content: ShopContent, q: string): Ren
 
 export function renderHome(shop: ShopConfig, content: ShopContent, theme: ThemeKey, q: string): string {
   const ctx = buildCtx(shop, content, q);
-  const composition = THEME_CATALOG[theme].composition.home;
+  // A shop may override the theme's act order — the anti-doorway control
+  // described in ShopConfig.design.composition. Capped here rather than at the
+  // config, so an override can never turn a page into a scroll of everything.
+  const composition = (shop.design.composition ?? THEME_CATALOG[theme].composition.home)
+    .slice(0, MAX_SECTIONS_PER_PAGE);
   const studio = theme === "studio";
   // A studio section falls back to the kernel renderer when the theme has no
   // module for that key, so the composition can never render a hole.

@@ -40,6 +40,15 @@ export const fotelj: ShopConfig = {
     accentHue: 30, // bronze — used as punctuation on studio's monochrome
     accentChroma: 0.11,
     themeColor: "#ffffff",
+    /**
+     * A massage chair is bought on how it feels, and nobody can feel it
+     * through a screen — so other people's experience does the work that a
+     * showroom would, directly under the models.
+     *
+     * Six shops now share one theme, so this order is what keeps them from
+     * rendering the same page (docs/SEO.md §6).
+     */
+    composition: ["hero", "marquee", "products", "reviews", "moat", "stats", "guides", "trust"],
   },
 
   // FILL BEFORE LIVE.

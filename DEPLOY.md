@@ -1,10 +1,17 @@
 # Deploying trgovina (Cloudflare Workers)
 
 One Worker (`trgovina`) serves every shop; the shop resolves per-request from
-the Host header. All four shops are **pre-live**: real domains would serve
+the Host header. All six shops are **pre-live**: real domains would serve
 503 + noindex, and no domains are routed yet. The QA surface is
 **https://trgovina.worldfans.workers.dev** — permanently noindexed, with a
-dev-only switcher bar (`?shop=savna|kad|bazen|fotelj`, `?theme=zarja|lednik|salon`).
+dev-only switcher bar (`?shop=savna|kad|bazen|fotelj|kopalna|biljard`,
+`?theme=zarja|lednik|salon|studio`).
+
+All six shops wear the **studio** theme (the owner's FURNEXA baseline). They
+are kept from rendering the same page by a per-shop `design.composition` — the
+anti-doorway control described in `ShopConfig` and asserted by
+`src/tenants/composition.test.ts`. The other three themes remain selectable
+via `?theme=` and are still rendered by the kernel.
 
 ## First deploy (~2 minutes)
 

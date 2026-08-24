@@ -35,10 +35,18 @@ export const kad: ShopConfig = {
   addressCountry: "SI",
 
   design: {
-    theme: "lednik",
+    theme: "studio",
     accentHue: 225, // glacial blue
     accentChroma: 0.1,
     themeColor: "#f3f6f9",
+    /**
+     * Cold plunge buyers arrive with numbers in mind — chiller capacity, hold
+     * temperature, draw. Specs lead; the models make sense only after them.
+     *
+     * Six shops now share one theme, so this order is what keeps them from
+     * rendering the same page (docs/SEO.md §6).
+     */
+    composition: ["hero", "marquee", "stats", "products", "moat", "reviews", "guides", "trust"],
   },
 
   // FILL BEFORE LIVE.

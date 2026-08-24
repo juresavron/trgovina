@@ -48,10 +48,19 @@ export const biljard: ShopConfig = {
   addressCountry: "SI",
 
   design: {
-    theme: "zarja",
+    theme: "studio",
     accentHue: 150, // baize green against zarja's near-black
     accentChroma: 0.1,
     themeColor: "#171210",
+    /**
+     * The first question is never which table — it is whether the room can
+     * take one. The clearance guide has to come before the models or half
+     * the traffic bounces on a spec it never found.
+     *
+     * Six shops now share one theme, so this order is what keeps them from
+     * rendering the same page (docs/SEO.md §6).
+     */
+    composition: ["hero", "marquee", "guides", "products", "moat", "stats", "reviews", "trust"],
   },
 
   // FILL BEFORE LIVE.

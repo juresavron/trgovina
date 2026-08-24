@@ -45,10 +45,19 @@ export const kopalna: ShopConfig = {
   addressCountry: "SI",
 
   design: {
-    theme: "salon",
+    theme: "studio",
     accentHue: 25, // travertine / warm stone
     accentChroma: 0.08,
     themeColor: "#faf7f1",
+    /**
+     * A stone-resin bath is chosen visually and then rationalised. Models
+     * first, then the guides that answer the material questions the picture
+     * raises.
+     *
+     * Six shops now share one theme, so this order is what keeps them from
+     * rendering the same page (docs/SEO.md §6).
+     */
+    composition: ["hero", "marquee", "products", "guides", "moat", "reviews", "stats", "trust"],
   },
 
   // FILL BEFORE LIVE.

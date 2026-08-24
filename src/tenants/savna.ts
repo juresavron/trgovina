@@ -36,10 +36,19 @@ export const savna: ShopConfig = {
   addressCountry: "SI",
 
   design: {
-    theme: "zarja",
+    theme: "studio",
     accentHue: 55, // ember amber
     accentChroma: 0.12,
     themeColor: "#171210",
+    /**
+     * A sauna is a considered ritual purchase and the objection is never the
+     * product, it is "who carries it up my stairs and plugs it in". The
+     * delivery promise therefore runs before the models.
+     *
+     * Six shops now share one theme, so this order is what keeps them from
+     * rendering the same page (docs/SEO.md §6).
+     */
+    composition: ["hero", "marquee", "moat", "products", "stats", "reviews", "guides", "trust"],
   },
 
   // FILL BEFORE LIVE — launch-readiness gates check these are non-placeholder.
