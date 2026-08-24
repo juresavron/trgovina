@@ -337,6 +337,25 @@ system:
 - Product fills **~70%** of the frame, centred, generous margin all round.
 - **Three-quarter view** for seating; straight-on for beds/tables.
 - Even, neutral studio light; no gradient stage, no colour cast.
+- Panel grey is `#f0f0f0` (`--bg-alt`), not the `#F2F2F2` measured above.
+
+### Hero images: dark along the top edge — a hard requirement
+
+Separate from the cutouts, and non-negotiable. The header is a **fixed
+transparent bar with a white logotype and white nav**, so it is legible only
+over a dark ground. The source theme never states this because its own hero
+photography happens to satisfy it; ours cannot be left to chance.
+
+So any image placed in a hero panel must read dark across its **top ~90px**
+at full width. A light or high-key hero image puts the navigation somewhere
+between 2.5:1 and 1.1:1 — unreadable, and a WCAG failure on the most-seen
+element of the site.
+
+Two mitigations are already in place, and neither replaces the brief: the bar
+carries a top-down scrim so a mistake degrades rather than disappears, and the
+placeholder panels ship dark so the default state is correct. If a shop's
+hero photography must be light, the theme needs a light-header variant — that
+is a code change, not a photo swap, and it has not been built.
 
 Scene/lifestyle photography is separate: 2880×1500 ultrawides for full-bleed
 bands, 2000×2000 squares for cards, 2761×3905 portrait for the testimonial.
