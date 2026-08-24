@@ -38,8 +38,9 @@ forking a line of layout code:
 
 | | `warm` (savna) | `crisp` (krio) |
 | --- | --- | --- |
-| Display face | **Fraunces** (variable, optical sizing) | **Space Grotesk** |
-| Text/UI face | Inter | Inter |
+| Display face | **Fraunces** (variable, optical sizing) | **Archivo** (Expanded, variable width) |
+| Text/UI face | Hanken Grotesk | Hanken Grotesk |
+| Label/spec face | system mono (spec pins, meta rows) | system mono |
 | Surfaces | deep charcoal-browns `oklch(0.22 0.01 40)` | glacial near-whites `oklch(0.97 0.005 230)` |
 | Accent | ember amber, hue 55 | cold cyan-blue, hue 225 |
 | Imagery | cedar, steam, low warm light | fog, frost, high-key cold light |
@@ -49,15 +50,18 @@ Accent colors are oklch `(fixed-L, chroma≤0.14, per-shop hue)` — the
 onlyworld discipline: lightness ramps are owned by the theme layer so every
 shop passes WCAG contrast automatically, both themes.
 
-Fonts are self-hosted, subset to `latin-ext` (č š ž), loaded with
-metric-compatible fallbacks → CLS 0.
+In production fonts are self-hosted, subset to `latin-ext` (č š ž), loaded
+with metric-compatible (`size-adjust`) fallbacks → CLS 0. The design
+prototype substitutes Google Fonts for speed of iteration — that substitution
+does not ship.
 
 ## Layout DNA (shared)
 
 - 12-col grid, max-width 1280px content / full-bleed imagery bands.
 - Section rhythm: 96–128px vertical between acts; a page is 5–7 acts, each
   one idea.
-- Type scale ~1.25 ratio; display sizes clamp `3rem → 5.5rem`.
+- Type scale ~1.25 ratio; hero display clamps `2.5rem → 4.625rem`, PDP
+  display `1.875rem → 2.75rem`.
 - PDP: sticky buy bar (price + configured summary + CTA) after the hero
   scrolls out; gallery left / configuration right on desktop, stacked mobile.
 - Motion: one entrance transition per act, `prefers-reduced-motion`

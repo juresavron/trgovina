@@ -65,6 +65,8 @@ const ZONE_BY_COUNTRY: Record<string, FreightZone> = {
 
 /** Returns null for countries we do not deliver to — callers must refuse. */
 export function zoneForCountry(country: string): FreightZone | null {
+  // Hostile input: a non-string destination is an unknown destination, not a crash.
+  if (typeof country !== "string") return null;
   return ZONE_BY_COUNTRY[country.trim().toUpperCase()] ?? null;
 }
 
@@ -90,9 +92,12 @@ const BASE_CENTS: Record<FreightClass, Partial<Record<FreightZone, number>>> = {
 };
 
 /**
- * Each pallet-or-heavier unit beyond the first adds half the base rate:
- * the truck is already coming, but a second sauna is a second pallet and a
- * second hour of crew time. Parcels don't multiply — twenty ladles is one box.
+ * Each pallet-or-heavier unit beyond the first adds half of ITS OWN class's
+ * base rate: the truck is already coming, but a second sauna is a second
+ * pallet and a second hour of crew time. Pricing extras by their own class
+ * (not the order's governing class) keeps a pallet added to a white-glove
+ * order costing a pallet's share — combining shipments must never cost more
+ * than splitting them. Parcels don't multiply — twenty ladles is one box.
  */
 const ADDITIONAL_UNIT_FACTOR = 0.5;
 
@@ -117,13 +122,19 @@ const SERVICE_CENTS: Record<ServiceKey, Partial<Record<FreightClass, number>>> =
   removal: { pallet: 7900, pallet_xl: 9900, two_man: 7900, white_glove: 7900 },
 };
 
-/** Services a class already contains — quoted at 0 and listed as included. */
+/**
+ * Services a class already contains — quoted at 0 and listed as included.
+ * liftGate is included in the crew classes because the crew carries: a valid
+ * lift-gate selection must survive the cart escalating to two_man/white_glove
+ * (adding a cryo chamber to a pallet cart must absorb the selection, not
+ * throw the customer out of checkout).
+ */
 const INCLUDED_SERVICES: Record<FreightClass, ServiceKey[]> = {
   parcel: [],
   pallet: [],
   pallet_xl: [],
-  two_man: ["roomOfChoice"],
-  white_glove: ["roomOfChoice", "installation"],
+  two_man: ["roomOfChoice", "liftGate"],
+  white_glove: ["roomOfChoice", "installation", "liftGate"],
 };
 
 export interface FreightItem {
@@ -176,7 +187,13 @@ function isFreightClass(v: unknown): v is FreightClass {
  * Price freight for one order. Throws FreightError — never guesses.
  */
 export function quote(input: FreightQuoteInput): FreightQuote {
-  const { items, destinationCountry, services = {} } = input;
+  const { items, destinationCountry } = input;
+
+  // Hostile input: services must be a plain object (null/undefined mean "none").
+  const services: FreightServices = input.services ?? {};
+  if (typeof services !== "object" || Array.isArray(services)) {
+    throw new FreightError("invalid_service", "services must be an object.");
+  }
 
   if (!Array.isArray(items) || items.length === 0) {
     throw new FreightError("empty_order", "An order needs at least one item.");
@@ -224,32 +241,58 @@ export function quote(input: FreightQuoteInput): FreightQuote {
     { kind: "base", key: `${governingClass}:${zone}`, cents: baseCents },
   ];
 
-  // Heavy units beyond the first each add a share of the base rate.
-  const heavyUnits = items
-    .filter((i) => FREIGHT_CLASS_RANK[i.freightClass] >= FREIGHT_CLASS_RANK.pallet)
-    .reduce((n, i) => n + i.qty, 0);
+  // Heavy units beyond the first each add half of THEIR OWN class's base for
+  // the zone; the single governing-class unit rides the order base. Every
+  // heavy class in the cart must have a priced lane — otherwise refuse.
+  const heavyItems = items.filter(
+    (i) => FREIGHT_CLASS_RANK[i.freightClass] >= FREIGHT_CLASS_RANK.pallet,
+  );
+  const heavyUnits = heavyItems.reduce((n, i) => n + i.qty, 0);
   if (heavyUnits > 1) {
-    lines.push({
-      kind: "additional_units",
-      key: `extra_heavy_units:${heavyUnits - 1}`,
-      cents: Math.round(baseCents * ADDITIONAL_UNIT_FACTOR) * (heavyUnits - 1),
-    });
+    let surcharge = 0;
+    for (const item of heavyItems) {
+      const ownBase = BASE_CENTS[item.freightClass][zone];
+      if (ownBase === undefined) {
+        throw new FreightError(
+          "unpriced_lane",
+          `No ${item.freightClass} lane to ${zone}. Price it in BASE_CENTS or refuse.`,
+        );
+      }
+      surcharge += item.qty * Math.round(ownBase * ADDITIONAL_UNIT_FACTOR);
+    }
+    // The first governing-class unit is covered by the order base.
+    surcharge -= Math.round(baseCents * ADDITIONAL_UNIT_FACTOR);
+    if (surcharge > 0) {
+      lines.push({
+        kind: "additional_units",
+        key: `extra_heavy_units:${heavyUnits - 1}`,
+        cents: surcharge,
+      });
+    }
   }
 
   const included = INCLUDED_SERVICES[governingClass];
-  for (const key of Object.keys(services) as ServiceKey[]) {
-    if (!services[key]) continue;
-    if (included.includes(key)) continue; // already in the base — never double-charged
-    const cents = SERVICE_CENTS[key][governingClass];
+  for (const key of Object.keys(services)) {
+    // Hostile input: an unknown service key is a refusal, not a TypeError.
+    if (!Object.hasOwn(SERVICE_CENTS, key)) {
+      throw new FreightError(
+        "invalid_service",
+        `Unknown service: '${String(key)}'.`,
+      );
+    }
+    const serviceKey = key as ServiceKey;
+    if (!services[serviceKey]) continue;
+    if (included.includes(serviceKey)) continue; // in the base — never double-charged
+    const cents = SERVICE_CENTS[serviceKey][governingClass];
     if (cents === undefined) {
       // e.g. lift-gate on a parcel, installation on a parcel: a UI that offers
       // this is broken, and charging for it silently would hide that. Loud.
       throw new FreightError(
         "invalid_service",
-        `Service '${key}' is not available for class '${governingClass}'.`,
+        `Service '${serviceKey}' is not available for class '${governingClass}'.`,
       );
     }
-    lines.push({ kind: "service", key, cents });
+    lines.push({ kind: "service", key: serviceKey, cents });
   }
 
   return {

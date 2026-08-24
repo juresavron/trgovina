@@ -107,7 +107,10 @@ One Worker serves every shop (the onlyworld pattern), so:
   deploy (error 10082). The pre-deploy zone probe from onlyworld's workflow
   carries over as-is.
 - `workers_dev: true` stays — the workers.dev host is QA + Lighthouse target.
-- Per-shop rollout is data (`live` flag + `is_live` row), never a deploy.
+- Per-shop rollout never touches routing or zones: flip `live` in the tenant
+  file (a one-line deploy of the shared Worker) + the `is_live` row. The
+  dangerous class of change — wrangler routes — happens only when a domain
+  is added, under the zone-probe gate.
 
 ## Admin
 

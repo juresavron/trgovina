@@ -128,7 +128,7 @@ describe("quote — included services are never double-charged", () => {
       }),
     );
     expect(q.totalCents).toBe(9900 + 14900);
-    expect(q.includedServices).toEqual(["roomOfChoice"]);
+    expect(q.includedServices).toEqual(["roomOfChoice", "liftGate"]);
   });
 
   it("a deselected service is not charged", () => {
@@ -161,7 +161,7 @@ describe("quote — additional heavy units", () => {
     expect(q.totalCents).toBe(7900);
   });
 
-  it("mixed heavy classes count all heavy units against the governing base", () => {
+  it("mixed heavy classes price each extra unit by ITS OWN class base", () => {
     const q = quote(
       order({
         items: [
@@ -171,7 +171,69 @@ describe("quote — additional heavy units", () => {
       }),
     );
     expect(q.governingClass).toBe("two_man");
-    expect(q.totalCents).toBe(9900 + Math.round(9900 * 0.5));
+    // two_man base + the pallet unit at half a PALLET's rate, not half a two_man's
+    expect(q.totalCents).toBe(9900 + Math.round(4900 * 0.5));
+  });
+
+  it("combining shipments never costs more than splitting them", () => {
+    const combined = quote(
+      order({
+        items: [
+          { freightClass: "white_glove", qty: 1 },
+          { freightClass: "pallet", qty: 1 },
+        ],
+      }),
+    );
+    // white_glove base + half a pallet — 27350, vs 29800 shipped separately
+    expect(combined.totalCents).toBe(24900 + Math.round(4900 * 0.5));
+    const split =
+      quote(order({ items: [{ freightClass: "white_glove", qty: 1 }] })).totalCents +
+      quote(order({ items: [{ freightClass: "pallet", qty: 1 }] })).totalCents;
+    expect(combined.totalCents).toBeLessThan(split);
+  });
+});
+
+describe("quote — hostile input beyond the type system", () => {
+  it("an unknown service key is a refusal, not a TypeError", () => {
+    try {
+      quote(order({ services: { express: true } as never }));
+      expect.unreachable("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(FreightError);
+      expect((e as FreightError).code).toBe("invalid_service");
+    }
+  });
+
+  it("null services means no services", () => {
+    const q = quote(order({ services: null as never }));
+    expect(q.totalCents).toBe(4900);
+  });
+
+  it("a non-string destination is an unknown destination", () => {
+    expect(zoneForCountry(42 as never)).toBeNull();
+    try {
+      quote(order({ destinationCountry: 42 as never }));
+      expect.unreachable("should have thrown");
+    } catch (e) {
+      expect((e as FreightError).code).toBe("unknown_destination");
+    }
+  });
+
+  it("a lift-gate selection survives escalation to a crew class as included", () => {
+    // The customer picked lift-gate for a pallet, then added a cryo chamber:
+    // the crew carries, so the selection is absorbed at 0 — never a throw.
+    const q = quote(
+      order({
+        items: [
+          { freightClass: "pallet", qty: 1 },
+          { freightClass: "white_glove", qty: 1 },
+        ],
+        services: { liftGate: true },
+      }),
+    );
+    expect(q.governingClass).toBe("white_glove");
+    expect(q.includedServices).toContain("liftGate");
+    expect(q.totalCents).toBe(24900 + Math.round(4900 * 0.5));
   });
 });
 

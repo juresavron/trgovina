@@ -6,7 +6,8 @@
  * one Worker) generalized from "one country per tenant" to "one commercial
  * keyword per tenant". Everything that renders (brand, keyword, SEO, slugs,
  * design tokens) lives here — the database `shops` table holds only
- * { id, domain, name, is_live } as the FK anchor for catalog and orders.
+ * { id, domain, name, is_live, order_prefix } as the FK anchor for catalog
+ * and orders (plus a shop_order_seq counter row).
  *
  * The keyword block replaces onlyworld's seo.country/seo.demonym: shared page
  * templates stay product-neutral and interpolate {keyword}/{product} tokens
