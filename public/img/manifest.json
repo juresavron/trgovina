@@ -1,0 +1,55 @@
+{
+  "portrait": [
+    "portrait-01.webp",
+    "portrait-02.webp",
+    "portrait-03.webp",
+    "portrait-04.webp",
+    "portrait-05.webp",
+    "portrait-06.webp",
+    "portrait-07.webp",
+    "portrait-08.webp"
+  ],
+  "scene": [
+    "scene-01.webp",
+    "scene-02.webp",
+    "scene-03.webp",
+    "scene-04.webp"
+  ],
+  "tile": [
+    "tile-01.webp",
+    "tile-02.webp",
+    "tile-03.webp",
+    "tile-04.webp",
+    "tile-05.webp",
+    "tile-06.webp",
+    "tile-07.webp",
+    "tile-08.webp"
+  ],
+  "cutout": [
+    "cutout-01.webp",
+    "cutout-02.webp",
+    "cutout-03.webp",
+    "cutout-04.webp",
+    "cutout-05.webp",
+    "cutout-06.webp",
+    "cutout-07.webp",
+    "cutout-08.webp",
+    "cutout-09.webp",
+    "cutout-10.webp",
+    "cutout-11.webp",
+    "cutout-12.webp",
+    "cutout-13.webp",
+    "cutout-14.webp"
+  ],
+  "room": [
+    "room-01.webp",
+    "room-02.webp",
+    "room-03.webp",
+    "room-04.webp",
+    "room-05.webp",
+    "room-06.webp"
+  ],
+  "motif": [
+    "motif-01.webp"
+  ]
+}

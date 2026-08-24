@@ -57,7 +57,7 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { statValue } from "./stat";
-import { discWatermark } from "./icons";
+import { MOTIF_EYE, ROOMS, decorativeImg, pick } from "./media";
 
 export const STUDIO_EDITORIAL_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ----
@@ -319,16 +319,30 @@ export const STUDIO_EDITORIAL_CSS = `
    * measurement. The icon strokes with currentColor, so the color property is
    * where that rung is set. Decorative: aria-hidden and out of the layout
    * (position:absolute) — it must never displace the heading it sits behind. */
+  /* The band motif is the source's own eye raster, not a shape we draw. It is
+   * a dark-ground JPEG, so mix-blend-mode: screen drops its background into
+   * the band and leaves only the light figure — which is why no cutout is
+   * needed and why the band colour still governs. */
   :root[data-theme="studio"] .st-tst-mark {
     position: absolute;
     z-index: 0;
     left: 50%;
     top: 50%;
     translate: -50% -50%;
-    width: min(1400px, 128%);
-    aspect-ratio: 12 / 5;
-    color: var(--ink-invert-2);
+    width: min(760px, 72%);
     pointer-events: none;
+    mix-blend-mode: screen;
+    opacity: 0.5;
+  }
+  :root[data-theme="studio"] .st-tst-mark img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  @media (forced-colors: active) {
+    /* A blend mode is meaningless in forced colours and the motif is
+       decoration, so it simply goes. */
+    :root[data-theme="studio"] .st-tst-mark { display: none; }
   }
   :root[data-theme="studio"] .st-tst-mark .st-watermark {
     display: block;
@@ -578,6 +592,21 @@ export const STUDIO_EDITORIAL_CSS = `
     background: var(--bg-alt);
     text-decoration: none;
   }
+  /* The photograph fills the card; the scrim above it carries the copy. */
+  :root[data-theme="studio"] .st-gd-photo {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+    transition: transform 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  :root[data-theme="studio"] .st-gd-card:hover .st-gd-photo { transform: scale(1.04); }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-gd-photo { transition: none; }
+    :root[data-theme="studio"] .st-gd-card:hover .st-gd-photo { transform: none; }
+  }
   :root[data-theme="studio"] .st-gd-mass {
     position: absolute;
     inset: 12% 12% 26%;
@@ -711,7 +740,7 @@ export const STUDIO_EDITORIAL_CSS = `
     }
     :root[data-theme="studio"] .st-tst-q,
     :root[data-theme="studio"] .st-tst-item .st-tst-q { max-width: 100%; }
-    :root[data-theme="studio"] .st-tst-mark { width: 160%; }
+    :root[data-theme="studio"] .st-tst-mark { width: 110%; opacity: 0.38; }
   }
 
   /* ---- Motion ---- */
@@ -802,7 +831,11 @@ export function renderStudioImpact(ctx: RenderCtx): string {
  * focusable="false" keeps it out of the tab order.
  */
 function watermark(): string {
-  return '<span class="st-tst-mark" aria-hidden="true">' + discWatermark() + "</span>";
+  return (
+    '<span class="st-tst-mark" aria-hidden="true">' +
+    decorativeImg(MOTIF_EYE, "st-tst-eye", "(max-width: 809px) 110vw, 760px") +
+    "</span>"
+  );
 }
 
 /** The B&W portrait placeholder — flat masses, no lighting. */
@@ -898,9 +931,17 @@ export function renderStudioGuides(ctx: RenderCtx): string {
     '<div class="st-gd-row">' +
     guides
       .map(
-        (g) =>
+        (g, i) =>
           '<a class="st-gd-card" href="' + href + '">' +
-          '<span class="st-gd-mass" aria-hidden="true"></span>' +
+          // Atmosphere, not the product: a room interior beside a buying guide
+          // claims nothing about what is for sale. Seeded by shop AND index so
+          // three cards differ and two shops do not land on the same set.
+          decorativeImg(
+            pick(ROOMS, ctx.shop.key, i),
+            "st-gd-photo",
+            "(max-width: 809px) 92vw, (max-width: 1199px) 46vw, 30vw",
+          ) +
+          '<span class="st-gd-scrim" aria-hidden="true"></span>' +
           '<span class="st-gd-scrim" aria-hidden="true"></span>' +
           '<span class="st-gd-copy">' +
           '<span class="st-gd-chip">' + esc(g[0]) + "</span>" +

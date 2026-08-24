@@ -97,4 +97,20 @@ jobs:
             echo "FAIL: CSS comments are reaching the wire"; exit 1
           fi
 
+          # Static assets actually serve. This is a new binding, and a
+          # misconfigured one fails silently: the Worker still renders, every
+          # <img> just 404s, and the page looks like the placeholders never
+          # landed rather than like a broken deploy.
+          icode=$(curl -s -o /tmp/img.webp -w "%{http_code}" "https://${WORKERS_DEV_HOST}/img/motif-01.webp")
+          if [ "$icode" != "200" ]; then
+            echo "FAIL: /img/motif-01.webp returned $icode — asset binding is not serving"; exit 1
+          fi
+          if ! file /tmp/img.webp | grep -qi "web/p\|webp"; then
+            echo "FAIL: /img/motif-01.webp is not a WebP — the Worker answered instead of the asset store"
+            head -c 200 /tmp/img.webp; exit 1
+          fi
+
+          # Assets must not shadow the page routes.
+          grep -q 'data-theme="studio"' /tmp/home.html
+
           echo "smoke OK"

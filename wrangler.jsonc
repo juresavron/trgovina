@@ -36,6 +36,17 @@
   //   { "pattern": "www.masazni-fotelj.si", "custom_domain": true }
   // ],
 
+  // Static assets, served from the edge before the Worker runs. Only /img/*
+  // lives here; every page is still server-rendered by src/worker.ts.
+  //
+  // Note the ordering consequence: an asset is served for ANY Host, including
+  // one the tenant resolver would 404. That is fine for imagery — it leaks no
+  // canonical and names no shop — but it is the reason nothing HTML-shaped may
+  // ever be put in this directory.
+  "assets": {
+    "directory": "./public"
+  },
+
   "observability": {
     "enabled": true
   }
