@@ -29,8 +29,8 @@ import { arrowWatermark } from "./icons";
 
 export const STUDIO_HERO_CSS = `
   /* ---- The only values this module declares ----------------------------
-   * tokens.ts is the single declaration site: --studio-gutter, --photo-cool,
-   * --photo-warm and --on-invert-soft live there and are consumed here as
+   * tokens.ts is the single declaration site: --studio-gutter, --tile-mid,
+   * --bg-alt and --on-invert-mute live there and are consumed here as
    * var(--…) with no fallback — a fallback would silently resurrect the
    * duplicate this file used to carry. What remains below is the one measure
    * tokens.ts does not carry: the hero stack's two internal rhythms. */
@@ -59,8 +59,8 @@ export const STUDIO_HERO_CSS = `
      * bleed into the neighbouring column. */
     overflow: clip;
   }
-  :root[data-theme="studio"] .st-hero-photo-a { background: var(--photo-cool); }
-  :root[data-theme="studio"] .st-hero-photo-b { background: var(--photo-warm); }
+  :root[data-theme="studio"] .st-hero-photo-a { background: var(--tile-mid); }
+  :root[data-theme="studio"] .st-hero-photo-b { background: var(--bg-alt); }
 
   /* §4.14 watermark — the ARROW-STADIUM outline, scaled enormous and set a few
    * percent off the ground. Not a circle and not a gradient blob: it is the
@@ -107,7 +107,7 @@ export const STUDIO_HERO_CSS = `
   /* Pills are ROUND (§3) — the counterpoint to the sharp button below. */
   :root[data-theme="studio"] .st-hero-pill {
     border: 1px solid color-mix(in srgb, var(--on-invert) 40%, transparent);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     padding: clamp(8px, 0.6vw, 12px) clamp(16px, 1.4vw, 28px);
     font-family: var(--f-body);
     font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
@@ -122,7 +122,6 @@ export const STUDIO_HERO_CSS = `
     margin: 0;
     font-family: var(--f-display);
     font-weight: 650;
-    font-stretch: var(--stretch);
     font-size: clamp(2rem, 4.5vw, 5.625rem);
     letter-spacing: -0.03em;
     line-height: 1;
@@ -138,7 +137,7 @@ export const STUDIO_HERO_CSS = `
     font-size: clamp(1rem, 1.2vw, 1.5rem);
     line-height: 1.5;
     /* Measured #d6d6d6 — lighter than --on-invert-mute. 13.4:1 on #0d0d0d. */
-    color: var(--on-invert-soft);
+    color: var(--on-invert-mute);
   }
   /* Buttons are SHARP (--r-ctrl, §3). White on black: --bg is the fill. */
   :root[data-theme="studio"] .st-btn-light {
@@ -188,10 +187,10 @@ export const STUDIO_HERO_CSS = `
     position: absolute;
     left: 50%; bottom: 12%; transform: translateX(-50%);
     width: 62%; height: 7%;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--ink) 20%, transparent), transparent 72%);
   }
-  /* --ink-soft, not --ink-mute: 6.3:1 on the cool grey ground and better on the
+  /* --ink-body, not --ink-mute: 6.3:1 on the cool grey ground and better on the
    * warm one (mute is 3.2:1 and fails on both). */
   :root[data-theme="studio"] .st-photo-cap {
     position: absolute; z-index: 2;
@@ -200,7 +199,7 @@ export const STUDIO_HERO_CSS = `
     font-size: clamp(0.6875rem, 0.7vw, 0.8125rem);
     font-weight: 500; letter-spacing: 0.12em; line-height: 1;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
   /* Both photo panels carry the "photography pending" disclosure, but exactly
    * ONE is ever visible: panel A's above 900px, panel B's below it — where
@@ -223,7 +222,6 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-hero-name {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1.375rem, 2vw, 2.5rem);
     letter-spacing: -0.01em; line-height: 1.15;
     color: var(--on-invert);
@@ -292,7 +290,6 @@ export const STUDIO_HERO_CSS = `
     margin: 0 0 clamp(28px, 3.6vw, 72px);
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(2.75rem, 12vw, 15rem);
     letter-spacing: -0.03em; line-height: 0.86;
     text-transform: uppercase;
@@ -309,7 +306,7 @@ export const STUDIO_HERO_CSS = `
     width: clamp(200px, 40vw, 760px);
     aspect-ratio: 4 / 3;
     border-radius: var(--r-media);
-    background: linear-gradient(168deg, var(--photo-warm), var(--bg-alt));
+    background: linear-gradient(168deg, var(--bg-alt), var(--bg-alt));
   }
   /* Inside the band object the mass is the product itself, not a subject on a
    * backdrop, so it sits tighter to the frame than in a hero panel. */
@@ -327,7 +324,7 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-band-dot {
     flex: none;
     width: 9px; height: 9px;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: var(--on-invert);
   }
   :root[data-theme="studio"] .st-band-line {
@@ -353,7 +350,7 @@ export const STUDIO_HERO_CSS = `
   /* Chips are ROUND; the CTA beside them stays SHARP. */
   :root[data-theme="studio"] .st-band-chip {
     border: 1px solid color-mix(in srgb, var(--on-invert) 40%, transparent);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     padding: clamp(7px, 0.55vw, 11px) clamp(14px, 1.3vw, 26px);
     font-family: var(--f-body);
     font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
@@ -364,9 +361,8 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-band-title {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1.375rem, 2.3vw, 2.875rem);
-    letter-spacing: var(--track-display); line-height: 1.1;
+    letter-spacing: var(--ls-h2); line-height: 1.1;
     color: var(--on-invert);
     /* A long model name must fold inside the cluster, never widen the band. */
     overflow-wrap: break-word;

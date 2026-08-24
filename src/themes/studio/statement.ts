@@ -106,9 +106,8 @@ export const STUDIO_STATEMENT_CSS = `
     max-width: min(100%, max(28rem, 67.5vw));
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(2.125rem, 3.4vw, 4.25rem);
-    letter-spacing: var(--track-display);
+    letter-spacing: var(--ls-h2);
     line-height: 1.15;
     color: var(--ink);
     text-wrap: balance;
@@ -158,7 +157,7 @@ export const STUDIO_STATEMENT_CSS = `
     gap: clamp(32px, 4.4vw, 88px);
     margin-top: clamp(40px, 5.5vw, 110px);
   }
-  /* 19px body / 1.65, max-width 600 at 2000px (§1, §4.3). --ink-soft on white
+  /* 19px body / 1.65, max-width 600 at 2000px (§1, §4.3). --ink-body on white
    * is 9.0:1. */
   :root[data-theme="studio"] .st-story-copy {
     margin: 0;
@@ -167,7 +166,7 @@ export const STUDIO_STATEMENT_CSS = `
     font-size: clamp(1rem, 0.95vw, 1.1875rem);
     font-weight: 400;
     line-height: 1.65;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
 
   :root[data-theme="studio"] .st-story-fig { margin: 0; }
@@ -183,7 +182,7 @@ export const STUDIO_STATEMENT_CSS = `
     letter-spacing: 0.12em;
     line-height: 1;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
   /* Photo-ready slot at the band's measured 4:3. Flatter and more neutral than
    * zarja's lit scenes: studio's grounds are white/grey, not gradient-lit. The
@@ -220,7 +219,7 @@ export const STUDIO_STATEMENT_CSS = `
     );
   }
   /* Note sits at the TOP of the frame, on the flat ground rather than on the
-   * scrim: --ink-soft is 8.4:1 on --bg-alt, and unaffected once a photo lands
+   * scrim: --ink-body is 8.4:1 on --bg-alt, and unaffected once a photo lands
    * behind the scrim at the bottom. */
   :root[data-theme="studio"] .st-story-note {
     position: absolute;
@@ -233,7 +232,7 @@ export const STUDIO_STATEMENT_CSS = `
     letter-spacing: 0.12em;
     line-height: 1;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
 
   /* ================= §4.8 Inline-icon statement + stats ================= */
@@ -254,7 +253,7 @@ export const STUDIO_STATEMENT_CSS = `
   :root[data-theme="studio"] .st-stats-pill {
     display: inline-block;
     border: 1px solid var(--studio-ring);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     padding: clamp(8px, 0.6vw, 12px) clamp(16px, 1.4vw, 28px);
     font-family: var(--f-body);
     font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
@@ -271,7 +270,6 @@ export const STUDIO_STATEMENT_CSS = `
     margin: clamp(28px, 3.4vw, 68px) auto 0;
     font-family: var(--f-display);
     font-weight: 450;
-    font-stretch: var(--stretch);
     font-size: clamp(1.5rem, 2.6vw, 3.25rem);
     letter-spacing: -0.01em;
     line-height: 1.35;
@@ -301,9 +299,9 @@ export const STUDIO_STATEMENT_CSS = `
      * lowercase line, so nudge it down by a hair of its own size. */
     translate: 0 -0.06em;
     border: 1px solid var(--studio-ring);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     line-height: 0;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
   :root[data-theme="studio"] .st-claim-ico svg {
     inline-size: 54%;
@@ -327,7 +325,6 @@ export const STUDIO_STATEMENT_CSS = `
     display: block;
     font-family: var(--f-display);
     font-weight: 500;
-    font-stretch: var(--stretch);
     font-size: clamp(1.875rem, 3.9vw, 4.875rem);
     letter-spacing: -0.02em;
     line-height: 1;

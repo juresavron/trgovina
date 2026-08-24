@@ -92,7 +92,12 @@ const SHEET = `
 
   .display {
     font-family: var(--f-display); font-weight: var(--w-display);
-    font-stretch: var(--stretch); letter-spacing: var(--track-display); line-height: 1.04;
+    /* Fallbacks matter: studio declares neither of these — its display face
+       (Clash Display) is not variable-width and its tracking is per-role. An
+       undefined var() makes the whole declaration invalid, which silently
+       dropped the tracking on every kernel-rendered studio page, the 503
+       pre-live screen among them. */
+    font-stretch: var(--stretch, 100%); letter-spacing: var(--track-display, 0em); line-height: 1.04;
   }
   .wrap { max-width: 1280px; margin: 0 auto; padding: 0 clamp(20px, 4.5vw, 56px); }
   .eyebrow {

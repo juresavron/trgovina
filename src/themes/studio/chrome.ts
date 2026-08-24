@@ -49,8 +49,8 @@ function icon(k: IconKey): string {
 }
 
 export const STUDIO_CHROME_CSS = `
-  /* No :root token block here. --studio-gutter, --studio-inset-r, --chrome-h,
-   * --disc, --w-mark and --w-mark-foot all live in tokens.ts; a second copy at
+  /* No :root token block here. --studio-gutter, --studio-gutter, --chrome-h,
+   * --on-invert-16, --w-display and --w-body all live in tokens.ts; a second copy at
    * equal specificity meant sheet order, not the spec, decided the value. */
 
   /* Visually hidden until focused — used by the skip link and the newsletter
@@ -70,14 +70,14 @@ export const STUDIO_CHROME_CSS = `
     border-bottom: 1px solid color-mix(in srgb, var(--on-invert) 10%, transparent);
   }
   :root[data-theme="studio"] .st-chrome-bar {
-    /* --studio-band (1900px) is the CONTENT measure, and box-sizing here is
+    /* --studio-container (1900px) is the CONTENT measure, and box-sizing here is
      * border-box: capping the box at 1900 and then padding it inward left the
      * wordmark ~54px inboard of the measured x=54. The padding is added to the
      * cap — gutter left + inset-r right, the two the bar actually uses — so
      * the content between them is exactly 1900px. */
-    max-width: calc(var(--studio-band) + var(--studio-gutter) + var(--studio-inset-r));
+    max-width: calc(var(--studio-container) + var(--studio-gutter) + var(--studio-gutter));
     margin-inline: auto;
-    padding-inline: var(--studio-gutter) var(--studio-inset-r);
+    padding-inline: var(--studio-gutter) var(--studio-gutter);
     min-height: var(--chrome-h);
     display: grid;
     /* 1fr | auto | 1fr keeps the nav optically centred on the VIEWPORT even
@@ -90,8 +90,7 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-chrome-mark {
     justify-self: start;
     font-family: var(--f-display);
-    font-weight: var(--w-mark);
-    font-stretch: var(--stretch);
+    font-weight: var(--w-display);
     font-size: clamp(1rem, 1.4vw, 1.75rem);
     letter-spacing: 0.02em;
     line-height: 1;
@@ -159,9 +158,9 @@ export const STUDIO_CHROME_CSS = `
     display: inline-flex; align-items: center; justify-content: center;
     inline-size: clamp(36px, 2.3vw, 46px);
     block-size: clamp(36px, 2.3vw, 46px);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     border: 0;
-    background: var(--disc);
+    background: var(--on-invert-16);
     color: var(--on-invert);
     text-decoration: none;
     transition: background-color 0.2s ease;
@@ -180,7 +179,7 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-chrome-btn:focus-visible {
     outline: 2px solid var(--on-invert);
     outline-offset: 3px;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
   }
 
   /* Count badge: small white disc, black numeral (measured). */
@@ -189,7 +188,7 @@ export const STUDIO_CHROME_CSS = `
     min-inline-size: 18px; block-size: 18px;
     padding-inline: 5px;
     display: inline-flex; align-items: center; justify-content: center;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: var(--bg);
     color: var(--ink);
     font-family: var(--f-body);
@@ -244,9 +243,9 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-foot-in {
     /* Same content-measure arithmetic as the bar: the gutter sits OUTSIDE the
      * 1900px measure, so the giant wordmark starts at the measured x=54. */
-    max-width: calc(var(--studio-band) + var(--studio-gutter) + var(--studio-inset-r));
+    max-width: calc(var(--studio-container) + var(--studio-gutter) + var(--studio-gutter));
     margin-inline: auto;
-    padding-inline: var(--studio-gutter) var(--studio-inset-r);
+    padding-inline: var(--studio-gutter) var(--studio-gutter);
   }
 
   :root[data-theme="studio"] .st-foot-top {
@@ -259,10 +258,9 @@ export const STUDIO_CHROME_CSS = `
   /* ~150px, and LIGHTER than the bar's mark — the measured difference. */
   :root[data-theme="studio"] .st-foot-mark {
     font-family: var(--f-display);
-    font-weight: var(--w-mark-foot);
-    font-stretch: var(--stretch);
+    font-weight: var(--w-body);
     font-size: clamp(2.2rem, 7.5vw, 9.375rem);
-    letter-spacing: var(--track-display);
+    letter-spacing: var(--ls-h2);
     line-height: 0.88;
     text-transform: uppercase;
     color: var(--on-invert);
@@ -273,8 +271,7 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-news-h {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
-    letter-spacing: var(--track-display);
+    letter-spacing: var(--ls-h2);
     font-size: clamp(1.15rem, 1.4vw, 1.75rem);
     line-height: 1.2;
     color: var(--on-invert);
@@ -312,7 +309,7 @@ export const STUDIO_CHROME_CSS = `
     flex: 0 0 auto;
     display: inline-flex; align-items: center; justify-content: center;
     inline-size: clamp(34px, 2.1vw, 42px); block-size: clamp(34px, 2.1vw, 42px);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     border: 1px solid color-mix(in srgb, var(--on-invert) 34%, transparent);
     background: transparent; color: var(--on-invert);
     cursor: pointer;
@@ -327,7 +324,7 @@ export const STUDIO_CHROME_CSS = `
     border-color: color-mix(in srgb, var(--on-invert) 20%, transparent);
   }
   :root[data-theme="studio"] .st-news-go:focus-visible {
-    outline: 2px solid var(--on-invert); outline-offset: 3px; border-radius: var(--r-pill);
+    outline: 2px solid var(--on-invert); outline-offset: 3px; border-radius: var(--r-ctrl);
   }
   :root[data-theme="studio"] .st-news-go .st-ico { inline-size: 18px; block-size: 18px; }
   :root[data-theme="studio"] .st-news-note {
@@ -367,7 +364,7 @@ export const STUDIO_CHROME_CSS = `
     flex: 0 0 auto;
     display: inline-flex; align-items: center; justify-content: center;
     inline-size: clamp(34px, 2.2vw, 44px); block-size: clamp(34px, 2.2vw, 44px);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     border: 1px solid color-mix(in srgb, var(--on-invert) 28%, transparent);
     color: var(--on-invert);
     transition: background-color 0.2s ease, color 0.2s ease;
@@ -459,8 +456,8 @@ export const STUDIO_CHROME_CSS = `
       scrollbar-width: none;
       -webkit-overflow-scrolling: touch;
       padding: 14px 0 12px;
-      margin-inline: calc(var(--studio-gutter) * -1) calc(var(--studio-inset-r) * -1);
-      padding-inline: var(--studio-gutter) var(--studio-inset-r);
+      margin-inline: calc(var(--studio-gutter) * -1) calc(var(--studio-gutter) * -1);
+      padding-inline: var(--studio-gutter) var(--studio-gutter);
     }
     :root[data-theme="studio"] .st-chrome-nav::-webkit-scrollbar { display: none; }
 

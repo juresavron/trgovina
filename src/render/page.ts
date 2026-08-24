@@ -22,15 +22,40 @@ import {
 } from "../themes/studio";
 
 /**
- * Font payload per theme — studio runs a different pair (Bricolage Grotesque
- * + DM Sans) from the original three, and no page should pay for faces it
- * cannot render.
+ * Font payload per theme — no page should pay for faces it cannot render.
  */
 const FONTS_BASE =
   "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Archivo:wdth,wght@62..125,400..800&family=Hanken+Grotesk:wght@300..800&family=Marcellus&display=swap";
 
-function fontsHref(theme: ThemeKey): string {
-  return theme === "studio" ? STUDIO_FONTS_HREF : FONTS_BASE;
+/**
+ * Studio needs two origins: DM Sans from Google, and Clash Display + Satoshi
+ * from Fontshare (Indian Type Foundry), which is where the source theme gets
+ * them — they are not on Google Fonts.
+ *
+ * This is an interim. Two render-blocking third-party stylesheets is the exact
+ * pattern docs/SEO.md §4 exists to prevent, and LCP is the reason these shops
+ * are meant to outrank the incumbents. The fix is to vendor the four woff2
+ * files into the Worker and serve them same-origin with a single preload;
+ * that needs egress this environment does not have (fontshare.com is blocked),
+ * so it is a launch task, tracked in docs/STUDIO-BASELINE.md §0.
+ */
+const FONTS_STUDIO_FONTSHARE =
+  "https://api.fontshare.com/v2/css?f[]=clash-display@500,700&f[]=satoshi@400,500,700&display=swap";
+
+function fontLinks(theme: ThemeKey): string {
+  const preconnect =
+    '<link rel="preconnect" href="https://fonts.googleapis.com">' +
+    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>';
+  if (theme !== "studio") {
+    return preconnect + '<link rel="stylesheet" href="' + FONTS_BASE + '">';
+  }
+  return (
+    preconnect +
+    '<link rel="preconnect" href="https://api.fontshare.com">' +
+    '<link rel="preconnect" href="https://cdn.fontshare.com" crossorigin>' +
+    '<link rel="stylesheet" href="' + STUDIO_FONTS_HREF + '">' +
+    '<link rel="stylesheet" href="' + esc(FONTS_STUDIO_FONTSHARE) + '">'
+  );
 }
 
 export interface PageOptions {
@@ -81,9 +106,7 @@ export function renderDocument(o: PageOptions): string {
     '<meta property="og:url" content="' + esc(canonical) + '">' +
     '<meta property="og:locale" content="' + esc(s.locale.ogLocale) + '">' +
     '<meta name="theme-color" content="' + esc(s.design.themeColor) + '">' +
-    '<link rel="preconnect" href="https://fonts.googleapis.com">' +
-    '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
-    '<link rel="stylesheet" href="' + fontsHref(o.theme) + '">' +
+    fontLinks(o.theme) +
     "<style>" + BASE_CSS + "</style>" +
     jsonLd +
     "</head><body>" +

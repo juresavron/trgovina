@@ -91,7 +91,7 @@ export const STUDIO_COMMERCE_CSS = `
     position: absolute;
     left: 50%; bottom: 12%; transform: translateX(-50%);
     width: 60%; height: 8%;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: radial-gradient(
       50% 50% at 50% 50%,
       color-mix(in srgb, var(--ink) 18%, transparent),
@@ -105,15 +105,14 @@ export const STUDIO_COMMERCE_CSS = `
     font-size: clamp(11.5px, 0.75vw, 15px);
     font-weight: 500; letter-spacing: 0.12em; line-height: 1;
     text-transform: uppercase;
-    /* --ink-soft, not --ink-mute: 9.7:1 on #ffffff at 15px tracked caps. */
-    color: var(--ink-soft);
+    /* --ink-body, not --ink-mute: 9.7:1 on #ffffff at 15px tracked caps. */
+    color: var(--ink-body);
   }
   /* Section heading: measured 68–72px / 600 / −0.025em / 1.05. */
   :root[data-theme="studio"] .st-sec-h {
     margin: clamp(12px, 1vw, 20px) 0 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1.9rem, 3.4vw, 4.25rem);
     letter-spacing: -0.025em;
     line-height: 1.05;
@@ -132,7 +131,7 @@ export const STUDIO_COMMERCE_CSS = `
     padding-block: var(--studio-rhythm);
   }
   :root[data-theme="studio"] .st-shop-in {
-    max-width: var(--studio-band);
+    max-width: var(--studio-container);
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
@@ -214,7 +213,6 @@ export const STUDIO_COMMERCE_CSS = `
   :root[data-theme="studio"] .st-card-name {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1.0625rem, 1.5vw, 1.875rem);
     letter-spacing: -0.01em; line-height: 1.2;
     color: var(--ink);
@@ -245,7 +243,7 @@ export const STUDIO_COMMERCE_CSS = `
   :root[data-theme="studio"] .st-vat {
     font-size: clamp(11px, 0.7vw, 14px);
     letter-spacing: 0.04em;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
 
   /* The util card: same frame, inverted ground. Its hover twin of "frame goes
@@ -262,9 +260,8 @@ export const STUDIO_COMMERCE_CSS = `
   :root[data-theme="studio"] .st-util-h {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1.25rem, 2.1vw, 2.625rem);
-    letter-spacing: var(--track-display); line-height: 1.1;
+    letter-spacing: var(--ls-h2); line-height: 1.1;
     color: var(--on-invert);
     overflow-wrap: break-word;
   }
@@ -301,7 +298,7 @@ export const STUDIO_COMMERCE_CSS = `
   }
   /* Centred heading (§4.4) — the counterpoint to §4.7's gutter-left one. */
   :root[data-theme="studio"] .st-rail-head {
-    max-width: var(--studio-measure);
+    max-width: var(--studio-container);
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
     text-align: center;
@@ -394,20 +391,19 @@ export const STUDIO_COMMERCE_CSS = `
   :root[data-theme="studio"] .st-rail-name {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1rem, 1.3vw, 1.625rem);
     letter-spacing: -0.01em; line-height: 1.2;
     color: var(--ink);
     /* The rail card is the narrowest name slot in the theme. */
     overflow-wrap: break-word;
   }
-  /* Meta line: --ink-soft (7.8:1 on white) rather than --ink-mute, because
+  /* Meta line: --ink-body (7.8:1 on white) rather than --ink-mute, because
    * this line is dense spec text at 15–19px, not a struck secondary price. */
   :root[data-theme="studio"] .st-rail-meta {
     font-family: var(--f-body);
     font-size: clamp(12.5px, 0.9vw, 18px);
     line-height: 1.45;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
   /* The measured muted price slot, 22px — it carries a RANGE (§4.4), so it is
    * allowed to fold onto a second line in a narrow card rather than overflow. */
@@ -452,7 +448,7 @@ export const STUDIO_COMMERCE_CSS = `
     outline: 2px solid var(--acc);
     outline-offset: 3px;
     /* Round (§9): arrows are pills, never sharp like the word-carrying CTAs. */
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
   }
   :root[data-theme="studio"] .st-rail-go .st-arrow-svg { display: block; }
 

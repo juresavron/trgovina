@@ -82,11 +82,11 @@ export const STUDIO_PDP_CSS = `
     padding-top: var(--studio-rhythm);
   }
   :root[data-theme="studio"] .st-pdp-in {
-    /* --studio-measure (1560px), the baseline's text-led measure (§3) — a PDP
+    /* --studio-container (1560px), the baseline's text-led measure (§3) — a PDP
      * is a decision column, not a full-bleed band. The buy bar below uses
-     * --studio-band. Both are CONTENT measures and box-sizing is border-box,
+     * --studio-container. Both are CONTENT measures and box-sizing is border-box,
      * so the gutter is ADDED to the cap rather than eaten out of it. */
-    max-width: calc(var(--studio-measure) + 2 * var(--studio-gutter));
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
@@ -139,14 +139,14 @@ export const STUDIO_PDP_CSS = `
     position: absolute;
     left: 50%; bottom: 12%; transform: translateX(-50%);
     width: 60%; height: 8%;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: radial-gradient(
       50% 50% at 50% 50%,
       color-mix(in srgb, var(--ink) 18%, transparent),
       transparent 72%
     );
   }
-  /* Uppercase caption rung (15px / 500 / 0.12em). --ink-soft, not --ink-mute:
+  /* Uppercase caption rung (15px / 500 / 0.12em). --ink-body, not --ink-mute:
    * 8.1:1 on the #f4f4f4 panel, where mute would land at 4.2:1 and fail. */
   :root[data-theme="studio"] .st-pdp-cap {
     position: absolute; z-index: 3;
@@ -155,7 +155,7 @@ export const STUDIO_PDP_CSS = `
     font-size: clamp(10.5px, 0.7vw, 14px);
     font-weight: 500; letter-spacing: 0.12em; line-height: 1;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
   /* The detail strip: three smaller frames, same ground, same ratio. Fixed
    * fractions — never a scroller, so it cannot widen the page. */
@@ -176,13 +176,13 @@ export const STUDIO_PDP_CSS = `
 
   /* ---- buy column ------------------------------------------------------ */
   :root[data-theme="studio"] .st-pdp-buy { min-width: 0; }
-  /* 15px / 500 / 0.12em uppercase (§1). --ink-soft = 9.7:1 on white. */
+  /* 15px / 500 / 0.12em uppercase (§1). --ink-body = 9.7:1 on white. */
   :root[data-theme="studio"] .st-pdp-eyebrow {
     font-family: var(--f-body);
     font-size: clamp(11.5px, 0.75vw, 15px);
     font-weight: 500; letter-spacing: 0.12em; line-height: 1;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
   /* Page-statement rung: 62–68px / 600 / −0.022em / 1.15 (§1). One step below
    * §4.13's 90px shop-hero title, which spans a full-bleed band; this one sits
@@ -191,9 +191,8 @@ export const STUDIO_PDP_CSS = `
     margin: clamp(10px, 1vw, 20px) 0 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(2rem, 3.4vw, 4.25rem);
-    letter-spacing: var(--track-display);
+    letter-spacing: var(--ls-h2);
     line-height: 1.08;
     color: var(--ink);
     /* A long Slovenian model name folds; it never pushes the column open. */
@@ -206,7 +205,7 @@ export const STUDIO_PDP_CSS = `
     font-family: var(--f-body);
     font-size: clamp(14.5px, 1.05vw, 1.3125rem);
     line-height: 1.65;
-    color: var(--ink-soft);
+    color: var(--ink-body);
     max-width: 46ch;
   }
   :root[data-theme="studio"] .st-pdp-price {
@@ -236,7 +235,7 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-vat {
     font-size: clamp(11px, 0.7vw, 14px);
     letter-spacing: 0.04em;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
 
   /* ---- §4.13 configurator: label + hairline, squares, round pills ------ */
@@ -253,7 +252,7 @@ export const STUDIO_PDP_CSS = `
     font-size: clamp(11.5px, 0.75vw, 15px);
     font-weight: 500; letter-spacing: 0.12em; line-height: 1;
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
   :root[data-theme="studio"] .st-pdp-opts {
     list-style: none; margin: clamp(12px, 1.1vw, 22px) 0 0; padding: 0;
@@ -313,7 +312,7 @@ export const STUDIO_PDP_CSS = `
     display: inline-flex; align-items: center;
     padding: clamp(8px, 0.6vw, 12px) clamp(13px, 1.2vw, 24px);
     border: 1px solid var(--line);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: var(--surface);
     font-family: var(--f-body);
     font-size: clamp(12.5px, 0.9vw, 1.125rem);
@@ -336,7 +335,7 @@ export const STUDIO_PDP_CSS = `
     font-family: var(--f-body);
     font-size: clamp(12px, 0.8vw, 16px);
     line-height: 1.6;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
   :root[data-theme="studio"] .st-pdp-cfg-note a {
     color: var(--ink);
@@ -365,7 +364,7 @@ export const STUDIO_PDP_CSS = `
     display: flex; align-items: baseline; flex-wrap: wrap;
     gap: 6px clamp(12px, 1.2vw, 24px);
     padding-block: clamp(9px, 0.8vw, 16px);
-    border-top: 1px solid var(--line-soft);
+    border-top: 1px solid var(--line);
   }
   :root[data-theme="studio"] .st-pdp-frow:first-child { border-top: 0; padding-top: 0; }
   :root[data-theme="studio"] .st-pdp-frow dt {
@@ -373,7 +372,7 @@ export const STUDIO_PDP_CSS = `
     font-family: var(--f-body);
     font-size: clamp(13px, 0.9vw, 1.0625rem);
     line-height: 1.5;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
   :root[data-theme="studio"] .st-pdp-frow dd {
     margin: 0; margin-left: auto;
@@ -392,7 +391,7 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-note {
     margin-top: clamp(12px, 1.1vw, 22px);
     padding-top: clamp(12px, 1.1vw, 22px);
-    border-top: 1px solid var(--line-soft);
+    border-top: 1px solid var(--line);
     font-family: var(--f-body);
     font-size: clamp(11.5px, 0.78vw, 15px);
     line-height: 1.55;
@@ -412,7 +411,6 @@ export const STUDIO_PDP_CSS = `
     margin: clamp(10px, 1vw, 20px) 0 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1.5rem, 2.4vw, 3rem);
     letter-spacing: -0.025em;
     line-height: 1.05;
@@ -458,7 +456,7 @@ export const STUDIO_PDP_CSS = `
     border-top: 1px solid color-mix(in srgb, var(--on-invert) 10%, transparent);
   }
   :root[data-theme="studio"] .st-pdp-bar-in {
-    max-width: calc(var(--studio-band) + 2 * var(--studio-gutter));
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
     min-height: var(--chrome-h);
@@ -570,10 +568,10 @@ export const STUDIO_PDP_CSS = `
     z-index: 1;
     background: var(--ink-invert);
     color: var(--on-invert);
-    padding-block: var(--studio-rhythm-dark);
+    padding-block: var(--studio-rhythm);
   }
   :root[data-theme="studio"] .st-shop-hero-in {
-    max-width: calc(var(--studio-band) + 2 * var(--studio-gutter));
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
     display: grid;
@@ -593,22 +591,21 @@ export const STUDIO_PDP_CSS = `
     margin: clamp(14px, 1.4vw, 28px) 0 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(2.25rem, 4.6vw, 5.625rem);
-    letter-spacing: var(--track-display);
+    letter-spacing: var(--ls-h2);
     line-height: 1.02;
     color: var(--on-invert);
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* The measured 21px sub. --on-invert-soft, the rung tokens.ts carries for
+  /* The measured 21px sub. --on-invert-mute, the rung tokens.ts carries for
    * exactly this: --on-invert-mute is too dark under a 90px title. */
   :root[data-theme="studio"] .st-shop-hero-sub {
     margin: clamp(12px, 1.2vw, 24px) 0 0;
     font-family: var(--f-body);
     font-size: clamp(14.5px, 1.05vw, 1.3125rem);
     line-height: 1.6;
-    color: var(--on-invert-soft);
+    color: var(--on-invert-mute);
     max-width: 46ch;
   }
   :root[data-theme="studio"] .st-shop-hero-media {
@@ -626,7 +623,7 @@ export const STUDIO_PDP_CSS = `
     transform: translate(-50%, -50%);
     aspect-ratio: 1;
     border: 1px solid color-mix(in srgb, var(--on-invert) 18%, transparent);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
   }
   :root[data-theme="studio"] .st-shop-hero-ring:nth-child(1) { inline-size: 98%; }
   :root[data-theme="studio"] .st-shop-hero-ring:nth-child(2) { inline-size: 76%; }
@@ -691,7 +688,7 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-filters a.st-pdp-pill:focus-visible {
     outline: 2px solid var(--acc);
     outline-offset: 3px;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
   }
 
   @media (max-width: 900px) {

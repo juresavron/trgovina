@@ -1,102 +1,224 @@
 /**
- * STUDIO — the FURNEXA baseline, ported from the owner's Framer theme.
+ * STUDIO — the FURNEXA baseline, transcribed from the owner's Framer export.
  *
- * This is the network's flagship theme: black chrome over a white page,
- * Bricolage Grotesque statements at poster scale, DM Sans for everything
- * else, near-monochrome with the shop accent used only as punctuation.
- * Both faces are variable and ship latin-ext, so č/š/ž render correctly.
+ * THIS FILE IS THE SINGLE DECLARATION SITE. Section modules consume var(--…)
+ * and never re-declare: three modules each declaring their own --studio-gutter
+ * at equal specificity meant whichever landed last in the concatenated sheet
+ * silently won for the whole storefront.
  *
- * THIS FILE IS THE SINGLE DECLARATION SITE. Section modules consume
- * var(--…) and never re-declare: three modules each declaring their own
- * --studio-gutter at equal specificity meant whichever landed last in the
- * concatenated sheet silently won for the whole storefront. Values here are
- * measured (docs/STUDIO-BASELINE.md) at a 2000px viewport and expressed as
- * clamps whose maximum is the measurement.
+ * PROVENANCE. Every value below is transcribed from the source page's own
+ * stylesheet (the saved Framer export, 231 KB of CSS, 758 rules), not measured
+ * off a screenshot. The earlier measured pass got six things materially wrong,
+ * so the rule now is: if a value is not in this file's provenance table, it was
+ * not in the source and is ours to justify. See docs/STUDIO-BASELINE.md §0.
+ *
+ * The source's three breakpoints are reproduced exactly rather than smoothed
+ * into clamps: ≥1200px, 810–1199px, ≤809px. Framer emits hard tiers and the
+ * type ramp is tuned per tier (h6 is 24/19/22 — the phone value is LARGER than
+ * the tablet one), so a clamp cannot reproduce it. Tiers are literal.
  */
 
+/**
+ * Clash Display and Satoshi are Fontshare (Indian Type Foundry) faces, not
+ * Google Fonts — the source loads them from Framer's Fontshare mirror. Only
+ * DM Sans comes from Google. We self-host the two Fontshare faces (their
+ * licence permits web embedding); this href covers the Google half only.
+ *
+ * GLYPH COVERAGE IS AN UNVERIFIED LAUNCH GATE. Slovenian needs č/š/ž/Č/Š/Ž and
+ * these storefronts are entirely Slovenian. The source is an English furniture
+ * site, so its own rendering proves nothing about latin-ext. Egress here is
+ * allowlisted and fontshare.com is blocked, so coverage could not be confirmed
+ * in-session. scripts/verify-fonts.mjs is the gate — it must pass before any
+ * shop goes live. Until then --f-display and --f-body carry a latin-ext-safe
+ * fallback so a missing glyph degrades to a near neighbour rather than tofu.
+ */
 export const STUDIO_FONTS_HREF =
-  "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&family=DM+Sans:opsz,wght@9..40,100..1000&display=swap";
+  "https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..500&display=swap";
 
 export const STUDIO_TOKENS = `
   :root[data-theme="studio"] {
-    /* ---- Ground (§2, sampled) ------------------------------------------- */
+    /* ---- Ground -----------------------------------------------------------
+     * The source's palette is 11 design tokens plus one hardcoded body ink.
+     * Sampling a screenshot had produced #f2f2f2 AND #efefef as two separate
+     * greys; the source has exactly one panel grey, #f0f0f0. */
     --bg: #ffffff;
-    /** Product image panel — the panel a cutout sits on inside a card. */
-    --bg-alt: #f2f2f2;
-    /** Impact-grid quiet tile: a distinct rung, used beside --bg-alt. */
-    --bg-quiet: #efefef;
-    /** Impact-grid hero tile — the mid grey a cropped product bleeds over. */
-    --tile-mid: #a8a8a8;
     --surface: #ffffff;
-    --surface2: #fafafa;
-    --ink-invert: #0d0d0d;
-    /** Dark-band watermark ink. The arrow-stadium's faintness depends on
-     *  this exact rung sitting one step off --ink-invert. */
-    --ink-invert-2: #161616;
-    --line: #e4e4e4;
-    /** The frame a card draws on hover — the source's card signature. */
-    --line-strong: #111111;
-    --line-soft: #ededed;
-    --ink: #0a0a0a;
-    --ink-soft: #4a4a4a;
-    --ink-mute: #767676;
-    --on-invert: #f7f7f7;
-    --on-invert-mute: #a8a8a8;
-    /** Hero sub on black: --on-invert-mute is too dark for this rung. */
-    --on-invert-soft: #d6d6d6;
-    /** Hero triptych photo grounds (§4.2). */
-    --photo-cool: #d9d9d9;
-    --photo-warm: #e8e0d6;
-    /** Measured #2A2A2A disc under the chrome icon buttons (§4.1): 12% of the
-     *  on-invert ink lifted off the near-black band, so it tracks --ink-invert
-     *  if that ever moves. Declared here, like every other rung, so chrome.ts
-     *  consumes it instead of owning a second copy. */
-    --disc: color-mix(in srgb, var(--on-invert) 12%, var(--ink-invert));
+    /** The one panel grey. Product panels, quiet tiles, inset blocks. */
+    --bg-alt: #f0f0f0;
+    /** Mid grey — the rung a cropped product bleeds over. */
+    --tile-mid: #a4a4a4;
 
-    /* ---- Accent = punctuation only. Never a surface, never body text. --- */
+    /** Primary ink and the dark band's ground are the SAME token in the
+     *  source (#151515). Measurement had split them into #0a0a0a and #0d0d0d. */
+    --ink: #151515;
+    /** Body copy is a hair lighter than headings, and is the one colour the
+     *  source hardcodes rather than tokenising. */
+    --ink-body: #212121;
+    --ink-invert: #151515;
+    /** Second dark rung — dark-on-dark separation. */
+    --ink-invert-2: #2e2e2e;
+    --black: #000000;
+
+    /* ---- Where we deviate from the source, and why -----------------------
+     * The source is an English furniture site and its muted rungs do not meet
+     * WCAG 2.1 AA as TEXT: #15151552 is 2.08:1 on white and #ffffff52 is
+     * 2.91:1 on the dark band, against a 4.5:1 floor. These shops sell to
+     * Slovenian consumers, so the European Accessibility Act (2019/882,
+     * in force for e-commerce since 28 June 2025) makes AA a legal floor,
+     * not a preference.
+     *
+     * So the palette splits by JOB rather than by name. Decorative rungs keep
+     * the source value exactly; anything carrying text gets a compliant rung
+     * chosen from the source's own token set where one exists — the on-dark
+     * muted ink is #a4a4a4, which IS a source token (7.33:1), not an invention.
+     * Ratios below are computed, not estimated; scripts/verify-contrast.mjs
+     * re-checks them and fails the build on regression. */
+
+    /** Muted ink for TEXT. The lightest rung that clears 4.5:1 on BOTH grounds
+     *  it appears on — 5.17:1 on white, 4.54:1 on the panel grey — so it keeps
+     *  the source's quiet feel without failing on the darker of the two. */
+    --ink-mute: #6d6d6d;
+    /** The source's muted alpha. DECORATION ONLY — never text. */
+    --ink-mute-decor: #15151552;
+
+    --on-invert: #ffffff;
+    /** Muted ink on the dark band, for TEXT. #a4a4a4 = 7.33:1 on #151515. */
+    --on-invert-mute: #a4a4a4;
+    /** White alphas: the source's on-dark border and divider vocabulary.
+     *  These are 1.2–2.9:1 — dividers and decorative hairlines only, never
+     *  text and never the sole boundary of a control. */
+    --on-invert-64: #ffffff52;
+    --on-invert-40: #ffffff3d;
+    --on-invert-24: #ffffff1f;
+    --on-invert-16: #ffffff14;
+
+    /** Hairline between surfaces. 1.33:1 — decorative, per WCAG 1.4.11 which
+     *  exempts pure decoration. */
+    --line: #dfdfdf;
+    /** The boundary of an INTERACTIVE control, which 1.4.11 holds to 3:1.
+     *  The source outlines buttons with 2px #151515 (18.3:1) and that is what
+     *  --line-strong is for; --line-ctrl is the quieter rung for inputs, where
+     *  the source's #dfdfdf would fail. */
+    --line-ctrl: #949494;
+    --line-strong: #151515;
+
+    /* ---- Accent ---------------------------------------------------------
+     * The source's accent is amber #f0aa13 with a cream #ffdfc4 companion and
+     * a coral #ff8787. Our network needs each shop to differentiate, so --acc
+     * stays driven by the per-shop hue set in css.ts; the source literals are
+     * kept because the theme uses them as fixed punctuation (badges, the sale
+     * flag) where a per-shop hue would read as a bug rather than a brand. */
     --acc: oklch(0.62 var(--c) var(--hue));
     --acc-text: oklch(0.45 var(--c) var(--hue));
     --on-acc: #ffffff;
     --wash: oklch(0.62 var(--c) var(--hue) / 0.1);
-    --wash-strong: oklch(0.62 var(--c) var(--hue) / 0.2);
+    --amber: #f0aa13;
+    --cream: #ffdfc4;
+    --coral: #ff8787;
 
-    /* ---- Edges (§3) -----------------------------------------------------
-     * Buttons are SHARP and pills are ROUND. That contrast is the theme's
-     * signature and the single easiest thing to get wrong — --r-ctrl is 0,
-     * not "nearly 0". */
-    --r-card: 12px;
-    --r-ctrl: 0px;
-    --r-media: 12px;
-    --r-scene: 12px;
-    /** The one 24px radius: §4.13's black philosophy card. */
-    --r-feature: 24px;
-    --r-pill: 999px;
+    /* ---- Edges -----------------------------------------------------------
+     * The source has NO card radius. Nothing on the page is a rounded
+     * rectangle: the only three radii are 99px (pill buttons), 50px (pill
+     * tags/inputs) and 100% (circular icon buttons). The measured pass had
+     * this exactly inverted — 12px cards and 0px "sharp" buttons — which is
+     * why the build read as generic. Cards are square; controls are pills. */
+    --r-card: 0px;
+    --r-media: 0px;
+    --r-ctrl: 99px;
+    --r-tag: 50px;
+    --r-circle: 100%;
+    /** Outlined buttons carry a 2px dark border; dividers are 1px. */
+    --bw-ctrl: 2px;
+    --bw-line: 1px;
 
-    /* ---- Rhythm (§3) ----------------------------------------------------- */
-    --studio-gutter: clamp(18px, 2.7vw, 54px);
-    /** §4.1 measures the chrome's icon cluster at x=-48, not the gutter. */
-    --studio-inset-r: clamp(14px, 2.4vw, 48px);
-    --studio-rhythm: clamp(56px, 6.5vw, 130px);
-    --studio-rhythm-dark: clamp(64px, 7.5vw, 150px);
-    --studio-card-gap: clamp(16px, 1.8vw, 36px);
-    /** Band content measure; the gutter sits OUTSIDE it (see §3). */
-    --studio-band: 1900px;
-    --studio-measure: 1560px;
-    --studio-read: 930px;
+    /* ---- Rhythm (desktop tier, ≥1200px) ---------------------------------- */
+    --studio-gutter: 40px;
+    --studio-rhythm: 170px;
+    /** Chrome is padding-driven in the source: 16px above and below a single
+     *  24px label line, giving 56px. --chrome-h is derived from those two so
+     *  the hero's viewport math cannot drift away from the bar's real height.
+     *  (The 24px/40px bar is a different device — the band pinned to the
+     *  bottom of the hero — not the header.) */
+    --chrome-pad-y: 16px;
+    --chrome-line: 24px;
+    --chrome-h: calc(var(--chrome-line) + 2 * var(--chrome-pad-y));
+    /** Nav: 50px between top-level items, 8px between an item's icon and
+     *  its label. */
+    --chrome-nav-gap: 50px;
+    --chrome-item-gap: 8px;
+    --studio-container: 1440px;
+    /** Text measures the source uses inside that container. */
+    --studio-read: 863px;
+    --studio-read-narrow: 620px;
+    --studio-card-gap: 24px;
+    --studio-col-gap: 40px;
 
     /* ---- Type ------------------------------------------------------------ */
-    --f-display: "Bricolage Grotesque", "Archivo", "Helvetica Neue", sans-serif;
-    --f-body: "DM Sans", system-ui, sans-serif;
-    --stretch: 100%;
-    --w-display: 600;
-    --track-display: -0.022em;
-    /** §4.12: the footer wordmark is measurably lighter than the bar's. */
-    --w-mark: 600;
-    --w-mark-foot: 400;
+    --f-display: "Clash Display", "Archivo", "Helvetica Neue", sans-serif;
+    --f-body: "Satoshi", "DM Sans", system-ui, sans-serif;
+    --f-label: "DM Sans", system-ui, sans-serif;
+    --w-display: 500;
+    --w-display-bold: 700;
+    --w-body: 400;
+    --w-body-med: 500;
+    --w-label: 500;
 
-    --shadow: 0 24px 60px rgba(10, 10, 10, 0.12);
-    /** Chrome height, responsive — the hero's viewport math subtracts this,
-     *  so a flat value left a gap at every width below ~1955px. */
-    --chrome-h: clamp(58px, 4.5vw, 90px);
+    /* Display ramp — Clash Display, weight 500. */
+    --t-h1: 92px;   --lh-h1: 1.04em;    --ls-h1: 0em;
+    --t-h2: 60px;   --lh-h2: 1.13em;    --ls-h2: 0em;
+    --t-h3: 48px;   --lh-h3: 1.16em;    --ls-h3: 0em;
+    --t-h4: 42px;   --lh-h4: 1.19em;    --ls-h4: 0.02em;
+    --t-h5: 32px;   --lh-h5: 1.1875em;  --ls-h5: 0.02em;
+    --t-h6: 24px;   --lh-h6: 1.33em;    --ls-h6: 0em;
+
+    /* Prose ramp — Satoshi. --t-lead-xl is the big pull-quote rung. */
+    --t-lead-xl: 48px;  --lh-lead-xl: 1.3em;
+    --t-lead: 20px;     --lh-lead: 1.5em;
+    --t-body: 16px;     --lh-body: 1.625em;
+    --ls-body: 0.02em;
+
+    /* Label — DM Sans, uppercase, the widest tracking on the page. */
+    --t-label: 14px;
+    --lh-label: 1.71em;
+    --lh-label-tight: 1.428em;
+    --ls-label: 0.06em;
+
+    --shadow: 0 24px 60px rgba(21, 21, 21, 0.12);
+  }
+
+  /* ---- Tablet tier: 810–1199px ------------------------------------------ */
+  @media (max-width: 1199px) {
+    :root[data-theme="studio"] {
+      --studio-gutter: 25px;
+      --studio-rhythm: 100px;
+      --chrome-pad-y: 8px;
+      --t-h1: 64px;
+      --t-h2: 50px;  --lh-h2: 1.1em;
+      --t-h3: 38px;
+      --t-h4: 42px;
+      --t-h5: 26px;
+      --t-h6: 19px;
+      --t-lead-xl: 44px;
+      --t-lead: 16px;
+    }
+  }
+
+  /* ---- Phone tier: ≤809px ------------------------------------------------
+   * Two ramp entries go UP from the tablet tier rather than down (h6 19→22,
+   * lead 16→18). That is in the source, not a transcription slip: the phone
+   * layout drops to one column, so those roles carry more weight there. */
+  @media (max-width: 809px) {
+    :root[data-theme="studio"] {
+      --studio-gutter: 25px;
+      --studio-rhythm: 70px;
+      --t-h1: 44px;
+      --t-h2: 38px;  --lh-h2: 1.13em;
+      --t-h3: 32px;
+      --t-h4: 28px;
+      --t-h5: 24px;
+      --t-h6: 22px;
+      --t-lead-xl: 24px;
+      --t-lead: 18px;
+    }
   }
 `;

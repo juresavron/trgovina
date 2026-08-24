@@ -41,7 +41,7 @@
  * moat.steps (tile labels), stats (the tile overlay), reviews and guides.
  *
  * Token discipline (docs/THEMES.md): colors, radii and faces are var(--…)
- * only. tokens.ts is the SINGLE declaration site — ground rungs (--bg-quiet,
+ * only. tokens.ts is the SINGLE declaration site — ground rungs (--bg-alt,
  * --tile-mid, --ink-invert-2), radii and the rhythm/gutter/gap scale are
  * consumed from there with no local re-declaration and no var() fallback: a
  * second declaration at equal specificity let sheet order silently decide the
@@ -63,7 +63,7 @@ export const STUDIO_EDITORIAL_CSS = `
    * token block — which is a bug to fix at the seam, not to paper over. */
   :root[data-theme="studio"] {
     /* §4.9 measured 14px tile radius / §4.11 measured 16px card radius. Both
-     * sit above --r-media (12px) and below --r-feature (24px), so neither is a
+     * sit above --r-media (12px) and below --r-card (24px), so neither is a
      * token rung; clamped so a 390px card is not proportionally rounder than
      * the 2000px original. */
     --studio-tile-r: clamp(10px, 0.7vw, 14px);
@@ -89,7 +89,7 @@ export const STUDIO_EDITORIAL_CSS = `
     overflow: clip;
   }
   :root[data-theme="studio"] .st-imp-in {
-    max-width: var(--studio-band);
+    max-width: var(--studio-container);
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
@@ -102,7 +102,6 @@ export const STUDIO_EDITORIAL_CSS = `
     margin: 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1.9rem, 3.4vw, 4.25rem);
     letter-spacing: -0.025em;
     line-height: 1.05;
@@ -142,7 +141,7 @@ export const STUDIO_EDITORIAL_CSS = `
     border-radius: var(--studio-tile-r);
     background: var(--bg-alt);
   }
-  :root[data-theme="studio"] .st-imp-quiet { background: var(--bg-quiet); }
+  :root[data-theme="studio"] .st-imp-quiet { background: var(--bg-alt); }
   :root[data-theme="studio"] .st-imp-hero {
     aspect-ratio: 4 / 5;
     background: var(--tile-mid);
@@ -180,7 +179,7 @@ export const STUDIO_EDITORIAL_CSS = `
     left: 50%; bottom: 11%;
     transform: translateX(-50%);
     width: 62%; height: 8%;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: radial-gradient(
       50% 50% at 50% 50%,
       color-mix(in srgb, var(--ink) 18%, transparent),
@@ -199,7 +198,6 @@ export const STUDIO_EDITORIAL_CSS = `
     margin: 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1.25rem, 1.6vw, 2rem);
     letter-spacing: -0.01em;
     line-height: 1.2;
@@ -208,14 +206,14 @@ export const STUDIO_EDITORIAL_CSS = `
     hyphens: none;
   }
   /* 19px "muted" sub — but --ink-mute is only 4.3:1 on the #EFEFEF tile and
-   * FAILS; --ink-soft is the muted rung that clears there (7.9:1). */
+   * FAILS; --ink-body is the muted rung that clears there (7.9:1). */
   :root[data-theme="studio"] .st-imp-p {
     margin: clamp(6px, 0.6vw, 12px) 0 0;
     font-family: var(--f-body);
     font-size: clamp(0.875rem, 0.95vw, 1.1875rem);
     font-weight: 400;
     line-height: 1.5;
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
 
   /* The right tile's STAT overlay sits on its own legibility scrim, so the
@@ -237,7 +235,6 @@ export const STUDIO_EDITORIAL_CSS = `
     display: block;
     font-family: var(--f-display);
     font-weight: 500;
-    font-stretch: var(--stretch);
     font-size: clamp(1.5rem, 2.9vw, 3.625rem);
     letter-spacing: -0.02em;
     line-height: 1;
@@ -273,13 +270,13 @@ export const STUDIO_EDITORIAL_CSS = `
   :root[data-theme="studio"] .st-tst {
     position: relative;
     background: var(--ink-invert);
-    padding-block: var(--studio-rhythm-dark);
+    padding-block: var(--studio-rhythm);
     /* The watermark is deliberately wider than the band; clip it here. */
     overflow: clip;
   }
   :root[data-theme="studio"] .st-tst-in {
     position: relative;
-    max-width: var(--studio-band);
+    max-width: var(--studio-container);
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
@@ -319,7 +316,6 @@ export const STUDIO_EDITORIAL_CSS = `
     margin: 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(2rem, 3.6vw, 4.5rem);
     letter-spacing: -0.025em;
     line-height: 1.05;
@@ -367,7 +363,7 @@ export const STUDIO_EDITORIAL_CSS = `
     translate: -50% 0;
     inline-size: 30%;
     aspect-ratio: 1 / 1;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: color-mix(in srgb, var(--on-invert) 16%, transparent);
   }
   :root[data-theme="studio"] .st-tst-shoulders {
@@ -376,7 +372,7 @@ export const STUDIO_EDITORIAL_CSS = `
     translate: -50% 0;
     inline-size: 66%;
     aspect-ratio: 3 / 2;
-    border-radius: var(--r-pill) var(--r-pill) 0 0;
+    border-radius: var(--r-ctrl) var(--r-ctrl) 0 0;
     background: color-mix(in srgb, var(--on-invert) 12%, transparent);
   }
 
@@ -428,7 +424,7 @@ export const STUDIO_EDITORIAL_CSS = `
   :root[data-theme="studio"] .st-tst-chip {
     display: inline-block;
     border: 1px solid var(--studio-line-invert);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1.1vw, 22px);
     font-family: var(--f-body);
     font-size: clamp(0.6875rem, 0.7vw, 0.875rem);
@@ -447,7 +443,7 @@ export const STUDIO_EDITORIAL_CSS = `
     overflow: hidden;
     inline-size: clamp(180px, 15vw, 300px);
     aspect-ratio: 1 / 1;
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: var(--studio-quote-disc);
   }
   :root[data-theme="studio"] .st-tst-disc-mass {
@@ -503,7 +499,7 @@ export const STUDIO_EDITORIAL_CSS = `
     overflow: clip;
   }
   :root[data-theme="studio"] .st-gd-in {
-    max-width: var(--studio-band);
+    max-width: var(--studio-container);
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
@@ -513,7 +509,6 @@ export const STUDIO_EDITORIAL_CSS = `
     text-align: center;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(2rem, 3.6vw, 4.5rem);
     letter-spacing: -0.025em;
     line-height: 1.05;
@@ -581,7 +576,7 @@ export const STUDIO_EDITORIAL_CSS = `
    * and it still reads as a chip because the ground is not fully opaque. */
   :root[data-theme="studio"] .st-gd-chip {
     border: 1px solid color-mix(in srgb, var(--on-invert) 34%, transparent);
-    border-radius: var(--r-pill);
+    border-radius: var(--r-ctrl);
     background: color-mix(in srgb, var(--ink-invert) 82%, transparent);
     padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1.1vw, 22px);
     font-family: var(--f-body);
@@ -597,7 +592,6 @@ export const STUDIO_EDITORIAL_CSS = `
     margin: 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-stretch: var(--stretch);
     font-size: clamp(1.125rem, 1.5vw, 1.875rem);
     letter-spacing: -0.01em;
     line-height: 1.2;
