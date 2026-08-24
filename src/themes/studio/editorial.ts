@@ -41,48 +41,40 @@
  * moat.steps (tile labels), stats (the tile overlay), reviews and guides.
  *
  * Token discipline (docs/THEMES.md): colors, radii and faces are var(--…)
- * only; values the baseline measures that tokens.ts does not carry are
- * declared below as documented --studio-* variables. Every selector is scoped
- * :root[data-theme="studio"] — zarja/lednik/salon share this sheet.
+ * only. tokens.ts is the SINGLE declaration site — ground rungs (--bg-quiet,
+ * --tile-mid, --ink-invert-2), radii and the rhythm/gutter/gap scale are
+ * consumed from there with no local re-declaration and no var() fallback: a
+ * second declaration at equal specificity let sheet order silently decide the
+ * value storefront-wide. Only the handful of values tokens.ts does not carry
+ * (the two measured tile radii, the band-local mixes) are declared below.
+ * Every selector is scoped :root[data-theme="studio"] — zarja/lednik/salon
+ * share this sheet.
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { arrowWatermark } from "./icons";
 
 export const STUDIO_EDITORIAL_CSS = `
-  /* ---- Values the baseline measures that tokens.ts does not carry ---- */
+  /* ---- Values the baseline measures that tokens.ts does not carry ----
+   * The gutter, the light and dark rhythms, the card gap, every ground rung
+   * and every radius come from tokens.ts and are consumed as bare var(--…)
+   * with NO fallback: a fallback here is a second source of truth, and the
+   * only way it could ever be used is a sheet assembled without its own
+   * token block — which is a bug to fix at the seam, not to paper over. */
   :root[data-theme="studio"] {
-    /* §3: the 54px page gutter / ~130px light rhythm / card gap. chrome.ts,
-     * hero.ts and commerce.ts already declare these; this module consumes them
-     * and carries the measured clamp as a var() fallback so it also stands
-     * alone if the sheet is assembled without those modules. */
-    --studio-editorial-gutter: var(--studio-gutter, clamp(18px, 2.7vw, 54px));
-    --studio-editorial-rhythm: var(--studio-rhythm, clamp(56px, 6.5vw, 130px));
-    --studio-editorial-gap: var(--studio-card-gap, clamp(12px, 1.6vw, 32px));
-    /* §3: dark bands breathe wider than light ones — measured ~150px. */
-    --studio-editorial-rhythm-dark: clamp(64px, 7.5vw, 150px);
-
     /* §4.9 measured 14px tile radius / §4.11 measured 16px card radius. Both
-     * sit above --r-media (12px); clamped so a 390px card is not proportionally
-     * rounder than the 2000px original. */
+     * sit above --r-media (12px) and below --r-feature (24px), so neither is a
+     * token rung; clamped so a 390px card is not proportionally rounder than
+     * the 2000px original. */
     --studio-tile-r: clamp(10px, 0.7vw, 14px);
     --studio-guide-r: clamp(10px, 0.8vw, 16px);
 
-    /* §2/§4.9: the quiet tile ground (#EFEFEF). One rung darker than --bg-alt,
-     * which is the product-panel grey — the baseline uses both, side by side. */
-    --studio-quiet: #efefef;
-    /* §4.9: the centre hero tile's mid-grey ground (#A8A8A8). Carries no text
-     * by design — the crop is the content. */
-    --studio-tile-mid: #a8a8a8;
-
-    /* §2/§4.10: the dark-band watermark rung (#161616). Taken from the token
-     * layer rather than re-typed as a hex — --ink-invert-2 IS that rung. */
-    --studio-watermark: var(--ink-invert-2);
     /* §4.10: the B&W portrait's ground on the inverted band — a lifted black,
      * so the square reads as a photo slot and not as a hole in the band. */
     --studio-portrait: color-mix(in srgb, var(--on-invert) 10%, var(--ink-invert));
-    /* §4.10: the Ø300px #1C1C1C disc. Identical rung to chrome.ts's circular
-     * chrome buttons, consumed with a fallback for standalone assembly. */
-    --studio-quote-disc: var(--studio-disc, color-mix(in srgb, var(--on-invert) 12%, var(--ink-invert)));
+    /* §4.10: the Ø300px #1C1C1C disc — mixed from tokens, never a hex, and
+     * mixed HERE rather than borrowed from another module's private var. */
+    --studio-quote-disc: color-mix(in srgb, var(--on-invert) 12%, var(--ink-invert));
     /* The hairline that separates stacked quotes on the inverted band. --line
      * (#e4e4e4) is a white-ground value and glares here. */
     --studio-line-invert: color-mix(in srgb, var(--on-invert) 16%, transparent);
@@ -91,15 +83,15 @@ export const STUDIO_EDITORIAL_CSS = `
   /* ================= §4.9 Impact grid ================= */
   :root[data-theme="studio"] .st-imp {
     background: var(--bg);
-    padding-block: var(--studio-editorial-rhythm);
+    padding-block: var(--studio-rhythm);
     /* The hero tile is deliberately oversized; the page must never scroll
      * sideways because of it (§6). */
     overflow: clip;
   }
   :root[data-theme="studio"] .st-imp-in {
-    max-width: 1900px;
+    max-width: var(--studio-band);
     margin-inline: auto;
-    padding-inline: var(--studio-editorial-gutter);
+    padding-inline: var(--studio-gutter);
   }
   :root[data-theme="studio"] .st-imp-head {
     text-align: center;
@@ -140,7 +132,7 @@ export const STUDIO_EDITORIAL_CSS = `
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.22fr) minmax(0, 1fr);
     align-items: center;
-    gap: var(--studio-editorial-gap);
+    gap: var(--studio-card-gap);
   }
   :root[data-theme="studio"] .st-imp-tile {
     position: relative;
@@ -150,10 +142,10 @@ export const STUDIO_EDITORIAL_CSS = `
     border-radius: var(--studio-tile-r);
     background: var(--bg-alt);
   }
-  :root[data-theme="studio"] .st-imp-quiet { background: var(--studio-quiet); }
+  :root[data-theme="studio"] .st-imp-quiet { background: var(--bg-quiet); }
   :root[data-theme="studio"] .st-imp-hero {
     aspect-ratio: 4 / 5;
-    background: var(--studio-tile-mid);
+    background: var(--tile-mid);
   }
 
   /* Photo-ready mass. Flatter and more neutral than zarja's lit scenes —
@@ -262,7 +254,11 @@ export const STUDIO_EDITORIAL_CSS = `
     top: -0.92em;
     letter-spacing: 0;
   }
-  /* 19px caption. --on-invert-mute is 8.9:1 over the scrim's opaque foot. */
+  /* 19px caption. NOT --on-invert-mute: at 390px the tile is a 354px square and
+   * the whole stat block sits high in the scrim, where the gradient has not yet
+   * reached its opaque foot — the muted rung measures below 4.5:1 there. The
+   * full --on-invert rung clears at every width, and the value/caption
+   * hierarchy is carried by size (58 : 19), not by ink. */
   :root[data-theme="studio"] .st-imp-c {
     display: block;
     margin-top: clamp(6px, 0.6vw, 12px);
@@ -270,31 +266,35 @@ export const STUDIO_EDITORIAL_CSS = `
     font-size: clamp(0.875rem, 0.95vw, 1.1875rem);
     font-weight: 400;
     line-height: 1.45;
-    color: var(--on-invert-mute);
+    color: var(--on-invert);
   }
 
   /* ================= §4.10 Dark testimonial ================= */
   :root[data-theme="studio"] .st-tst {
     position: relative;
     background: var(--ink-invert);
-    padding-block: var(--studio-editorial-rhythm-dark);
+    padding-block: var(--studio-rhythm-dark);
     /* The watermark is deliberately wider than the band; clip it here. */
     overflow: clip;
   }
   :root[data-theme="studio"] .st-tst-in {
     position: relative;
-    max-width: 1900px;
+    max-width: var(--studio-band);
     margin-inline: auto;
-    padding-inline: var(--studio-editorial-gutter);
+    padding-inline: var(--studio-gutter);
   }
   :root[data-theme="studio"] .st-tst-head {
     position: relative;
     text-align: center;
     margin-bottom: clamp(36px, 4.4vw, 88px);
   }
-  /* The giant faint "eye" (§4.10): an ellipse with a concentric ring cut out of
-   * it, at the #161616 rung — 1.14:1 against the band, which is exactly how
-   * faint the measurement is. Decorative, so aria-hidden and out of the layout
+  /* §4.10/§4.14 — the giant faint ARROW-STADIUM watermark behind the heading:
+   * the same 35×23 rx-11.5 outline as the theme's arrow buttons, from icons.ts,
+   * stretched to band width (preserveAspectRatio="none", so the stadium spans
+   * the box rather than shrinking to its own 36×35 canvas). Inked at the
+   * --ink-invert-2 rung — 1.14:1 against the band, exactly as faint as the
+   * measurement. The icon strokes with currentColor, so the color property is
+   * where that rung is set. Decorative: aria-hidden and out of the layout
    * (position:absolute) — it must never displace the heading it sits behind. */
   :root[data-theme="studio"] .st-tst-mark {
     position: absolute;
@@ -304,9 +304,10 @@ export const STUDIO_EDITORIAL_CSS = `
     translate: -50% -50%;
     width: min(1400px, 128%);
     aspect-ratio: 12 / 5;
+    color: var(--ink-invert-2);
     pointer-events: none;
   }
-  :root[data-theme="studio"] .st-tst-mark svg {
+  :root[data-theme="studio"] .st-tst-mark .st-watermark {
     display: block;
     inline-size: 100%;
     block-size: 100%;
@@ -498,13 +499,13 @@ export const STUDIO_EDITORIAL_CSS = `
   /* ================= §4.11 Blog cards ================= */
   :root[data-theme="studio"] .st-gd {
     background: var(--bg);
-    padding-block: var(--studio-editorial-rhythm);
+    padding-block: var(--studio-rhythm);
     overflow: clip;
   }
   :root[data-theme="studio"] .st-gd-in {
-    max-width: 1900px;
+    max-width: var(--studio-band);
     margin-inline: auto;
-    padding-inline: var(--studio-editorial-gutter);
+    padding-inline: var(--studio-gutter);
   }
   /* Centred 72px heading (§4.11). */
   :root[data-theme="studio"] .st-gd-h {
@@ -524,7 +525,7 @@ export const STUDIO_EDITORIAL_CSS = `
   :root[data-theme="studio"] .st-gd-row {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--studio-editorial-gap);
+    gap: var(--studio-card-gap);
   }
   /* ~1:1 card, radius 16px, the whole card is the link. */
   :root[data-theme="studio"] .st-gd-card {
@@ -572,11 +573,16 @@ export const STUDIO_EDITORIAL_CSS = `
     align-items: flex-start;
     gap: clamp(10px, 1.1vw, 22px);
   }
-  /* Translucent pill chip, 15px tracked caps — ROUND, per §3. */
+  /* Pill chip, 15px tracked caps — ROUND, per §3. The chip sits ~44% up the
+   * scrim, where the gradient has fallen to ~0.59 alpha; at 390px a 14%-white
+   * translucent ground on top of that left the caps under 4.5:1 against the
+   * photo behind. So the chip carries its OWN dark ground rather than borrowing
+   * the scrim's: --on-invert on 82% --ink-invert clears wherever the chip lands,
+   * and it still reads as a chip because the ground is not fully opaque. */
   :root[data-theme="studio"] .st-gd-chip {
     border: 1px solid color-mix(in srgb, var(--on-invert) 34%, transparent);
     border-radius: var(--r-pill);
-    background: color-mix(in srgb, var(--on-invert) 14%, transparent);
+    background: color-mix(in srgb, var(--ink-invert) 82%, transparent);
     padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1.1vw, 22px);
     font-family: var(--f-body);
     font-size: clamp(0.6875rem, 0.75vw, 0.9375rem);
@@ -758,23 +764,15 @@ export function renderStudioImpact(ctx: RenderCtx): string {
 }
 
 /**
- * The §4.10 watermark: a giant faint ellipse with a concentric ring cut out of
- * it — the "eye" behind the heading. Drawn as inline SVG rather than stacked
- * radial-gradients because the ring is a hard edge, not a falloff, and because
- * one element scales cleanly with the head block. Purely decorative: aria-hidden
- * and focusable="false" keep it out of both the a11y tree and the tab order.
+ * The §4.10 watermark, wrapped in its positioning box: §4.14's ARROW-STADIUM
+ * outline from icons.ts, path data verbatim from the source SVGs, stretched
+ * across the band. It is the brand motif at poster scale — not an eye, not a
+ * circle — so it is never redrawn here; hero.ts places the same glyph the same
+ * way. Purely decorative: the wrapper is aria-hidden as well as the svg, and
+ * focusable="false" keeps it out of the tab order.
  */
 function watermark(): string {
-  return (
-    '<span class="st-tst-mark" aria-hidden="true">' +
-    '<svg viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid meet" focusable="false">' +
-    '<ellipse cx="600" cy="250" rx="596" ry="246" fill="var(--studio-watermark)"/>' +
-    // The ring is cut with the band's own ground, so the shape stays exactly
-    // one value away from the background at every point.
-    '<circle cx="600" cy="250" r="238" fill="var(--ink-invert)"/>' +
-    '<circle cx="600" cy="250" r="176" fill="var(--studio-watermark)"/>' +
-    "</svg></span>"
-  );
+  return '<span class="st-tst-mark" aria-hidden="true">' + arrowWatermark() + "</span>";
 }
 
 /** The B&W portrait placeholder — flat masses, no lighting. */

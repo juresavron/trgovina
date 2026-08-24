@@ -47,6 +47,11 @@ export const STUDIO_TOKENS = `
     /** Hero triptych photo grounds (§4.2). */
     --photo-cool: #d9d9d9;
     --photo-warm: #e8e0d6;
+    /** Measured #2A2A2A disc under the chrome icon buttons (§4.1): 12% of the
+     *  on-invert ink lifted off the near-black band, so it tracks --ink-invert
+     *  if that ever moves. Declared here, like every other rung, so chrome.ts
+     *  consumes it instead of owning a second copy. */
+    --disc: color-mix(in srgb, var(--on-invert) 12%, var(--ink-invert));
 
     /* ---- Accent = punctuation only. Never a surface, never body text. --- */
     --acc: oklch(0.62 var(--c) var(--hue));

@@ -11,26 +11,24 @@
  * the ratios between elements — gutter 54 : bar 90 : wordmark 28 : nav 15 —
  * survive the clamp because each shares the same vw slope as its neighbour.
  *
- * Token discipline: colors, radii and faces are var(--…) only. The three
- * values the token layer does not carry are declared here as --studio-*
- * (documented at their declaration), and every selector is scoped to
- * :root[data-theme="studio"] because the sheet is shared with the other
- * three themes.
+ * Token discipline: colors, radii, faces, gutters, chrome height and the two
+ * wordmark weights are var(--…) from tokens.ts only — this module declares no
+ * variable of its own. Every selector is scoped to :root[data-theme="studio"]
+ * because the sheet is shared with the other three themes.
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { searchIcon, basketIcon } from "./icons";
 
 /* ---- inline line icons ----------------------------------------------- */
-/* 24px grid, stroke-only, currentColor: one icon serves both the white-on-
- * disc chrome buttons and the footer's contact rows without a second copy. */
-type IconKey = "search" | "basket" | "mail" | "phone" | "pin" | "arrow";
+/* 24px grid, stroke-only, currentColor. The chrome's magnifier and basket are
+ * NOT here: icons.ts is the icon set's one home, and a second hand-drawn pair
+ * meant the bar and the rest of the theme could drift apart glyph by glyph.
+ * What remains is the footer's contact/affordance set, which icons.ts does not
+ * carry. */
+type IconKey = "mail" | "phone" | "pin" | "arrow";
 
 const ICON_PATHS: Record<IconKey, string> = {
-  search:
-    '<circle cx="11" cy="11" r="6.4"/><path d="m15.9 15.9 4.6 4.6"/>',
-  basket:
-    '<path d="M5.6 8h12.8l1 11.4a1.6 1.6 0 0 1-1.6 1.7H6.2a1.6 1.6 0 0 1-1.6-1.7Z"/>' +
-    '<path d="M9 8V6.3a3 3 0 0 1 6 0V8"/>',
   mail:
     '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.7 6.9 8.3 5.9 8.3-5.9"/>',
   phone:
@@ -51,25 +49,9 @@ function icon(k: IconKey): string {
 }
 
 export const STUDIO_CHROME_CSS = `
-  :root[data-theme="studio"] {
-    /* Measured 54px page gutter (§3). Header, footer and every left-aligned
-     * band start here, so it lives as one variable rather than four clamps. */
-    --studio-gutter: clamp(18px, 2.7vw, 54px);
-    /* Measured 90px chrome bar (§4.1). The token layer's --chrome-h is a flat
-     * 88px; this is its responsive twin — see the integrator note. */
-    --studio-chrome-h: clamp(58px, 4.5vw, 90px);
-    /* The right inset is measured at 48px, NOT the 54px gutter — the icon
-     * discs sit closer to the edge than the wordmark does. */
-    --studio-inset-r: clamp(14px, 2.4vw, 48px);
-    /* Measured #2A2A2A disc under the chrome icons: 12% of the on-invert ink
-     * lifted off the near-black band, so it tracks the band if that moves. */
-    --studio-disc: color-mix(in srgb, var(--on-invert) 12%, var(--ink-invert));
-    /* The measured weight PAIR. The bar's wordmark is heavy, the footer's
-     * giant one is visibly lighter (~400 vs ~600) — that difference is the
-     * whole reason the 150px footer wordmark reads as a ground, not a shout. */
-    --studio-w-mark: 600;
-    --studio-w-mark-foot: 400;
-  }
+  /* No :root token block here. --studio-gutter, --studio-inset-r, --chrome-h,
+   * --disc, --w-mark and --w-mark-foot all live in tokens.ts; a second copy at
+   * equal specificity meant sheet order, not the spec, decided the value. */
 
   /* Visually hidden until focused — used by the skip link and the newsletter
    * field's label. clip-path over the old clip-rect hack: it survives
@@ -88,10 +70,15 @@ export const STUDIO_CHROME_CSS = `
     border-bottom: 1px solid color-mix(in srgb, var(--on-invert) 10%, transparent);
   }
   :root[data-theme="studio"] .st-chrome-bar {
-    max-width: 1900px;
+    /* --studio-band (1900px) is the CONTENT measure, and box-sizing here is
+     * border-box: capping the box at 1900 and then padding it inward left the
+     * wordmark ~54px inboard of the measured x=54. The padding is added to the
+     * cap — gutter left + inset-r right, the two the bar actually uses — so
+     * the content between them is exactly 1900px. */
+    max-width: calc(var(--studio-band) + var(--studio-gutter) + var(--studio-inset-r));
     margin-inline: auto;
     padding-inline: var(--studio-gutter) var(--studio-inset-r);
-    min-height: var(--studio-chrome-h);
+    min-height: var(--chrome-h);
     display: grid;
     /* 1fr | auto | 1fr keeps the nav optically centred on the VIEWPORT even
      * when the wordmark and the icon cluster differ in width. */
@@ -103,7 +90,7 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-chrome-mark {
     justify-self: start;
     font-family: var(--f-display);
-    font-weight: var(--studio-w-mark);
+    font-weight: var(--w-mark);
     font-stretch: var(--stretch);
     font-size: clamp(1rem, 1.4vw, 1.75rem);
     letter-spacing: 0.02em;
@@ -113,6 +100,26 @@ export const STUDIO_CHROME_CSS = `
     /* ONE white word: studio drops the accent split the other themes use. */
     color: var(--on-invert);
     white-space: nowrap;
+  }
+
+  /* The halves are separate spans around a real space, so the accessible name
+   * is "Masažni Fotelj" rather than the nonsense token "MasažniFotelj".
+   *
+   * The space is TIGHT BUT PRESENT, not zero. The source brand is a single
+   * word (FURNEXA), so closing the join exactly was right there and wrong
+   * here: every shop on this network has a two-word name, and set solid they
+   * read as a typo ("MASAŽNIFOTELJ") rather than as a logotype.
+   *
+   * The gap is an inline-block of explicit width rather than a scaled space
+   * glyph: at 0.25em the space rendered under 2px and the words still ran
+   * together. Width is set here so the mark's spacing does not depend on how
+   * wide the face happens to draw U+0020. */
+  :root[data-theme="studio"] .st-mark-gap {
+    display: inline-block;
+    inline-size: 0.3em;
+    font-size: inherit;
+    letter-spacing: 0;
+    overflow: hidden;
   }
 
   :root[data-theme="studio"] .st-chrome-nav {
@@ -154,7 +161,7 @@ export const STUDIO_CHROME_CSS = `
     block-size: clamp(36px, 2.3vw, 46px);
     border-radius: var(--r-pill);
     border: 0;
-    background: var(--studio-disc);
+    background: var(--disc);
     color: var(--on-invert);
     text-decoration: none;
     transition: background-color 0.2s ease;
@@ -162,7 +169,9 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-chrome-btn:hover {
     background: color-mix(in srgb, var(--on-invert) 22%, var(--ink-invert));
   }
-  :root[data-theme="studio"] .st-chrome-btn .st-ico {
+  /* The glyphs come from icons.ts and carry no chrome-local class, so the
+   * sizing hangs off the element, not a class name. */
+  :root[data-theme="studio"] .st-chrome-btn svg {
     inline-size: clamp(17px, 1.05vw, 21px);
     block-size: clamp(17px, 1.05vw, 21px);
   }
@@ -188,7 +197,8 @@ export const STUDIO_CHROME_CSS = `
     font-variant-numeric: tabular-nums;
   }
 
-  /* Phone fallback for the icon cluster below 720px. */
+  /* The phone number, shown below 720px ALONGSIDE the basket — not instead of
+   * the icon cluster: only the magnifier steps aside there. */
   :root[data-theme="studio"] .st-chrome-tel {
     display: none;
     align-items: center; gap: 8px;
@@ -201,7 +211,12 @@ export const STUDIO_CHROME_CSS = `
   }
   :root[data-theme="studio"] .st-chrome-tel .st-ico { inline-size: 16px; block-size: 16px; }
 
-  /* Skip link: off-screen until focused, then a sharp-cornered white plate. */
+  /* Skip link: off-screen until focused, then a white plate. --r-ctrl is 0,
+   * so the plate is genuinely sharp-cornered — which is what §3 asks of every
+   * control that carries a word, and which the base sheet's forced 4px would
+   * otherwise round off. Its ring is --acc rather than --ink: a black ring
+   * around a white plate ON THE BLACK BAR is invisible, and the plate landing
+   * on the page cannot be the only focus cue. */
   :root[data-theme="studio"] .st-skip {
     position: absolute; left: -9999px; top: 0; z-index: 50;
     background: var(--bg); color: var(--ink);
@@ -212,7 +227,7 @@ export const STUDIO_CHROME_CSS = `
   }
   :root[data-theme="studio"] .st-skip:focus-visible {
     left: var(--studio-gutter); top: 8px;
-    outline: 2px solid var(--ink); outline-offset: 2px;
+    outline: 2px solid var(--acc); outline-offset: 2px;
     border-radius: var(--r-ctrl);
   }
   /* Focus target after the bar — never a visible box, never a focus ring. */
@@ -227,7 +242,10 @@ export const STUDIO_CHROME_CSS = `
     padding-block: clamp(48px, 7.5vw, 150px) clamp(28px, 2.6vw, 52px);
   }
   :root[data-theme="studio"] .st-foot-in {
-    max-width: 1900px; margin-inline: auto;
+    /* Same content-measure arithmetic as the bar: the gutter sits OUTSIDE the
+     * 1900px measure, so the giant wordmark starts at the measured x=54. */
+    max-width: calc(var(--studio-band) + var(--studio-gutter) + var(--studio-inset-r));
+    margin-inline: auto;
     padding-inline: var(--studio-gutter) var(--studio-inset-r);
   }
 
@@ -241,7 +259,7 @@ export const STUDIO_CHROME_CSS = `
   /* ~150px, and LIGHTER than the bar's mark — the measured difference. */
   :root[data-theme="studio"] .st-foot-mark {
     font-family: var(--f-display);
-    font-weight: var(--studio-w-mark-foot);
+    font-weight: var(--w-mark-foot);
     font-stretch: var(--stretch);
     font-size: clamp(2.2rem, 7.5vw, 9.375rem);
     letter-spacing: var(--track-display);
@@ -276,6 +294,16 @@ export const STUDIO_CHROME_CSS = `
     color: var(--on-invert);
   }
   :root[data-theme="studio"] .st-news-in::placeholder { color: var(--on-invert-mute); }
+  /* The row is not wired yet (see renderStudioFooter), so both controls ship
+   * disabled. They must still LOOK like the measured device — an underlined
+   * field with an arrow chip — while reading as unavailable rather than
+   * broken, so the dimming is slight and the note carries the reason. */
+  :root[data-theme="studio"] .st-news-in:disabled {
+    color: var(--on-invert-mute);
+    -webkit-text-fill-color: var(--on-invert-mute);
+    opacity: 1;
+    cursor: not-allowed;
+  }
   :root[data-theme="studio"] .st-news-in:focus-visible {
     outline: 2px solid var(--on-invert); outline-offset: 6px; border-radius: var(--r-ctrl);
   }
@@ -290,7 +318,14 @@ export const STUDIO_CHROME_CSS = `
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
   }
-  :root[data-theme="studio"] .st-news-go:hover { background: var(--on-invert); color: var(--ink); }
+  :root[data-theme="studio"] .st-news-go:hover:not(:disabled) {
+    background: var(--on-invert); color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-news-go:disabled {
+    cursor: not-allowed;
+    color: var(--on-invert-mute);
+    border-color: color-mix(in srgb, var(--on-invert) 20%, transparent);
+  }
   :root[data-theme="studio"] .st-news-go:focus-visible {
     outline: 2px solid var(--on-invert); outline-offset: 3px; border-radius: var(--r-pill);
   }
@@ -387,17 +422,29 @@ export const STUDIO_CHROME_CSS = `
   /* ---- responsive ---- */
   @media (max-width: 720px) {
     /* §4.1 mobile: the nav drops to its own scrollable row under the
-     * wordmark, and the icon cluster gives way to the phone number — the one
-     * action that actually converts at this AOV. */
+     * wordmark, and the phone number joins the top row. The CART STAYS. The
+     * mobile nav has no cart route, so hiding the whole action cluster here
+     * left a phone with no path to the basket at all; only the magnifier —
+     * whose destination, the catalogue, is the nav's first item — gives way. */
     :root[data-theme="studio"] .st-chrome-bar {
-      grid-template-columns: auto 1fr;
+      /* minmax(0, auto): with a long shop name the wordmark yields before the
+       * row can push the page sideways. */
+      grid-template-columns: minmax(0, auto) 1fr auto;
       row-gap: 0;
       padding-block: 12px 0;
     }
-    :root[data-theme="studio"] .st-chrome-actions { display: none; }
-    /* Explicit placement: the nav spanning both columns would otherwise push
-     * the phone link — which follows it in source order — onto a third row. */
-    :root[data-theme="studio"] .st-chrome-mark { grid-area: 1 / 1; }
+    :root[data-theme="studio"] .st-chrome-search { display: none; }
+    /* Explicit placement: the nav spanning the row would otherwise push the
+     * phone link and the basket — both after it in source order — onto a
+     * third row. */
+    :root[data-theme="studio"] .st-chrome-mark {
+      grid-area: 1 / 1;
+      min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    }
+    :root[data-theme="studio"] .st-chrome-actions {
+      grid-area: 1 / 3;
+      justify-self: end;
+    }
     :root[data-theme="studio"] .st-chrome-tel {
       grid-area: 1 / 2;
       display: inline-flex; justify-self: end;
@@ -422,6 +469,10 @@ export const STUDIO_CHROME_CSS = `
     :root[data-theme="studio"] .st-foot-brand { grid-column: 1 / -1; }
   }
   @media (max-width: 420px) {
+    /* Wordmark + number + basket stop fitting on one 320–360px row. The number
+     * keeps its tap target and its aria-label, and gives up only its digits —
+     * which the footer states in full a scroll away. */
+    :root[data-theme="studio"] .st-chrome-tel span { display: none; }
     /* Two 19px link columns stop fitting; one column, tightened rows. */
     :root[data-theme="studio"] .st-foot-cols { grid-template-columns: minmax(0, 1fr); }
     :root[data-theme="studio"] .st-foot-col ul { gap: 14px; }
@@ -441,9 +492,23 @@ export const STUDIO_CHROME_CSS = `
   }
 `;
 
-/** Wordmark joined into ONE word — studio drops the two-tone accent split. */
-function markText(ctx: RenderCtx): string {
-  return ctx.shop.wordmark[0] + ctx.shop.wordmark[1];
+/**
+ * The wordmark, set as ONE white word — studio drops the two-tone accent split
+ * the other themes use.
+ *
+ * It is still TWO words, and concatenating them produced a single unreadable
+ * token in the accessibility tree ("MasažniFotelj"). The halves are emitted as
+ * separate spans with a real space between them; the space carries font-size 0
+ * (see .st-mark-gap), which closes the visual join exactly while leaving the
+ * word break in the text stream.
+ */
+function markHtml(ctx: RenderCtx): string {
+  const w = ctx.shop.wordmark;
+  return (
+    "<span>" + esc(w[0]) + "</span>" +
+    '<span class="st-mark-gap"> </span>' +
+    "<span>" + esc(w[1]) + "</span>"
+  );
 }
 
 /**
@@ -473,22 +538,33 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     '<header class="st-chrome">' +
     '<a class="st-skip" href="#st-vsebina">Preskočite na vsebino</a>' +
     '<div class="st-chrome-bar">' +
-    '<a class="st-chrome-mark" href="/' + ctx.q + '">' + esc(markText(ctx)) + "</a>" +
+    // aria-label as well as the split spans: the brand name as the shop states
+    // it is the name a screen reader should read for the home link.
+    '<a class="st-chrome-mark" href="' + esc("/" + ctx.q) + '" aria-label="' +
+    esc(s.name) + ' — domov">' + markHtml(ctx) + "</a>" +
     '<nav class="st-chrome-nav" aria-label="Glavni meni">' +
     links
-      .map(([k, label]) => '<a href="' + s.routeSlugs[k] + ctx.q + '">' + esc(label) + "</a>")
+      .map(
+        ([k, label]) =>
+          '<a href="' + esc(s.routeSlugs[k] + ctx.q) + '">' + esc(label) + "</a>",
+      )
       .join("") +
     "</nav>" +
     '<div class="st-chrome-actions">' +
     // Magnifier goes to the catalogue: a real destination, not a dead control.
-    '<a class="st-chrome-btn" href="' + s.routeSlugs["/products"] + ctx.q +
-    '" aria-label="Iščite po ponudbi">' + icon("search") + "</a>" +
-    '<a class="st-chrome-btn" href="' + s.routeSlugs["/cart"] + ctx.q +
-    '" aria-label="Košarica — ' + cartCount + ' izdelkov">' + icon("basket") +
+    // It is the one action that drops on a phone — the catalogue is also the
+    // nav's first item — while the basket below stays at every width.
+    '<a class="st-chrome-btn st-chrome-search" href="' +
+    esc(s.routeSlugs["/products"] + ctx.q) +
+    '" aria-label="Iščite po ponudbi">' + searchIcon() + "</a>" +
+    '<a class="st-chrome-btn st-chrome-cart" href="' +
+    esc(s.routeSlugs["/cart"] + ctx.q) +
+    '" aria-label="Košarica — ' + cartCount + ' izdelkov">' + basketIcon() +
     '<span class="st-chrome-badge" data-st-cart-count="' + cartCount + '" aria-hidden="true">' +
     cartCount + "</span></a>" +
     "</div>" +
-    '<a class="st-chrome-tel" href="' + ctx.phoneHref + '">' + icon("phone") +
+    '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
+    esc(ctx.phoneDisplay) + '">' + icon("phone") +
     "<span>" + esc(ctx.phoneDisplay) + "</span></a>" +
     "</div></header>" +
     '<span class="st-anchor" id="st-vsebina" tabindex="-1"></span>'
@@ -498,10 +574,12 @@ export function renderStudioHeader(ctx: RenderCtx): string {
 /**
  * §4.12 — footer.
  *
- * The newsletter row is deliberately inert: type="button", no <form>, no
- * action, no name on the field. Rendering a live-looking subscription that
- * silently drops the address would be worse than admitting it is not wired,
- * so the note under it says when it opens.
+ * The newsletter row is not wired — there is no form, no action and no handler
+ * behind it — so it ships DISABLED rather than merely inert. A live-looking
+ * field and arrow that silently swallow an address is the worse failure: a
+ * reader who types and presses the arrow learns nothing. Both controls are
+ * disabled and both point at the note (aria-describedby), which states when
+ * the subscription opens and what to do until then.
  */
 export function renderStudioFooter(ctx: RenderCtx): string {
   const s = ctx.shop;
@@ -511,7 +589,10 @@ export function renderStudioFooter(ctx: RenderCtx): string {
   const col = (title: string, items: readonly (readonly [string, string])[]): string =>
     '<div class="st-foot-col"><h2>' + esc(title) + "</h2><ul>" +
     items
-      .map(([href, label]) => '<li><a href="' + href + ctx.q + '">' + esc(label) + "</a></li>")
+      .map(
+        ([href, label]) =>
+          '<li><a href="' + esc(href + ctx.q) + '">' + esc(label) + "</a></li>",
+      )
       .join("") +
     "</ul></div>";
 
@@ -519,25 +600,26 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     const inner =
       '<span class="st-contact-ico">' + icon(k) + "</span><span>" + esc(label) + "</span>";
     return href
-      ? '<a class="st-contact" href="' + href + '">' + inner + "</a>"
+      ? '<a class="st-contact" href="' + esc(href) + '">' + inner + "</a>"
       : '<span class="st-contact">' + inner + "</span>";
   };
 
   return (
     '<footer class="st-foot"><div class="st-foot-in">' +
     '<div class="st-foot-top">' +
-    '<p class="st-foot-mark">' + esc(markText(ctx)) + "</p>" +
+    '<p class="st-foot-mark">' + markHtml(ctx) + "</p>" +
     "<div>" +
     '<h2 class="st-news-h">E-novice</h2>' +
     '<div class="st-news-row">' +
     '<label class="st-vh" for="st-news">Vaš e-poštni naslov</label>' +
     '<input class="st-news-in" id="st-news" type="email" autocomplete="email" ' +
-    'placeholder="Vaš e-poštni naslov">' +
-    '<button class="st-news-go" type="button" aria-label="Prijavite se na e-novice">' +
+    'placeholder="Vaš e-poštni naslov" disabled aria-describedby="st-news-note">' +
+    '<button class="st-news-go" type="button" disabled ' +
+    'aria-describedby="st-news-note" aria-label="Prijavite se na e-novice">' +
     icon("arrow") + "</button>" +
     "</div>" +
-    '<p class="st-news-note">Prijava na e-novice bo na voljo ob zagonu trgovine. ' +
-    "Do takrat nas, prosimo, pokličite ali pišite.</p>" +
+    '<p class="st-news-note" id="st-news-note">Prijava na e-novice bo na voljo ob ' +
+    "zagonu trgovine. Do takrat nas, prosimo, pokličite ali pišite.</p>" +
     "</div></div>" +
 
     '<div class="st-foot-cols">' +

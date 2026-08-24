@@ -18,6 +18,13 @@
  *         pills — the contrast the baseline calls the easiest thing to get
  *         wrong.
  *
+ * It also carries §4.13's two SECONDARY-PAGE devices, which no other module
+ * built: renderStudioShopHero() (the dark listing-page band) and
+ * renderStudioFilters() (the 380px sidebar). They sit here because the sidebar
+ * is the configurator's own label/hairline/square/pill vocabulary, reused
+ * class for class — and because, with no JS and no filtered URLs, it renders
+ * as links rather than as controls that could not filter.
+ *
  * Scale translation: every measured px is the clamp MAXIMUM (the spec is
  * measured at a 2000px viewport). Neighbouring values share a vw slope, so
  * the ratios — gutter 54 : title 68 : label 15 : box 22 — survive the shrink.
@@ -28,9 +35,11 @@
  * <select> that could not change anything. The one live control on the page
  * is the buy bar's CTA, which is a real link.
  *
- * Token discipline (docs/THEMES.md): colors, radii and faces are var(--…)
- * only; the values the baseline measures that tokens.ts does not carry are
- * declared below as documented --studio-* variables. Every selector is scoped
+ * Token discipline (docs/THEMES.md): colors, radii, faces, gutters, rhythm and
+ * chrome height are var(--…) from tokens.ts — this module re-declares none of
+ * them (a local --studio-rhythm at equal specificity let sheet order pick the
+ * storefront's vertical rhythm). What remains below are values tokens.ts does
+ * not carry, all of them local to this page. Every selector is scoped
  * :root[data-theme="studio"] — zarja/lednik/salon share this sheet.
  */
 
@@ -40,13 +49,6 @@ import type { PdpContent } from "../../content/types";
 export const STUDIO_PDP_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ---- */
   :root[data-theme="studio"] {
-    /* §3's 54px gutter. chrome.ts/hero.ts/commerce.ts already declare
-     * --studio-gutter; this module consumes it with a fallback instead of
-     * declaring a fourth copy, so cascade order can never make it drift and
-     * the module still stands alone if the sheet is assembled without them. */
-    --studio-pdp-gutter: var(--studio-gutter, clamp(20px, 2.7vw, 54px));
-    /* §3: ~130px vertical rhythm on light sections. */
-    --studio-pdp-rhythm: clamp(44px, 6.5vw, 130px);
     /* Gallery → buy column gap. Sized off §4.7's 48px card padding plus the
      * card gap: the two columns must read as two panels, not one spread. */
     --studio-pdp-col-gap: clamp(26px, 3.4vw, 68px);
@@ -58,8 +60,11 @@ export const STUDIO_PDP_CSS = `
     --studio-pdp-frame-ar: 4 / 3;
     /* §4.13: the sidebar's square 22px checkbox. */
     --studio-pdp-box: clamp(16px, 1.1vw, 22px);
-    /* §4.1: the 90px chrome band, reused as the buy bar's height. */
-    --studio-pdp-bar-h: clamp(54px, 4.5vw, 90px);
+    /* The buy bar sits at the bottom of the viewport for the whole page, so an
+     * in-page anchor scrolled flush to the bottom edge landed UNDERNEATH it.
+     * The bar is the chrome band's height (--chrome-h), plus its own block
+     * padding — reserve that much at the end of every scroll. */
+    scroll-padding-bottom: calc(var(--chrome-h) + clamp(18px, 1.6vw, 32px));
   }
 
   /* Visually hidden until focused. Local copy (chrome.ts has .st-vh) so this
@@ -74,14 +79,16 @@ export const STUDIO_PDP_CSS = `
    * would kill position:sticky on the buy bar inside it. */
   :root[data-theme="studio"] .st-pdp {
     background: var(--bg);
-    padding-top: var(--studio-pdp-rhythm);
+    padding-top: var(--studio-rhythm);
   }
   :root[data-theme="studio"] .st-pdp-in {
-    /* 1560px, the baseline's text-led measure (§3) — a PDP is a decision
-     * column, not a full-bleed band. The buy bar below uses the 1900px one. */
-    max-width: 1560px;
+    /* --studio-measure (1560px), the baseline's text-led measure (§3) — a PDP
+     * is a decision column, not a full-bleed band. The buy bar below uses
+     * --studio-band. Both are CONTENT measures and box-sizing is border-box,
+     * so the gutter is ADDED to the cap rather than eaten out of it. */
+    max-width: calc(var(--studio-measure) + 2 * var(--studio-gutter));
     margin-inline: auto;
-    padding-inline: var(--studio-pdp-gutter);
+    padding-inline: var(--studio-gutter);
   }
   :root[data-theme="studio"] .st-pdp-grid {
     display: grid;
@@ -397,7 +404,7 @@ export const STUDIO_PDP_CSS = `
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
     gap: var(--studio-pdp-col-gap);
-    margin-top: var(--studio-pdp-rhythm);
+    margin-top: var(--studio-rhythm);
   }
   /* Section heading rung: 68–72px / 600 / −0.025em / 1.05 (§1), capped one
    * step down because it shares the row with the table it labels. */
@@ -443,7 +450,7 @@ export const STUDIO_PDP_CSS = `
     position: sticky;
     bottom: 0;
     z-index: 40;
-    margin-top: var(--studio-pdp-rhythm);
+    margin-top: var(--studio-rhythm);
     background: var(--ink-invert);
     color: var(--on-invert);
     /* A band, not a card: sharp edges, one hairline, no shadow — the chrome
@@ -451,10 +458,10 @@ export const STUDIO_PDP_CSS = `
     border-top: 1px solid color-mix(in srgb, var(--on-invert) 10%, transparent);
   }
   :root[data-theme="studio"] .st-pdp-bar-in {
-    max-width: 1900px;
+    max-width: calc(var(--studio-band) + 2 * var(--studio-gutter));
     margin-inline: auto;
-    padding-inline: var(--studio-pdp-gutter);
-    min-height: var(--studio-pdp-bar-h);
+    padding-inline: var(--studio-gutter);
+    min-height: var(--chrome-h);
     display: flex; align-items: center;
     gap: clamp(10px, 1.4vw, 28px);
     padding-block: clamp(9px, 0.8vw, 16px);
@@ -539,6 +546,161 @@ export const STUDIO_PDP_CSS = `
      * frames, and it keeps the gallery one object instead of two. */
     :root[data-theme="studio"] .st-pdp-thumbs { gap: 8px; }
   }
+  @media (max-height: 480px) {
+    /* A landscape phone, or a desktop window squashed to a strip: a bar that
+     * pins itself to the bottom of a 420px-tall viewport is eating a fifth of
+     * the reading area for a summary of what is already on screen. It goes
+     * back into the flow, and the scroll reserve above goes with it. */
+    :root[data-theme="studio"] .st-pdp-bar { position: static; }
+    :root[data-theme="studio"] { scroll-padding-bottom: 0; }
+  }
+
+  /* ==== §4.13 secondary-page devices ==================================== */
+  /* The baseline measures two devices for the shop/listing page that no
+   * module had yet built: the dark shop hero and the 380px filter sidebar.
+   * They live here because they share this file's vocabulary — the sidebar IS
+   * the configurator's label/hairline/square/pill set, reused class for class
+   * rather than restyled. */
+
+  /* ---- shop hero: dark band, 90px title left, product right ----------- */
+  :root[data-theme="studio"] .st-shop-hero {
+    /* Positioned so the media that bleeds past the band's bottom edge paints
+     * OVER the section that follows instead of under it. */
+    position: relative;
+    z-index: 1;
+    background: var(--ink-invert);
+    color: var(--on-invert);
+    padding-block: var(--studio-rhythm-dark);
+  }
+  :root[data-theme="studio"] .st-shop-hero-in {
+    max-width: calc(var(--studio-band) + 2 * var(--studio-gutter));
+    margin-inline: auto;
+    padding-inline: var(--studio-gutter);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+    gap: clamp(28px, 4vw, 90px);
+    align-items: end;
+  }
+  :root[data-theme="studio"] .st-shop-hero-eyebrow {
+    font-family: var(--f-body);
+    font-size: clamp(11.5px, 0.75vw, 15px);
+    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    text-transform: uppercase;
+    color: var(--on-invert-mute);
+  }
+  /* The measured 90px page title — the one rung above the PDP's 68px. */
+  :root[data-theme="studio"] .st-shop-hero-h {
+    margin: clamp(14px, 1.4vw, 28px) 0 0;
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-stretch: var(--stretch);
+    font-size: clamp(2.25rem, 4.6vw, 5.625rem);
+    letter-spacing: var(--track-display);
+    line-height: 1.02;
+    color: var(--on-invert);
+    overflow-wrap: break-word;
+    hyphens: none;
+  }
+  /* The measured 21px sub. --on-invert-soft, the rung tokens.ts carries for
+   * exactly this: --on-invert-mute is too dark under a 90px title. */
+  :root[data-theme="studio"] .st-shop-hero-sub {
+    margin: clamp(12px, 1.2vw, 24px) 0 0;
+    font-family: var(--f-body);
+    font-size: clamp(14.5px, 1.05vw, 1.3125rem);
+    line-height: 1.6;
+    color: var(--on-invert-soft);
+    max-width: 46ch;
+  }
+  :root[data-theme="studio"] .st-shop-hero-media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    /* THE BLEED: the product hangs below the band's bottom edge. */
+    margin-bottom: calc(-1 * clamp(20px, 3.4vw, 76px));
+  }
+  /* Thin concentric outlines behind the product. They are drawn in the band's
+   * white ink, so the rings simply stop existing where the media crosses onto
+   * the page below — which is exactly how the source reads. */
+  :root[data-theme="studio"] .st-shop-hero-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    aspect-ratio: 1;
+    border: 1px solid color-mix(in srgb, var(--on-invert) 18%, transparent);
+    border-radius: var(--r-pill);
+  }
+  :root[data-theme="studio"] .st-shop-hero-ring:nth-child(1) { inline-size: 98%; }
+  :root[data-theme="studio"] .st-shop-hero-ring:nth-child(2) { inline-size: 76%; }
+  :root[data-theme="studio"] .st-shop-hero-ring:nth-child(3) { inline-size: 54%; }
+  /* Photo-ready slot. Opaque mid grey, not a translucent wash: half of it
+   * hangs over the white page below, and a wash would vanish there. */
+  :root[data-theme="studio"] .st-shop-hero-mass {
+    position: relative;
+    z-index: 1;
+    display: block;
+    margin-inline: auto;
+    inline-size: 62%;
+    block-size: 100%;
+    border-radius: var(--r-media);
+    border: 1px solid color-mix(in srgb, var(--on-invert) 22%, transparent);
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tile-mid) 82%, var(--ink-invert)),
+      color-mix(in srgb, var(--tile-mid) 48%, var(--ink-invert))
+    );
+  }
+  :root[data-theme="studio"] .st-shop-hero-cap {
+    position: absolute; z-index: 2;
+    top: 0; left: 0;
+    font-family: var(--f-body);
+    font-size: clamp(10.5px, 0.7vw, 14px);
+    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    text-transform: uppercase;
+    color: var(--on-invert-mute);
+  }
+
+  /* ---- filter sidebar: 380px column ----------------------------------- */
+  /* Presentation only, and honest about it: every row is a LINK to a page
+   * that exists. Nothing here filters, so nothing here is a checkbox — the
+   * squares and pills are the measured vocabulary, marked aria-hidden, and
+   * the labels are the link text. */
+  :root[data-theme="studio"] .st-filters {
+    inline-size: 100%;
+    max-inline-size: 380px;
+    display: flex; flex-direction: column;
+    gap: clamp(20px, 2vw, 40px);
+  }
+  :root[data-theme="studio"] .st-filters a.st-pdp-opt,
+  :root[data-theme="studio"] .st-filters a.st-pdp-pill {
+    text-decoration: none;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  :root[data-theme="studio"] .st-filters a.st-pdp-opt:hover { color: var(--ink); }
+  :root[data-theme="studio"] .st-filters a.st-pdp-opt:hover .st-pdp-box {
+    border-color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-filters a.st-pdp-pill:hover {
+    border-color: var(--line-strong);
+    color: var(--ink);
+  }
+  /* Sharp ring on the row (it carries a word), round on the pill (§3/§9). */
+  :root[data-theme="studio"] .st-filters a.st-pdp-opt:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+    border-radius: var(--r-ctrl);
+  }
+  :root[data-theme="studio"] .st-filters a.st-pdp-pill:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+    border-radius: var(--r-pill);
+  }
+
+  @media (max-width: 900px) {
+    /* Title over product, and the bleed goes away with the two-column layout:
+     * a stacked media that hangs into the next section reads as a mistake. */
+    :root[data-theme="studio"] .st-shop-hero-in { grid-template-columns: minmax(0, 1fr); }
+    :root[data-theme="studio"] .st-shop-hero-media { margin-bottom: 0; }
+    :root[data-theme="studio"] .st-filters { max-inline-size: none; }
+  }
 
   /* ---- motion ---------------------------------------------------------- */
   @media (prefers-reduced-motion: reduce) {
@@ -546,7 +708,9 @@ export const STUDIO_PDP_CSS = `
      * resting one: no transitions, no residual transform. The buy bar keeps
      * its sticky position — that is layout, not motion. */
     :root[data-theme="studio"] .st-pdp-cta,
-    :root[data-theme="studio"] .st-pdp-cfg-note a {
+    :root[data-theme="studio"] .st-pdp-cfg-note a,
+    :root[data-theme="studio"] .st-filters a.st-pdp-opt,
+    :root[data-theme="studio"] .st-filters a.st-pdp-pill {
       transition: none;
       transform: none;
     }
@@ -685,14 +849,24 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<h1 class="st-pdp-title">' + esc(d.title) + "</h1>" +
     '<p class="st-pdp-sub">' + esc(d.sub) + "</p>" +
     '<p class="st-pdp-price">' +
-    '<span class="st-pdp-now">' + esc(d.price) + "</span>" +
-    (was ? '<s class="st-pdp-was">' + esc(was) + "</s>" : "") +
+    // The struck price's only cue is the line through it, and most screen
+    // readers announce neither <s> nor text-decoration — so the row would read
+    // as two unqualified prices, the higher one last. A hidden word inside
+    // each carries the distinction into the accessibility tree (commerce.ts
+    // does the same on the card).
+    '<span class="st-pdp-now"><span class="st-pdp-vh">cena </span>' +
+    esc(d.price) + "</span>" +
+    (was
+      ? '<s class="st-pdp-was"><span class="st-pdp-vh">prejšnja cena </span>' +
+        esc(was) + "</s>"
+      : "") +
     '<span class="st-pdp-vat">z DDV</span>' +
     "</p>" +
     (cfg
       ? '<div class="st-pdp-cfg">' + cfg + "</div>" +
         '<p class="st-pdp-cfg-note">Prikazana je izbrana konfiguracija. ' +
-        'Za drugo kombinacijo nas, prosimo, pokličite na <a href="' + ctx.phoneHref + '">' +
+        'Za drugo kombinacijo nas, prosimo, pokličite na <a href="' +
+        esc(ctx.phoneHref) + '">' +
         esc(ctx.phoneDisplay) + "</a>.</p>"
       : "") +
     '<section class="st-pdp-freight" aria-labelledby="st-pdp-fh">' +
@@ -720,9 +894,124 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<span class="st-pdp-sum-cfg">' + esc(d.bar[1]) + "</span>" +
     "</span>" +
     '<span class="st-pdp-bar-price">' + esc(d.bar[2]) + "</span>" +
-    '<a class="st-pdp-cta" href="' + ctx.shop.routeSlugs["/cart"] + ctx.q + '">' +
+    '<a class="st-pdp-cta" href="' + esc(ctx.shop.routeSlugs["/cart"] + ctx.q) + '">' +
     esc(d.bar[3]) + "</a>" +
     "</div></div>" +
     "</section>"
+  );
+}
+
+/* ==== §4.13 secondary-page devices ====================================== */
+
+/** Slovenian sentence case: only the first letter, and via the shop's locale. */
+function upperFirst(s: string, locale: string): string {
+  const first = Array.from(s)[0];
+  return first ? first.toLocaleUpperCase(locale) + s.slice(first.length) : s;
+}
+
+/**
+ * §4.13 — the shop hero.
+ *
+ * "Dark band, page title 90px left with 21px sub; product photo right with
+ * thin white circle outlines behind it, bleeding below the band."
+ *
+ * Copy comes from what the shop already states about itself — the keyword's
+ * plural is the listing page's title in every one of these stores, and the
+ * kicker/sub are the shop's own hand-written lines — so nothing here is
+ * templated prose and no caller has to invent a heading. Both are overridable
+ * for the pages that carry their own.
+ */
+export function renderStudioShopHero(ctx: RenderCtx, title?: string, sub?: string): string {
+  const s = ctx.shop;
+  const h = title ?? upperFirst(s.keyword.plural, s.locale.intl);
+  const p = sub ?? ctx.content.sub;
+
+  return (
+    '<section class="st-shop-hero"><div class="st-shop-hero-in">' +
+    "<div>" +
+    '<p class="st-shop-hero-eyebrow">' + esc(ctx.content.kicker) + "</p>" +
+    '<h1 class="st-shop-hero-h">' + esc(h) + "</h1>" +
+    '<p class="st-shop-hero-sub">' + esc(p) + "</p>" +
+    "</div>" +
+    // Decorative throughout: the rings and the mass carry no fact, and the
+    // caption states what the reader is actually looking at.
+    '<div class="st-shop-hero-media">' +
+    '<span class="st-shop-hero-cap">Vizualizacija — fotografije v pripravi</span>' +
+    '<span class="st-shop-hero-ring" aria-hidden="true"></span>' +
+    '<span class="st-shop-hero-ring" aria-hidden="true"></span>' +
+    '<span class="st-shop-hero-ring" aria-hidden="true"></span>' +
+    '<span class="st-shop-hero-mass" aria-hidden="true"></span>' +
+    "</div>" +
+    "</div></section>"
+  );
+}
+
+/**
+ * §4.13 — the 380px filter sidebar.
+ *
+ * "Uppercase label + hairline, square 22px checkboxes with 19px labels, and
+ * availability as outlined round pills."
+ *
+ * This Worker ships no JS and the catalogue has no query-parameter filtering,
+ * so a checkbox here could not filter anything — and a control that cannot act
+ * is worse than no control. The device is therefore rendered as what it can
+ * honestly be: a column of LINKS to pages that exist, wearing the measured
+ * vocabulary. The square markers and the pill outlines are the decoration;
+ * the link text is the content. It reuses the configurator's classes rather
+ * than restyling them, because it is literally the same device.
+ *
+ * When real filtering lands, the rows become <a> elements pointing at filtered
+ * URLs — the markup shape does not change.
+ */
+export function renderStudioFilters(ctx: RenderCtx): string {
+  const s = ctx.shop;
+  const c = ctx.content;
+
+  /** Escaped, dev-query-carrying href for one internal route. */
+  const href = (k: keyof typeof s.routeSlugs): string => esc(s.routeSlugs[k] + ctx.q);
+
+  // Square-marker rows: the shop's own sections, in the order the chrome nav
+  // states them, so the sidebar and the bar never disagree.
+  const rows: readonly (readonly [string, string])[] = [
+    [href("/products"), c.nav[0]],
+    [href("/compare"), c.nav[1]],
+    [href("/guides"), c.nav[2]],
+    [href("/financing"), "Financiranje"],
+  ] as const;
+
+  // Round pills: availability, as the baseline has it — each one a service the
+  // shop actually offers, linking to the page that spells it out.
+  const pills: readonly (readonly [string, string])[] = [
+    [href("/delivery"), "Dostava in montaža"],
+    [href("/showroom"), "Ogled v salonu"],
+    [href("/faq"), "Pogosta vprašanja"],
+  ] as const;
+
+  const box = '<span class="st-pdp-box" aria-hidden="true">' + CHECK + "</span>";
+
+  return (
+    '<aside class="st-filters" aria-label="Razdelki trgovine">' +
+    "<div>" +
+    '<h2 class="st-pdp-glabel" id="st-filters-a">Ponudba</h2>' +
+    '<ul class="st-pdp-opts" aria-labelledby="st-filters-a">' +
+    rows
+      .map(
+        ([h, label]) =>
+          '<li><a class="st-pdp-opt" href="' + h + '">' + box +
+          "<span>" + esc(label) + "</span></a></li>",
+      )
+      .join("") +
+    "</ul></div>" +
+    "<div>" +
+    '<h2 class="st-pdp-glabel" id="st-filters-b">Razpoložljivost</h2>' +
+    '<ul class="st-pdp-pills" aria-labelledby="st-filters-b">' +
+    pills
+      .map(
+        ([h, label]) =>
+          '<li><a class="st-pdp-pill" href="' + h + '">' + esc(label) + "</a></li>",
+      )
+      .join("") +
+    "</ul></div>" +
+    "</aside>"
   );
 }
