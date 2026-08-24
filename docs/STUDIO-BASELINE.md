@@ -4,11 +4,19 @@ Derived by direct measurement from 20 screenshots of the owner's Framer theme
 at 2000px viewport width. **All px values below are measured at 2000px** —
 divide by 1.39 for a 1440px design width, or treat as the clamp maximum.
 
-The uploaded Framer files (`script`, `script_main.*.mjs`, `bootstrap.js`,
-`editorbar.mjs`, `edit.html`) are Framer's *runtime* — an analytics tracker
-and the editor bundle carrying generic `--framer-*` variables, not the site's
-own tokens. The one hard asset they yield is the font request, below. Every
-other value here is measured off the renders.
+### Source material
+
+| Source | What it gave us |
+| --- | --- |
+| 20 screenshots @2000px | every measurement below |
+| `css2` font request | the two faces, verbatim |
+| **site `_files` bundle (107 files)** | **the real SVG assets and 41 product/scene images** |
+| `script*.mjs`, `bootstrap.js`, `edit.html` | nothing — Framer's analytics tracker and editor bundle, carrying only generic `--framer-*` variables |
+
+The bundle shipped the `_files` sidecar without the page HTML, so there is no
+source DOM or stylesheet — but it did carry the **icon SVGs and the wordmark**,
+which replace guesswork with exact geometry (§4.14), and the **product
+photography**, which fixes the image treatment (§4.15).
 
 ---
 
@@ -57,7 +65,7 @@ middle ground — the theme never sets 30–50px display text except on cards.
 | body text | `#4A4A4A` | paragraphs |
 | muted text | `#767676` | captions, struck prices, placeholder |
 | on-dark body | `#A8A8A8` | footer links, quote attribution |
-| dark-band watermark | `#161616` | the giant faint "eye" ellipse behind the testimonial heading |
+| dark-band watermark | `#161616` | the giant faint arrow-stadium outline behind the testimonial heading (§4.14) |
 
 **Accent: none.** The theme is monochrome; every drop of color comes from
 photography (tan chair, blue chair, orange chair). Our port keeps this and
@@ -92,12 +100,12 @@ basket); the basket carries a count badge — small white disc, black numeral.
 
 ### 4.2 Hero triptych
 Three equal columns, full-bleed, no gaps, height = viewport − chrome.
-- **Left**: product photo on `#D9D9D9`, a faint oversized circle watermark behind.
+- **Left**: product photo on `#D9D9D9`, a faint oversized arrow-stadium watermark behind (§4.14).
 - **Centre**: black. Stack, centered: outlined pill "LIMITED-TIME OFFER"
   (1px white, radius full, 12×28 padding) → 48px gap → "50% Off" at 90px →
   "Select Best Sellers" 24px in `#D6D6D6` → 56px gap → white **sharp-cornered**
-  button, padding 22×60, 16px tracked. Faint dark ellipse/circle watermarks sit
-  behind the stack.
+  button, padding 22×60, 16px tracked. A faint oversized **arrow-stadium watermark**
+  (§4.14) sits behind the stack.
 - **Right**: product photo on warm `#E8E0D6`; product name 40px white and price
   26px white with struck compare-at, overlaid bottom-left.
 
@@ -110,7 +118,7 @@ Left-aligned 3-line statement at 68px starting x=54, max-width ~1350. 90px gap.
 Centered heading. Cards ~470×500, 1px `#E4E4E4`, radius 12px, white; product
 image occupies the top ~55%; name 26px; **price range** ("$1,099 - $3,099")
 22px in muted. Cards peek at both viewport edges — it is a rail, not a grid.
-Two circular arrow buttons Ø46px, 1px border, centered *below* the rail.
+Two **stadium** arrow buttons (§4.14 — not circles), centered *below* the rail.
 
 ### 4.5 Wordmark band
 Full-bleed photo. The brand name is set enormous in white — letters ~200px tall,
@@ -145,12 +153,13 @@ tile, visually bleeding past its neighbours); right tile a room photo with a
 **stat overlaid** (58px value + 19px caption) instead of a label.
 
 ### 4.10 Dark testimonial
-Black band. Centered white heading 72px. A giant faint `#161616` "eye" (ellipse
-plus concentric circle) sits behind it as a watermark. Left: square B&W portrait
+Black band. Centered white heading 72px. A giant faint `#161616` **arrow-stadium
+watermark** sits behind it (§4.14) — the same outline as the arrow buttons,
+scaled to band width. Left: square B&W portrait
 ~420px, sharp corners, x=54. Centre: oversized quote glyph ~90px, quote 26px
 white leading 1.5 max-width 800, attribution 15px uppercase tracked in muted.
-Right: a Ø300px `#1C1C1C` disc containing a small product image. Two circular
-white-outlined arrows Ø48px below it.
+Right: a Ø300px `#1C1C1C` disc containing a small product image. Two **stadium**
+arrows (§4.14) in the white ink below it.
 
 ### 4.11 Blog cards
 Centered heading 72px. Three ~1:1 cards, radius 16px, photo fills, bottom
@@ -175,6 +184,48 @@ columns at 19px with ~66px row gaps. Hairline rule, then legal line 17px muted.
 - **Philosophy card**: photo left with a black radius-24px card overlapping it
   on the right, 54px heading + 19px body inside.
 
+### 4.14 The arrow motif — exact geometry (from the source SVGs)
+
+**The arrow button is a stadium, not a circle.** Measured from the theme's own
+assets (four variants shipped: left/right × dark/light ink):
+
+```
+canvas   36 × 35
+outline  35 × 23 rounded rect, rx 11.5, 1px stroke   ← a stadium, wider than tall
+arrow    shaft x12 → x24 on y17.5, head 3.18u
+ink      #FFFFFF on dark bands · #4D4D4D on light
+```
+
+This same outline, scaled to band width and set a few percent off the
+background, **is the faint watermark** behind the hero's message panel and the
+testimonial heading. Reading it as an "eye" — as an earlier pass of this spec
+did — and drawing a circle instead loses the theme's signature. Both live in
+`src/themes/studio/icons.ts`, path data verbatim, inked via `currentColor`.
+
+The bundle also ships the **wordmark as an SVG** (126×18 letterform paths,
+white fill) — evidence the brand name is treated as artwork, not live text, at
+the sizes where it becomes a graphic (chrome bar, footer, wordmark band).
+
+### 4.15 Product photography treatment (from the source images)
+
+41 images; 14 are **transparent-alpha PNG cutouts** — that is the product
+system:
+
+- Product is a **cutout on transparency**, composited onto the `#F2F2F2` panel
+  by CSS, never a photo with a baked-in background.
+- A **soft contact shadow** grounds it — the product sits on the panel, it does
+  not float.
+- Product fills **~70%** of the frame, centred, generous margin all round.
+- **Three-quarter view** for seating; straight-on for beds/tables.
+- Even, neutral studio light; no gradient stage, no colour cast.
+
+Scene/lifestyle photography is separate: 2880×1500 ultrawides for full-bleed
+bands, 2000×2000 squares for cards, 2761×3905 portrait for the testimonial.
+
+> **Licensing:** those images are the source template's stock and are *not*
+> committed to this repo or shipped. They define the treatment our own product
+> photography must match.
+
 ---
 
 ## 5. Porting decisions (where we deliberately differ)
@@ -190,7 +241,10 @@ columns at 19px with ~66px row gaps. Hairline rule, then legal line 17px muted.
 4. **Accent as punctuation.** FURNEXA is pure monochrome; we allow the shop
    hue in exactly three places so four shops on one baseline still read as
    different companies.
-5. **Struck price format**: the source renders `3,399$` (symbol trailing) next
+5. **Photography spec, not photography.** §4.15 tells our photographer exactly
+   what to deliver: cutouts on transparency with a contact shadow, 70% fill,
+   3/4 view. Until those exist, placeholders hold the same geometry.
+6. **Struck price format**: the source renders `3,399$` (symbol trailing) next
    to `$2,099` (symbol leading). We normalise to Slovenian convention
    (`3.399 €`) — an inconsistency worth not replicating.
 

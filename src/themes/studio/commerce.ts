@@ -581,7 +581,10 @@ export function renderStudioRail(ctx: RenderCtx): string {
     })
     .join("");
 
-  const nav = items
+  // With a single card there is nothing to move between, so the row is not
+  // rendered at all. With two or more it always acts: it scrolls the rail when
+  // the track overflows, and moves focus into the named card when it does not.
+  const nav = items.length < 2 ? "" : items
     .map(
       (p, i) =>
         '<a class="st-rail-go" href="#st-rail-' + String(i + 1) +
@@ -597,7 +600,7 @@ export function renderStudioRail(ctx: RenderCtx): string {
     '<h2 class="st-sec-h" id="st-rail-h">' + esc(title) + "</h2>" +
     "</div>" +
     '<div class="st-rail"><ul class="st-rail-track">' + cards + "</ul></div>" +
-    '<nav class="st-rail-nav" aria-label="Pomik po ponudbi">' + nav + "</nav>" +
+    (nav ? '<nav class="st-rail-nav" aria-label="Pomik po ponudbi">' + nav + "</nav>" : "") +
     "</section>"
   );
 }
