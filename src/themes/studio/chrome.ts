@@ -67,20 +67,46 @@ export const STUDIO_CHROME_CSS = `
     clip-path: inset(50%); white-space: nowrap;
   }
 
-  /* ---- §4.1 chrome bar ---- */
+  /* ---- chrome bar ----
+   * The source's header is FIXED and TRANSPARENT, overlaying the page:
+   * its container is position:fixed; z-index:8; top:0; left:0; width:100%
+   * and the header itself carries background-color: rgba(0,0,0,0). We had
+   * built a solid dark bar in normal flow, which is the single most visible
+   * structural difference between the port and the source — the hero is meant
+   * to run full-bleed underneath it.
+   *
+   * The scrim is ours, not the source's. A transparent bar is only legible
+   * over art direction that guarantees a dark top edge; the source gets that
+   * from its own photography, but these shops take customer-supplied product
+   * photos and cannot. A short top-down gradient costs nothing, is invisible
+   * over a dark hero, and keeps the nav readable over a light one. It is the
+   * difference between replicating the design and shipping its fragility. */
   :root[data-theme="studio"] .st-chrome {
-    background: var(--ink-invert);
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 8;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--ink-invert) 55%, transparent),
+      transparent
+    );
     color: var(--on-invert);
-    /* The wordmark band and hero sit flush under it; the hairline keeps the
-     * bar legible where a dark section follows a dark bar. */
-    border-bottom: 1px solid color-mix(in srgb, var(--on-invert) 10%, transparent);
   }
+  /* A fixed bar occupies no space in flow, so every page must reserve it or
+   * its first line renders underneath the nav. The hero is the one exception:
+   * it is built to run full-bleed under the transparent bar, so it pulls the
+   * reserved space back. Anything else — PDP, placeholders, 404 — keeps it. */
+  :root[data-theme="studio"] main { padding-top: var(--chrome-h); }
+  :root[data-theme="studio"] main > .st-hero:first-child {
+    margin-top: calc(-1 * var(--chrome-h));
+  }
+
   :root[data-theme="studio"] .st-chrome-bar {
-    /* --studio-container (1900px) is the CONTENT measure, and box-sizing here is
-     * border-box: capping the box at 1900 and then padding it inward left the
-     * wordmark ~54px inboard of the measured x=54. The padding is added to the
-     * cap — gutter left + inset-r right, the two the bar actually uses — so
-     * the content between them is exactly 1900px. */
+    /* --studio-container is the CONTENT measure and box-sizing is border-box,
+     * so the cap is widened by the two gutters — the content between them is
+     * then exactly --studio-container. */
     max-width: calc(var(--studio-container) + var(--studio-gutter) + var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-gutter) var(--studio-gutter);

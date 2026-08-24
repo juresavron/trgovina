@@ -44,16 +44,25 @@ export const STUDIO_HERO_CSS = `
      * 48:56 ratio is edited in one place and never drifts. */
     --studio-gap-stack: clamp(20px, 2.4vw, 48px);
     --studio-gap-cta: clamp(24px, 2.8vw, 56px);
+    /* The photo placeholder draws itself in these, so one set of markup works
+     * on a light or a dark ground. Defaults are the light case; the hero's
+     * panels override them, because the hero is dark. */
+    --photo-ink: var(--ink);
+    --photo-cap-ink: var(--ink-body);
   }
 
-  /* ---- §4.2 Hero triptych ---- */
-  /* Three EQUAL full-bleed columns, no gaps, height = viewport − chrome. */
+  /* ---- §4.2 Hero triptych ----
+   * Three EQUAL full-bleed columns, no gaps, FULL viewport height. The chrome
+   * no longer subtracts: it is a fixed transparent bar overlaying this section
+   * (see chrome.ts), so the hero owns the whole viewport as the source's does.
+   * Subtracting --chrome-h now would leave a band of the next section showing
+   * above the fold. */
   :root[data-theme="studio"] .st-hero {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
-    min-height: calc(100vh - var(--chrome-h));
-    min-height: calc(100svh - var(--chrome-h));
+    min-height: 100vh;
+    min-height: 100svh;
     overflow: clip;
   }
   :root[data-theme="studio"] .st-hero-panel {
@@ -64,8 +73,24 @@ export const STUDIO_HERO_CSS = `
      * bleed into the neighbouring column. */
     overflow: clip;
   }
-  :root[data-theme="studio"] .st-hero-photo-a { background: var(--tile-mid); }
-  :root[data-theme="studio"] .st-hero-photo-b { background: var(--bg-alt); }
+  /* All three hero panels are DARK, and that is a constraint rather than a
+   * preference. The header is a fixed transparent bar whose logo and nav are
+   * white — the source's logo file is literally fill="#fff" — so whatever sits
+   * beneath it must be dark or the navigation is unreadable. The source gets
+   * that from its hero photography; these panels stand in for the same
+   * photography, so they carry its ground.
+   *
+   * The consequence lands on the photo brief: a hero image for this theme must
+   * be dark along its top edge. docs/STUDIO-BASELINE.md §4.15 carries it as a
+   * requirement. */
+  :root[data-theme="studio"] .st-hero-photo-a,
+  :root[data-theme="studio"] .st-hero-photo-b {
+    --photo-ink: var(--on-invert);
+    --photo-cap-ink: var(--on-invert-mute);
+    color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-hero-photo-a { background: var(--ink-invert-2); }
+  :root[data-theme="studio"] .st-hero-photo-b { background: var(--ink-invert); }
 
   /* §4.14 watermark — the ARROW-STADIUM outline, scaled enormous and set a few
    * percent off the ground. Not a circle and not a gradient blob: it is the
@@ -81,7 +106,7 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-hero-wm .st-watermark {
     display: block; width: 100%; height: 100%;
   }
-  /* Light band: white pulled back off the #d9d9d9 ground. */
+  /* Pulled back off the panel's dark ground so it reads as a watermark. */
   :root[data-theme="studio"] .st-hero-photo-a .st-hero-wm {
     color: color-mix(in srgb, var(--bg) 46%, transparent);
   }
@@ -196,11 +221,11 @@ export const STUDIO_HERO_CSS = `
     position: absolute;
     left: 17%; right: 17%; top: 28%; bottom: 17%;
     border-radius: var(--r-media);
-    border: 1px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--photo-ink) 12%, transparent);
     background: linear-gradient(
       180deg,
-      color-mix(in srgb, var(--ink) 10%, transparent),
-      color-mix(in srgb, var(--ink) 4%, transparent)
+      color-mix(in srgb, var(--photo-ink) 10%, transparent),
+      color-mix(in srgb, var(--photo-ink) 4%, transparent)
     );
   }
   :root[data-theme="studio"] .st-photo-floor {
@@ -208,10 +233,11 @@ export const STUDIO_HERO_CSS = `
     left: 50%; bottom: 12%; transform: translateX(-50%);
     width: 62%; height: 7%;
     border-radius: var(--r-pill);
-    background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--ink) 20%, transparent), transparent 72%);
+    background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--photo-ink) 20%, transparent), transparent 72%);
   }
-  /* --ink-body, not --ink-mute: 6.3:1 on the cool grey ground and better on the
-   * warm one (mute is 3.2:1 and fails on both). */
+  /* Draws in --photo-cap-ink so the disclosure follows its panel's ground:
+   * --ink-body where the panel is light, --on-invert-mute (7.33:1) on the
+   * hero's dark panels. A fixed ink would have failed on one of the two. */
   :root[data-theme="studio"] .st-photo-cap {
     position: absolute; z-index: 2;
     top: var(--studio-gutter); left: var(--studio-gutter);
@@ -222,7 +248,7 @@ export const STUDIO_HERO_CSS = `
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
-    color: var(--ink-body);
+    color: var(--photo-cap-ink);
   }
   /* Both photo panels carry the "photography pending" disclosure, but exactly
    * ONE is ever visible: panel A's above 900px, panel B's below it — where
