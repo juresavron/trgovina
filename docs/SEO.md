@@ -81,6 +81,30 @@ Rendered server-side, per shop, from `ShopConfig` + catalog rows:
 - Budget enforced in CI (Lighthouse against the workers.dev QA host); a red
   budget blocks deploy exactly like a failing test.
 
+### Known debt: the studio theme's fonts violate this section
+
+The studio theme currently loads its faces from **two third-party origins** —
+Google (DM Sans) and Fontshare (Clash Display, Satoshi) — as render-blocking
+stylesheets. That is two extra DNS+TLS handshakes on the critical path, which
+is exactly the pattern this budget exists to forbid, and it will not hit
+LCP < 1.5 s on mid-range mobile.
+
+It is interim, for one reason: Clash Display and Satoshi are not on Google
+Fonts, and the environment the theme was transcribed in has allowlisted egress
+that blocks fontshare.com, so the woff2 files could not be vendored. The fix,
+before any studio shop goes live:
+
+1. Download the four faces (Clash Display 500, Satoshi 400/500, DM Sans 400/500).
+2. Subset to latin + latin-ext — the source ships each face unsubsetted in one
+   file, which is wasteful for a Slovenian storefront.
+3. Serve same-origin from the Worker, `font-display: swap`, with a single
+   `<link rel=preload>` for the face that paints the LCP element.
+4. Delete both third-party origins and their preconnects.
+
+`scripts/verify-fonts.mjs` gates the related question — whether those faces
+carry č/š/ž at all — and must pass first, since it may change which faces we
+vendor.
+
 ## 5. E-E-A-T for a store that ships pallets
 
 Google's quality raters ask "would you trust this site with €5,000?" — so the

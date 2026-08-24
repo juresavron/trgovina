@@ -357,9 +357,15 @@ bands, 2000×2000 squares for cards, 2761×3905 portrait for the testimonial.
    focusable anchors instead of buttons that would do nothing.
 3. **Slovenian, per shop.** The baseline is layout and type only. Copy stays
    per-shop (anti-doorway rule, docs/SEO.md §6) and formal (vikanje).
-4. **Accent as punctuation.** FURNEXA is pure monochrome; we allow the shop
-   hue in exactly three places so four shops on one baseline still read as
-   different companies.
+4. **Accent as punctuation.** FURNEXA is *not* monochrome — the screenshot
+   pass got this wrong; it carries amber `#f0aa13` with cream and coral
+   companions (§2). But it spends them sparingly, on badges and status, and
+   that restraint is the part worth keeping. We substitute the per-shop hue in
+   those same few places, so six shops on one baseline still read as different
+   companies. The hue is oklch with fixed lightness, which keeps contrast
+   roughly hue-independent; `scripts/verify-contrast.mjs` resolves each shop's
+   real accent and checks it, because adding a shop is a one-line config
+   change nobody thinks of as a design edit.
 5. **Photography spec, not photography.** §4.15 tells our photographer exactly
    what to deliver: cutouts on transparency with a contact shadow, 70% fill,
    3/4 view. Until those exist, placeholders hold the same geometry.
