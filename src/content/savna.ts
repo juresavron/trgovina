@@ -2,7 +2,7 @@ import type { ShopContent } from "./types";
 
 export const savnaContent: ShopContent = {
   nav: ["Savne", "Primerjava", "Vodniki", "Dostava in montaža", "Kontakt"],
-  artKey: "saunaCabin",
+  artKey: "saunaQuattro",
   kicker: "Infrardeča savna · Slovenija",
   h1: "Infrardeča savna za vaš dom.",
   sub: "Karbonski grelniki, hemlock les in poraba, manjša od likalnika. Dvočlanska ekipa jo prinese, sestavi in preizkusi — prvo savnanje še isti večer. Od 1.490 € z DDV.",
@@ -27,14 +27,14 @@ export const savnaContent: ShopContent = {
       desc: "Infrardeča savna za 2 osebi. V kopalnico, spalnico ali klet — brez posegov.",
       meta: "2 osebi · 1750 W · 230 V · 1,45 m³",
       price: "1.490 €",
-      art: "saunaCabin",
+      art: "saunaDuo",
     },
     {
       name: "SAVNA QUATTRO",
       desc: "Infrardeča savna za 4 osebe. Družinska seja brez čakanja na vrsto.",
       meta: "4 osebe · 2400 W · 230 V · 2,20 m³",
       price: "1.990 €",
-      art: "saunaCabin",
+      art: "saunaQuattro",
       badge: "Najbolje prodajana",
     },
     {

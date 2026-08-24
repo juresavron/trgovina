@@ -9,7 +9,7 @@
  * manual-action magnet and this network's whole strategy is SEO.
  */
 
-export type ArtKey = "saunaCabin" | "tub" | "pool" | "chair";
+export type ArtKey = "saunaDuo" | "saunaQuattro" | "tub" | "pool" | "chair";
 
 export interface ProductCard {
   name: string;

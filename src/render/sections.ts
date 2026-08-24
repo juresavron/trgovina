@@ -18,52 +18,109 @@ export interface RenderCtx {
   phoneDisplay: string;
 }
 
-/* Product art — duotone scenes; colors ride the theme CSS vars. */
-const ART: Record<ArtKey, string> = {
-  saunaCabin:
+/* Product art — duotone scenes; colors ride the theme CSS vars. Redrawn
+ * after the v1 screenshot audit: the sauna gains glass, an interior bench
+ * and heater glow (and a width per model); the plunge tub loses its floating
+ * steam curls for in-water ripples and gains a connected chiller; the pool
+ * top-view loses the two eye-like jets that made it read as a face. */
+
+function saunaSvg(w: number): string {
+  const x0 = (240 - w) / 2;
+  const doorX = 120 - 26;
+  return (
     '<svg viewBox="0 0 240 190" aria-hidden="true">' +
-    '<defs><linearGradient id="gw" x1="0" y1="0" x2="0" y2="1">' +
-    '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.55"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.22"/></linearGradient></defs>' +
-    '<rect x="28" y="18" width="184" height="160" rx="7" fill="url(#gw)"/>' +
-    '<rect x="40" y="30" width="160" height="136" rx="4" fill="var(--bg)" opacity="0.55"/>' +
-    '<rect x="96" y="42" width="72" height="124" rx="3" fill="var(--acc)" opacity="0.34"/>' +
-    '<rect x="96" y="42" width="72" height="124" rx="3" fill="none" stroke="var(--ink)" stroke-opacity="0.5" stroke-width="2"/>' +
-    '<circle cx="158" cy="106" r="4" fill="var(--ink)" opacity="0.75"/>' +
-    '<g stroke="var(--ink)" stroke-opacity="0.32" stroke-width="2">' +
-    '<line x1="52" y1="52" x2="84" y2="52"/><line x1="52" y1="76" x2="84" y2="76"/><line x1="52" y1="100" x2="84" y2="100"/>' +
-    '<line x1="178" y1="52" x2="188" y2="52"/><line x1="178" y1="76" x2="188" y2="76"/></g>' +
-    '<rect x="52" y="122" width="32" height="44" rx="2" fill="var(--acc)" opacity="0.5"/></svg>',
+    '<defs><linearGradient id="gw' + w + '" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.5"/>' +
+    '<stop offset="1" stop-color="var(--acc)" stop-opacity="0.18"/></linearGradient>' +
+    '<linearGradient id="gd' + w + '" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="var(--bg)" stop-opacity="0.55"/>' +
+    '<stop offset="1" stop-color="var(--bg)" stop-opacity="0.25"/></linearGradient></defs>' +
+    // roof cap + body
+    '<rect x="' + (x0 - 8) + '" y="14" width="' + (w + 16) + '" height="11" rx="4" fill="var(--acc)" opacity="0.45"/>' +
+    '<rect x="' + x0 + '" y="25" width="' + w + '" height="143" rx="5" fill="url(#gw' + w + ')"/>' +
+    // side slats
+    '<g stroke="var(--ink)" stroke-opacity="0.22" stroke-width="2">' +
+    [46, 66, 86, 106, 126].map((y) =>
+      '<line x1="' + (x0 + 10) + '" y1="' + y + '" x2="' + (doorX - 8) + '" y2="' + y + '"/>' +
+      '<line x1="' + (doorX + 60) + '" y1="' + y + '" x2="' + (x0 + w - 10) + '" y2="' + y + '"/>'
+    ).join('') + '</g>' +
+    // glass door with interior: bench + under-bench heater glow
+    '<rect x="' + doorX + '" y="40" width="52" height="126" rx="3" fill="url(#gd' + w + ')"/>' +
+    '<ellipse cx="120" cy="152" rx="22" ry="12" fill="var(--acc)" opacity="0.55"/>' +
+    '<rect x="' + (doorX + 8) + '" y="112" width="36" height="5" rx="2" fill="var(--ink)" opacity="0.5"/>' +
+    '<rect x="' + (doorX + 12) + '" y="117" width="4" height="18" fill="var(--ink)" opacity="0.35"/>' +
+    '<rect x="' + (doorX + 36) + '" y="117" width="4" height="18" fill="var(--ink)" opacity="0.35"/>' +
+    '<rect x="' + doorX + '" y="40" width="52" height="126" rx="3" fill="none" stroke="var(--ink)" stroke-opacity="0.5" stroke-width="2"/>' +
+    '<circle cx="' + (doorX + 45) + '" cy="104" r="3.5" fill="var(--ink)" opacity="0.8"/>' +
+    // feet
+    '<rect x="' + (x0 + 6) + '" y="168" width="14" height="7" rx="2" fill="var(--ink)" opacity="0.45"/>' +
+    '<rect x="' + (x0 + w - 20) + '" y="168" width="14" height="7" rx="2" fill="var(--ink)" opacity="0.45"/>' +
+    '</svg>'
+  );
+}
+
+const ART: Record<ArtKey, string> = {
+  saunaDuo: saunaSvg(136),
+  saunaQuattro: saunaSvg(190),
   tub:
     '<svg viewBox="0 0 240 190" aria-hidden="true">' +
     '<defs><linearGradient id="gt" x1="0" y1="0" x2="0" y2="1">' +
     '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.6"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.25"/></linearGradient></defs>' +
-    '<rect x="176" y="52" width="42" height="108" rx="6" fill="var(--ink)" opacity="0.35"/>' +
-    '<g stroke="var(--bg)" stroke-width="2" opacity="0.8"><line x1="184" y1="70" x2="210" y2="70"/><line x1="184" y1="82" x2="210" y2="82"/><line x1="184" y1="94" x2="210" y2="94"/></g>' +
-    '<path d="M22 78 Q22 64 40 64 L142 64 Q160 64 160 78 L156 138 Q154 160 120 160 L62 160 Q28 160 26 138 Z" fill="url(#gt)"/>' +
-    '<ellipse cx="91" cy="72" rx="62" ry="13" fill="var(--acc)" opacity="0.55"/>' +
-    '<ellipse cx="91" cy="72" rx="44" ry="8.5" fill="var(--bg)" opacity="0.5"/>' +
-    '<ellipse cx="91" cy="72" rx="27" ry="5" fill="var(--acc)" opacity="0.6"/>' +
-    '<path d="M60 40 Q64 30 60 22 M80 44 Q84 34 80 26 M100 40 Q104 30 100 22" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>',
+    // chiller unit: accent status light, grill, hose into the tub
+    '<rect x="178" y="56" width="42" height="110" rx="7" fill="var(--ink)" opacity="0.35"/>' +
+    '<g stroke="var(--bg)" stroke-width="2.5" opacity="0.8"><line x1="186" y1="76" x2="212" y2="76"/><line x1="186" y1="88" x2="212" y2="88"/><line x1="186" y1="100" x2="212" y2="100"/></g>' +
+    '<circle cx="212" cy="64" r="3" fill="var(--acc)"/>' +
+    '<path d="M160 118 C 172 118 172 132 182 138" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="5" fill="none" stroke-linecap="round"/>' +
+    // tub with in-water ripples (no floating steam)
+    '<path d="M20 76 Q20 62 38 62 L142 62 Q160 62 160 76 L156 138 Q154 162 118 162 L60 162 Q26 162 24 138 Z" fill="url(#gt)"/>' +
+    '<ellipse cx="90" cy="70" rx="62" ry="13" fill="var(--acc)" opacity="0.55"/>' +
+    '<ellipse cx="90" cy="70" rx="46" ry="9" fill="var(--bg)" opacity="0.45"/>' +
+    '<ellipse cx="90" cy="70" rx="32" ry="6" fill="none" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="1.5"/>' +
+    '<ellipse cx="90" cy="70" rx="18" ry="3.5" fill="none" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="1.5"/>' +
+    '<g stroke="var(--ink)" stroke-opacity="0.2" stroke-width="2"><line x1="34" y1="92" x2="34" y2="130"/><line x1="146" y1="92" x2="146" y2="130"/></g>' +
+    '</svg>',
   pool:
+    // Side elevation, deliberately asymmetric — the earlier top view kept
+    // reading as a face (paired headrests = eyes). One headrest, one control
+    // panel, panelled cabinet: a product shot silhouette, not a smiley.
     '<svg viewBox="0 0 240 190" aria-hidden="true">' +
     '<defs><linearGradient id="gp" x1="0" y1="0" x2="0" y2="1">' +
     '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.5"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.2"/></linearGradient></defs>' +
-    '<rect x="24" y="34" width="192" height="132" rx="26" fill="url(#gp)"/>' +
-    '<rect x="40" y="50" width="160" height="100" rx="18" fill="var(--acc)" opacity="0.45"/>' +
-    '<rect x="40" y="50" width="160" height="100" rx="18" fill="var(--bg)" opacity="0.35"/>' +
-    '<path d="M52 96 q12 -9 24 0 t24 0 t24 0 t24 0 t24 0" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
-    '<path d="M52 118 q12 -9 24 0 t24 0 t24 0 t24 0 t24 0" stroke="var(--ink)" stroke-opacity="0.25" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
-    '<g fill="var(--ink)" opacity="0.5"><circle cx="62" cy="70" r="4.5"/><circle cx="120" cy="66" r="4.5"/><circle cx="178" cy="70" r="4.5"/></g></svg>',
+    // one back headrest + control panel on the rim (asymmetric)
+    '<rect x="54" y="50" width="36" height="11" rx="5" fill="var(--ink)" opacity="0.45"/>' +
+    '<rect x="166" y="52" width="24" height="9" rx="3" fill="var(--ink)" opacity="0.5"/>' +
+    '<circle cx="186" cy="56" r="1.8" fill="var(--acc)"/>' +
+    // rim lip + water surface with one ripple
+    '<rect x="24" y="61" width="192" height="18" rx="9" fill="var(--acc)" opacity="0.55"/>' +
+    '<ellipse cx="120" cy="70" rx="84" ry="7.5" fill="var(--bg)" opacity="0.45"/>' +
+    '<path d="M60 70 q10 -5 20 0 t20 0 t20 0 t20 0 t20 0" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="2" fill="none" stroke-linecap="round"/>' +
+    // panelled cabinet
+    '<rect x="30" y="79" width="180" height="82" rx="10" fill="url(#gp)"/>' +
+    '<g stroke="var(--ink)" stroke-opacity="0.22" stroke-width="2">' +
+    '<line x1="58" y1="86" x2="58" y2="154"/><line x1="86" y1="86" x2="86" y2="154"/>' +
+    '<line x1="114" y1="86" x2="114" y2="154"/><line x1="142" y1="86" x2="142" y2="154"/>' +
+    '<line x1="170" y1="86" x2="170" y2="154"/></g>' +
+    // LED underline + feet
+    '<line x1="44" y1="158" x2="196" y2="158" stroke="var(--acc)" stroke-opacity="0.6" stroke-width="2.5" stroke-linecap="round"/>' +
+    '<rect x="40" y="163" width="16" height="7" rx="2" fill="var(--ink)" opacity="0.45"/>' +
+    '<rect x="184" y="163" width="16" height="7" rx="2" fill="var(--ink)" opacity="0.45"/>' +
+    '</svg>',
   chair:
     '<svg viewBox="0 0 240 190" aria-hidden="true">' +
     '<defs><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1">' +
     '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.6"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.24"/></linearGradient></defs>' +
+    // headrest pillow + back
     '<path d="M78 26 Q104 18 112 40 L118 64 Q120 74 112 78 L88 86 Q78 88 76 78 L70 44 Q68 32 78 26 Z" fill="url(#gc)"/>' +
+    '<ellipse cx="93" cy="44" rx="16" ry="9" fill="var(--bg)" opacity="0.3" transform="rotate(-14 93 44)"/>' +
+    // seat + ottoman
     '<path d="M70 88 Q116 74 128 92 L134 116 Q170 112 186 128 Q198 142 186 152 L120 168 Q64 176 52 148 L48 112 Q48 94 70 88 Z" fill="url(#gc)"/>' +
     '<path d="M134 116 L186 128" stroke="var(--bg)" stroke-width="3" opacity="0.6"/>' +
     '<path d="M60 100 Q100 88 122 98" stroke="var(--bg)" stroke-width="3" fill="none" opacity="0.55"/>' +
-    '<rect x="44" y="150" width="20" height="22" rx="4" fill="var(--ink)" opacity="0.4"/>' +
-    '<rect x="176" y="152" width="20" height="20" rx="4" fill="var(--ink)" opacity="0.4"/></svg>',
+    '<path d="M64 116 Q100 104 124 112" stroke="var(--bg)" stroke-width="2" fill="none" opacity="0.35"/>' +
+    // integrated feet
+    '<path d="M52 148 q-8 16 6 24 l14 -6 q-12 -6 -14 -20 Z" fill="var(--ink)" opacity="0.45"/>' +
+    '<path d="M186 152 q6 12 -4 18 l-12 -4 q10 -6 10 -16 Z" fill="var(--ink)" opacity="0.45"/>' +
+    '</svg>',
 };
 
 function scene(art: ArtKey, cap?: string): string {
@@ -91,7 +148,7 @@ function hero(ctx: RenderCtx): string {
     '<p class="sub">' + esc(c.sub) + "</p>" +
     '<div class="ctas"><a class="btn btn-fill" href="#izbor">' + esc(c.cta) + "</a>" +
     '<a class="btn btn-ghost" href="' + ctx.phoneHref + '">Pokličite ' + esc(ctx.phoneDisplay) + "</a></div></div>" +
-    '<div class="hero-scene">' + scene(c.artKey, "fotografija: hero ambient") + "</div>" +
+    '<div class="hero-scene">' + scene(c.artKey, "vizualizacija — fotografije v pripravi") + "</div>" +
     "</div></div></section>"
   );
 }
@@ -222,7 +279,7 @@ export function renderPdpBody(ctx: RenderCtx): string {
   const d = ctx.content.pdp;
   return (
     '<section class="act"><div class="wrap"><div class="pdp-grid">' +
-    '<div class="gallery">' + scene(ctx.content.artKey, "fotografija: galerija") +
+    '<div class="gallery">' + scene(ctx.content.artKey, "vizualizacija") +
     '<div class="thumbs">' + [0, 1, 2].map(() => scene(ctx.content.artKey)).join("") + "</div></div>" +
     '<div class="buy"><p class="eyebrow">' + esc(d.eyebrow) + "</p>" +
     '<h1 class="display" style="margin-top:14px">' + esc(d.title) + "</h1>" +

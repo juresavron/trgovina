@@ -53,7 +53,7 @@ export const bazenContent: ShopContent = {
       ["Priklop in zagon", "Napolnimo, zaženemo filtracijo in ogrevanje ter umerimo šobe."],
       ["Predaja", "Pokažemo vzdrževanje: 10 minut na teden, nič več."],
     ],
-    claim: ["Bazen je težak štiristo kilogramov. ", "Za vas ga premikamo mi."],
+    claim: ["Bazen tehta štiristo kilogramov. ", "Premaknemo ga mi."],
   },
   reviews: [
     {
