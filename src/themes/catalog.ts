@@ -85,8 +85,8 @@ export const THEME_CATALOG: Record<ThemeKey, ThemeCatalogEntry> = {
     name: "Studio",
     voice: "Črno-bela, plakatna, fotografska — tipografija kot naslovnica.",
     surface: "light",
-    radius: { card: "8px", control: "2px" },
-    displayFont: "Archivo",
+    radius: { card: "12px", control: "0px" },
+    displayFont: "Bricolage Grotesque",
     recommendedFor: ["wellness", "neutral"],
     composition: {
       home: ["hero", "marquee", "products", "trust", "moat", "reviews", "guides"],

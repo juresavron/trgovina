@@ -60,7 +60,40 @@ export const STUDIO_EFFECTS_CSS = `
     animation: st-marquee 38s linear infinite;
   }
   :root[data-theme="studio"] .st-mq-track--reverse { animation-direction: reverse; }
-  :root[data-theme="studio"] .st-mq:hover .st-mq-track { animation-play-state: paused; }
+  :root[data-theme="studio"] .st-mq:hover .st-mq-track,
+  :root[data-theme="studio"] .st-mq:focus-within .st-mq-track { animation-play-state: paused; }
+
+  /* WCAG 2.2.2 (Pause, Stop, Hide, Level A): motion that starts automatically,
+     runs over 5s and sits alongside other content needs a real mechanism to
+     stop it. Hover is not one — it excludes keyboard and touch. This is a
+     checkbox: an actual focusable control, operable by keyboard, costing no
+     JavaScript. The label swaps its text via ::after so one control reads
+     correctly in both states. */
+  :root[data-theme="studio"] .st-mq-pause { position: absolute; opacity: 0; pointer-events: none; }
+  :root[data-theme="studio"] .st-mq-toggle {
+    flex: none;
+    font: inherit;
+    font-size: clamp(0.625rem, 0.55vw, 0.6875rem);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    border: 1px solid var(--ink-mute);
+    border-radius: var(--r-pill);
+    padding: 5px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s ease, border-color 0.2s ease;
+  }
+  :root[data-theme="studio"] .st-mq-toggle:hover { color: var(--ink); border-color: var(--ink); }
+  :root[data-theme="studio"] .st-mq-pause:focus-visible + .st-mq-toggle {
+    outline: 2px solid var(--ink);
+    outline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-mq-toggle::after { content: "Ustavi"; }
+  :root[data-theme="studio"] .st-mq-pause:checked + .st-mq-toggle::after { content: "Zaženi"; }
+  :root[data-theme="studio"] .st-mq-pause:checked ~ .st-mq-viewport .st-mq-track {
+    animation-play-state: paused;
+  }
   @keyframes st-marquee {
     from { transform: translate3d(0, 0, 0); }
     to   { transform: translate3d(-50%, 0, 0); }
@@ -146,7 +179,7 @@ export const STUDIO_EFFECTS_CSS = `
       width: 100%;
       flex-wrap: wrap;
     }
-    :root[data-theme="studio"] .st-mq-track--clone { display: none; }
+    :root[data-theme="studio"] .st-mq-clone { display: none; }
     :root[data-theme="studio"] .st-lift,
     :root[data-theme="studio"] .st-zoom > *,
     :root[data-theme="studio"] .st-arrow-svg,
