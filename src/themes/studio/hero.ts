@@ -7,7 +7,7 @@
  *
  * All three are full-bleed: they render OUTSIDE `.wrap`, so the page gutter
  * never applies and the panels meet the viewport edges. The gutter is
- * reintroduced inside each band as --studio-gutter.
+ * reintroduced inside each band as var(--studio-gutter), declared in tokens.ts.
  *
  * Scale translation: the baseline was measured at a 2000px viewport, so every
  * measured px is expressed as clamp(min, measured/20 vw, measured) — the
@@ -15,31 +15,30 @@
  * stack gaps, 90px vs 24px type) survive the shrink.
  *
  * Token discipline (docs/THEMES.md): colors, radii and faces are var(--…)
- * only; the handful of values the baseline measures but tokens.ts does not
- * carry are declared below as documented --studio-* variables. Every selector
- * is scoped :root[data-theme="studio"] because zarja/lednik/salon share the
- * sheet.
+ * only, and tokens.ts is the ONLY declaration site — this module re-declares
+ * nothing it consumes, because two declarations at equal specificity let load
+ * order pick the value for the whole storefront. Likewise the marquee's
+ * animation and keyframes belong to effects.ts, which also owns the ticker's
+ * pause mechanism; renderStudioMarquee() below emits the markup that mechanism
+ * needs. Every selector is scoped :root[data-theme="studio"] because
+ * zarja/lednik/salon share the sheet.
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { arrowWatermark } from "./icons";
 
 export const STUDIO_HERO_CSS = `
-  /* ---- Values the baseline measures that tokens.ts does not carry ---- */
+  /* ---- The only values this module declares ----------------------------
+   * tokens.ts is the single declaration site: --studio-gutter, --photo-cool,
+   * --photo-warm and --on-invert-soft live there and are consumed here as
+   * var(--…) with no fallback — a fallback would silently resurrect the
+   * duplicate this file used to carry. What remains below is the one measure
+   * tokens.ts does not carry: the hero stack's two internal rhythms. */
   :root[data-theme="studio"] {
-    /* §3: page gutter 54px @2000px — the wordmark, headings and bands start here. */
-    --studio-gutter: clamp(20px, 2.7vw, 54px);
-    /* §4.2: the two hero stack rhythms — pill→statement 48px, sub→button 56px.
-     * Kept as variables so the 48:56 ratio is edited in one place, never drifts. */
+    /* §4.2: pill→statement 48px, sub→button 56px. Kept as variables so the
+     * 48:56 ratio is edited in one place and never drifts. */
     --studio-gap-stack: clamp(20px, 2.4vw, 48px);
     --studio-gap-cta: clamp(24px, 2.8vw, 56px);
-    /* §4.2: the grounds the two hero product photos sit on — a cool grey left,
-     * a warm sand right. Sampled off the renders; no token equivalent because
-     * they are photo backdrops, not UI surfaces. */
-    --studio-photo-cool: #d9d9d9;
-    --studio-photo-warm: #e8e0d6;
-    /* §4.2: the hero sub on black is lighter than --on-invert-mute (#a8a8a8);
-     * measured #d6d6d6. 13.4:1 on #0d0d0d. */
-    --studio-on-invert-soft: #d6d6d6;
   }
 
   /* ---- §4.2 Hero triptych ---- */
@@ -56,18 +55,35 @@ export const STUDIO_HERO_CSS = `
     position: relative;
     min-width: 0;
     isolation: isolate;
+    /* The watermark is drawn wider than its panel; clip it here so it cannot
+     * bleed into the neighbouring column. */
+    overflow: clip;
   }
-  :root[data-theme="studio"] .st-hero-photo-a { background: var(--studio-photo-cool); }
-  :root[data-theme="studio"] .st-hero-photo-b { background: var(--studio-photo-warm); }
+  :root[data-theme="studio"] .st-hero-photo-a { background: var(--photo-cool); }
+  :root[data-theme="studio"] .st-hero-photo-b { background: var(--photo-warm); }
 
-  /* Faint oversized circle watermark behind the left product (§4.2). */
-  :root[data-theme="studio"] .st-hero-photo-a::before {
-    content: "";
+  /* §4.14 watermark — the ARROW-STADIUM outline, scaled enormous and set a few
+   * percent off the ground. Not a circle and not a gradient blob: it is the
+   * brand motif, so it is the real outline from icons.ts, rendered as an
+   * aria-hidden element BEHIND the panel content (z-index 0). The ink is
+   * currentColor, set per band below. */
+  :root[data-theme="studio"] .st-hero-wm {
     position: absolute; z-index: 0;
-    left: 50%; top: 46%; transform: translate(-50%, -50%);
-    width: 128%; aspect-ratio: 1;
-    border-radius: var(--r-pill);
-    background: color-mix(in srgb, var(--bg) 42%, transparent);
+    left: 50%; top: 50%; transform: translate(-50%, -50%);
+    width: 128%; height: 58%;
+    pointer-events: none;
+  }
+  :root[data-theme="studio"] .st-hero-wm .st-watermark {
+    display: block; width: 100%; height: 100%;
+  }
+  /* Light band: white pulled back off the #d9d9d9 ground. */
+  :root[data-theme="studio"] .st-hero-photo-a .st-hero-wm {
+    color: color-mix(in srgb, var(--bg) 46%, transparent);
+  }
+  /* Dark band: --ink-invert-2 is the baseline's #161616 watermark rung, one
+   * step off --ink-invert (§2 token table). */
+  :root[data-theme="studio"] .st-hero-offer .st-hero-wm {
+    color: var(--ink-invert-2);
   }
 
   /* Centre: black, the whole message stack, centered. */
@@ -78,15 +94,6 @@ export const STUDIO_HERO_CSS = `
     align-items: center;
     justify-content: center;
     padding: clamp(48px, 5.5vw, 110px) var(--studio-gutter);
-  }
-  /* Faint dark ellipse/circle watermarks behind the stack (§4.2). --ink-invert-2
-   * is the baseline's #161616 watermark rung. */
-  :root[data-theme="studio"] .st-hero-offer::before {
-    content: "";
-    position: absolute; inset: 0; z-index: 0;
-    background:
-      radial-gradient(38% 26% at 50% 22%, var(--ink-invert-2), transparent 70%),
-      radial-gradient(46% 32% at 50% 82%, var(--ink-invert-2), transparent 72%);
   }
   :root[data-theme="studio"] .st-hero-stack {
     position: relative; z-index: 1;
@@ -130,7 +137,8 @@ export const STUDIO_HERO_CSS = `
     font-family: var(--f-body);
     font-size: clamp(1rem, 1.2vw, 1.5rem);
     line-height: 1.5;
-    color: var(--studio-on-invert-soft);
+    /* Measured #d6d6d6 — lighter than --on-invert-mute. 13.4:1 on #0d0d0d. */
+    color: var(--on-invert-soft);
   }
   /* Buttons are SHARP (--r-ctrl, §3). White on black: --bg is the fill. */
   :root[data-theme="studio"] .st-btn-light {
@@ -183,7 +191,8 @@ export const STUDIO_HERO_CSS = `
     border-radius: var(--r-pill);
     background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--ink) 20%, transparent), transparent 72%);
   }
-  /* --ink-soft, not --ink-mute: 6.3:1 on the #d9d9d9 ground (mute is 3.2:1). */
+  /* --ink-soft, not --ink-mute: 6.3:1 on the cool grey ground and better on the
+   * warm one (mute is 3.2:1 and fails on both). */
   :root[data-theme="studio"] .st-photo-cap {
     position: absolute; z-index: 2;
     top: var(--studio-gutter); left: var(--studio-gutter);
@@ -193,6 +202,10 @@ export const STUDIO_HERO_CSS = `
     text-transform: uppercase;
     color: var(--ink-soft);
   }
+  /* Both photo panels carry the "photography pending" disclosure, but exactly
+   * ONE is ever visible: panel A's above 900px, panel B's below it — where
+   * panel A is display:none and the disclosure would otherwise vanish with it. */
+  :root[data-theme="studio"] .st-hero-photo-b .st-photo-cap { display: none; }
 
   /* Right column overlay: product name + price on a legibility scrim. */
   :root[data-theme="studio"] .st-hero-scrim {
@@ -214,12 +227,37 @@ export const STUDIO_HERO_CSS = `
     font-size: clamp(1.375rem, 2vw, 2.5rem);
     letter-spacing: -0.01em; line-height: 1.15;
     color: var(--on-invert);
+    /* A long model name must fold inside the column, never widen the panel. */
+    overflow-wrap: break-word;
+  }
+  /* §4.2 measures the price row as "26px white with struck compare-at". */
+  :root[data-theme="studio"] .st-hero-prices {
+    display: flex; align-items: baseline; flex-wrap: wrap;
+    gap: clamp(8px, 0.8vw, 16px);
   }
   :root[data-theme="studio"] .st-hero-price {
     font-family: var(--f-body);
     font-size: clamp(1.0625rem, 1.3vw, 1.625rem);
     font-weight: 500; font-variant-numeric: tabular-nums;
     color: var(--on-invert);
+  }
+  /* The struck compare-at, 20px in the muted on-dark rung (#a8a8a8 on the
+   * scrim's near-black: 7.4:1 — it is secondary, never illegible). */
+  :root[data-theme="studio"] .st-hero-was {
+    /* Containing block for the visually-hidden "prejšnja cena" prefix. */
+    position: relative;
+    font-family: var(--f-body);
+    font-size: clamp(0.8125rem, 1vw, 1.25rem);
+    font-weight: 500; font-variant-numeric: tabular-nums;
+    color: var(--on-invert-mute);
+    text-decoration-line: line-through;
+    text-decoration-thickness: 1px;
+  }
+  /* Local copy of chrome.ts's .st-vh: the hero must not depend on the chrome
+   * module being on the page for its screen-reader prefix to stay hidden. */
+  :root[data-theme="studio"] .st-hero-vh {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
   }
 
   /* ---- §4.5 Wordmark band ---- */
@@ -271,7 +309,7 @@ export const STUDIO_HERO_CSS = `
     width: clamp(200px, 40vw, 760px);
     aspect-ratio: 4 / 3;
     border-radius: var(--r-media);
-    background: linear-gradient(168deg, var(--studio-photo-warm), var(--bg-alt));
+    background: linear-gradient(168deg, var(--photo-warm), var(--bg-alt));
   }
   /* Inside the band object the mass is the product itself, not a subject on a
    * backdrop, so it sits tighter to the frame than in a hero panel. */
@@ -304,6 +342,9 @@ export const STUDIO_HERO_CSS = `
     line-height: 1.35;
     color: var(--on-invert);
   }
+  /* §4.5's bottom-left cluster: chip, product name and CTA are ONE group,
+   * reading left to right off the gutter. Nothing pushes the CTA to the far
+   * edge — on a full-bleed band that separates it from the name it belongs to. */
   :root[data-theme="studio"] .st-band-foot {
     position: relative; z-index: 3;
     display: flex; align-items: center; flex-wrap: wrap;
@@ -327,21 +368,28 @@ export const STUDIO_HERO_CSS = `
     font-size: clamp(1.375rem, 2.3vw, 2.875rem);
     letter-spacing: var(--track-display); line-height: 1.1;
     color: var(--on-invert);
+    /* A long model name must fold inside the cluster, never widen the band. */
+    overflow-wrap: break-word;
   }
-  :root[data-theme="studio"] .st-band-foot .st-btn-light { margin-left: auto; }
 
-  /* ---- §4.6 Marquee ---- */
+  /* ---- §4.6 Marquee ----
+   * The track, its keyframes and the pause mechanism (.st-mq-pause checkbox +
+   * .st-mq-toggle label) all live in effects.ts — this module only lays the
+   * band out and inks its type. Re-declaring the animation here is what made
+   * load order decide the ticker's duration, so nothing below touches it. */
   :root[data-theme="studio"] .st-mq {
     background: var(--bg);
     border-block: 1px solid var(--line);
     padding: clamp(14px, 1.2vw, 24px) 0;
+    /* The pause control sits on the gutter, the ticker runs off the right
+     * edge — a full-bleed band that still carries a reachable control. */
+    display: flex; align-items: center;
+    gap: clamp(12px, 1.2vw, 24px);
+    padding-inline: var(--studio-gutter) 0;
   }
-  :root[data-theme="studio"] .st-mq-viewport { overflow: hidden; }
-  :root[data-theme="studio"] .st-mq-track {
-    display: flex; width: max-content;
-    /* The track holds the item set twice, so −50% lands on the clone's first
-     * item: the loop restarts on a pixel-identical frame, no seam. */
-    animation: st-marquee 42s linear infinite;
+  :root[data-theme="studio"] .st-mq-viewport {
+    flex: 1 1 auto; min-width: 0;
+    overflow: hidden;
   }
   :root[data-theme="studio"] .st-mq-group { display: flex; align-items: center; }
   :root[data-theme="studio"] .st-mq-item,
@@ -356,10 +404,6 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-mq-sep {
     color: var(--ink-mute);
     padding: 0 clamp(18px, 2.2vw, 44px);
-  }
-  @keyframes st-marquee {
-    from { transform: translate3d(0, 0, 0); }
-    to { transform: translate3d(-50%, 0, 0); }
   }
 
   /* ---- Below 900px: the message leads, ONE photo supports it ---- */
@@ -377,11 +421,13 @@ export const STUDIO_HERO_CSS = `
      * the other is dropped outright rather than squeezing three panels. */
     :root[data-theme="studio"] .st-hero-photo-b { order: 2; min-height: 58svh; }
     :root[data-theme="studio"] .st-hero-photo-a { display: none; }
+    /* …so the placeholder disclosure moves with it: panel B's caption is the
+     * one that shows here (see .st-hero-photo-b .st-photo-cap above). */
+    :root[data-theme="studio"] .st-hero-photo-b .st-photo-cap { display: block; }
 
     :root[data-theme="studio"] .st-band { min-height: clamp(380px, 72vh, 620px); }
     :root[data-theme="studio"] .st-band-callout { display: none; }
     :root[data-theme="studio"] .st-band-object { bottom: clamp(120px, 34vw, 240px); }
-    :root[data-theme="studio"] .st-band-foot .st-btn-light { margin-left: 0; }
   }
   @media (max-width: 560px) {
     :root[data-theme="studio"] .st-hero-photo-b { min-height: 48svh; }
@@ -389,17 +435,16 @@ export const STUDIO_HERO_CSS = `
     :root[data-theme="studio"] .st-band-foot .st-btn-light { width: 100%; }
   }
 
-  /* ---- Motion ---- */
+  /* ---- Motion ----
+   * effects.ts owns the reduced-motion reset for the ticker itself (track
+   * animation off, clone hidden, items wrapped). Two consequences are this
+   * module's to handle: the wrapped set needs the gutter on its trailing edge,
+   * and the pause control now toggles an animation that no longer runs — a
+   * control that does nothing, so it goes. */
   @media (prefers-reduced-motion: reduce) {
-    /* Reset the transform, never merely pause: a paused ticker freezes
-     * mid-scroll with half its words cut off. The clone is removed so the
-     * static state reads once, and the rail gets its own scroller. */
-    :root[data-theme="studio"] .st-mq-track { animation: none; transform: none; }
-    :root[data-theme="studio"] .st-mq-clone { display: none; }
-    :root[data-theme="studio"] .st-mq-viewport {
-      overflow-x: auto;
-      padding-inline: var(--studio-gutter);
-    }
+    :root[data-theme="studio"] .st-mq-viewport { padding-inline-end: var(--studio-gutter); }
+    :root[data-theme="studio"] .st-mq-pause,
+    :root[data-theme="studio"] .st-mq-toggle { display: none; }
     :root[data-theme="studio"] .st-btn-light { transition: none; }
   }
 `;
@@ -424,29 +469,64 @@ function pdpHref(ctx: RenderCtx): string {
 }
 
 /**
+ * §4.14's arrow-stadium watermark, wrapped in its positioning box. Decorative
+ * only, so the wrapper is aria-hidden as well as the svg: no assistive
+ * technology should meet the brand motif twice.
+ */
+function watermark(): string {
+  return '<span class="st-hero-wm" aria-hidden="true">' + arrowWatermark() + "</span>";
+}
+
+/**
+ * The struck compare-at of §4.2's price overlay.
+ *
+ * PdpContent does not (yet) carry a compare-at field, and deriving one from
+ * `price` would print a fabricated discount over a real product. Read
+ * structurally, exactly as commerce.ts and pdp.ts do, so adding
+ * `compareAt?: string` to the interface needs no change here.
+ */
+function compareAt(d: RenderCtx["content"]["pdp"]): string | null {
+  const v: unknown = (d as { compareAt?: unknown }).compareAt;
+  return typeof v === "string" && v.length > 0 ? v : null;
+}
+
+/**
  * §4.2 — hero triptych. Carries the page's single h1; the wordmark band and
  * marquee below deliberately use non-heading elements so this stays the only
  * one on the page.
  */
 export function renderStudioHero(ctx: RenderCtx): string {
   const c = ctx.content;
+  const was = compareAt(c.pdp);
   return (
     '<section class="st-hero">' +
     '<div class="st-hero-panel st-hero-photo-a">' +
+    watermark() +
     photoSlot("fotografija v pripravi") +
     "</div>" +
-    '<div class="st-hero-panel st-hero-offer"><div class="st-hero-stack">' +
+    '<div class="st-hero-panel st-hero-offer">' +
+    watermark() +
+    '<div class="st-hero-stack">' +
     '<span class="st-hero-pill">' + esc(c.kicker) + "</span>" +
     "<h1>" + esc(c.h1) + "</h1>" +
     '<p class="st-hero-sub">' + esc(c.sub) + "</p>" +
     '<a class="st-btn-light st-hero-cta" href="#izbor">' + esc(c.cta) + "</a>" +
     "</div></div>" +
+    // The caption rides BOTH photo panels; CSS shows exactly one, so the
+    // disclosure survives panel A being dropped below 900px.
     '<div class="st-hero-panel st-hero-photo-b">' +
-    photoSlot() +
+    photoSlot("fotografija v pripravi") +
     '<div class="st-hero-scrim">' +
     '<span class="st-hero-name">' + esc(c.pdp.title) + "</span>" +
+    '<span class="st-hero-prices">' +
     '<span class="st-hero-price">' + esc(c.pdp.price) + "</span>" +
-    "</div></div></section>"
+    // The <s> alone is silent in most screen readers; the hidden prefix is
+    // what makes "prejšnja cena 3.499 €" the announced relationship.
+    (was
+      ? '<s class="st-hero-was"><span class="st-hero-vh">prejšnja cena </span>' +
+        esc(was) + "</s>"
+      : "") +
+    "</span></div></div></section>"
   );
 }
 
@@ -482,8 +562,20 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
 
 /**
  * §4.6 — USP ticker. One track holding the item set twice; the clone is
- * aria-hidden so a screen reader hears each claim once, and the −50%
- * translate loops without a visible seam.
+ * aria-hidden so a screen reader hears each claim once, and the −50% translate
+ * loops without a visible seam.
+ *
+ * WCAG 2.2.2 (Pause, Stop, Hide, Level A): the scroll starts on its own, runs
+ * far past five seconds and sits beside other content, so it needs a real stop
+ * mechanism. effects.ts supplies it in CSS —
+ * `.st-mq-pause:checked ~ .st-mq-viewport .st-mq-track` — and this markup is
+ * the half that makes it exist: a checkbox, its label, then the viewport, all
+ * siblings, in that order, because the selector is `+` then `~`. Zero
+ * JavaScript, operable by keyboard and touch, unlike a :hover pause.
+ *
+ * The label is empty on purpose: its text is `content:` in effects.ts so one
+ * control can read "Ustavi"/"Zaženi" per state, which leaves nothing for a
+ * screen reader to announce — hence the aria-label.
  */
 export function renderStudioMarquee(ctx: RenderCtx): string {
   const group = ctx.content.trust
@@ -494,7 +586,11 @@ export function renderStudioMarquee(ctx: RenderCtx): string {
     )
     .join("");
   return (
-    '<section class="st-mq" aria-label="Prednosti"><div class="st-mq-viewport">' +
+    '<section class="st-mq" aria-label="Prednosti">' +
+    '<input class="st-mq-pause" id="st-mq-pause" type="checkbox">' +
+    '<label class="st-mq-toggle" for="st-mq-pause" ' +
+    'aria-label="Ustavi ali zaženi drsenje"></label>' +
+    '<div class="st-mq-viewport">' +
     '<div class="st-mq-track">' +
     '<span class="st-mq-group">' + group + "</span>" +
     '<span class="st-mq-group st-mq-clone" aria-hidden="true">' + group + "</span>" +

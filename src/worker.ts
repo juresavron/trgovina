@@ -193,7 +193,7 @@ export function handleRequest(request: Request): Response {
       noindex: dev,
       q,
       devBar,
-      bodyHtml: renderPdp(shop, content, q),
+      bodyHtml: renderPdp(shop, content, q, theme),
       jsonLd: [organizationJsonLd(shop), productJsonLd(shop, content)],
     });
     return htmlResponse(doc, 200, baseHeaders);
@@ -212,7 +212,7 @@ export function handleRequest(request: Request): Response {
         noindex: true,
         q,
         devBar,
-        bodyHtml: renderPlaceholder(shop, content, title, q),
+        bodyHtml: renderPlaceholder(shop, content, title, q, theme),
       });
       return htmlResponse(doc, 200, { ...baseHeaders, "x-robots-tag": "noindex, nofollow" });
     }
@@ -229,7 +229,7 @@ export function handleRequest(request: Request): Response {
     noindex: true,
     q,
     devBar,
-    bodyHtml: renderPlaceholder(shop, content, "Te strani ni.", q),
+    bodyHtml: renderPlaceholder(shop, content, "Te strani ni.", q, theme),
   });
   return htmlResponse(doc, 404, { ...baseHeaders, "x-robots-tag": "noindex, nofollow" });
 }

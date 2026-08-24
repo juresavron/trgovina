@@ -13,6 +13,13 @@ import {
 } from "./sections";
 
 import { STUDIO_FONTS_HREF } from "../themes/studio/tokens";
+import {
+  renderStudioExtras,
+  renderStudioFooter,
+  renderStudioHeader,
+  renderStudioPdp,
+  renderStudioSection,
+} from "../themes/studio";
 
 /**
  * Font payload per theme — studio runs a different pair (Bricolage Grotesque
@@ -138,29 +145,52 @@ export function buildCtx(shop: ShopConfig, content: ShopContent, q: string): Ren
 export function renderHome(shop: ShopConfig, content: ShopContent, theme: ThemeKey, q: string): string {
   const ctx = buildCtx(shop, content, q);
   const composition = THEME_CATALOG[theme].composition.home;
-  return (
-    renderHeader(ctx) +
-    "<main>" + composition.map((k) => renderSection(k, ctx)).join("") + "</main>" +
-    renderFooter(ctx)
-  );
+  const studio = theme === "studio";
+  // A studio section falls back to the kernel renderer when the theme has no
+  // module for that key, so the composition can never render a hole.
+  const body = composition
+    .map((k) => {
+      const own = studio ? renderStudioSection(k, ctx) : null;
+      return (own ?? renderSection(k, ctx)) + (studio ? renderStudioExtras(k, ctx) : "");
+    })
+    .join("");
+  return studio
+    ? renderStudioHeader(ctx) + "<main>" + body + "</main>" + renderStudioFooter(ctx)
+    : renderHeader(ctx) + "<main>" + body + "</main>" + renderFooter(ctx);
 }
 
-export function renderPdp(shop: ShopConfig, content: ShopContent, q: string): string {
+export function renderPdp(
+  shop: ShopConfig,
+  content: ShopContent,
+  q: string,
+  theme: ThemeKey,
+): string {
   const ctx = buildCtx(shop, content, q);
+  if (theme === "studio") {
+    return renderStudioHeader(ctx) + "<main>" + renderStudioPdp(ctx) + "</main>" + renderStudioFooter(ctx);
+  }
   return renderHeader(ctx) + "<main>" + renderPdpBody(ctx) + "</main>" + renderFooter(ctx);
 }
 
-export function renderPlaceholder(shop: ShopConfig, content: ShopContent, title: string, q: string): string {
+export function renderPlaceholder(
+  shop: ShopConfig,
+  content: ShopContent,
+  title: string,
+  q: string,
+  theme: ThemeKey,
+): string {
   const ctx = buildCtx(shop, content, q);
+  const head = theme === "studio" ? renderStudioHeader(ctx) : renderHeader(ctx);
+  const foot = theme === "studio" ? renderStudioFooter(ctx) : renderFooter(ctx);
   return (
-    renderHeader(ctx) +
+    head +
     '<main><section class="act"><div class="wrap placeholder"><div>' +
     '<p class="eyebrow">' + esc(shop.name) + "</p>" +
     '<h1 class="display" style="margin-top:14px">' + esc(title) + "</h1>" +
     "<p>Stran je v pripravi. Medtem si oglejte ponudbo ali nas pokličite.</p>" +
     '<a class="btn btn-fill" href="/' + q + '">Na začetno stran</a>' +
     "</div></div></section></main>" +
-    renderFooter(ctx)
+    foot
   );
 }
 

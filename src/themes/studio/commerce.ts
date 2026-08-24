@@ -19,32 +19,32 @@
  * name + a meta/price line — so `desc`/`meta` surface in the rail rather than
  * being bolted onto a grid card the baseline never gave a spec line to.
  *
- * No dead controls (§5.2): this Worker ships no JS, so the rail's measured
- * arrow buttons become real anchor links to focusable card targets, driven by
- * CSS scroll-snap. Nothing here renders a control that cannot act.
+ * No dead controls (§5.2): this Worker ships no JS, so the rail's two measured
+ * arrow buttons become real anchor links to focusable card targets — prev to
+ * the first card, next to the last — driven by CSS scroll-snap. Nothing here
+ * renders a control that cannot act. The glyph is the STADIUM of §4.14
+ * (icons.ts, path data verbatim from the source SVGs), never a circle and
+ * never a numeral: the source ships exactly two arrows, not one per card.
  *
- * Token discipline (docs/THEMES.md): colors, radii and faces are var(--…)
- * only; values the baseline measures that tokens.ts does not carry are
- * declared below as documented --studio-* variables. Every selector is scoped
- * :root[data-theme="studio"] — zarja/lednik/salon share this sheet.
+ * Token discipline (docs/THEMES.md): colors, radii, faces, gutter and rhythm
+ * are var(--…) from tokens.ts, which is the single declaration site. Only the
+ * three ratios/lengths this act measures and tokens.ts does not carry are
+ * declared below. Every selector is scoped :root[data-theme="studio"] —
+ * zarja/lednik/salon share this sheet.
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { arrowIcon } from "./icons";
 import type { ProductCard, UtilCard } from "../../content/types";
 
 export const STUDIO_COMMERCE_CSS = `
-  /* ---- Values the baseline measures that tokens.ts does not carry ---- */
+  /* ---- Values the baseline measures that tokens.ts does not carry ----
+   * --studio-gutter, --studio-card-gap and the section rhythm are NOT among
+   * them: tokens.ts declares those, and a second declaration here at equal
+   * specificity would let sheet order decide the storefront's gutter. */
   :root[data-theme="studio"] {
-    /* §3: the 54px page gutter. Same value as chrome.ts/hero.ts declare —
-     * repeated here so this module stands alone if the sheet is assembled
-     * without them; identical text means the cascade order cannot make it
-     * drift. */
-    --studio-gutter: clamp(18px, 2.7vw, 54px);
     /* §4.7: measured ~48px card padding — the card's whole "gallery" feel. */
     --studio-card-pad: clamp(16px, 2.4vw, 48px);
-    /* Gap between cards in both the grid and the rail. Measured off the
-     * 3-up row inside the 1900px band. */
-    --studio-card-gap: clamp(12px, 1.6vw, 32px);
     /* §4.4: measured 470px rail card. The vw term is what produces the peek:
      * whole cards never tile the viewport exactly, so a fraction of the next
      * one is always visible past the right gutter. */
@@ -55,8 +55,18 @@ export const STUDIO_COMMERCE_CSS = `
      * it lands at ~78% of the card's height as measured. */
     --studio-panel-ar: 3 / 4;
     /* §4.4: the rail card's image area is the top ~55% — a shorter panel than
-     * the grid's, which is what makes a rail card read as 470×500, not 470×800. */
-    --studio-rail-panel-ar: 4 / 3;
+     * the grid's, which is what makes a rail card read as 470×500, not 470×800.
+     * 3/2, not 4/3: inside a ~446px content box a 4/3 panel is 335px tall and
+     * eats ~64% of the card, while 3/2 lands at 297px ≈ the measured 55%. */
+    --studio-rail-panel-ar: 3 / 2;
+  }
+
+  /* Visually hidden. Local copy (chrome.ts has .st-vh, pdp.ts .st-pdp-vh) so
+   * this module carries its own screen-reader text with no cross-file
+   * dependency on sheet assembly order. */
+  :root[data-theme="studio"] .st-shop-vh {
+    position: absolute; width: 1px; height: 1px; overflow: hidden;
+    clip-path: inset(50%); white-space: nowrap;
   }
 
   /* ---- shared: photo-ready slot ------------------------------------- */
@@ -117,11 +127,12 @@ export const STUDIO_COMMERCE_CSS = `
   /* ---- §4.7 best sellers / product grid ------------------------------ */
   :root[data-theme="studio"] .st-shop {
     background: var(--bg);
-    /* §3: ~130px vertical rhythm on light sections. */
-    padding-block: clamp(48px, 6.5vw, 130px);
+    /* §3: ~130px vertical rhythm on light sections — tokens.ts owns the clamp
+     * so every light band in the theme breathes on one number. */
+    padding-block: var(--studio-rhythm);
   }
   :root[data-theme="studio"] .st-shop-in {
-    max-width: 1900px;
+    max-width: var(--studio-band);
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
@@ -207,6 +218,9 @@ export const STUDIO_COMMERCE_CSS = `
     font-size: clamp(1.0625rem, 1.5vw, 1.875rem);
     letter-spacing: -0.01em; line-height: 1.2;
     color: var(--ink);
+    /* A long unbroken Slovenian model name (or an SKU) must fold inside the
+     * card rather than push the grid column open. */
+    overflow-wrap: break-word;
   }
   :root[data-theme="studio"] .st-price-row {
     display: flex; align-items: baseline; flex-wrap: wrap;
@@ -252,6 +266,7 @@ export const STUDIO_COMMERCE_CSS = `
     font-size: clamp(1.25rem, 2.1vw, 2.625rem);
     letter-spacing: var(--track-display); line-height: 1.1;
     color: var(--on-invert);
+    overflow-wrap: break-word;
   }
   :root[data-theme="studio"] .st-util-p {
     font-family: var(--f-body);
@@ -280,13 +295,13 @@ export const STUDIO_COMMERCE_CSS = `
   /* ---- §4.4 category rail -------------------------------------------- */
   :root[data-theme="studio"] .st-rail-sec {
     background: var(--bg);
-    padding-block: clamp(48px, 6.5vw, 130px);
+    padding-block: var(--studio-rhythm);
     /* The rail is full-bleed; the section must never widen the page. */
     overflow: clip;
   }
   /* Centred heading (§4.4) — the counterpoint to §4.7's gutter-left one. */
   :root[data-theme="studio"] .st-rail-head {
-    max-width: 1560px;
+    max-width: var(--studio-measure);
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
     text-align: center;
@@ -298,14 +313,20 @@ export const STUDIO_COMMERCE_CSS = `
   }
 
   /* THE RAIL. Cards peek at both edges because the scroller is full-bleed and
-   * only its PADDING holds the gutter: scroll to the middle and a card is cut
-   * by each viewport edge. scroll-padding matches that inset so a snapped or
-   * anchor-targeted card lands exactly on the gutter, never under it. */
+   * only its PADDING holds the gutter, and because the snap lands a card in
+   * the CENTRE of the scrollport: whatever sits left and right of the centred
+   * card is then cut by each viewport edge. Snapping to "start" against a
+   * scroll-padding inset did the opposite — it pinned the first card flush to
+   * the gutter with nothing peeking, i.e. a grid that happened to scroll.
+   *
+   * "proximity", not "mandatory": mandatory re-snaps on every settle, which
+   * fights a zoomed-in or large-text reader trying to rest between cards
+   * (a genuine hazard, not a nicety) — proximity keeps the alignment while
+   * leaving free positions reachable. */
   :root[data-theme="studio"] .st-rail {
     overflow-x: auto;
     overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    scroll-padding-inline: var(--studio-gutter);
+    scroll-snap-type: x proximity;
     padding-inline: var(--studio-gutter);
     /* Room for the card's focus ring, which would otherwise be clipped by
      * the scroll container. */
@@ -323,7 +344,11 @@ export const STUDIO_COMMERCE_CSS = `
   }
   :root[data-theme="studio"] .st-rail-item {
     flex: 0 0 var(--studio-rail-card);
-    scroll-snap-align: start;
+    /* centre, not start — see the peek note on .st-rail above. */
+    scroll-snap-align: center;
+    /* Only the two end cards need this: it keeps an anchor-targeted first or
+     * last card off the viewport edge. Equal on both sides, so it cannot bias
+     * the centring. */
     scroll-margin-inline: var(--studio-gutter);
   }
   /* The anchor targets take focus programmatically (tabindex="-1"); they must
@@ -373,6 +398,8 @@ export const STUDIO_COMMERCE_CSS = `
     font-size: clamp(1rem, 1.3vw, 1.625rem);
     letter-spacing: -0.01em; line-height: 1.2;
     color: var(--ink);
+    /* The rail card is the narrowest name slot in the theme. */
+    overflow-wrap: break-word;
   }
   /* Meta line: --ink-soft (7.8:1 on white) rather than --ink-mute, because
    * this line is dense spec text at 15–19px, not a struck secondary price. */
@@ -382,48 +409,52 @@ export const STUDIO_COMMERCE_CSS = `
     line-height: 1.45;
     color: var(--ink-soft);
   }
-  /* The measured muted price slot, 22px. */
+  /* The measured muted price slot, 22px — it carries a RANGE (§4.4), so it is
+   * allowed to fold onto a second line in a narrow card rather than overflow. */
   :root[data-theme="studio"] .st-rail-price {
     font-family: var(--f-body);
     font-size: clamp(13px, 1.1vw, 1.375rem);
     font-variant-numeric: tabular-nums;
     color: var(--ink-mute);
+    overflow-wrap: break-word;
   }
 
-  /* The measured arrow row, centred BELOW the rail (§4.4) — rebuilt as real
-   * links to the card targets, so every control actually moves the rail with
-   * no JS. Round (§9): these are arrows/chips, not word-carrying buttons. */
+  /* The measured arrow row: exactly TWO controls, centred BELOW the rail
+   * (§4.4) — rebuilt as real links to the first and last card, so both
+   * actually move the rail with no JS. */
   :root[data-theme="studio"] .st-rail-nav {
-    display: flex; justify-content: center; align-items: center; flex-wrap: wrap;
+    display: flex; justify-content: center; align-items: center;
     gap: clamp(8px, 0.8vw, 14px);
     margin-top: clamp(20px, 2.4vw, 48px);
     padding-inline: var(--studio-gutter);
   }
-  /* Ø46px, 1px border (measured). */
+  /* THE BOUNDARY IS THE GLYPH. §4.14's stadium — 35×23, rx 11.5, 1px stroke —
+   * is drawn by the SVG itself in currentColor, so the control paints no box
+   * of its own; a second border would read as a circle around a stadium.
+   *
+   * Rest ink is --ink-mute (#767676 on white = 4.54:1), not --line (#e4e4e4 =
+   * 1.27:1): this outline IS the control's visual boundary, so WCAG 1.4.11's
+   * 3:1 for non-text UI applies to it. --line-strong stays the hover ink.
+   *
+   * The 36×35 glyph is padded out to a ≥44px target (WCAG 2.5.8) — the SVG
+   * carries the geometry, the padding carries the hit area. */
   :root[data-theme="studio"] .st-rail-go {
     display: inline-flex; align-items: center; justify-content: center;
-    inline-size: clamp(36px, 2.3vw, 46px);
-    block-size: clamp(36px, 2.3vw, 46px);
-    border: 1px solid var(--line);
-    border-radius: var(--r-pill);
-    background: var(--surface);
-    color: var(--ink-soft);
+    min-inline-size: 44px;
+    min-block-size: 44px;
+    padding: 4px;
+    color: var(--ink-mute);
     text-decoration: none;
-    font-family: var(--f-body);
-    font-size: clamp(12px, 0.8vw, 15px);
-    font-weight: 600; line-height: 1;
-    font-variant-numeric: tabular-nums;
-    transition: border-color 0.2s ease, color 0.2s ease;
+    transition: color 0.2s ease;
   }
-  :root[data-theme="studio"] .st-rail-go:hover {
-    border-color: var(--line-strong);
-    color: var(--ink);
-  }
+  :root[data-theme="studio"] .st-rail-go:hover { color: var(--line-strong); }
   :root[data-theme="studio"] .st-rail-go:focus-visible {
     outline: 2px solid var(--acc);
     outline-offset: 3px;
+    /* Round (§9): arrows are pills, never sharp like the word-carrying CTAs. */
     border-radius: var(--r-pill);
   }
+  :root[data-theme="studio"] .st-rail-go .st-arrow-svg { display: block; }
 
   /* ---- responsive ---------------------------------------------------- */
   @media (max-width: 1000px) {
@@ -486,6 +517,46 @@ function compareAt(p: ProductCard): string | null {
   return typeof v === "string" && v.length > 0 ? v : null;
 }
 
+/**
+ * The numeric value behind a display price, for ordering only.
+ *
+ * Prices reach this module already formatted in the shop's locale ("1.790 €",
+ * and "1.790,50 €" if a shop ever prices to the cent), so the grouping dot is
+ * dropped and the decimal comma becomes a point. Anything unparseable returns
+ * null and is simply left out of the comparison rather than sorting as 0.
+ */
+function priceValue(s: string): number | null {
+  const m = /[0-9][0-9.,]*/.exec(s);
+  if (m === null) return null;
+  const n = Number.parseFloat(m[0].replace(/\./g, "").replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * §4.4's measured price RANGE ("$1,099 - $3,099" in the source; "1.290 € –
+ * 1.790 €" here).
+ *
+ * The endpoints are printed from the shop's OWN strings — the range is
+ * assembled, never re-formatted — so separators, currency position and spacing
+ * stay exactly as the content layer wrote them. Returns null when the range
+ * would be degenerate (one product, or every price equal, or nothing
+ * parseable); the caller then prints the single price, as the baseline's
+ * one-product case does.
+ */
+function priceRange(items: ProductCard[]): string | null {
+  let lo: { v: number; s: string } | null = null;
+  let hi: { v: number; s: string } | null = null;
+  for (const p of items) {
+    const v = priceValue(p.price);
+    if (v === null) continue;
+    if (lo === null || v < lo.v) lo = { v, s: p.price };
+    if (hi === null || v > hi.v) hi = { v, s: p.price };
+  }
+  if (lo === null || hi === null || lo.v === hi.v) return null;
+  // U+2013 EN DASH between the endpoints, per Slovenian typographic practice.
+  return lo.s + " – " + hi.s;
+}
+
 /** Sentence-case a keyword for use as a heading, in the shop's own locale. */
 function capFirst(s: string, locale: string): string {
   return s.charAt(0).toLocaleUpperCase(locale) + s.slice(1);
@@ -505,7 +576,7 @@ export function renderStudioProducts(ctx: RenderCtx): string {
     .map((p: ProductCard | UtilCard) => {
       if ("util" in p) {
         return (
-          '<a class="st-card st-util" href="' + href + '">' +
+          '<a class="st-card st-util" href="' + esc(href) + '">' +
           '<h3 class="st-util-h">' + esc(p.h) + "</h3>" +
           '<p class="st-util-p">' + esc(p.p) + "</p>" +
           '<span class="st-util-go">' + esc(p.cta) + "</span>" +
@@ -514,7 +585,7 @@ export function renderStudioProducts(ctx: RenderCtx): string {
       }
       const was = compareAt(p);
       return (
-        '<a class="st-card" href="' + href + '">' +
+        '<a class="st-card" href="' + esc(href) + '">' +
         '<span class="st-card-panel">' +
         (p.badge ? '<span class="st-badge">' + esc(p.badge) + "</span>" : "") +
         shot() +
@@ -522,8 +593,16 @@ export function renderStudioProducts(ctx: RenderCtx): string {
         '<span class="st-card-body">' +
         '<h3 class="st-card-name">' + esc(p.name) + "</h3>" +
         '<span class="st-price-row">' +
-        '<span class="st-price">' + esc(p.price) + "</span>" +
-        (was ? '<s class="st-was">' + esc(was) + "</s>" : "") +
+        // The struck price's only cue is the line through it, and most screen
+        // readers announce neither <s> nor text-decoration — so the row would
+        // read as two unqualified prices, the higher one last. A hidden word
+        // inside each carries the distinction into the accessibility tree.
+        '<span class="st-price"><span class="st-shop-vh">cena </span>' +
+        esc(p.price) + "</span>" +
+        (was
+          ? '<s class="st-was"><span class="st-shop-vh">prejšnja cena </span>' +
+            esc(was) + "</s>"
+          : "") +
         '<span class="st-vat">z DDV</span>' +
         "</span></span></a>"
       );
@@ -550,10 +629,11 @@ export function renderStudioProducts(ctx: RenderCtx): string {
  * rank for). Util tiles are filtered out: they are not products and a rail
  * card has no room for a paragraph.
  *
- * The measured arrow buttons are replaced by a row of anchors, one per card,
- * each pointing at a `tabindex="-1"` list item. Following one scrolls the rail
- * (and moves focus into it) with no script — a control that does nothing must
- * not ship.
+ * The measured pair of stadium arrows is rebuilt as TWO anchors — prev to the
+ * first card, next to the last — each pointing at a `tabindex="-1"` list item.
+ * Following one scrolls the rail (and moves focus into it) with no script, so
+ * both controls act; the numbered one-per-card row this used to emit was
+ * neither the measured device nor the measured shape.
  */
 export function renderStudioRail(ctx: RenderCtx): string {
   const items = ctx.content.products.filter(
@@ -565,33 +645,44 @@ export function renderStudioRail(ctx: RenderCtx): string {
   const href = pdpHref(ctx);
   const title = capFirst(ctx.shop.keyword.plural, ctx.shop.locale.intl);
 
+  // §4.4's price slot is a RANGE across the offer, not one card's price; it is
+  // the same span on every card because it describes the rail, not the item.
+  const range = priceRange(items);
+
   const cards = items
     .map((p, i) => {
       const id = "st-rail-" + String(i + 1);
       return (
-        '<li class="st-rail-item" id="' + id + '" tabindex="-1">' +
-        '<a class="st-rail-card" href="' + href + '">' +
+        '<li class="st-rail-item" id="' + esc(id) + '" tabindex="-1">' +
+        '<a class="st-rail-card" href="' + esc(href) + '">' +
         '<span class="st-rail-panel">' + shot() + "</span>" +
         '<span class="st-rail-body">' +
         '<span class="st-rail-name">' + esc(p.name) + "</span>" +
         '<span class="st-rail-meta">' + esc(p.meta) + "</span>" +
-        '<span class="st-rail-price">' + esc(p.price) + "</span>" +
+        '<span class="st-rail-price">' + esc(range ?? p.price) + "</span>" +
         "</span></a></li>"
       );
     })
     .join("");
 
-  // With a single card there is nothing to move between, so the row is not
-  // rendered at all. With two or more it always acts: it scrolls the rail when
-  // the track overflows, and moves focus into the named card when it does not.
-  const nav = items.length < 2 ? "" : items
-    .map(
-      (p, i) =>
-        '<a class="st-rail-go" href="#st-rail-' + String(i + 1) +
-        '" aria-label="Pokažite model ' + esc(p.name) + '">' +
-        String(i + 1) + "</a>",
-    )
-    .join("");
+  // §4.4's two stadium arrows. With a single card there is nothing to move
+  // between, so the row is not rendered at all. With two or more both controls
+  // always act: they scroll the rail when the track overflows, and move focus
+  // into the end card when it does not.
+  //
+  // Icon-only by design, so there is no visible text for WCAG 2.5.3 to
+  // contradict — the aria-label IS the whole accessible name, and it names
+  // where the link actually goes (the ends of the rail), not a scroll step it
+  // cannot promise. The glyph is aria-hidden inside icons.ts.
+  const last = "#st-rail-" + String(items.length);
+  const nav =
+    items.length < 2
+      ? ""
+      : '<a class="st-rail-go st-arrow st-arrow--prev" href="' +
+        esc("#st-rail-1") +
+        '" aria-label="Na začetek ponudbe">' + arrowIcon("left") + "</a>" +
+        '<a class="st-rail-go st-arrow" href="' + esc(last) +
+        '" aria-label="Na konec ponudbe">' + arrowIcon("right") + "</a>";
 
   return (
     '<section class="st-rail-sec" aria-labelledby="st-rail-h">' +

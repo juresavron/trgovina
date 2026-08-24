@@ -8,10 +8,15 @@
  *         its content cropped by the frame — right a room photo carrying a
  *         STAT overlay (58px value + 19px caption) INSTEAD of a label.
  *   §4.10 Dark testimonial — inverted band, centred 72px white heading with the
- *         giant faint #161616 "eye" (ellipse + concentric circle) behind it,
- *         square B&W portrait left, oversized ~90px quote glyph, 26px quote at
- *         leading 1.5 (max-width 800), 15px uppercase tracked attribution, the
- *         Ø300px #1C1C1C product disc right.
+ *         giant faint ARROW-STADIUM watermark (§4.14) behind it at the
+ *         --ink-invert-2 rung: the same outline as the theme's arrow buttons,
+ *         stretched to band width. It is NOT an eye and NOT a circle — reading
+ *         it as one (as an earlier pass of this file did, drawing an ellipse
+ *         with a concentric ring) throws away the theme's signature. The
+ *         geometry comes from icons.ts, path data verbatim from the source
+ *         SVGs. Then square B&W portrait left, oversized ~90px quote glyph,
+ *         26px quote at leading 1.5 (max-width 800), 15px uppercase tracked
+ *         attribution, the Ø300px #1C1C1C product disc right.
  *   §4.11 Blog cards — centred 72px heading, three ~1:1 cards (radius 16px),
  *         photo filling the frame under a bottom gradient scrim, a translucent
  *         pill chip (15px) and a 30px white title overlaid.
@@ -23,7 +28,7 @@
  * 72 : 30 : 15 on a guide card — survive the shrink intact. Measured
  * max-WIDTHS use min(100%, max(floor, k vw)) for the same reason.
  *
- * No dead controls (§5.2): the baseline's two circular arrows under the
+ * No dead controls (§5.2): the baseline's two stadium arrows under the
  * testimonial drive a carousel, and this Worker ships no JS. Rather than render
  * buttons that cannot act, the additional reviews STACK below the lead one,
  * separated by hairlines — every quote is reachable, nothing is hidden behind
