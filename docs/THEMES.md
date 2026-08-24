@@ -44,6 +44,16 @@ src/themes/<key>/
    scoped to `src/themes/**` — the same enforcement the source repo runs).
    Sizes come from the shared 6-rung scale; themes vary weight, tracking,
    family, case — never size.
+
+   **`studio` is the standing exception, and it earns it.** It is a
+   transcription of a real theme, so its ramp is that theme's measured ramp
+   (11 roles across three literal breakpoints, docs/STUDIO-BASELINE.md §1) and
+   not the shared scale. Two of its rungs get *larger* on the phone tier than
+   on the tablet tier, which the shared clamp-based scale cannot express. A
+   theme may bring its own ramp when it is replicating something specific;
+   what it may not do is let components invent sizes inline. Studio declares
+   every size as a token in its own `tokens.ts` and its modules reference
+   those — the rule that actually matters is intact.
 4. **Composition over pages.** A page is an ordered `SectionKey[]` from the
    theme's catalog preset (shop-overridable, capped at 10). Every theme can
    render every section. This is Shopify's JSON-template insight applied to

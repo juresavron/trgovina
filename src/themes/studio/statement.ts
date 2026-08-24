@@ -2,23 +2,28 @@
  * STUDIO — statement/story and the inline-icon statement + stats
  * (docs/STUDIO-BASELINE.md §4.3 and §4.8).
  *
- *   §4.3 Statement + story — left-aligned 3-line statement at the 54px gutter,
- *        90px gap, a small tracked "NAŠA ZGODBA →" link, then a two-column
- *        band: 19px body copy left (max-width 600), photo right carrying a
- *        right-aligned uppercase label above it.
+ *   §4.3 Statement + story — left-aligned 3-line statement at the page gutter,
+ *        90px gap, a small tracked "NAŠA ZGODBA →" label link, then a
+ *        two-column band: the standfirst copy left (max-width 600), photo right
+ *        carrying a right-aligned uppercase label above it.
  *   §4.8 Inline-icon statement + stats — the theme's SIGNATURE device: a
- *        centred outlined pill, a 52px centred paragraph with circular
+ *        centred outlined pill, a centred pull-quote paragraph with circular
  *        OUTLINED Ø62px icon glyphs set INLINE in the text flow and vertically
- *        centred on the line, then the stat row (78px value with the trailing
- *        +/% as a real <sup>, 18px muted caption, max-width 280, centred).
+ *        centred on the line, then the stat row (display numerals with the
+ *        trailing +/% as a real <sup>, a label caption, max-width 280, centred).
  *
- * Scale translation: the baseline was measured at a 2000px viewport, so every
- * measured px is written as clamp(min, measured/20 vw, measured) — the
- * measurement is the MAXIMUM and the ratios between elements (68 : 52 : 19,
- * 78 : 18, 62px glyph on a 52px line) survive the shrink because neighbours
- * share a vw slope. Measured max-WIDTHS use min(100%, max(floor, k vw)): the
- * vw term keeps the 1350/600/1750/280 proportions at any width above a phone,
- * the floor stops a 390px viewport from collapsing a column to a word.
+ * Type roles (docs/STUDIO-BASELINE.md §1). Every size, weight, tracking and
+ * leading below comes from the transcribed ramp in tokens.ts, which already
+ * resolves per breakpoint (≥1200 / 810–1199 / ≤809) — nothing here is a px or
+ * a clamp. The statement is h2 (display face, the section's dominant type), the
+ * story copy lead, the claim lead-xl (the ramp's prose pull-quote rung), the
+ * stat values h2 numerals, and every chip, link, figure label and caption the
+ * label role. The earlier pass measured this section at a 2000px viewport and
+ * wrote each px as clamp(min, measured/20 vw, measured); those figures were
+ * eyeballed and are gone. Only the measured max-WIDTHS keep that treatment —
+ * min(100%, max(floor, k vw)) holds the 1350/600/1750/280 proportions at any
+ * width above a phone, and the floor stops a 390px viewport from collapsing a
+ * column to a word.
  *
  * Accent budget (§5.4): the shop hue is spent in exactly three places on the
  * whole storefront. This module owns ONE of them — the second half of the
@@ -66,20 +71,18 @@ function glyph(k: GlyphKey): string {
 }
 
 export const STUDIO_STATEMENT_CSS = `
-  /* ---- Values the baseline measures that tokens.ts does not carry ---- */
+  /* ---- Values this module owns that tokens.ts does not carry ---- */
   :root[data-theme="studio"] {
-    /* §3: the 54px page gutter. hero.ts and chrome.ts each declare
-     * --studio-gutter; this module deliberately does NOT add a third
-     * (conflicting) declaration — it consumes theirs and carries the measured
-     * clamp as a var() fallback so the module also stands alone. */
-    --studio-statement-gutter: var(--studio-gutter, clamp(20px, 2.7vw, 54px));
-    /* §3: ~130px vertical rhythm on light sections. */
-    --studio-rhythm: clamp(56px, 6.5vw, 130px);
+    /* Consumes the theme's gutter rather than restating it. The fallback is
+     * only for the case where this module is used outside the theme sheet. */
+    --studio-statement-gutter: var(--studio-gutter, 40px);
     /* §4.8: the Ø62px inline glyph. One variable because the ring, the SVG
-     * inside it and the inline margins all derive from this diameter. */
+     * inside it and the inline margins all derive from this diameter. This is
+     * a drawn disc, not type — it carries no glyph of its own — so it keeps a
+     * clamp rather than taking a rung off the ramp. */
     --studio-glyph: clamp(26px, 3.1vw, 62px);
     /* §4.8/§4.3: the drawn hairline of an OUTLINED control on a white ground.
-     * --line (#e4e4e4) disappears at 1px on a 52px line; --line-strong (#111)
+     * --line disappears at 1px against the claim's lead-xl line; --line-strong
      * is the hover frame and reads as a filled edge. This is the rung between:
      * ~#b8b8b8 over white, the outline measured on the pill and the glyphs. */
     --studio-ring: color-mix(in srgb, var(--ink) 28%, transparent);
@@ -100,32 +103,35 @@ export const STUDIO_STATEMENT_CSS = `
     padding-inline: var(--studio-statement-gutter);
   }
 
-  /* 62–68px / 600 / −0.022em / 1.15, max-width ~1350 at 2000px (§1, §4.3). */
+  /* The section's dominant type and a real <h2>, set in the display face, so
+   * it takes the h2 rung whole (§1, §4.3). max-width ~1350 at 2000px. */
   :root[data-theme="studio"] .st-statement-h {
     margin: 0;
     max-width: min(100%, max(28rem, 67.5vw));
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(2.125rem, 3.4vw, 4.25rem);
+    font-size: var(--t-h2);
     letter-spacing: var(--ls-h2);
-    line-height: 1.15;
+    line-height: var(--lh-h2);
     color: var(--ink);
     text-wrap: balance;
     overflow-wrap: break-word;
     hyphens: none;
   }
 
-  /* Measured 90px gap, statement → link. 15px / 500 / 0.12em uppercase. */
+  /* Measured 90px gap, statement → link. The link is a tracked uppercase
+   * button label, so it is the label role; one line of it, hence the ramp's
+   * tight label leading rather than the 1.71em reading rung. */
   :root[data-theme="studio"] .st-statement-link {
     display: inline-flex;
     align-items: center;
     gap: clamp(8px, 0.7vw, 14px);
     margin-top: clamp(28px, 4.5vw, 90px);
-    font-family: var(--f-body);
-    font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     text-decoration: none;
     color: var(--ink);
@@ -157,30 +163,33 @@ export const STUDIO_STATEMENT_CSS = `
     gap: clamp(32px, 4.4vw, 88px);
     margin-top: clamp(40px, 5.5vw, 110px);
   }
-  /* 19px body / 1.65, max-width 600 at 2000px (§1, §4.3). --ink-body on white
-   * is 9.0:1. */
+  /* The band's standfirst — it carries the shop's own sub line, not running
+   * body copy — so it takes the lead rung (§1, §4.3). max-width 600 at 2000px.
+   * --ink-body on white is 9.0:1. */
   :root[data-theme="studio"] .st-story-copy {
     margin: 0;
     max-width: min(100%, max(20rem, 30vw));
     font-family: var(--f-body);
-    font-size: clamp(1rem, 0.95vw, 1.1875rem);
-    font-weight: 400;
-    line-height: 1.65;
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead);
     color: var(--ink-body);
   }
 
   :root[data-theme="studio"] .st-story-fig { margin: 0; }
   /* The label sits ABOVE the frame and is right-aligned — the measured detail
-   * that keeps this band from reading as a plain text/image split. */
+   * that keeps this band from reading as a plain text/image split. A figure
+   * caption, so: label role, uppercase, tight leading for its single line. */
   :root[data-theme="studio"] .st-story-label {
     display: block;
     text-align: right;
     margin-bottom: clamp(12px, 1.1vw, 22px);
-    font-family: var(--f-body);
-    font-size: clamp(0.6875rem, 0.75vw, 0.9375rem);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--ink-body);
   }
@@ -226,11 +235,11 @@ export const STUDIO_STATEMENT_CSS = `
     z-index: 1;
     top: clamp(12px, 1.4vw, 28px);
     left: clamp(12px, 1.4vw, 28px);
-    font-family: var(--f-body);
-    font-size: clamp(0.625rem, 0.7vw, 0.8125rem);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--ink-body);
   }
@@ -249,30 +258,35 @@ export const STUDIO_STATEMENT_CSS = `
     padding-inline: var(--studio-statement-gutter);
     text-align: center;
   }
-  /* Pills are ROUND (§3) — the counterpoint to the sharp CTA buttons. */
+  /* Pills are ROUND (§3) — the counterpoint to the sharp CTA buttons. A chip,
+   * so label role; tight leading keeps the pill's measured height. */
   :root[data-theme="studio"] .st-stats-pill {
     display: inline-block;
     border: 1px solid var(--studio-ring);
     border-radius: var(--r-pill);
     padding: clamp(8px, 0.6vw, 12px) clamp(16px, 1.4vw, 28px);
-    font-family: var(--f-body);
-    font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--ink);
   }
 
-  /* The signature paragraph: 52px / 450 / −0.01em / 1.35, max-width ~1750. */
+  /* The signature paragraph: a big editorial statement, which is exactly what
+   * lead-xl is for — the ramp's prose pull-quote rung (§1, §4.8). It is a <p>,
+   * not a heading, and lead-xl is a Satoshi rung, so the face moves with the
+   * role: the measured pass had it in the display face at a 450 weight the
+   * source's display ramp does not have. max-width ~1750 at 2000px. */
   :root[data-theme="studio"] .st-claim {
     max-width: min(100%, max(20rem, 87.5vw));
     margin: clamp(28px, 3.4vw, 68px) auto 0;
-    font-family: var(--f-display);
-    font-weight: 450;
-    font-size: clamp(1.5rem, 2.6vw, 3.25rem);
-    letter-spacing: -0.01em;
-    line-height: 1.35;
+    font-family: var(--f-body);
+    font-weight: var(--w-body-med);
+    font-size: var(--t-lead-xl);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead-xl);
     color: var(--ink);
     text-wrap: pretty;
     overflow-wrap: break-word;
@@ -286,7 +300,7 @@ export const STUDIO_STATEMENT_CSS = `
   /* Ø62px circular OUTLINED glyph, set INLINE in the text flow and vertically
    * centred on the line. inline-flex + vertical-align:middle is what centres
    * it on the x-height axis; line-height:0 stops the disc from inflating the
-   * 1.35 line box into an uneven ladder. */
+   * claim's 1.3em line box into an uneven ladder. */
   :root[data-theme="studio"] .st-claim-ico {
     display: inline-flex;
     align-items: center;
@@ -320,14 +334,18 @@ export const STUDIO_STATEMENT_CSS = `
     margin-inline: auto;
     text-align: center;
   }
-  /* 78px / 500 / −0.02em / 1.0 (§1). */
+  /* Stat values are display-face numerals. h1 belongs to the hero alone, so
+   * the largest rung open to a repeated figure is h2 — the ramp has no rung
+   * between h1 and h2, and a four-up stat row is not the page's dominant
+   * statement (§1, §4.8). The measured pass's −0.02em tracking was an artifact:
+   * the display ramp tracks h2 at 0em. */
   :root[data-theme="studio"] .st-stat-v {
     display: block;
     font-family: var(--f-display);
-    font-weight: 500;
-    font-size: clamp(1.875rem, 3.9vw, 4.875rem);
-    letter-spacing: -0.02em;
-    line-height: 1;
+    font-weight: var(--w-display);
+    font-size: var(--t-h2);
+    letter-spacing: var(--ls-h2);
+    line-height: var(--lh-h2);
     color: var(--ink);
     font-variant-numeric: tabular-nums;
     /* Values are short tokens ("230 V", "≈ 0,25 €") — keep the unit with the
@@ -335,26 +353,34 @@ export const STUDIO_STATEMENT_CSS = `
     text-wrap: balance;
   }
   /* The trailing +/% is a REAL superscript (§4.8), positioned rather than left
-   * to vertical-align:super, which would stretch the 1.0 line box. */
+   * to vertical-align:super, which would stretch the h2 line box. The ramp has
+   * no superscript rung, so the size stays a RATIO of the parent — 0.44em is
+   * whatever h2 resolves to at the current tier, not an invented step. */
   :root[data-theme="studio"] .st-stat-v sup {
     font-size: 0.44em;
-    font-weight: 500;
+    font-weight: var(--w-display);
     line-height: 0;
     vertical-align: baseline;
     position: relative;
     top: -0.92em;
-    letter-spacing: 0;
+    letter-spacing: var(--ls-h2);
   }
-  /* 18px muted caption, two lines, max-width 280 (§4.8). --ink-mute (#767676)
-   * is 4.54:1 on white — it clears, and only just, which is why the caption
-   * never shrinks below 14px. */
+  /* The muted stat caption — a caption, so the label role, two lines wide at
+   * max-width 280 (§4.8). Set in the label face and left in sentence case: the
+   * ramp's uppercase treatment is opt-in, and shouting four two-line captions
+   * under the numerals would out-weigh them. Tight label leading for the same
+   * reason. --ink-mute is the lightest rung that clears 4.5:1 on both grounds
+   * it appears on (5.17:1 here on white) — it clears, and only just, which is
+   * why the caption sits at the label rung's 14px on every tier and never
+   * shrinks below it. */
   :root[data-theme="studio"] .st-stat-c {
     display: block;
     margin-top: clamp(8px, 0.8vw, 16px);
-    font-family: var(--f-body);
-    font-size: clamp(0.875rem, 0.9vw, 1.125rem);
-    font-weight: 400;
-    line-height: 1.45;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--ink-mute);
   }
 

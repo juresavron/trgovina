@@ -4,15 +4,21 @@
  *   §4.7 Best sellers / product grid — left-aligned heading at the gutter,
  *        three cards per row. Card = 1px frame + padding ~48px; the product
  *        sits on a #F2F2F2 panel occupying ~620 of the ~800px card height;
- *        name 30px; price row 26px with a struck compare-at 20px in muted.
+ *        name at the h5 card-title rung, price at h6, with the struck
+ *        compare-at in body and the "z DDV" suffix in label.
  *        HOVER TURNS THE FRAME BLACK — the theme's signature card state.
  *   §4.4 Category rail — centred heading, ~470×500 cards that PEEK at both
  *        viewport edges (the peek is what separates a rail from a grid),
- *        name + meta line, price in muted.
+ *        name (h6, the compact-card rung) + meta line (label), price in muted.
  *
- * Scale translation: the baseline was measured at a 2000px viewport, so every
- * measured px below is the clamp MAXIMUM (clamp(min, measured/20 vw, measured)).
- * The ratios survive the shrink because neighbouring values share a vw slope.
+ * TYPE COMES FROM THE RAMP IN tokens.ts, NEVER FROM A CLAMP. An earlier pass
+ * eyeballed sizes off a 2000px screenshot and expressed each as a clamp whose
+ * maximum was the measured px. The source's real ramp is three hard tiers
+ * (≥1200 / 810–1199 / ≤809) that no clamp can reproduce — h6 is 24/19/22, so
+ * the phone value is LARGER than the tablet one. Every font-size, weight,
+ * tracking and leading below is therefore a var(--t-…/--w-…/--ls-…/--lh-…) and
+ * the tier switch happens once, in tokens.ts. The clamps that survive here are
+ * LENGTHS — card padding, rail-card width, internal spacing — not type.
  *
  * Content split between the two acts is deliberate, not lossy: the measured
  * §4.7 card carries name + price only, and the measured §4.4 rail card carries
@@ -100,22 +106,31 @@ export const STUDIO_COMMERCE_CSS = `
   }
 
   /* ---- shared: section head ------------------------------------------ */
+  /* Eyebrow → the label role, in the label FACE (DM Sans): the ramp gives
+   * eyebrows, chips, badges and button words one rung, and it is not --f-body.
+   * Leading is the tight label rung — a one-line eyebrow, and the ramp carries
+   * no unitless 1 to fall back on. */
   :root[data-theme="studio"] .st-eyebrow {
-    font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.75vw, 15px);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
-    /* --ink-body, not --ink-mute: 9.7:1 on #ffffff at 15px tracked caps. */
+    /* --ink-body, not --ink-mute: 9.7:1 on #ffffff at 14px tracked caps. */
     color: var(--ink-body);
   }
-  /* Section heading: measured 68–72px / 600 / −0.025em / 1.05. */
+  /* Section heading → h2, the ramp's section rung (60/50/38). The measured
+   * pass had it at 68–72px / 600 / −0.025em; the source tracks h2 at 0em and
+   * sets it in the display weight — display type here is never negative-
+   * tracked. */
   :root[data-theme="studio"] .st-sec-h {
     margin: clamp(12px, 1vw, 20px) 0 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1.9rem, 3.4vw, 4.25rem);
-    letter-spacing: -0.025em;
-    line-height: 1.05;
+    font-size: var(--t-h2);
+    letter-spacing: var(--ls-h2);
+    line-height: var(--lh-h2);
     color: var(--ink);
     /* A long Slovenian head term folds; it never pushes the band open. */
     max-width: 20ch;
@@ -197,9 +212,12 @@ export const STUDIO_COMMERCE_CSS = `
     border-radius: var(--r-pill);
     background: var(--ink-invert);
     color: var(--on-invert);
-    font-family: var(--f-body);
-    font-size: clamp(10px, 0.7vw, 13px);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    /* A badge is a chip: the label role, tight leading, in the label face. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
   }
 
@@ -209,12 +227,15 @@ export const STUDIO_COMMERCE_CSS = `
     /* The panel is ~78% of the card; this is the remaining ~22%. */
     padding-top: clamp(16px, 1.8vw, 36px);
   }
-  /* Card title: 26–30px / 600 / −0.01em / 1.2. */
+  /* Card title → h5 (32/26/24), the ramp's rung for a LARGE card's title; the
+   * rail's compact cards take h6 below. The measured −0.01em is gone: h5 tracks
+   * at +0.02em in the source, and nothing in this theme tracks negative. */
   :root[data-theme="studio"] .st-card-name {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1.0625rem, 1.5vw, 1.875rem);
-    letter-spacing: -0.01em; line-height: 1.2;
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
     color: var(--ink);
     /* A long unbroken Slovenian model name (or an SKU) must fold inside the
      * card rather than push the grid column open. */
@@ -226,23 +247,39 @@ export const STUDIO_COMMERCE_CSS = `
     font-family: var(--f-body);
     font-variant-numeric: tabular-nums;
   }
-  /* Current price 26px. */
+  /* The price is the card's primary numeric element, so it takes h6 — the
+   * ramp's price rung — in the DISPLAY face, overriding the row's --f-body.
+   * The two spans beside it stay in body/label, which is what keeps the row a
+   * hierarchy rather than three numbers of equal voice. */
   :root[data-theme="studio"] .st-price {
-    font-size: clamp(0.9375rem, 1.3vw, 1.625rem);
-    font-weight: 600;
+    font-family: var(--f-display);
+    font-size: var(--t-h6);
+    font-weight: var(--w-display);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
     color: var(--ink);
   }
-  /* Struck compare-at 20px muted. #767676 on #ffffff = 4.5:1 — it passes on
-   * the card's white surface, which is why the price row is NOT on the panel. */
+  /* Struck compare-at → body, the smaller of the two rungs the ramp allows a
+   * secondary price. #767676 on #ffffff = 4.5:1 — it passes on the card's
+   * white surface, which is why the price row is NOT on the panel. */
   :root[data-theme="studio"] .st-was {
-    font-size: clamp(0.8125rem, 1vw, 1.25rem);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--ink-mute);
     text-decoration-line: line-through;
     text-decoration-thickness: 1px;
   }
+  /* "z DDV" is a qualifier on the price, not a price — the label rung, in the
+   * label face, tight-led so it sits on the row without opening it up. Not
+   * uppercased: the abbreviation is already capitalised in the copy. */
   :root[data-theme="studio"] .st-vat {
-    font-size: clamp(11px, 0.7vw, 14px);
-    letter-spacing: 0.04em;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--ink-body);
   }
 
@@ -257,18 +294,28 @@ export const STUDIO_COMMERCE_CSS = `
   }
   :root[data-theme="studio"] .st-util:hover,
   :root[data-theme="studio"] .st-util:focus-visible { border-color: var(--on-invert); }
+  /* The util tile fills one grid slot, so its heading is a LARGE card's title
+   * → h5, the same rung as .st-card-name. The measured pass had it a rung
+   * louder (42px) than the product name; the tile keeps that emphasis through
+   * the inversion — black ground, white ink — which outshouts 10px of size. */
   :root[data-theme="studio"] .st-util-h {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1.25rem, 2.1vw, 2.625rem);
-    letter-spacing: var(--ls-h2); line-height: 1.1;
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
     color: var(--on-invert);
     overflow-wrap: break-word;
   }
+  /* The tile's one line of prose, standing between its heading and its CTA →
+   * lead, the standfirst rung (20/16/18), not body: it introduces the tile
+   * rather than being ordinary running copy. Lead is set in --w-body-med. */
   :root[data-theme="studio"] .st-util-p {
     font-family: var(--f-body);
-    font-size: clamp(14px, 0.95vw, 19px);
-    line-height: 1.6;
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead);
     color: var(--on-invert-mute);
     max-width: 34ch;
   }
@@ -278,9 +325,13 @@ export const STUDIO_COMMERCE_CSS = `
     border: 1px solid color-mix(in srgb, var(--on-invert) 40%, transparent);
     border-radius: var(--r-ctrl);
     padding: clamp(10px, 0.9vw, 18px) clamp(16px, 1.6vw, 32px);
-    font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.75vw, 15px);
-    font-weight: 600; letter-spacing: 0.12em; line-height: 1;
+    /* A button word is the label role, in the label face — same rung as the
+     * eyebrow and the badge, so every worded control in the act matches. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert);
     transition: background-color 0.2s ease, color 0.2s ease;
@@ -387,29 +438,41 @@ export const STUDIO_COMMERCE_CSS = `
     gap: clamp(4px, 0.4vw, 8px);
     padding: clamp(14px, 1.4vw, 28px) clamp(4px, 0.6vw, 12px) clamp(6px, 0.6vw, 12px);
   }
-  /* Name 26px. */
+  /* Name → h6, the ramp's rung for a COMPACT card / rail item — one below the
+   * grid card's h5, which is exactly the relationship the two cards had when
+   * they were measured at 30 and 26px. Tracking is h6's 0em, never negative. */
   :root[data-theme="studio"] .st-rail-name {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1rem, 1.3vw, 1.625rem);
-    letter-spacing: -0.01em; line-height: 1.2;
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
     color: var(--ink);
     /* The rail card is the narrowest name slot in the theme. */
     overflow-wrap: break-word;
   }
-  /* Meta line: --ink-body (7.8:1 on white) rather than --ink-mute, because
-   * this line is dense spec text at 15–19px, not a struck secondary price. */
+  /* Meta row → label, the ramp's rung for meta lines, in the label face. Tight
+   * leading because the rail card is the theme's shortest body box. Colour is
+   * --ink-body (7.8:1 on white) rather than --ink-mute, because this line is
+   * dense spec text, not a struck secondary price. */
   :root[data-theme="studio"] .st-rail-meta {
-    font-family: var(--f-body);
-    font-size: clamp(12.5px, 0.9vw, 18px);
-    line-height: 1.45;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--ink-body);
   }
-  /* The measured muted price slot, 22px — it carries a RANGE (§4.4), so it is
-   * allowed to fold onto a second line in a narrow card rather than overflow. */
+  /* The rail card's own price slot → h6, the price rung, same as the grid
+   * card's: --ink-mute is what keeps it under the name, not a smaller size.
+   * It carries a RANGE (§4.4), so it is allowed to fold onto a second line in
+   * a narrow card rather than overflow. */
   :root[data-theme="studio"] .st-rail-price {
-    font-family: var(--f-body);
-    font-size: clamp(13px, 1.1vw, 1.375rem);
+    font-family: var(--f-display);
+    font-size: var(--t-h6);
+    font-weight: var(--w-display);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
     font-variant-numeric: tabular-nums;
     color: var(--ink-mute);
     overflow-wrap: break-word;

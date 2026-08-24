@@ -9,10 +9,15 @@
  * never applies and the panels meet the viewport edges. The gutter is
  * reintroduced inside each band as var(--studio-gutter), declared in tokens.ts.
  *
- * Scale translation: the baseline was measured at a 2000px viewport, so every
- * measured px is expressed as clamp(min, measured/20 vw, measured) — the
- * measurement is the MAXIMUM, and the RATIOS between elements (48px vs 56px
- * stack gaps, 90px vs 24px type) survive the shrink.
+ * Scale translation applies to SPACE ONLY. Padding and gaps were measured at a
+ * 2000px viewport, so each is expressed as clamp(min, measured/20 vw, measured)
+ * — the measurement is the MAXIMUM and the RATIOS survive the shrink (48px vs
+ * 56px stack gaps). TYPE no longer works that way: the source stylesheet has
+ * since been transcribed, so every size, weight, tracking and leading here is a
+ * ramp token from tokens.ts, which switches per breakpoint tier rather than
+ * interpolating. The one exception is the §4.5 band wordmark, a poster-scale
+ * decorative outlier that sits above the ramp and keeps its clamp — flagged as
+ * such where it is declared.
  *
  * Token discipline (docs/THEMES.md): colors, radii and faces are var(--…)
  * only, and tokens.ts is the ONLY declaration site — this module re-declares
@@ -109,33 +114,44 @@ export const STUDIO_HERO_CSS = `
     border: 1px solid color-mix(in srgb, var(--on-invert) 40%, transparent);
     border-radius: var(--r-pill);
     padding: clamp(8px, 0.6vw, 12px) clamp(16px, 1.4vw, 28px);
-    font-family: var(--f-body);
-    font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    /* An eyebrow chip — the label role, whole row: DM Sans 14px, +0.06em,
+     * uppercase. Leading is the ramp's tight label rung because a chip is one
+     * line inside its own padding. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert);
     /* measured 48px gap, pill → statement */
     margin-bottom: var(--studio-gap-stack);
   }
-  /* The offer statement: 90px / 650 / −0.03em / 1.0 at 2000px. */
+  /* The offer statement is the page's single h1, so it takes the ramp's h1
+   * rung outright: 92/64/44 Clash Display at --w-display (500), 0em tracking,
+   * 1.04em leading. The measured pass had guessed a 650 weight and −0.03em
+   * tracking; the source sets display type at 500 and never tracks it negative. */
   :root[data-theme="studio"] .st-hero-offer h1 {
     margin: 0;
     font-family: var(--f-display);
-    font-weight: 650;
-    font-size: clamp(2rem, 4.5vw, 5.625rem);
-    letter-spacing: -0.03em;
-    line-height: 1;
+    font-weight: var(--w-display);
+    font-size: var(--t-h1);
+    letter-spacing: var(--ls-h1);
+    line-height: var(--lh-h1);
     text-wrap: balance;
     /* a long Slovenian head term must fold, never push the column open */
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* Sub: 24px, the lighter on-dark rung. */
+  /* Sub: the standfirst under the statement, so the lead rung (20/16/18
+   * Satoshi at --w-body-med) in the lighter on-dark ink. */
   :root[data-theme="studio"] .st-hero-sub {
     margin: clamp(10px, 1.1vw, 22px) 0 0;
     font-family: var(--f-body);
-    font-size: clamp(1rem, 1.2vw, 1.5rem);
-    line-height: 1.5;
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead);
     /* Measured #d6d6d6 — lighter than --on-invert-mute. 13.4:1 on #0d0d0d. */
     color: var(--on-invert-mute);
   }
@@ -147,9 +163,13 @@ export const STUDIO_HERO_CSS = `
     border-radius: var(--r-ctrl);
     padding: clamp(14px, 1.1vw, 22px) clamp(26px, 3vw, 60px);
     text-decoration: none;
-    font-family: var(--f-body);
-    font-size: clamp(0.8125rem, 0.8vw, 1rem);
-    font-weight: 600; letter-spacing: 0.12em; line-height: 1;
+    /* Button label — the label role, whole row, tight leading for the one
+     * centred line inside the control's own padding. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     transition: background-color 0.2s ease;
   }
@@ -195,9 +215,12 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-photo-cap {
     position: absolute; z-index: 2;
     top: var(--studio-gutter); left: var(--studio-gutter);
-    font-family: var(--f-body);
-    font-size: clamp(0.6875rem, 0.7vw, 0.8125rem);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    /* A caption — the label role, whole row, uppercase. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--ink-body);
   }
@@ -218,35 +241,47 @@ export const STUDIO_HERO_CSS = `
       transparent 100%
     );
   }
-  /* 40px scale — the card/product-title rung pushed to hero size (§4.2). */
+  /* A product title, so the ramp's large-card rung, h5 (32/26/24) — this panel
+   * is the biggest "card" on the page but the element is still a product name,
+   * and the ramp is picked by role, not by the 40px the screenshot showed. */
   :root[data-theme="studio"] .st-hero-name {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1.375rem, 2vw, 2.5rem);
-    letter-spacing: -0.01em; line-height: 1.15;
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
     color: var(--on-invert);
     /* A long model name must fold inside the column, never widen the panel. */
     overflow-wrap: break-word;
   }
-  /* §4.2 measures the price row as "26px white with struck compare-at". */
+  /* §4.2's price row: the live price white, the compare-at struck beside it. */
   :root[data-theme="studio"] .st-hero-prices {
     display: flex; align-items: baseline; flex-wrap: wrap;
     gap: clamp(8px, 0.8vw, 16px);
   }
+  /* The primary price takes the h6 rung (24/19/22 Clash Display) — the ramp's
+   * price role, which is a display face, not the body one the measured pass used. */
   :root[data-theme="studio"] .st-hero-price {
-    font-family: var(--f-body);
-    font-size: clamp(1.0625rem, 1.3vw, 1.625rem);
-    font-weight: 500; font-variant-numeric: tabular-nums;
+    font-family: var(--f-display);
+    font-size: var(--t-h6);
+    font-weight: var(--w-display);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
+    font-variant-numeric: tabular-nums;
     color: var(--on-invert);
   }
-  /* The struck compare-at, 20px in the muted on-dark rung (#a8a8a8 on the
-   * scrim's near-black: 7.4:1 — it is secondary, never illegible). */
+  /* The struck compare-at drops to the body rung — secondary information beside
+   * the live price — in the muted on-dark ink (7.33:1 on the scrim's near-black:
+   * it is secondary, never illegible). */
   :root[data-theme="studio"] .st-hero-was {
     /* Containing block for the visually-hidden "prejšnja cena" prefix. */
     position: relative;
     font-family: var(--f-body);
-    font-size: clamp(0.8125rem, 1vw, 1.25rem);
-    font-weight: 500; font-variant-numeric: tabular-nums;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    font-variant-numeric: tabular-nums;
     color: var(--on-invert-mute);
     text-decoration-line: line-through;
     text-decoration-thickness: 1px;
@@ -282,16 +317,23 @@ export const STUDIO_HERO_CSS = `
       radial-gradient(58% 60% at 78% 12%, color-mix(in srgb, var(--on-invert) 8%, transparent), transparent 68%),
       linear-gradient(158deg, var(--ink-invert-2), var(--ink-invert));
   }
-  /* Letters ~200px tall spanning nearly the full width, at 2000px. The vw
-   * term is what keeps a long shop name inside a 390px viewport; the band's
-   * overflow:clip is the second belt so the PAGE can never scroll sideways. */
+  /* DECORATIVE OUTLIER — the one size in this module that is not a ramp token.
+   * The band's whole device is a wordmark ~200px tall spanning nearly the full
+   * width at 2000px, which is more than twice the h1 rung; no role in the ramp
+   * describes it, and pinning it to --t-h1 would collapse the occlusion effect.
+   * So the size stays a clamp: the vw term is what keeps a long shop name
+   * inside a 390px viewport, and the band's overflow:clip is the second belt so
+   * the PAGE can never scroll sideways. Tracking and leading are NOT invented
+   * with it — they come from the h1 row, which is the nearest role, and the
+   * measured pass's −0.03em is gone: the source never tracks display negative. */
   :root[data-theme="studio"] .st-band-word {
     position: relative; z-index: 1;
     margin: 0 0 clamp(28px, 3.6vw, 72px);
     font-family: var(--f-display);
     font-weight: var(--w-display);
     font-size: clamp(2.75rem, 12vw, 15rem);
-    letter-spacing: -0.03em; line-height: 0.86;
+    letter-spacing: var(--ls-h1);
+    line-height: var(--lh-h1);
     text-transform: uppercase;
     color: var(--on-invert);
     max-width: 100%;
@@ -332,11 +374,16 @@ export const STUDIO_HERO_CSS = `
     width: clamp(28px, 5vw, 100px); height: 1px;
     background: color-mix(in srgb, var(--on-invert) 72%, transparent);
   }
+  /* The callout's short annotation — a caption, so the label role, whole row.
+   * Left in sentence case: the label rung is a role, not a mandate to
+   * uppercase, and this one is a trust claim rather than chrome. */
   :root[data-theme="studio"] .st-band-note {
     padding-left: clamp(10px, 0.9vw, 18px);
-    font-family: var(--f-body);
-    font-size: clamp(0.875rem, 1vw, 1.25rem);
-    line-height: 1.35;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--on-invert);
   }
   /* §4.5's bottom-left cluster: chip, product name and CTA are ONE group,
@@ -352,17 +399,25 @@ export const STUDIO_HERO_CSS = `
     border: 1px solid color-mix(in srgb, var(--on-invert) 40%, transparent);
     border-radius: var(--r-pill);
     padding: clamp(7px, 0.55vw, 11px) clamp(14px, 1.3vw, 26px);
-    font-family: var(--f-body);
-    font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    /* Same eyebrow-chip role as the hero pill: the label row, uppercase. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert);
   }
+  /* The band's product name — the same large-card rung as .st-hero-name (h5),
+   * so the two places a model name appears stay one rung. The measured pass had
+   * an h2 tracking on a non-h2 size here; size, tracking and leading now all
+   * come from the h5 row. */
   :root[data-theme="studio"] .st-band-title {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1.375rem, 2.3vw, 2.875rem);
-    letter-spacing: var(--ls-h2); line-height: 1.1;
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
     color: var(--on-invert);
     /* A long model name must fold inside the cluster, never widen the band. */
     overflow-wrap: break-word;
@@ -388,11 +443,18 @@ export const STUDIO_HERO_CSS = `
     overflow: hidden;
   }
   :root[data-theme="studio"] .st-mq-group { display: flex; align-items: center; }
+  /* A marquee CAN be the module's decorative outlier — one run at poster scale
+   * would sit above the ramp the way the band wordmark does. This one does not:
+   * it is a row of uppercase USP claims at reading size, i.e. ordinary UI text
+   * in the label role, and the label row fits it exactly. So it takes the token
+   * rather than keeping the measured clamp. */
   :root[data-theme="studio"] .st-mq-item,
   :root[data-theme="studio"] .st-mq-sep {
-    font-family: var(--f-body);
-    font-size: clamp(0.8125rem, 0.85vw, 1.0625rem);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     white-space: nowrap;
     color: var(--ink);
