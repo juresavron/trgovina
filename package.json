@@ -1,0 +1,14 @@
+{
+  "name": "trgovina",
+  "private": true,
+  "type": "module",
+  "description": "Multi-shop commerce kernel: one Cloudflare Worker, N single-keyword shops. Chassis lineage: onlyworld (fans-network). Commerce lineage: ocenagor-landing-lovable-13.",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vitest": "^4.1.5"
+  }
+}
