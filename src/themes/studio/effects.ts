@@ -92,12 +92,20 @@ export const STUDIO_EFFECTS_CSS = `
   :root[data-theme="studio"] .st-mq-pause { position: absolute; opacity: 0; pointer-events: none; }
   :root[data-theme="studio"] .st-mq-toggle {
     flex: none;
-    font: inherit;
-    font-size: clamp(0.625rem, 0.55vw, 0.6875rem);
-    letter-spacing: 0.12em;
+    /* The label rung, like every other chip in the theme. It was running at
+       10–11px with 0.12em — double the source's widest tracking, and below
+       the ramp's floor. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--ink-mute);
-    border: 1px solid var(--ink-mute);
+    /* --line-ctrl, not --ink-mute: this border IS the control's boundary, so
+       WCAG 1.4.11 wants 3:1 and --line-ctrl is the rung chosen for exactly
+       that. --ink-mute clears it too, but says "text" rather than "edge". */
+    border: 1px solid var(--line-ctrl);
     border-radius: var(--r-pill);
     padding: 5px 14px;
     cursor: pointer;

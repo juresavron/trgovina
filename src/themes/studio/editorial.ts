@@ -1,32 +1,36 @@
 /**
  * STUDIO — editorial acts (docs/STUDIO-BASELINE.md §4.9, §4.10, §4.11).
  *
- *   §4.9  Impact grid — centred heading + 21px muted sub, then a 3-tile row
- *         (radius 14px) with the measured ASYMMETRY: left a quiet #EFEFEF tile
- *         labelled bottom-left (32px title + 19px muted sub), centre the hero
+ *   §4.9  Impact grid — centred h2 heading + a lead standfirst, then a 3-tile
+ *         row (radius 14px) with the measured ASYMMETRY: left a quiet #EFEFEF
+ *         tile labelled bottom-left (h5 title + a body sub), centre the hero
  *         tile on the #A8A8A8 ground — wider AND taller than its neighbours,
  *         its content cropped by the frame — right a room photo carrying a
- *         STAT overlay (58px value + 19px caption) INSTEAD of a label.
- *   §4.10 Dark testimonial — inverted band, centred 72px white heading with the
+ *         STAT overlay (h2-rung value + label caption) INSTEAD of a label.
+ *   §4.10 Dark testimonial — inverted band, centred h2 white heading with the
  *         giant faint ARROW-STADIUM watermark (§4.14) behind it at the
  *         --ink-invert-2 rung: the same outline as the theme's arrow buttons,
  *         stretched to band width. It is NOT an eye and NOT a circle — reading
  *         it as one (as an earlier pass of this file did, drawing an ellipse
  *         with a concentric ring) throws away the theme's signature. The
  *         geometry comes from icons.ts, path data verbatim from the source
- *         SVGs. Then square B&W portrait left, oversized ~90px quote glyph,
- *         26px quote at leading 1.5 (max-width 800), 15px uppercase tracked
- *         attribution, the Ø300px #1C1C1C product disc right.
- *   §4.11 Blog cards — centred 72px heading, three ~1:1 cards (radius 16px),
+ *         SVGs. Then square B&W portrait left, an oversized quote glyph at the
+ *         h1 rung, the lead quote at lead-xl (max-width 800), a label-rung
+ *         uppercase attribution, the Ø300px #1C1C1C product disc right.
+ *   §4.11 Blog cards — centred h2 heading, three ~1:1 cards (radius 16px),
  *         photo filling the frame under a bottom gradient scrim, a translucent
- *         pill chip (15px) and a 30px white title overlaid.
+ *         pill chip (label rung) and an h5 white title overlaid.
  *
- * Scale translation: the baseline was measured at a 2000px viewport, so every
- * measured px below is written as the clamp MAXIMUM (clamp(min, measured/20 vw,
- * measured)). Neighbouring values share a vw slope, so the ratios that carry
- * the look — 68 : 21 on the impact head, 90 : 26 : 15 in the quote stack,
- * 72 : 30 : 15 on a guide card — survive the shrink intact. Measured
- * max-WIDTHS use min(100%, max(floor, k vw)) for the same reason.
+ * Type comes from the ramp in tokens.ts, never from this file. The source emits
+ * three literal breakpoint tiers (≥1200 / 810–1199 / ≤809) and retunes the ramp
+ * in each, so a clamp cannot reproduce it: every size, weight, tracking and
+ * leading below is a bare var(--…) and the tier resolves it. An earlier pass
+ * wrote the baseline's 2000px measurements as clamp MAXIMUMS and invented the
+ * slope between them; that is what this file no longer does. Measured
+ * max-WIDTHS still use min(100%, max(floor, k vw)) — a width belongs to no ramp.
+ * The ratios that carry the look are now ramp steps rather than px pairs:
+ * h2 : lead on the impact head, h1 : lead-xl : label in the quote stack,
+ * h2 : h5 : label on a guide card.
  *
  * No dead controls (§5.2): the baseline's two stadium arrows under the
  * testimonial drive a carousel, and this Worker ships no JS. Rather than render
@@ -97,28 +101,33 @@ export const STUDIO_EDITORIAL_CSS = `
     text-align: center;
     margin-bottom: clamp(28px, 3.4vw, 68px);
   }
-  /* Measured 68–72px / 600 / −0.025em / 1.05 (§1). */
+  /* A section heading, so the h2 rung (60/50/38) whole: Clash Display 500,
+   * tracking --ls-h2, leading --lh-h2. The measured pass read it as 68px at
+   * −0.025em — the source's display tracking is 0em and never negative. */
   :root[data-theme="studio"] .st-imp-h {
     margin: 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1.9rem, 3.4vw, 4.25rem);
-    letter-spacing: -0.025em;
-    line-height: 1.05;
+    font-size: var(--t-h2);
+    letter-spacing: var(--ls-h2);
+    line-height: var(--lh-h2);
     color: var(--ink);
     text-wrap: balance;
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* 21px muted sub. --ink-mute is 4.54:1 on white — it clears, and only just,
-   * which is why this line never shrinks below 15px. */
+  /* The standfirst under the head — the lead rung (20/16/18, Satoshi 500,
+   * tracking --ls-body, leading --lh-lead). The tier floor is the ramp's own
+   * phone value, which is what keeps this line off caption sizes; --ink-mute is
+   * tokens.ts's muted rung for TEXT rather than the decorative alpha. */
   :root[data-theme="studio"] .st-imp-sub {
     max-width: min(100%, max(20rem, 34vw));
     margin: clamp(12px, 1.2vw, 24px) auto 0;
     font-family: var(--f-body);
-    font-size: clamp(0.9375rem, 1.05vw, 1.3125rem);
-    font-weight: 400;
-    line-height: 1.55;
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead);
     color: var(--ink-mute);
     text-wrap: pretty;
   }
@@ -193,26 +202,32 @@ export const STUDIO_EDITORIAL_CSS = `
     z-index: 2;
     inset: auto clamp(16px, 1.8vw, 36px) clamp(16px, 1.8vw, 36px) clamp(16px, 1.8vw, 36px);
   }
-  /* 32px title. */
+  /* The tile's title — a card title on a large card, so the h5 rung
+   * (32/26/24), which is exactly the 32px the baseline measured here. Tracking
+   * is h5's +0.02em, not the measured −0.01em. */
   :root[data-theme="studio"] .st-imp-t {
     margin: 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1.25rem, 1.6vw, 2rem);
-    letter-spacing: -0.01em;
-    line-height: 1.2;
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
     color: var(--ink);
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* 19px "muted" sub — but --ink-mute is only 4.3:1 on the #EFEFEF tile and
-   * FAILS; --ink-body is the muted rung that clears there (7.9:1). */
+  /* The line under it is ordinary paragraph copy inside a card, so the body
+   * rung (16px, Satoshi 400). The measured 19px sat between two ramp steps and
+   * belonged to neither. The ink stays --ink-body — type-only pass — but note
+   * the contrast reasoning that picked it cites a tile grey (#EFEFEF) that
+   * tokens.ts no longer carries. */
   :root[data-theme="studio"] .st-imp-p {
     margin: clamp(6px, 0.6vw, 12px) 0 0;
     font-family: var(--f-body);
-    font-size: clamp(0.875rem, 0.95vw, 1.1875rem);
-    font-weight: 400;
-    line-height: 1.5;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--ink-body);
   }
 
@@ -230,39 +245,49 @@ export const STUDIO_EDITORIAL_CSS = `
       transparent 100%
     );
   }
-  /* 58px value; the trailing +/% is a real superscript, as in §4.8. */
+  /* The stat value. A number is not a heading, but it is display voice at
+   * poster size and the ramp has no "stat" role, so it takes the NEAREST rung
+   * whole: h2 (60/50/38) against the measured 58px. The trailing +/% is a real
+   * superscript, as in §4.8. */
   :root[data-theme="studio"] .st-imp-v {
     display: block;
     font-family: var(--f-display);
-    font-weight: 500;
-    font-size: clamp(1.5rem, 2.9vw, 3.625rem);
-    letter-spacing: -0.02em;
-    line-height: 1;
+    font-weight: var(--w-display);
+    font-size: var(--t-h2);
+    letter-spacing: var(--ls-h2);
+    line-height: var(--lh-h2);
     color: var(--on-invert);
     font-variant-numeric: tabular-nums;
     text-wrap: balance;
   }
+  /* Proportional to whatever rung the value sits on, so this stays a relative
+   * multiplier rather than a ramp entry — the superscript has to track its own
+   * numeral, not a tier. The parent's --ls-h2 (0em) now carries, so the local
+   * tracking reset that cancelled the invented −0.02em is gone. */
   :root[data-theme="studio"] .st-imp-v sup {
     font-size: 0.44em;
-    font-weight: 500;
+    font-weight: var(--w-display);
     line-height: 0;
     vertical-align: baseline;
     position: relative;
     top: -0.92em;
-    letter-spacing: 0;
   }
-  /* 19px caption. NOT --on-invert-mute: at 390px the tile is a 354px square and
-   * the whole stat block sits high in the scrim, where the gradient has not yet
-   * reached its opaque foot — the muted rung measures below 4.5:1 there. The
-   * full --on-invert rung clears at every width, and the value/caption
-   * hierarchy is carried by size (58 : 19), not by ink. */
+  /* The caption under the value — a caption is the label role, so DM Sans 500
+   * at 14px with --ls-label and the tight label leading. Not uppercased: the
+   * source reserves tracked caps for chips and eyebrows, and this is a sentence.
+   * NOT --on-invert-mute: at 390px the tile is a 354px square and the whole
+   * stat block sits high in the scrim, where the gradient has not yet reached
+   * its opaque foot — the muted rung measures below 4.5:1 there. The full
+   * --on-invert rung clears at every width, and the value/caption hierarchy is
+   * carried by the rungs (h2 : label), not by ink. */
   :root[data-theme="studio"] .st-imp-c {
     display: block;
     margin-top: clamp(6px, 0.6vw, 12px);
-    font-family: var(--f-body);
-    font-size: clamp(0.875rem, 0.95vw, 1.1875rem);
-    font-weight: 400;
-    line-height: 1.45;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--on-invert);
   }
 
@@ -309,16 +334,18 @@ export const STUDIO_EDITORIAL_CSS = `
     inline-size: 100%;
     block-size: 100%;
   }
-  /* 72px / 600 / −0.025em centred white heading, ABOVE the watermark. */
+  /* "Preverjena mnenja strank" is a section heading — the h2 rung whole,
+   * centred and white, ABOVE the watermark. The measured 72px/−0.025em was an
+   * eyeballed step between h1 and h2; the source has no such step. */
   :root[data-theme="studio"] .st-tst-h {
     position: relative;
     z-index: 1;
     margin: 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(2rem, 3.6vw, 4.5rem);
-    letter-spacing: -0.025em;
-    line-height: 1.05;
+    font-size: var(--t-h2);
+    letter-spacing: var(--ls-h2);
+    line-height: var(--lh-h2);
     color: var(--on-invert);
     text-wrap: balance;
     overflow-wrap: break-word;
@@ -377,25 +404,33 @@ export const STUDIO_EDITORIAL_CSS = `
   }
 
   :root[data-theme="studio"] .st-tst-body { min-width: 0; }
-  /* Oversized ~90px quote glyph. line-height:0.6 stops it from opening a gap
-   * the size of its own em box above the quote. */
+  /* The oversized opening glyph. Its SIZE is a ramp step — h1 (92/64/44) is
+   * within two px of the measured 90 — but its LEADING is the one deliberate
+   * departure in this file: it is decorative punctuation (aria-hidden), and at
+   * --lh-h1 its em box would open a 96px hole above the quote. 0.6 is a layout
+   * device on a glyph nobody reads, not an invented type step. */
   :root[data-theme="studio"] .st-tst-glyph {
     display: block;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(2.25rem, 4.5vw, 5.625rem);
+    font-size: var(--t-h1);
+    letter-spacing: var(--ls-h1);
     line-height: 0.6;
     color: color-mix(in srgb, var(--on-invert) 42%, transparent);
     user-select: none;
   }
-  /* 26px / leading 1.5 / max-width 800 at 2000px. */
+  /* The lead quote is the band's editorial statement, so it takes lead-xl
+   * (48/44/24, Satoshi 500, --ls-body, --lh-lead-xl) — prose set large, not a
+   * heading. The measured 26px was a step the source's prose ramp does not
+   * have. max-width still tracks the measured 800-at-2000px measure. */
   :root[data-theme="studio"] .st-tst-q {
     max-width: min(100%, max(18rem, 40vw));
     margin: clamp(12px, 1.4vw, 28px) 0 0;
     font-family: var(--f-body);
-    font-size: clamp(1.0625rem, 1.3vw, 1.625rem);
-    font-weight: 400;
-    line-height: 1.5;
+    font-size: var(--t-lead-xl);
+    font-weight: var(--w-body-med);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead-xl);
     color: var(--on-invert);
     text-wrap: pretty;
     overflow-wrap: break-word;
@@ -407,30 +442,33 @@ export const STUDIO_EDITORIAL_CSS = `
     gap: clamp(10px, 1.1vw, 22px);
     min-width: 0;
   }
-  /* 15px uppercase tracked, muted (§4.10). --on-invert-mute is 8.9:1 on the
-   * #0D0D0D band. */
+  /* The attribution name — uppercase tracked meta, i.e. the label role: DM Sans
+   * 500 at 14px, --ls-label (0.06em, the source's widest tracking — the 0.12em
+   * here was double it) and the tight label leading for a single line. Ink is
+   * --on-invert-mute, tokens.ts's on-dark muted rung for TEXT; the ratio the old
+   * note quoted was against a band colour tokens.ts no longer carries. */
   :root[data-theme="studio"] .st-tst-who {
-    font-family: var(--f-body);
-    font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert-mute);
   }
   /* Verification chip — ROUND (§3): pills and chips are round, buttons sharp.
    * Only verified purchases render on this network, so the chip is a statement
-   * of fact about the record, not decoration. */
+   * of fact about the record, not decoration. Type is the label row whole. */
   :root[data-theme="studio"] .st-tst-chip {
     display: inline-block;
     border: 1px solid var(--studio-line-invert);
     border-radius: var(--r-pill);
     padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1.1vw, 22px);
-    font-family: var(--f-body);
-    font-size: clamp(0.6875rem, 0.7vw, 0.875rem);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert-mute);
   }
@@ -481,15 +519,20 @@ export const STUDIO_EDITORIAL_CSS = `
   :root[data-theme="studio"] .st-tst-item .st-tst-portrait {
     inline-size: clamp(64px, 7vw, 140px);
   }
-  /* Secondary quotes drop one rung (26px → 21px): the lead quote must stay the
-   * loudest voice in the band. */
+  /* Secondary quotes step down the prose ramp, lead-xl → lead: the lead quote
+   * must stay the loudest voice in the band. Face, weight and tracking are the
+   * same row for both, so only size and leading move. */
   :root[data-theme="studio"] .st-tst-item .st-tst-q {
     max-width: min(100%, max(18rem, 44vw));
     margin-top: clamp(8px, 0.8vw, 16px);
-    font-size: clamp(1rem, 1.05vw, 1.3125rem);
+    font-size: var(--t-lead);
+    line-height: var(--lh-lead);
   }
+  /* Their glyph steps down with them, h1 → h3, keeping the same collapsed
+   * leading for the same reason. */
   :root[data-theme="studio"] .st-tst-item .st-tst-glyph {
-    font-size: clamp(1.5rem, 2.4vw, 3rem);
+    font-size: var(--t-h3);
+    letter-spacing: var(--ls-h3);
   }
 
   /* ================= §4.11 Blog cards ================= */
@@ -503,15 +546,16 @@ export const STUDIO_EDITORIAL_CSS = `
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
-  /* Centred 72px heading (§4.11). */
+  /* Centred section heading (§4.11) — the h2 rung, same as the two bands
+   * above it, so the page has one heading voice and not three. */
   :root[data-theme="studio"] .st-gd-h {
     margin: 0 0 clamp(28px, 3.4vw, 68px);
     text-align: center;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(2rem, 3.6vw, 4.5rem);
-    letter-spacing: -0.025em;
-    line-height: 1.05;
+    font-size: var(--t-h2);
+    letter-spacing: var(--ls-h2);
+    line-height: var(--lh-h2);
     color: var(--ink);
     text-wrap: balance;
     overflow-wrap: break-word;
@@ -568,7 +612,7 @@ export const STUDIO_EDITORIAL_CSS = `
     align-items: flex-start;
     gap: clamp(10px, 1.1vw, 22px);
   }
-  /* Pill chip, 15px tracked caps — ROUND, per §3. The chip sits ~44% up the
+  /* Pill chip, the label rung in tracked caps — ROUND, per §3. The chip sits ~44% up the
    * scrim, where the gradient has fallen to ~0.59 alpha; at 390px a 14%-white
    * translucent ground on top of that left the caps under 4.5:1 against the
    * photo behind. So the chip carries its OWN dark ground rather than borrowing
@@ -579,36 +623,40 @@ export const STUDIO_EDITORIAL_CSS = `
     border-radius: var(--r-pill);
     background: color-mix(in srgb, var(--ink-invert) 82%, transparent);
     padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1.1vw, 22px);
-    font-family: var(--f-body);
-    font-size: clamp(0.6875rem, 0.75vw, 0.9375rem);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert);
   }
-  /* 30px white title over the scrim (§4.11). */
+  /* The card title over the scrim (§4.11) — a card title on a large card, so
+   * the h5 rung (32/26/24) against the measured 30px, tracked +0.02em like the
+   * rest of that row rather than the measured −0.01em. */
   :root[data-theme="studio"] .st-gd-t {
     margin: 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1.125rem, 1.5vw, 1.875rem);
-    letter-spacing: -0.01em;
-    line-height: 1.2;
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
     color: var(--on-invert);
     text-wrap: pretty;
     overflow-wrap: break-word;
     hyphens: none;
   }
+  /* "Preberite vodnik" is the card's call to action — a button label, i.e. the
+   * label row: DM Sans 500, --ls-label, tight leading, tracked caps. */
   :root[data-theme="studio"] .st-gd-go {
     display: inline-flex;
     align-items: center;
     gap: clamp(6px, 0.5vw, 10px);
-    font-family: var(--f-body);
-    font-size: clamp(0.6875rem, 0.7vw, 0.875rem);
-    font-weight: 500;
-    letter-spacing: 0.12em;
-    line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     /* On the opaque foot of the scrim this is 8.9:1; it never sits higher up. */
     color: var(--on-invert-mute);
@@ -649,8 +697,8 @@ export const STUDIO_EDITORIAL_CSS = `
      * box on a phone is a wall — bring it back to the row's square. */
     :root[data-theme="studio"] .st-imp-hero { aspect-ratio: 1 / 1; }
     :root[data-theme="studio"] .st-imp-sub { max-width: 100%; }
-    /* Portrait above the quote: a 120px square beside 26px text leaves the
-     * quote about eleven characters per line at 390px. */
+    /* Portrait above the quote: a 120px square beside the lead-xl quote leaves
+     * it about eleven characters per line at 390px. */
     :root[data-theme="studio"] .st-tst-lead,
     :root[data-theme="studio"] .st-tst-item {
       grid-template-columns: minmax(0, 1fr);

@@ -64,12 +64,22 @@ export function renderStudioSection(key: SectionKey, ctx: RenderCtx): string | n
 
 /**
  * Devices with no kernel section key, placed by position in the home
- * composition: the category rail follows the product grid, and the wordmark
- * band sits between the editorial half and the closing sections — matching
- * the source theme's running order.
+ * composition.
+ *
+ * The category rail is the source's SECOND device, immediately after the hero
+ * and its ticker — not a follow-up to the product grid, which is where it used
+ * to sit. Reading the source's DOM settled the running order: hero → category
+ * rail → brand story → offer band → best sellers → "why us" → testimonials →
+ * blogs → social → membership.
+ *
+ * The wordmark band is not on the source's home page at all; it belongs to the
+ * secondary pages. It stays here after `moat` because our composition is
+ * shorter than the source's ten devices and the band is doing real work as a
+ * breath between the editorial half and the closing sections — a deliberate
+ * departure rather than a transcription.
  */
 export function renderStudioExtras(afterKey: SectionKey, ctx: RenderCtx): string {
-  if (afterKey === "products") return renderStudioRail(ctx);
+  if (afterKey === "marquee") return renderStudioRail(ctx);
   if (afterKey === "moat") return renderStudioWordmarkBand(ctx);
   return "";
 }

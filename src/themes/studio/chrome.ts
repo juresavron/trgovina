@@ -7,14 +7,20 @@
  *         bar's, newsletter with an underlined input, brand blurb + circular
  *         contact rows, three link columns, hairline, legal line.
  *
- * Scale: every measured px is the clamp MAXIMUM (spec measured at 2000px);
- * the ratios between elements — gutter 54 : bar 90 : wordmark 28 : nav 15 —
- * survive the clamp because each shares the same vw slope as its neighbour.
+ * Scale: the px quoted from §4 above are the MEASURED pass, kept as provenance
+ * only. Type does not interpolate any more — tokens.ts sets every role per
+ * breakpoint tier (≥1200 / 810–1199 / ≤809), so a size is a token lookup, not
+ * a clamp, and the measured numbers land on ramp rungs instead of reproducing
+ * themselves: the bar's wordmark read ~28 and is h6 (24/19/22), the nav read
+ * 15 and is label (14), the footer's link columns read 19 and are label too.
+ * Only the non-type dimensions — discs, gutters, gaps, padding — still clamp,
+ * and one display outlier does (see .st-foot-mark).
  *
- * Token discipline: colors, radii, faces, gutters, chrome height and the two
- * wordmark weights are var(--…) from tokens.ts only — this module declares no
- * variable of its own. Every selector is scoped to :root[data-theme="studio"]
- * because the sheet is shared with the other three themes.
+ * Token discipline: colors, radii, gutters, chrome height and every type value
+ * — face, size, weight, tracking, leading — are var(--…) from tokens.ts only;
+ * this module declares no variable of its own. Every selector is scoped to
+ * :root[data-theme="studio"] because the sheet is shared with the other three
+ * themes.
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
@@ -87,13 +93,17 @@ export const STUDIO_CHROME_CSS = `
     gap: clamp(12px, 2vw, 32px);
   }
 
+  /* The logotype takes h6 (24/19/22) — the display ramp's smallest rung and the
+   * nearest to the measured ~28px; h5 (32) would out-scale a 56px bar. Its
+   * 1.33em leading draws a 32px line box, which --chrome-h absorbs as a
+   * min-height, so taking the ramp's leading does not grow the bar. */
   :root[data-theme="studio"] .st-chrome-mark {
     justify-self: start;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1rem, 1.4vw, 1.75rem);
-    letter-spacing: 0.02em;
-    line-height: 1;
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
     text-transform: uppercase;
     text-decoration: none;
     /* ONE white word: studio drops the accent split the other themes use. */
@@ -112,7 +122,12 @@ export const STUDIO_CHROME_CSS = `
    * The gap is an inline-block of explicit width rather than a scaled space
    * glyph: at 0.25em the space rendered under 2px and the words still ran
    * together. Width is set here so the mark's spacing does not depend on how
-   * wide the face happens to draw U+0020. */
+   * wide the face happens to draw U+0020.
+   *
+   * The two bare numbers below are mechanics, not type: the width IS the gap,
+   * and letter-spacing:0 stops the mark's own tracking being added to it.
+   * Both display roles the mark uses track at 0em today, so the reset is
+   * belt-and-braces — it keeps the gap fixed if either rung ever tracks. */
   :root[data-theme="studio"] .st-mark-gap {
     display: inline-block;
     inline-size: 0.3em;
@@ -128,15 +143,18 @@ export const STUDIO_CHROME_CSS = `
     gap: clamp(16px, 2.8vw, 56px);
   }
   :root[data-theme="studio"] .st-chrome-nav a {
-    font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.75vw, 15px);
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    line-height: 1;
+    /* Label role — 14px DM Sans, uppercase, tracked 0.06em. Its 1.71em leading
+     * is exactly the 24px --chrome-line that --chrome-h is derived from, so the
+     * nav is the thing that makes the bar's height come out right. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label);
     text-transform: uppercase;
     text-decoration: none;
     white-space: nowrap;
-    /* Full on-invert, not the muted rung: 15px tracked caps on #0D0D0D needs
+    /* Full on-invert, not the muted rung: 14px tracked caps on #151515 needs
      * every point of contrast it can get. */
     color: var(--on-invert);
     padding-block: 4px;
@@ -191,8 +209,16 @@ export const STUDIO_CHROME_CSS = `
     border-radius: var(--r-circle);
     background: var(--bg);
     color: var(--ink);
-    font-family: var(--f-body);
-    font-size: 10.5px; font-weight: 700; line-height: 1;
+    /* Badges are the label role, and the ramp has nothing below it — 14px is
+     * larger than the measured 10.5px, and the tight leading's 20px line box
+     * overruns the 18px disc by a pixel top and bottom, which a single centred
+     * numeral hides. Inventing a smaller size is the exact thing this pass
+     * exists to undo, so the disc absorbs the rung instead. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     font-variant-numeric: tabular-nums;
   }
 
@@ -201,26 +227,35 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-chrome-tel {
     display: none;
     align-items: center; gap: 8px;
-    font-family: var(--f-body);
-    font-size: clamp(12px, 0.8vw, 15px);
-    font-weight: 600; letter-spacing: 0.02em;
+    /* A meta row in the bar, so the same label rung as the nav — both draw the
+     * 24px line the bar is built on, and the number stays distinct from the
+     * nav by weight of position, not by an off-ramp size. */
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label);
     text-decoration: none;
     color: var(--on-invert);
     white-space: nowrap;
   }
   :root[data-theme="studio"] .st-chrome-tel .st-ico { inline-size: 16px; block-size: 16px; }
 
-  /* Skip link: off-screen until focused, then a white plate. --r-ctrl is 0,
-   * so the plate is genuinely sharp-cornered — which is what §3 asks of every
-   * control that carries a word, and which the base sheet's forced 4px would
-   * otherwise round off. Its ring is --acc rather than --ink: a black ring
-   * around a white plate ON THE BLACK BAR is invisible, and the plate landing
-   * on the page cannot be the only focus cue. */
+  /* Skip link: off-screen until focused, then a white plate. Its corners are
+   * --r-ctrl — 4px, the radius the transcribed source gives every control that
+   * carries a word (§3), not the 0 an earlier reading had here; it is restated
+   * on :focus-visible below because the base sheet's focus ring imposes its
+   * own. Its ring is --acc rather than the primary ink — a black ring around a
+   * white plate ON THE BLACK BAR is invisible, and the plate landing on the
+   * page cannot be the only focus cue. */
   :root[data-theme="studio"] .st-skip {
     position: absolute; left: -9999px; top: 0; z-index: 50;
     background: var(--bg); color: var(--ink);
-    font-family: var(--f-body); font-size: 13px; font-weight: 600;
-    letter-spacing: 0.08em; text-transform: uppercase;
+    /* It carries a word on a control, so it is a button label: the label rung,
+     * tight leading, because the plate's height is its padding's business. */
+    font-family: var(--f-label); font-size: var(--t-label);
+    font-weight: var(--w-label); letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight); text-transform: uppercase;
     padding: 12px 20px; text-decoration: none;
     border-radius: var(--r-ctrl);
   }
@@ -255,12 +290,19 @@ export const STUDIO_CHROME_CSS = `
     gap: clamp(32px, 4vw, 80px);
     margin-bottom: clamp(48px, 6vw, 120px);
   }
-  /* ~150px, and LIGHTER than the bar's mark — the measured difference. */
+  /* THE ONE SANCTIONED OUTLIER in this module. At ~150px it runs well past the
+   * ramp's tallest rung (h1, 92px), so it keeps its clamp() and its 0.88
+   * logotype leading: it is a poster-scale display device, not UI text, and
+   * h1's 1.04em would open a wrapped shop name into two loose lines. Tracking
+   * still comes from the ramp — --ls-h1, 0em. The weight is deliberately
+   * LIGHTER than the bar's mark (§4.12 measures ~400 against the bar's 500),
+   * which is the whole point of the device, so it takes --w-body on the
+   * display face. */
   :root[data-theme="studio"] .st-foot-mark {
     font-family: var(--f-display);
     font-weight: var(--w-body);
     font-size: clamp(2.2rem, 7.5vw, 9.375rem);
-    letter-spacing: var(--ls-h2);
+    letter-spacing: var(--ls-h1);
     line-height: 0.88;
     text-transform: uppercase;
     color: var(--on-invert);
@@ -268,12 +310,16 @@ export const STUDIO_CHROME_CSS = `
     max-width: 100%; overflow-wrap: anywhere; hyphens: none;
   }
 
+  /* The footer's one block heading. h3 is the nominal rung for a sub-section
+   * heading, but 48px next to a 150px wordmark reads as a second section
+   * opening rather than a label over a single input row; h5 (32/26/24) is the
+   * rung nearest the measured 28 and keeps it the size of what it heads. */
   :root[data-theme="studio"] .st-news-h {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    letter-spacing: var(--ls-h2);
-    font-size: clamp(1.15rem, 1.4vw, 1.75rem);
-    line-height: 1.2;
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
     color: var(--on-invert);
     margin-bottom: clamp(14px, 1.2vw, 24px);
   }
@@ -285,9 +331,13 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-news-in {
     flex: 1 1 auto; min-width: 0;
     background: transparent; border: 0; padding: 0;
+    /* What a reader types is prose, so body. The face and weight are stated
+     * rather than inherited: a form control takes neither from the page. */
     font-family: var(--f-body);
-    font-size: clamp(14px, 0.95vw, 19px);
-    line-height: 1.4;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--on-invert);
   }
   :root[data-theme="studio"] .st-news-in::placeholder { color: var(--on-invert-mute); }
@@ -329,9 +379,15 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-news-go .st-ico { inline-size: 18px; block-size: 18px; }
   :root[data-theme="studio"] .st-news-note {
     margin-top: 10px;
+    /* Body, not the label rung the ramp gives captions: this is two sentences
+     * of running prose, and 0.06em tracking on a sentence is a chip's job, not
+     * a paragraph's. The muted rung, not a smaller size, is what marks it as
+     * secondary to the field above it. */
     font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.7vw, 14px);
-    line-height: 1.5;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--on-invert-mute);
   }
 
@@ -340,10 +396,13 @@ export const STUDIO_CHROME_CSS = `
     grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
     gap: clamp(32px, 3.4vw, 68px);
   }
+  /* An ordinary paragraph — body, at the 42ch measure below. */
   :root[data-theme="studio"] .st-foot-blurb {
     font-family: var(--f-body);
-    font-size: clamp(14px, 0.95vw, 19px);
-    line-height: 1.6;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--on-invert-mute);
     max-width: 42ch;
     margin-bottom: clamp(22px, 2vw, 40px);
@@ -351,11 +410,16 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-contacts {
     display: flex; flex-direction: column; gap: clamp(14px, 1.3vw, 26px);
   }
+  /* Contact rows are meta rows, so the label rung — mixed case, not uppercase:
+   * an address and an e-mail are read, not scanned. Tight leading so a
+   * wrapping street line stays one block against its Ø44px disc. */
   :root[data-theme="studio"] .st-contact {
     display: flex; align-items: center; gap: clamp(12px, 1vw, 18px);
-    font-family: var(--f-body);
-    font-size: clamp(13.5px, 0.9vw, 18px);
-    line-height: 1.4;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--on-invert);
     text-decoration: none;
   }
@@ -377,10 +441,15 @@ export const STUDIO_CHROME_CSS = `
   }
   :root[data-theme="studio"] .st-contact-ico .st-ico { inline-size: 18px; block-size: 18px; }
 
+  /* Column heading: an eyebrow over a list, so the label rung uppercase. The
+   * ramp carries ONE label tracking (0.06em); the old 0.12em was measured, and
+   * the wider setting is not somewhere the source goes. */
   :root[data-theme="studio"] .st-foot-col h2 {
-    font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.75vw, 15px);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label);
     text-transform: uppercase;
     color: var(--on-invert-mute);
     margin-bottom: clamp(20px, 2vw, 40px);
@@ -391,10 +460,15 @@ export const STUDIO_CHROME_CSS = `
     /* Measured ~66px row gap — the footer's airiness is the device. */
     gap: clamp(14px, 3.3vw, 66px);
   }
+  /* The link columns are label too — same rung as the nav in the bar, which is
+   * what makes the two chromes read as one system. Tight leading: the row gap
+   * above supplies the air, so a link that wraps should stay one block. */
   :root[data-theme="studio"] .st-foot-col a {
-    font-family: var(--f-body);
-    font-size: clamp(14px, 0.95vw, 19px);
-    line-height: 1.3;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-decoration: none;
     color: var(--on-invert-mute);
     transition: color 0.2s ease;
@@ -409,10 +483,14 @@ export const STUDIO_CHROME_CSS = `
     background: color-mix(in srgb, var(--on-invert) 16%, transparent);
     margin: clamp(40px, 5vw, 100px) 0 clamp(18px, 1.6vw, 32px);
   }
+  /* Legal line: a meta row of company, VAT id and address, so the label rung.
+   * Tight leading keeps it compact where it wraps to two lines on a phone. */
   :root[data-theme="studio"] .st-foot-legal {
-    font-family: var(--f-body);
-    font-size: clamp(12px, 0.85vw, 17px);
-    line-height: 1.5;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--on-invert-mute);
   }
 
@@ -470,7 +548,7 @@ export const STUDIO_CHROME_CSS = `
      * keeps its tap target and its aria-label, and gives up only its digits —
      * which the footer states in full a scroll away. */
     :root[data-theme="studio"] .st-chrome-tel span { display: none; }
-    /* Two 19px link columns stop fitting; one column, tightened rows. */
+    /* Two label-set link columns stop fitting; one column, tightened rows. */
     :root[data-theme="studio"] .st-foot-cols { grid-template-columns: minmax(0, 1fr); }
     :root[data-theme="studio"] .st-foot-col ul { gap: 14px; }
   }
@@ -495,9 +573,9 @@ export const STUDIO_CHROME_CSS = `
  *
  * It is still TWO words, and concatenating them produced a single unreadable
  * token in the accessibility tree ("MasažniFotelj"). The halves are emitted as
- * separate spans with a real space between them; the space carries font-size 0
- * (see .st-mark-gap), which closes the visual join exactly while leaving the
- * word break in the text stream.
+ * separate spans with a real space between them; the space is an inline-block
+ * of a fixed 0.3em (see .st-mark-gap), which draws the join TIGHT BUT PRESENT
+ * — not closed — while leaving the word break in the text stream.
  */
 function markHtml(ctx: RenderCtx): string {
   const w = ctx.shop.wordmark;

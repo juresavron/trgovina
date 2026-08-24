@@ -91,7 +91,20 @@ export const THEME_CATALOG: Record<ThemeKey, ThemeCatalogEntry> = {
     displayFont: "Clash Display",
     recommendedFor: ["wellness", "neutral"],
     composition: {
-      home: ["hero", "marquee", "products", "trust", "moat", "reviews", "guides"],
+      /**
+       * The source's own running order, read off its DOM (10 devices between
+       * header and footer): hero → category rail → brand story → offer band →
+       * best sellers → "why us" + counters → testimonials → blog cards →
+       * social ticker → membership band.
+       *
+       * Mapped onto the kernel vocabulary, with two notes. The ticker sits at
+       * the BOTTOM EDGE of the hero on desktop (absolutely positioned) and
+       * reflows to a following block on smaller tiers, so `marquee` directly
+       * after `hero` is the honest expression of it. The category rail has no
+       * kernel key and is injected by renderStudioExtras — it belongs at
+       * position 2, not after the product grid where it used to sit.
+       */
+      home: ["hero", "marquee", "moat", "products", "stats", "reviews", "guides", "trust"],
     },
   },
 

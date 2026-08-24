@@ -9,9 +9,11 @@
  *         detail frames beneath.
  *   §4.13 the shop's FILTER SIDEBAR is the configurator's vocabulary:
  *         "uppercase label + hairline, square 22px checkboxes with 19px
- *         labels, and availability as outlined round pills". Both option
- *         shapes are used here, chosen per group by the rule documented at
- *         PILL_MAX_CHARS.
+ *         labels, and availability as outlined round pills". The SHAPES hold;
+ *         the 19px does not — it is the screenshot pass, and §1's transcribed
+ *         ramp wins on type (§0). The option row is the 16px body rung and the
+ *         group label the 14px label rung. Both option shapes are used here,
+ *         chosen per group by the rule documented at PILL_MAX_CHARS.
  *   §4.1  the black 90px chrome band is the sticky buy bar's language:
  *         near-black ground, on-invert type, one sharp white CTA.
  *   §3    54px gutter, ~130px light-section rhythm, sharp buttons / round
@@ -25,9 +27,15 @@
  * class for class — and because, with no JS and no filtered URLs, it renders
  * as links rather than as controls that could not filter.
  *
- * Scale translation: every measured px is the clamp MAXIMUM (the spec is
- * measured at a 2000px viewport). Neighbouring values share a vw slope, so
- * the ratios — gutter 54 : title 68 : label 15 : box 22 — survive the shrink.
+ * Scale translation: this page carries NO measured type. §4's px numbers are
+ * the screenshot pass and §1's ramp wins wherever the two touch type (§0), so
+ * the devices' geometry is still read off §4 — the 380px sidebar, the 22px
+ * checkbox, the 4/3 frame — while every font-size, weight, tracking and
+ * leading below is a token from the transcribed ramp, taken a whole row at a
+ * time. Nothing here sets a size without the weight, tracking and leading that
+ * ship with it, and nothing here tracks negatively: the source's display type
+ * is set open and light (500 at 92px), which is the single thing the measured
+ * pass had backwards.
  *
  * NO INTERACTIVITY. This Worker ships no JS (docs/SEO.md §4, baseline §5.2),
  * so the configurator renders the selected option as state — a `data-on`
@@ -146,14 +154,19 @@ export const STUDIO_PDP_CSS = `
       transparent 72%
     );
   }
-  /* Uppercase caption rung (15px / 500 / 0.12em). --ink-body, not --ink-mute:
-   * 8.1:1 on the #f4f4f4 panel, where mute would land at 4.2:1 and fail. */
+  /* The label rung, uppercase — a caption is label copy (§1), and the label
+   * rung is DM Sans at 14px / 500 / 0.06em, not the 0.12em the measured pass
+   * had. Single line, so it takes --lh-label-tight rather than the 1.71em
+   * stacked-copy leading. --ink-body, not --ink-mute: 8.1:1 on the panel,
+   * where mute would land at 4.2:1 and fail. */
   :root[data-theme="studio"] .st-pdp-cap {
     position: absolute; z-index: 3;
     top: clamp(12px, 1.2vw, 24px); left: clamp(12px, 1.2vw, 24px);
-    font-family: var(--f-body);
-    font-size: clamp(10.5px, 0.7vw, 14px);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--ink-body);
   }
@@ -176,38 +189,50 @@ export const STUDIO_PDP_CSS = `
 
   /* ---- buy column ------------------------------------------------------ */
   :root[data-theme="studio"] .st-pdp-buy { min-width: 0; }
-  /* 15px / 500 / 0.12em uppercase (§1). --ink-body = 9.7:1 on white. */
+  /* The label rung, uppercase (§1). --ink-body = 9.7:1 on white. */
   :root[data-theme="studio"] .st-pdp-eyebrow {
-    font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.75vw, 15px);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--ink-body);
   }
-  /* Page-statement rung: 62–68px / 600 / −0.022em / 1.15 (§1). One step below
-   * §4.13's 90px shop-hero title, which spans a full-bleed band; this one sits
-   * in a ~45% column. */
+  /* h2, not h1 — and the choice is about how this page is composed. The title
+   * is the PDP's dominant heading, but it sits in a ~45% decision column beside
+   * a gallery that is the largest object on the page; it never spans a band.
+   * h1 (92/64/44) is the rung the full-bleed shop hero below takes, and keeping
+   * the two apart preserves the step this file always described. The
+   * 600 / −0.022em / 1.15 this rule used to carry was the measured pass: §1's
+   * display type is 500, tracked 0em, led 1.13em, and is never negative. */
   :root[data-theme="studio"] .st-pdp-title {
     margin: clamp(10px, 1vw, 20px) 0 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(2rem, 3.4vw, 4.25rem);
+    font-size: var(--t-h2);
     letter-spacing: var(--ls-h2);
-    line-height: 1.08;
+    line-height: var(--lh-h2);
     color: var(--ink);
     /* A long Slovenian model name folds; it never pushes the column open. */
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* Body copy 19–21px / 1.6–1.7 (§1). */
+  /* The lead rung (20/16/18): a standfirst under the title, not ordinary body —
+   * hence Satoshi at the medium weight rather than 400. */
   :root[data-theme="studio"] .st-pdp-sub {
     margin: clamp(12px, 1.2vw, 24px) 0 0;
     font-family: var(--f-body);
-    font-size: clamp(14.5px, 1.05vw, 1.3125rem);
-    line-height: 1.65;
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead);
     color: var(--ink-body);
     max-width: 46ch;
   }
+  /* Three rungs share this row and the ramp gives each its own FACE, so the
+   * container's family serves only the body-rung child; the other two declare
+   * their own. */
   :root[data-theme="studio"] .st-pdp-price {
     display: flex; align-items: baseline; flex-wrap: wrap;
     gap: clamp(8px, 0.7vw, 14px);
@@ -215,26 +240,39 @@ export const STUDIO_PDP_CSS = `
     font-family: var(--f-body);
     font-variant-numeric: tabular-nums;
   }
-  /* §4.7's 26px price rung lifted one step: on a PDP it is the page's single
-   * commercial number, not one of nine on a grid. */
+  /* h6 — the ramp's price rung, and on a PDP this is the page's single
+   * commercial number rather than one of nine on a grid. h6 is a display rung,
+   * so the number sets in Clash Display at 500. The −0.01em it used to carry is
+   * exactly the artefact §1 rules out. */
   :root[data-theme="studio"] .st-pdp-now {
-    font-size: clamp(1.375rem, 1.7vw, 2.125rem);
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-family: var(--f-display);
+    font-size: var(--t-h6);
+    font-weight: var(--w-display);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
     color: var(--ink);
   }
-  /* The struck compare-at (§4.7): 20px, muted, one hairline through it.
-   * #767676 on #ffffff = 4.5:1 — it clears only because it sits on the page
+  /* The struck compare-at (§4.7): the body rung, muted, one hairline through
+   * it. #767676 on #ffffff = 4.5:1 — it clears only because it sits on the page
    * ground, never on the --bg-alt panel. */
   :root[data-theme="studio"] .st-pdp-was {
-    font-size: clamp(0.8125rem, 1vw, 1.25rem);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--ink-mute);
     text-decoration-line: line-through;
     text-decoration-thickness: 1px;
   }
+  /* "z DDV" is a meta note beside the number, so it takes the label rung —
+   * sentence case, because uppercase is a per-element choice and not a property
+   * of the rung. Tight leading: it is one line inside a baseline-aligned row. */
   :root[data-theme="studio"] .st-pdp-vat {
-    font-size: clamp(11px, 0.7vw, 14px);
-    letter-spacing: 0.04em;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--ink-body);
   }
 
@@ -244,13 +282,17 @@ export const STUDIO_PDP_CSS = `
     gap: clamp(20px, 2vw, 40px);
     margin-top: clamp(26px, 2.8vw, 56px);
   }
-  /* The sidebar's device: uppercase label with a hairline under it. */
+  /* The sidebar's device: the uppercase label rung with a hairline under it.
+   * It is an <h2> in the DOM and a label in the ramp — heading LEVEL and type
+   * rung are independent, and a group label is label copy. */
   :root[data-theme="studio"] .st-pdp-glabel {
     padding-bottom: clamp(8px, 0.7vw, 14px);
     border-bottom: 1px solid var(--line);
-    font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.75vw, 15px);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--ink-body);
   }
@@ -259,8 +301,10 @@ export const STUDIO_PDP_CSS = `
     display: flex; flex-direction: column;
     gap: clamp(9px, 0.8vw, 16px);
   }
-  /* Checkbox row: square box + 19px label (§4.13). Not a control — no cursor
-   * change, no hover state: it states the configuration, it does not offer it.
+  /* Checkbox row: square box + the BODY rung (§4.13 says 19px, but that is the
+   * screenshot pass — these labels are wrapping product copy, so body at 16px
+   * is the rung that fits what they are). Not a control — no cursor change, no
+   * hover state: it states the configuration, it does not offer it.
    * The unselected rung is --ink-mute (4.6:1 on the white page ground, the
    * lowest rung that still clears AA); the chosen row goes to full --ink. */
   :root[data-theme="studio"] .st-pdp-opt {
@@ -269,8 +313,10 @@ export const STUDIO_PDP_CSS = `
     display: flex; align-items: flex-start;
     gap: clamp(9px, 0.8vw, 16px);
     font-family: var(--f-body);
-    font-size: clamp(13.5px, 0.95vw, 1.1875rem);
-    line-height: 1.4;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--ink-mute);
   }
   /* SQUARE, and sharp (--r-ctrl): §9 keeps round for pills and arrows. */
@@ -279,7 +325,7 @@ export const STUDIO_PDP_CSS = `
     display: inline-flex; align-items: center; justify-content: center;
     inline-size: var(--studio-pdp-box);
     block-size: var(--studio-pdp-box);
-    /* Optical centering against the first line of a 1.4-leading label. */
+    /* Optical centering against the first line of a 1.625em-leading label. */
     margin-top: 0.15em;
     border: 1px solid var(--line-strong);
     border-radius: var(--r-ctrl);
@@ -290,8 +336,13 @@ export const STUDIO_PDP_CSS = `
     inline-size: 68%; block-size: 68%;
     opacity: 0;
   }
-  /* The chosen state, driven purely by the data attribute the renderer emits. */
-  :root[data-theme="studio"] .st-pdp-opt[data-on] { color: var(--ink); font-weight: 500; }
+  /* The chosen state, driven purely by the data attribute the renderer emits.
+   * The body rung is 400, so the escalation is to --w-body-med — the ramp's own
+   * second prose weight, not a heavier one invented for the state. */
+  :root[data-theme="studio"] .st-pdp-opt[data-on] {
+    color: var(--ink);
+    font-weight: var(--w-body-med);
+  }
   :root[data-theme="studio"] .st-pdp-opt[data-on] .st-pdp-box {
     background: var(--ink-invert);
     border-color: var(--ink-invert);
@@ -304,9 +355,11 @@ export const STUDIO_PDP_CSS = `
     display: flex; flex-wrap: wrap;
     gap: clamp(8px, 0.7vw, 14px);
   }
-  /* ROUND (§9). Sentence case, not the 0.12em uppercase rung: these labels are
-   * product copy carrying prices ("Za 4 osebe — 1.990 €"), and tracked caps
-   * would push them past two-per-row at 390px. */
+  /* ROUND (§9), and the LABEL rung: a pill is a chip, which is label copy.
+   * Sentence case though, not uppercase — these labels are product copy
+   * carrying prices ("Za 4 osebe — 1.990 €"), and caps would push them past
+   * two-per-row at 390px. One line by construction (PILL_MAX_CHARS), so it
+   * takes the tight label leading. */
   :root[data-theme="studio"] .st-pdp-pill {
     position: relative;
     display: inline-flex; align-items: center;
@@ -314,18 +367,21 @@ export const STUDIO_PDP_CSS = `
     border: 1px solid var(--line);
     border-radius: var(--r-pill);
     background: var(--surface);
-    font-family: var(--f-body);
-    font-size: clamp(12.5px, 0.9vw, 1.125rem);
-    line-height: 1.3;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--ink-mute);
   }
   /* Chosen = inverted fill. In a monochrome theme the only louder state than
-   * a black hairline is a black ground (§4.7 uses the same escalation). */
+   * a black hairline is a black ground (§4.7 uses the same escalation). No
+   * weight change: the label rung is already 500 and the ramp's next weight up
+   * is display-only, so the fill carries the state on its own. */
   :root[data-theme="studio"] .st-pdp-pill[data-on] {
     background: var(--ink-invert);
     border-color: var(--ink-invert);
     color: var(--on-invert);
-    font-weight: 500;
   }
 
   /* Honesty line under the configurator: says the selection is fixed and
@@ -333,8 +389,10 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-cfg-note {
     margin-top: clamp(14px, 1.2vw, 24px);
     font-family: var(--f-body);
-    font-size: clamp(12px, 0.8vw, 16px);
-    line-height: 1.6;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--ink-body);
   }
   :root[data-theme="studio"] .st-pdp-cfg-note a {
@@ -367,19 +425,24 @@ export const STUDIO_PDP_CSS = `
     border-top: 1px solid var(--line);
   }
   :root[data-theme="studio"] .st-pdp-frow:first-child { border-top: 0; padding-top: 0; }
+  /* Delivery rows are prose, both halves: the body rung, with the value at the
+   * ramp's second prose weight so the row still has a loud half. */
   :root[data-theme="studio"] .st-pdp-frow dt {
     flex: 1 1 14ch; min-width: 0;
     font-family: var(--f-body);
-    font-size: clamp(13px, 0.9vw, 1.0625rem);
-    line-height: 1.5;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--ink-body);
   }
   :root[data-theme="studio"] .st-pdp-frow dd {
     margin: 0; margin-left: auto;
     font-family: var(--f-body);
-    font-size: clamp(13px, 0.9vw, 1.0625rem);
-    font-weight: 600;
-    line-height: 1.5;
+    font-size: var(--t-body);
+    font-weight: var(--w-body-med);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     font-variant-numeric: tabular-nums;
     color: var(--ink);
     white-space: nowrap;
@@ -388,13 +451,20 @@ export const STUDIO_PDP_CSS = `
    * text on the page. --acc-text is the L=0.45 rung, ≥4.9:1 on #ffffff at
    * every shop hue; --acc (L=0.62) would not clear 4.5:1 and is not used here. */
   :root[data-theme="studio"] .st-pdp-frow dd.st-pdp-inc { color: var(--acc-text); }
+  /* Legal microcopy, and a wrapping sentence rather than a meta line, so it is
+   * the body rung and not the label one — it stays quieter than the rows above
+   * by colour (--ink-mute) and by the rule between them, not by being smaller.
+   * The ramp has no rung under 16px for prose; inventing one is what this pass
+   * exists to undo. */
   :root[data-theme="studio"] .st-pdp-note {
     margin-top: clamp(12px, 1.1vw, 22px);
     padding-top: clamp(12px, 1.1vw, 22px);
     border-top: 1px solid var(--line);
     font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.78vw, 15px);
-    line-height: 1.55;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--ink-mute);
   }
 
@@ -405,15 +475,17 @@ export const STUDIO_PDP_CSS = `
     gap: var(--studio-pdp-col-gap);
     margin-top: var(--studio-rhythm);
   }
-  /* Section heading rung: 68–72px / 600 / −0.025em / 1.05 (§1), capped one
-   * step down because it shares the row with the table it labels. */
+  /* h3 — a sub-section heading, one rung under the page's h2 title, and it
+   * shares its row with the table it labels. The 68–72px / 600 / −0.025em this
+   * rule carried was the measured pass; §1 has no negative tracking anywhere,
+   * and h3's leading is 1.16em rather than the 1.05 that was eyeballed. */
   :root[data-theme="studio"] .st-pdp-spec-h {
     margin: clamp(10px, 1vw, 20px) 0 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(1.5rem, 2.4vw, 3rem);
-    letter-spacing: -0.025em;
-    line-height: 1.05;
+    font-size: var(--t-h3);
+    letter-spacing: var(--ls-h3);
+    line-height: var(--lh-h3);
     color: var(--ink);
     max-width: 14ch;
   }
@@ -428,17 +500,24 @@ export const STUDIO_PDP_CSS = `
     padding-block: clamp(11px, 1vw, 20px);
     border-bottom: 1px solid var(--line);
   }
+  /* Spec cells are the body rung on both sides; the term/value distinction is
+   * carried by colour, which is how the ramp intends it — there is no separate
+   * table rung in §1. */
   :root[data-theme="studio"] .st-pdp-srow dt {
     font-family: var(--f-body);
-    font-size: clamp(13px, 0.9vw, 1.0625rem);
-    line-height: 1.5;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--ink-mute);
   }
   :root[data-theme="studio"] .st-pdp-srow dd {
     margin: 0;
     font-family: var(--f-body);
-    font-size: clamp(13px, 0.9vw, 1.0625rem);
-    line-height: 1.5;
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
     color: var(--ink);
     font-variant-numeric: tabular-nums;
   }
@@ -464,15 +543,19 @@ export const STUDIO_PDP_CSS = `
     gap: clamp(10px, 1.4vw, 28px);
     padding-block: clamp(9px, 0.8vw, 16px);
   }
+  /* The summary is chrome, not content: both halves are meta rows on a band,
+   * so both take the label rung and the band's own face. */
   :root[data-theme="studio"] .st-pdp-sum {
     display: flex; align-items: baseline; flex-wrap: wrap;
     gap: 2px clamp(6px, 0.6vw, 12px);
     min-width: 0;
-    font-family: var(--f-body);
+    font-family: var(--f-label);
   }
   :root[data-theme="studio"] .st-pdp-sum-name {
-    font-size: clamp(13px, 0.95vw, 1.1875rem);
-    font-weight: 600;
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--on-invert);
     /* One row at every width: the name gives way before the row wraps. */
     min-width: 0;
@@ -480,22 +563,36 @@ export const STUDIO_PDP_CSS = `
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* #a8a8a8 on #0d0d0d = 8.9:1. */
+  /* #a8a8a8 on #0d0d0d = 8.9:1. Same rung as the name beside it — the two are
+   * separated by colour, which is the only separation a chrome band gets. */
   :root[data-theme="studio"] .st-pdp-sum-cfg {
-    font-size: clamp(12px, 0.8vw, 1rem);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     color: var(--on-invert-mute);
     white-space: nowrap;
   }
+  /* h6, the price rung, matching .st-pdp-now above: the bar restates the one
+   * commercial number and restating it at a different rung would read as a
+   * second, different price. It is a display rung, so the bar's number sets in
+   * Clash Display while the summary beside it stays on the label rung. Its line
+   * box (24 × 1.33em = 32px) plus this bar's padding runs a few px past
+   * --chrome-h on desktop; the bar is min-height, so it grows rather than
+   * clipping. */
   :root[data-theme="studio"] .st-pdp-bar-price {
     margin-left: auto;
-    font-family: var(--f-body);
-    font-size: clamp(14px, 1.2vw, 1.5rem);
-    font-weight: 600;
+    font-family: var(--f-display);
+    font-size: var(--t-h6);
+    font-weight: var(--w-display);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
     font-variant-numeric: tabular-nums;
     white-space: nowrap;
     color: var(--on-invert);
   }
-  /* SHARP white CTA (§3/§9) — the one live control on the page. */
+  /* SHARP white CTA (§3/§9) — the one live control on the page. A button label
+   * is the label rung: DM Sans 14/500, tracked 0.06em, uppercase. */
   :root[data-theme="studio"] .st-pdp-cta {
     flex: 0 0 auto;
     display: inline-flex; align-items: center; justify-content: center;
@@ -504,9 +601,11 @@ export const STUDIO_PDP_CSS = `
     border: 1px solid var(--bg);
     border-radius: var(--r-ctrl);
     text-decoration: none;
-    font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.8vw, 1rem);
-    font-weight: 600; letter-spacing: 0.12em; line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     white-space: nowrap;
     color: var(--ink);
@@ -524,7 +623,7 @@ export const STUDIO_PDP_CSS = `
 
   /* ---- responsive ------------------------------------------------------ */
   @media (max-width: 1000px) {
-    /* Gallery over buy column: below this width the frame and a 19px option
+    /* Gallery over buy column: below this width the frame and a 16px option
      * list cannot share a row without both losing. */
     :root[data-theme="studio"] .st-pdp-grid,
     :root[data-theme="studio"] .st-pdp-spec {
@@ -533,13 +632,19 @@ export const STUDIO_PDP_CSS = `
     :root[data-theme="studio"] .st-pdp-spec-h { max-width: none; }
   }
   @media (max-width: 560px) {
-    /* 390px budget for the bar: 20px gutters leave 350px. CTA ~118px + price
-     * ~58px + two 10px gaps = 196px, so the name keeps ~154px and ellipses.
-     * The configuration summary is the one part that can be dropped without
-     * losing a fact the page has not already stated above. */
+    /* 390px budget for the bar, re-costed on the ramp: 20px gutters leave
+     * 350px. The CTA is now a flat 14px label (~122px with 14px padding) and
+     * the price is h6's phone value, 22px (~85px), so with two 10px gaps the
+     * name keeps ~113px — about fifteen characters before it ellipses, which
+     * is what the ellipsis is there for. The configuration summary is the one
+     * part that can be dropped without losing a fact the page has not already
+     * stated above.
+     * No letter-spacing override here any more: the label rung is 0.06em at
+     * every width, and the 0.08em this block used to claw back was only ever
+     * undoing an invented 0.12em. */
     :root[data-theme="studio"] .st-pdp-sum-cfg { display: none; }
     :root[data-theme="studio"] .st-pdp-bar-in { gap: 10px; }
-    :root[data-theme="studio"] .st-pdp-cta { padding-inline: 14px; letter-spacing: 0.08em; }
+    :root[data-theme="studio"] .st-pdp-cta { padding-inline: 14px; }
     /* A 3-up detail strip at 350px gives 110px frames — still readable as
      * frames, and it keeps the gallery one object instead of two. */
     :root[data-theme="studio"] .st-pdp-thumbs { gap: 8px; }
@@ -580,31 +685,39 @@ export const STUDIO_PDP_CSS = `
     align-items: end;
   }
   :root[data-theme="studio"] .st-shop-hero-eyebrow {
-    font-family: var(--f-body);
-    font-size: clamp(11.5px, 0.75vw, 15px);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert-mute);
   }
-  /* The measured 90px page title — the one rung above the PDP's 68px. */
+  /* h1 — the listing page's one dominant statement, spanning a full-bleed dark
+   * band, and the only h1-scale device in this file. §4.13 measured it at 90px,
+   * which is within a hair of the ramp's 92; the ramp value is the real one.
+   * The PDP title takes h2 for the reason given there. */
   :root[data-theme="studio"] .st-shop-hero-h {
     margin: clamp(14px, 1.4vw, 28px) 0 0;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(2.25rem, 4.6vw, 5.625rem);
-    letter-spacing: var(--ls-h2);
-    line-height: 1.02;
+    font-size: var(--t-h1);
+    letter-spacing: var(--ls-h1);
+    line-height: var(--lh-h1);
     color: var(--on-invert);
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* The measured 21px sub. --on-invert-mute, the rung tokens.ts carries for
-   * exactly this: --on-invert-mute is too dark under a 90px title. */
+  /* The lead rung — a standfirst under the page title (§4.13's 21px is the
+   * screenshot pass). --on-invert-mute is the rung tokens.ts carries for
+   * exactly this: quiet against the band without dropping under AA. */
   :root[data-theme="studio"] .st-shop-hero-sub {
     margin: clamp(12px, 1.2vw, 24px) 0 0;
     font-family: var(--f-body);
-    font-size: clamp(14.5px, 1.05vw, 1.3125rem);
-    line-height: 1.6;
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead);
     color: var(--on-invert-mute);
     max-width: 46ch;
   }
@@ -648,9 +761,11 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-shop-hero-cap {
     position: absolute; z-index: 2;
     top: 0; left: 0;
-    font-family: var(--f-body);
-    font-size: clamp(10.5px, 0.7vw, 14px);
-    font-weight: 500; letter-spacing: 0.12em; line-height: 1;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert-mute);
   }
@@ -715,12 +830,21 @@ export const STUDIO_PDP_CSS = `
 `;
 
 /**
- * A pill must hold its label on ONE line and still allow two pills per row at
- * the narrowest supported width. At 390px the buy column is 350px; a pill
- * spends ~30px on padding and border, so a two-up row leaves ~145px of text
- * per pill, which is ~24 characters of DM Sans at the 12.5px floor. Groups
- * whose longest option exceeds that render as the §4.13 checkbox list
- * instead, where a label may wrap freely.
+ * A pill must hold its label on ONE line. Groups whose longest option exceeds
+ * this render as the §4.13 checkbox list instead, where a label may wrap
+ * freely.
+ *
+ * The 24 was costed against a 12.5px floor that no longer exists: the pill is
+ * now the label rung, a flat 14px DM Sans, so the ~145px a two-up row leaves at
+ * 390px buys ~20 characters rather than ~24. A group sitting right on the limit
+ * therefore packs one pill per row on a narrow phone instead of two — it wraps,
+ * it does not overflow, and every pill still holds its label on one line, which
+ * is the invariant this constant actually protects.
+ *
+ * The number stays at 24 regardless: lowering it would move groups from the
+ * pill shape to the checkbox shape, which changes the DOM this page emits, and
+ * that is a layout decision rather than a type one. Flagged here so it is
+ * decided deliberately and not as a side effect of the ramp.
  */
 const PILL_MAX_CHARS = 24;
 
@@ -910,7 +1034,9 @@ function upperFirst(s: string, locale: string): string {
  * §4.13 — the shop hero.
  *
  * "Dark band, page title 90px left with 21px sub; product photo right with
- * thin white circle outlines behind it, bleeding below the band."
+ * thin white circle outlines behind it, bleeding below the band." The px are
+ * §4's screenshot pass; the band takes §1's h1 and lead rungs, which is the
+ * same reading of the device at the transcribed sizes.
  *
  * Copy comes from what the shop already states about itself — the keyword's
  * plural is the listing page's title in every one of these stores, and the
@@ -947,7 +1073,9 @@ export function renderStudioShopHero(ctx: RenderCtx, title?: string, sub?: strin
  * §4.13 — the 380px filter sidebar.
  *
  * "Uppercase label + hairline, square 22px checkboxes with 19px labels, and
- * availability as outlined round pills."
+ * availability as outlined round pills." The 22px box is geometry and stands;
+ * the 19px is §4's screenshot pass, and the rows take §1's body rung — they
+ * reuse the configurator's classes, so they take its type with them.
  *
  * This Worker ships no JS and the catalogue has no query-parameter filtering,
  * so a checkbox here could not filter anything — and a control that cannot act

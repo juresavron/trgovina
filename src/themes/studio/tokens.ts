@@ -171,6 +171,24 @@ export const STUDIO_TOKENS = `
     --studio-card-gap: 24px;
     --studio-col-gap: 40px;
 
+    /* Spacing scale, taken from the source's own frequency distribution rather
+     * than invented as a geometric ramp. Counting every desktop gap and
+     * padding in the sheet: 10px dominates by a wide margin (53 uses — it is
+     * the theme's default "things are related" gap), then 24 (14), 40 (11),
+     * 8 (7), 16 (6), 12 (6), 32 (6), 20 (5), 64 (3), with 80/100/170 for
+     * band-scale separation.
+     *
+     * Note 10px, not 8px, as the micro rung. A generic 8-point scale would be
+     * wrong here in the one place it shows most — the small gaps inside cards,
+     * nav items and price rows, which is nearly every component. */
+    --gap-xs: 8px;
+    --gap-sm: 10px;
+    --gap-md: 16px;
+    --gap-lg: 24px;
+    --gap-xl: 40px;
+    --gap-2xl: 64px;
+    --gap-3xl: 80px;
+
     /* ---- Type ------------------------------------------------------------ */
     --f-display: "Clash Display", "Archivo", "Helvetica Neue", sans-serif;
     --f-body: "Satoshi", "DM Sans", system-ui, sans-serif;
