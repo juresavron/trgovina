@@ -253,7 +253,7 @@ export const STUDIO_STATEMENT_CSS = `
   :root[data-theme="studio"] .st-stats-pill {
     display: inline-block;
     border: 1px solid var(--studio-ring);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     padding: clamp(8px, 0.6vw, 12px) clamp(16px, 1.4vw, 28px);
     font-family: var(--f-body);
     font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
@@ -299,7 +299,7 @@ export const STUDIO_STATEMENT_CSS = `
      * lowercase line, so nudge it down by a hair of its own size. */
     translate: 0 -0.06em;
     border: 1px solid var(--studio-ring);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
     line-height: 0;
     color: var(--ink-body);
   }

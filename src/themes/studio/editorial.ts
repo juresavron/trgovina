@@ -179,7 +179,7 @@ export const STUDIO_EDITORIAL_CSS = `
     left: 50%; bottom: 11%;
     transform: translateX(-50%);
     width: 62%; height: 8%;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     background: radial-gradient(
       50% 50% at 50% 50%,
       color-mix(in srgb, var(--ink) 18%, transparent),
@@ -353,7 +353,7 @@ export const STUDIO_EDITORIAL_CSS = `
     overflow: hidden;
     inline-size: clamp(120px, 21vw, 420px);
     aspect-ratio: 1 / 1;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
     background: var(--studio-portrait);
   }
   /* Head + shoulders, drawn flat: two neutral masses, no gradient lighting. */
@@ -363,7 +363,7 @@ export const STUDIO_EDITORIAL_CSS = `
     translate: -50% 0;
     inline-size: 30%;
     aspect-ratio: 1 / 1;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
     background: color-mix(in srgb, var(--on-invert) 16%, transparent);
   }
   :root[data-theme="studio"] .st-tst-shoulders {
@@ -372,7 +372,7 @@ export const STUDIO_EDITORIAL_CSS = `
     translate: -50% 0;
     inline-size: 66%;
     aspect-ratio: 3 / 2;
-    border-radius: var(--r-ctrl) var(--r-ctrl) 0 0;
+    border-radius: var(--r-pill) var(--r-pill) 0 0;
     background: color-mix(in srgb, var(--on-invert) 12%, transparent);
   }
 
@@ -424,7 +424,7 @@ export const STUDIO_EDITORIAL_CSS = `
   :root[data-theme="studio"] .st-tst-chip {
     display: inline-block;
     border: 1px solid var(--studio-line-invert);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1.1vw, 22px);
     font-family: var(--f-body);
     font-size: clamp(0.6875rem, 0.7vw, 0.875rem);
@@ -443,7 +443,7 @@ export const STUDIO_EDITORIAL_CSS = `
     overflow: hidden;
     inline-size: clamp(180px, 15vw, 300px);
     aspect-ratio: 1 / 1;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
     background: var(--studio-quote-disc);
   }
   :root[data-theme="studio"] .st-tst-disc-mass {
@@ -576,7 +576,7 @@ export const STUDIO_EDITORIAL_CSS = `
    * and it still reads as a chip because the ground is not fully opaque. */
   :root[data-theme="studio"] .st-gd-chip {
     border: 1px solid color-mix(in srgb, var(--on-invert) 34%, transparent);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     background: color-mix(in srgb, var(--ink-invert) 82%, transparent);
     padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1.1vw, 22px);
     font-family: var(--f-body);

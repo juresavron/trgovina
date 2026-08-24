@@ -78,7 +78,7 @@ export const STUDIO_EFFECTS_CSS = `
     text-transform: uppercase;
     color: var(--ink-mute);
     border: 1px solid var(--ink-mute);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     padding: 5px 14px;
     cursor: pointer;
     white-space: nowrap;

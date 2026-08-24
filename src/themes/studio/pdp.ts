@@ -139,7 +139,7 @@ export const STUDIO_PDP_CSS = `
     position: absolute;
     left: 50%; bottom: 12%; transform: translateX(-50%);
     width: 60%; height: 8%;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     background: radial-gradient(
       50% 50% at 50% 50%,
       color-mix(in srgb, var(--ink) 18%, transparent),
@@ -312,7 +312,7 @@ export const STUDIO_PDP_CSS = `
     display: inline-flex; align-items: center;
     padding: clamp(8px, 0.6vw, 12px) clamp(13px, 1.2vw, 24px);
     border: 1px solid var(--line);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     background: var(--surface);
     font-family: var(--f-body);
     font-size: clamp(12.5px, 0.9vw, 1.125rem);
@@ -623,7 +623,7 @@ export const STUDIO_PDP_CSS = `
     transform: translate(-50%, -50%);
     aspect-ratio: 1;
     border: 1px solid color-mix(in srgb, var(--on-invert) 18%, transparent);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
   }
   :root[data-theme="studio"] .st-shop-hero-ring:nth-child(1) { inline-size: 98%; }
   :root[data-theme="studio"] .st-shop-hero-ring:nth-child(2) { inline-size: 76%; }
@@ -688,7 +688,7 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-filters a.st-pdp-pill:focus-visible {
     outline: 2px solid var(--acc);
     outline-offset: 3px;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
   }
 
   @media (max-width: 900px) {

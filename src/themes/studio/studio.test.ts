@@ -53,7 +53,7 @@ describe("studio renders a self-consistent sheet", () => {
   // them for Archivo and Fraunces. Asserting against the whole document would
   // fail on those themes' legitimate declarations.
   it("studio's sheet carries no retired token name", () => {
-    for (const dead of ["--track-display", "--r-pill", "--stretch", "--studio-band", "--photo-warm", "--on-invert-soft"]) {
+    for (const dead of ["--track-display", "--stretch", "--studio-band", "--photo-warm", "--on-invert-soft"]) {
       expect(STUDIO_CSS, dead + " survived the migration").not.toContain(dead);
     }
   });

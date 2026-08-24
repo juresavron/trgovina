@@ -107,7 +107,7 @@ export const STUDIO_HERO_CSS = `
   /* Pills are ROUND (§3) — the counterpoint to the sharp button below. */
   :root[data-theme="studio"] .st-hero-pill {
     border: 1px solid color-mix(in srgb, var(--on-invert) 40%, transparent);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     padding: clamp(8px, 0.6vw, 12px) clamp(16px, 1.4vw, 28px);
     font-family: var(--f-body);
     font-size: clamp(0.75rem, 0.75vw, 0.9375rem);
@@ -187,7 +187,7 @@ export const STUDIO_HERO_CSS = `
     position: absolute;
     left: 50%; bottom: 12%; transform: translateX(-50%);
     width: 62%; height: 7%;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--ink) 20%, transparent), transparent 72%);
   }
   /* --ink-body, not --ink-mute: 6.3:1 on the cool grey ground and better on the
@@ -324,7 +324,7 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-band-dot {
     flex: none;
     width: 9px; height: 9px;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
     background: var(--on-invert);
   }
   :root[data-theme="studio"] .st-band-line {
@@ -350,7 +350,7 @@ export const STUDIO_HERO_CSS = `
   /* Chips are ROUND; the CTA beside them stays SHARP. */
   :root[data-theme="studio"] .st-band-chip {
     border: 1px solid color-mix(in srgb, var(--on-invert) 40%, transparent);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     padding: clamp(7px, 0.55vw, 11px) clamp(14px, 1.3vw, 26px);
     font-family: var(--f-body);
     font-size: clamp(0.75rem, 0.75vw, 0.9375rem);

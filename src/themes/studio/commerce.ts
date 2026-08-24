@@ -91,7 +91,7 @@ export const STUDIO_COMMERCE_CSS = `
     position: absolute;
     left: 50%; bottom: 12%; transform: translateX(-50%);
     width: 60%; height: 8%;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     background: radial-gradient(
       50% 50% at 50% 50%,
       color-mix(in srgb, var(--ink) 18%, transparent),
@@ -194,7 +194,7 @@ export const STUDIO_COMMERCE_CSS = `
     position: absolute; z-index: 3;
     top: clamp(10px, 1vw, 20px); left: clamp(10px, 1vw, 20px);
     padding: clamp(5px, 0.45vw, 9px) clamp(9px, 0.8vw, 16px);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-pill);
     background: var(--ink-invert);
     color: var(--on-invert);
     font-family: var(--f-body);
@@ -448,7 +448,7 @@ export const STUDIO_COMMERCE_CSS = `
     outline: 2px solid var(--acc);
     outline-offset: 3px;
     /* Round (§9): arrows are pills, never sharp like the word-carrying CTAs. */
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
   }
   :root[data-theme="studio"] .st-rail-go .st-arrow-svg { display: block; }
 

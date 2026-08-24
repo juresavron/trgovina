@@ -158,7 +158,7 @@ export const STUDIO_CHROME_CSS = `
     display: inline-flex; align-items: center; justify-content: center;
     inline-size: clamp(36px, 2.3vw, 46px);
     block-size: clamp(36px, 2.3vw, 46px);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
     border: 0;
     background: var(--on-invert-16);
     color: var(--on-invert);
@@ -179,7 +179,7 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-chrome-btn:focus-visible {
     outline: 2px solid var(--on-invert);
     outline-offset: 3px;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
   }
 
   /* Count badge: small white disc, black numeral (measured). */
@@ -188,7 +188,7 @@ export const STUDIO_CHROME_CSS = `
     min-inline-size: 18px; block-size: 18px;
     padding-inline: 5px;
     display: inline-flex; align-items: center; justify-content: center;
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
     background: var(--bg);
     color: var(--ink);
     font-family: var(--f-body);
@@ -309,7 +309,7 @@ export const STUDIO_CHROME_CSS = `
     flex: 0 0 auto;
     display: inline-flex; align-items: center; justify-content: center;
     inline-size: clamp(34px, 2.1vw, 42px); block-size: clamp(34px, 2.1vw, 42px);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
     border: 1px solid color-mix(in srgb, var(--on-invert) 34%, transparent);
     background: transparent; color: var(--on-invert);
     cursor: pointer;
@@ -324,7 +324,7 @@ export const STUDIO_CHROME_CSS = `
     border-color: color-mix(in srgb, var(--on-invert) 20%, transparent);
   }
   :root[data-theme="studio"] .st-news-go:focus-visible {
-    outline: 2px solid var(--on-invert); outline-offset: 3px; border-radius: var(--r-ctrl);
+    outline: 2px solid var(--on-invert); outline-offset: 3px; border-radius: var(--r-circle);
   }
   :root[data-theme="studio"] .st-news-go .st-ico { inline-size: 18px; block-size: 18px; }
   :root[data-theme="studio"] .st-news-note {
@@ -364,7 +364,7 @@ export const STUDIO_CHROME_CSS = `
     flex: 0 0 auto;
     display: inline-flex; align-items: center; justify-content: center;
     inline-size: clamp(34px, 2.2vw, 44px); block-size: clamp(34px, 2.2vw, 44px);
-    border-radius: var(--r-ctrl);
+    border-radius: var(--r-circle);
     border: 1px solid color-mix(in srgb, var(--on-invert) 28%, transparent);
     color: var(--on-invert);
     transition: background-color 0.2s ease, color 0.2s ease;

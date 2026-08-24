@@ -1,92 +1,211 @@
-# STUDIO — the FURNEXA baseline (forensic replication spec)
+# STUDIO — the FURNEXA baseline (replication spec)
 
-Derived by direct measurement from 20 screenshots of the owner's Framer theme
-at 2000px viewport width. **All px values below are measured at 2000px** —
-divide by 1.39 for a 1440px design width, or treat as the clamp maximum.
+**§1–§3 are transcribed from the source theme's own stylesheet.** §4 onward is
+still the earlier screenshot-derived catalogue; where the two disagree, this
+file's front half wins and §4 is being reconciled device by device.
 
-### Source material
+---
 
-| Source | What it gave us |
-| --- | --- |
-| 20 screenshots @2000px | every measurement below |
-| `css2` font request | the two faces, verbatim |
-| **site `_files` bundle (107 files)** | **the real SVG assets and 41 product/scene images** |
-| `script*.mjs`, `bootstrap.js`, `edit.html` | nothing — Framer's analytics tracker and editor bundle, carrying only generic `--framer-*` variables |
+## 0. Provenance, and what measurement got wrong
 
-The bundle shipped the `_files` sidecar without the page HTML, so there is no
-source DOM or stylesheet — but it did carry the **icon SVGs and the wordmark**,
-which replace guesswork with exact geometry (§4.14), and the **product
-photography**, which fixes the image treatment (§4.15).
+The first pass measured this theme off 20 screenshots. The owner then supplied
+the theme's saved page — 725 KB of HTML carrying 231 KB of inline CSS, 758
+rules, plus the DOM with Framer's inline style attributes. Everything in §1–§3
+now comes from that file.
+
+The gap between the two passes is the point of this section: measurement was
+not slightly off, it was **categorically wrong about what the theme is**.
+
+| What | Measured | Transcribed | Cost of the error |
+| --- | --- | --- | --- |
+| Display face | Bricolage Grotesque | **Clash Display** | wrong typeface everywhere |
+| Body face | DM Sans | **Satoshi** | wrong typeface everywhere |
+| DM Sans' role | the body face | **only the 14px uppercase label** | — |
+| Bricolage / Fragment Mono | assumed in use | **used zero times** | LCP paid for faces that never paint |
+| Display weight | 600 | **500** | too heavy |
+| Display tracking | −0.022em | **0em / +0.02em** | tight where the source is open |
+| Card radius | 12px | **8px** | — |
+| Button radius | 0px "sharp, the signature" | **4px** | the signature was invented |
+| Container | 1900px | **1440px** | every section too wide |
+| Gutter | up to 54px | **40 / 25 / 25px** | — |
+| Section rhythm | up to 130px | **170 / 100 / 70px** | vertical rhythm too tight |
+| Panel greys | `#f2f2f2` **and** `#efefef` | **one grey, `#f0f0f0`** | invented a rung |
+| Primary ink | `#0a0a0a` / `#0d0d0d` | **one `#151515`** | invented a rung |
+| Accent | "none — the theme is monochrome" | **amber `#f0aa13`** + cream + coral | missed the accent entirely |
+
+Two of these are worth dwelling on, because they are the ones a careful person
+still gets wrong:
+
+**Radius could not be read from the stylesheet.** Framer emits most radii as
+DOM `style` attributes, so a sheet-only reading finds almost none and concludes
+the theme is square. It is not: counted across the DOM there are 8px ×33
+(images, cards), 4px ×40 (buttons), 99/999/100px ×48 (pills, circles), 40px ×6.
+The correction had to come from the DOM, and the intermediate reading — "cards
+are square, buttons are pills" — was as wrong as the original.
+
+**The theme is not monochrome.** It has a three-colour accent set. Sampling
+screenshots of a page whose accent appears on two small badges will report no
+accent at all.
+
+### Method for anything still open
+
+Read the value out of `page.html`, not off a picture. The scratchpad carries
+the extractors used here (`extract.mjs` parses the CSS keeping `@media`
+context; `cls.mjs` dumps every rule for a class across breakpoints). If a
+value is not in this document's provenance, it was not in the source, and it
+is ours to justify rather than to attribute.
+
+### Open, and blocking launch
+
+- **Glyph coverage is unverified.** Clash Display and Satoshi are Fontshare
+  faces, and nothing in the source proves they carry č/š/ž — it is an English
+  furniture site. Every shop here sells in Slovenian. `scripts/verify-fonts.mjs`
+  is the gate; it needs egress this environment does not have. **No shop goes
+  live until it passes.**
+- **The two faces are loaded from a third-party CDN.** That is two extra
+  render-blocking origins, against a project whose whole thesis is LCP. The fix
+  is to vendor the four woff2 files and serve them same-origin — also blocked
+  on egress.
 
 ---
 
 ## 1. Type system
 
-| Role | Face | Axes |
+| Role | Face | Weights used |
 | --- | --- | --- |
-| Display | **Bricolage Grotesque** | `opsz 12..96`, `wght 200..800` |
-| Body / UI | **DM Sans** | `opsz 9..40`, `wght 100..1000` |
+| Display (h1–h6) | **Clash Display** | 500 (700 available, unused) |
+| Prose | **Satoshi** | 400, 500 |
+| Label / eyebrow | **DM Sans** | 500 |
 
-Both ship `latin-ext` — Slovenian diacritics native. Confirmed verbatim from
-the theme's own `fonts.googleapis.com/css2` request.
+Clash Display and Satoshi are Fontshare (Indian Type Foundry) faces, loaded in
+the source from Framer's Fontshare mirror as one file each, no `unicode-range`
+subsetting. Only DM Sans comes from Google.
 
-### Measured scale (at 2000px)
+### The ramp, exactly
 
-| Use | Size | Weight | Tracking | Leading |
-| --- | --- | --- | --- | --- |
-| Hero offer statement ("50% Off") | 90px | 650 | −0.03em | 1.0 |
-| Section heading ("Shop by categories") | 68–72px | 600 | −0.025em | 1.05 |
-| Page statement (3-line) | 62–68px | 600 | −0.022em | 1.15 |
-| Inline-icon paragraph | 52px | 450 | −0.01em | 1.35 |
-| Stat value ("800+") | 78px | 500 | −0.02em | 1.0 |
-| Card / product title | 26–30px | 600 | −0.01em | 1.2 |
-| Feature-row title | 28px | 600 | 0 | 1.3 |
-| Body copy | 19–21px | 400 | 0 | 1.6–1.7 |
-| Nav item | 15px | 500 | **0.08em** | 1 |
-| Uppercase label / chip | 15px | 500 | **0.12em** | 1 |
-| Footer legal | 17px | 400 | 0 | 1.5 |
+Three tiers, at the source's own breakpoints: **≥1200px**, **810–1199px**,
+**≤809px**. Sizes are `desktop / tablet / phone`.
 
-**Rule observed throughout:** display sizes are tight-tracked and heavy;
-anything uppercase is small, medium-weight and widely tracked. There is no
-middle ground — the theme never sets 30–50px display text except on cards.
+| Role | Face | Size | Weight | Tracking | Leading | Colour |
+| --- | --- | --- | --- | --- | --- | --- |
+| h1 | Clash Display | 92 / 64 / 44 | 500 | 0em | 1.04em | `#151515` |
+| h2 | Clash Display | 60 / 50 / 38 | 500 | 0em | 1.13 / 1.1 / 1.13em | `#151515` |
+| h3 | Clash Display | 48 / 38 / 32 | 500 | 0em | 1.16em | `#151515` |
+| h4 | Clash Display | 42 / 42 / 28 | 500 | 0.02em | 1.19em | `#000` |
+| h5 | Clash Display | 32 / 26 / 24 | 500 | 0.02em | 1.1875em | `#151515` |
+| h6 | Clash Display | 24 / 19 / **22** | 500 | 0em | 1.33em | `#151515` |
+| lead-xl | Satoshi | 48 / 44 / 24 | 500 | 0.02em | 1.3em | `#151515` |
+| lead | Satoshi | 20 / 16 / **18** | 500 | 0.02em | 1.5em | `#151515` |
+| body | Satoshi | 16 / 16 / 16 | 400 | 0.02em | 1.625em | `#212121` |
+| label (uppercase) | DM Sans | 14 | 500 | 0.06em | 1.71em | `#fff` |
+| label (tight) | DM Sans | 14 | 500 | 0.06em | 1.428em | `#fff` |
+
+Two entries go **up** on the phone tier rather than down (h6 19→22, lead
+16→18). That is in the source. It is why the port uses literal media queries
+rather than clamps: a clamp is monotonic and cannot express it.
+
+**The rule that actually governs the theme:** tracking is positive or zero,
+never negative, and the only widely-tracked role is the 14px uppercase label
+at 0.06em. Display type is set open and light — 500 weight at 92px — not tight
+and heavy. The measured pass had this backwards and that, more than any single
+value, is why the earlier build read as a different theme.
 
 ---
 
-## 2. Palette (sampled)
+## 2. Palette
 
-| Token | Sampled | Use |
+Eleven design tokens plus one hardcoded body ink. Not monochrome.
+
+| Token | Value | Use |
 | --- | --- | --- |
-| chrome / dark bands | `#0D0D0D` – `#111111` | top bar, testimonial band, footer, About hero |
-| page | `#FFFFFF` | every light section |
-| product image panel | `#F2F2F2` | the panel a product sits on inside a card |
-| quiet tile | `#EFEFEF` | impact-grid left tile |
-| card hairline (rest) | `#E4E4E4` | product/category card frame |
-| card hairline (hover) | `#111111` | **the frame turns black on hover** — measured on the middle card of both Best Sellers and the shop grid |
-| body text | `#4A4A4A` | paragraphs |
-| muted text | `#767676` | captions, struck prices, placeholder |
-| on-dark body | `#A8A8A8` | footer links, quote attribution |
-| dark-band watermark | `#161616` | the giant faint arrow-stadium outline behind the testimonial heading (§4.14) |
+| page | `#ffffff` | every light section |
+| panel | `#f0f0f0` | product panels, quiet tiles — **one grey, not two** |
+| mid | `#a4a4a4` | the grey a cropped product bleeds over; muted ink on dark |
+| ink | `#151515` | headings, and the dark band's ground — the same token |
+| ink (body) | `#212121` | paragraphs — the one colour the source hardcodes |
+| dark rung 2 | `#2e2e2e` | dark-on-dark separation |
+| black | `#000` | h4 only |
+| line | `#dfdfdf` | hairlines, pill-tag borders |
+| muted alpha | `#15151552` | source's muted ink — **fails AA as text, see §2.1** |
+| on-dark alphas | `#ffffff52` `#ffffff3d` `#ffffff1f` `#ffffff14` | dividers and hairlines on dark |
+| **amber** | `#f0aa13` | the accent |
+| **cream** | `#ffdfc4` | accent companion |
+| **coral** | `#ff8787` | sale / alert |
 
-**Accent: none.** The theme is monochrome; every drop of color comes from
-photography (tan chair, blue chair, orange chair). Our port keeps this and
-spends the shop accent only as punctuation — one status dot, hover, and the
-accented half of the stats claim.
+### 2.1 Where we deliberately differ, and why
+
+The source was never audited for accessibility. Its muted rungs fail WCAG 2.1
+AA as text: `#15151552` is **2.08:1** on white, `#ffffff52` is **2.91:1** on
+the dark band, against a 4.5:1 floor. Amber on white is 2.01:1.
+
+These shops sell to Slovenian consumers, so the European Accessibility Act
+(2019/882) has applied since 28 June 2025 — AA is a legal floor here, not a
+preference. So the palette splits **by job, not by name**:
+
+| Job | Token | Value | Ratio |
+| --- | --- | --- | --- |
+| muted text on light | `--ink-mute` | `#6d6d6d` | 5.17:1 on white, 4.54:1 on panel |
+| muted text on dark | `--on-invert-mute` | `#a4a4a4` | 7.33:1 |
+| interactive boundary | `--line-ctrl` | `#949494` | 3.03:1 |
+| decoration only | `--ink-mute-decor`, `--line`, on-dark alphas | source values, unchanged | 1.2–2.9:1 |
+
+`--on-invert-mute` is `#a4a4a4`, which **is a source token** — the accessible
+choice was already in the theme's own palette. `--ink-mute` at `#6d6d6d` is the
+lightest rung clearing 4.5:1 on *both* grounds it appears on, so it keeps the
+source's quiet feel without failing on the darker one.
+
+Amber is usable on dark (9.10:1) and as large or decorative elements, never as
+body text on white. `scripts/verify-contrast.mjs` reads the real token values
+out of `tokens.ts` and fails the build on regression.
 
 ---
 
 ## 3. Layout constants
 
-- Page gutter: **54px** at 2000px (≈2.7vw) — the wordmark, headings and left-aligned
-  sections all start here.
-- Content max-width: **1900px** for full-bleed bands, **1560px** for text-led
-  sections, **930px** for the About reading column.
-- Chrome bar height: **90px**.
-- Section vertical rhythm: **~130px** top and bottom on light sections,
-  **~150px** on dark bands.
-- Card radius: **12px**; media radius **12–16px**; the black philosophy card **24px**.
-- **Buttons are sharp-cornered (radius 0)** — every CTA: SHOP DEALS, SHOP NOW.
-  Pills (labels, chips, arrows) are fully round. This contrast is deliberate
-  and is the single easiest thing to get wrong.
+| Constant | Desktop ≥1200 | Tablet 810–1199 | Phone ≤809 |
+| --- | --- | --- | --- |
+| Page gutter | **40px** | 25px | 25px (20px on some devices) |
+| Section rhythm (padding block) | **170px** | 100px | 70px |
+| Content container | **1440px** | — | — |
+| Header padding | 16px 40px | 16px 25px | 8px 25px |
+| Header height (derived) | **56px** = 24px line + 2×16px | — | 40px |
+| Nav gap / item gap | 50px / 8px | — | — |
+| Hero | `height:100vh; min-height:1000px` | `height:600px` | auto, column |
+
+Text measures inside the container: **863px** (the reading column), 620px,
+558px, 540px.
+
+Card gap 24px; column gap 40px; the small utility gap is 10px.
+
+### Edges
+
+| Shape | Radius | Where |
+| --- | --- | --- |
+| Card / image | **8px** | 33 uses — the dominant card shape |
+| Button | **4px** | 40 uses — the tightest curve on the page |
+| Pill / badge | 99px, 999px, 100px, 50px | 48 uses combined |
+| Circle | 100% | icon buttons, avatars, dots |
+| Large block | 40px | 6 uses |
+
+### Controls
+
+- **Primary button:** padding `15px 39px`, 4px radius, white fill, label in the
+  14px uppercase DM Sans role, ink `#151515`. Compact variant `10px 25px`.
+- **Circular nav / carousel button:** **64px** square, `99px` radius, **2px**
+  `#151515` ring, no fill. (The earlier build drew these badly undersized.)
+- **Pill tag:** 50px radius, 1px `#dfdfdf`, padding `4px 16px` or `6px 20px`.
+- **Glass badge over photography:** 100px radius, `#ffffff14` fill,
+  1px `#ffffff52` hairline, `backdrop-filter: blur(6px)`. The source's only
+  backdrop-filter, used 11 times.
+- **Inset hairline:** `position:absolute; inset:16px; 1px solid #fff` — a white
+  frame floating inside a dark panel.
+
+### Effects found in the source that the port had not catalogued
+
+- **Button label roll.** The primary button holds two identical label rows in a
+  clipped stack; on hover the stack slides so the second replaces the first.
+- **Digit odometer.** Ten digit glyphs (0–9) repeated eight times with a
+  "Number" wrapper — a rolling counter for the stats band.
 
 ---
 

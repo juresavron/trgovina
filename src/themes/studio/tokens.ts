@@ -117,19 +117,37 @@ export const STUDIO_TOKENS = `
     --coral: #ff8787;
 
     /* ---- Edges -----------------------------------------------------------
-     * The source has NO card radius. Nothing on the page is a rounded
-     * rectangle: the only three radii are 99px (pill buttons), 50px (pill
-     * tags/inputs) and 100% (circular icon buttons). The measured pass had
-     * this exactly inverted — 12px cards and 0px "sharp" buttons — which is
-     * why the build read as generic. Cards are square; controls are pills. */
-    --r-card: 0px;
-    --r-media: 0px;
-    --r-ctrl: 99px;
+     * Read from the DOM's inline styles, not the stylesheet: Framer emits most
+     * radii as style attributes, so a sheet-only reading finds almost none and
+     * concludes the theme is square. It is not. Counted across the page:
+     * 8px ×33 (images and cards), 4px ×40 (buttons), 99/999/100px ×48 (pills
+     * and circles), 40px ×6 (large feature blocks).
+     *
+     * Radius is therefore SMALL AND ROLE-SPECIFIC — the tightest curve on the
+     * page belongs to the button, and the card is only slightly softer. Both
+     * earlier readings were wrong in opposite directions: 12px cards with 0px
+     * "sharp" buttons first, then 0px cards with 99px pill buttons. */
+    --r-card: 8px;
+    --r-media: 8px;
+    --r-ctrl: 4px;
     --r-tag: 50px;
+    --r-pill: 99px;
+    --r-lg: 40px;
     --r-circle: 100%;
-    /** Outlined buttons carry a 2px dark border; dividers are 1px. */
+    /** The 64px circular arrow button carries a 2px dark ring; the pill tags
+     *  and panel hairlines are 1px. */
     --bw-ctrl: 2px;
     --bw-line: 1px;
+    /** The circular carousel/nav button — 64px square, 2px ring, no fill. */
+    --ctrl-circle-size: 64px;
+    /** Primary button padding, and the compact variant beside it. */
+    --ctrl-pad: 15px 39px;
+    --ctrl-pad-sm: 10px 25px;
+    /** Glass badge over photography: the source's one backdrop-filter, used
+     *  11 times — 8% white fill, 32% white hairline, 6px blur, 100px radius. */
+    --glass-bg: #ffffff14;
+    --glass-line: #ffffff52;
+    --glass-blur: 6px;
 
     /* ---- Rhythm (desktop tier, ≥1200px) ---------------------------------- */
     --studio-gutter: 40px;
