@@ -14,7 +14,7 @@ import type { ThemeComposition } from "./shared/sections";
  * Slovene words, lowercase keys, ASCII.
  */
 
-export type ThemeKey = "zarja" | "lednik" | "salon";
+export type ThemeKey = "zarja" | "lednik" | "salon" | "studio";
 
 /** Soft hint for the picker — a theme stays selectable for every shop. */
 export type ProductTemperament = "heat" | "cold" | "wellness" | "neutral";
@@ -71,6 +71,25 @@ export const THEME_CATALOG: Record<ThemeKey, ThemeCatalogEntry> = {
     recommendedFor: ["cold"],
     composition: {
       home: ["hero", "stats", "products", "moat", "reviews", "guides"],
+    },
+  },
+
+  /**
+   * STUDIO — poster commerce, ported from the owner's FURNEXA Framer theme:
+   * black chrome bar over a white page, oversized expanded-grotesk
+   * statements, a scrolling USP marquee, near-monochrome with the shop
+   * accent used only as punctuation. Photography-first by construction.
+   */
+  studio: {
+    key: "studio",
+    name: "Studio",
+    voice: "Črno-bela, plakatna, fotografska — tipografija kot naslovnica.",
+    surface: "light",
+    radius: { card: "8px", control: "2px" },
+    displayFont: "Archivo",
+    recommendedFor: ["wellness", "neutral"],
+    composition: {
+      home: ["hero", "marquee", "products", "trust", "moat", "reviews", "guides"],
     },
   },
 

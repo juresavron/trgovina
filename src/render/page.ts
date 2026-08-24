@@ -12,8 +12,19 @@ import {
   type RenderCtx,
 } from "./sections";
 
-const FONTS_HREF =
+import { STUDIO_FONTS_HREF } from "../themes/studio/tokens";
+
+/**
+ * Font payload per theme — studio runs a different pair (Bricolage Grotesque
+ * + DM Sans) from the original three, and no page should pay for faces it
+ * cannot render.
+ */
+const FONTS_BASE =
   "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Archivo:wdth,wght@62..125,400..800&family=Hanken+Grotesk:wght@300..800&family=Marcellus&display=swap";
+
+function fontsHref(theme: ThemeKey): string {
+  return theme === "studio" ? STUDIO_FONTS_HREF : FONTS_BASE;
+}
 
 export interface PageOptions {
   shop: ShopConfig;
@@ -65,7 +76,7 @@ export function renderDocument(o: PageOptions): string {
     '<meta name="theme-color" content="' + esc(s.design.themeColor) + '">' +
     '<link rel="preconnect" href="https://fonts.googleapis.com">' +
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
-    '<link rel="stylesheet" href="' + FONTS_HREF + '">' +
+    '<link rel="stylesheet" href="' + fontsHref(o.theme) + '">' +
     "<style>" + BASE_CSS + "</style>" +
     jsonLd +
     "</head><body>" +

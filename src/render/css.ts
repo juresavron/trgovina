@@ -7,7 +7,9 @@
  * ~9 KB, far below the cost of a render-blocking request. Google Fonts is a
  * prototype-stage substitute; production self-hosts subsets (docs/DESIGN.md).
  */
-export const BASE_CSS = `
+import { STUDIO_TOKENS } from "../themes/studio/tokens";
+
+const SHEET = `
   :root[data-shop="savna"]  { --hue: 55;  --c: 0.12; }
   :root[data-shop="kad"]    { --hue: 235; --c: 0.10; }
   :root[data-shop="bazen"]  { --hue: 210; --c: 0.09; }
@@ -355,3 +357,6 @@ export const BASE_CSS = `
     .buybar .btn { margin-left: auto; }
   }
 `;
+
+/** Studio tokens + its section modules are appended at integration. */
+export const BASE_CSS = SHEET + STUDIO_TOKENS;

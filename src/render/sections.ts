@@ -255,9 +255,28 @@ function guides(ctx: RenderCtx): string {
   );
 }
 
+/**
+ * Marquee — the studio theme's signature USP ticker. Duplicated track so the
+ * CSS translate loops seamlessly; aria-hidden on the clone. Pure CSS, paused
+ * under prefers-reduced-motion.
+ */
+function marquee(ctx: RenderCtx): string {
+  const items = ctx.content.trust;
+  const track = (hidden: boolean) =>
+    '<span class="mq-track"' + (hidden ? ' aria-hidden="true"' : "") + ">" +
+    items.map((t) => '<span class="mq-item">' + esc(t) + "</span>").join("") +
+    "</span>";
+  return (
+    '<section class="marquee"><div class="mq-viewport">' +
+    track(false) + track(true) +
+    "</div></section>"
+  );
+}
+
 const SECTION_RENDERERS: Record<SectionKey, ((ctx: RenderCtx) => string) | null> = {
   hero,
   trust,
+  marquee,
   stats,
   finder: null, // arrives with the interactive island
   products,

@@ -36,10 +36,10 @@ export const fotelj: ShopConfig = {
   addressCountry: "SI",
 
   design: {
-    theme: "zarja",
-    accentHue: 30, // bronze / oxblood
+    theme: "studio",
+    accentHue: 30, // bronze — used as punctuation on studio's monochrome
     accentChroma: 0.11,
-    themeColor: "#171210",
+    themeColor: "#ffffff",
   },
 
   // FILL BEFORE LIVE.

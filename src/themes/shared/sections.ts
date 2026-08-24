@@ -16,6 +16,7 @@
 export type SectionKey =
   | "hero" // THE keyword statement + primary CTA
   | "trust" // trust strip: delivery, warranty, showroom, financing
+  | "marquee" // scrolling USP ticker (studio's signature; renders trust items)
   | "stats" // spec/performance tiles (lednik's hero support)
   | "finder" // guided 3-question chooser
   | "products" // product grid from catalog rows
