@@ -10,6 +10,7 @@ import { STUDIO_STATEMENT_CSS } from "./statement";
 import { STUDIO_EDITORIAL_CSS } from "./editorial";
 import { STUDIO_PDP_CSS } from "./pdp";
 import { STUDIO_EFFECTS_CSS } from "./effects";
+import { STUDIO_JS } from "./behaviour";
 
 /**
  * The studio theme was transcribed from a source stylesheet, and the token
@@ -90,6 +91,21 @@ describe("studio renders a self-consistent sheet", () => {
       const digits = (shown ?? "").replace(/[^\d]/g, "");
       expect(digits, "counter shows " + shown + " but targets " + target).toBe(target);
     }
+  });
+
+  /**
+   * The shipped script is comment-stripped by a deliberately naive regex. That
+   * is safe only while this file has no regex literal and no string containing
+   * "//", and nothing about the source enforces that — so the result is parsed
+   * here. A stripper that mangles the script would otherwise ship a page whose
+   * every interaction is dead, with no other test noticing.
+   */
+  it("the shipped script parses and carries no block comments", () => {
+    expect(STUDIO_JS).not.toContain("/*");
+    expect(() => new Function(STUDIO_JS)).not.toThrow();
+    // The strip must not have eaten the code itself.
+    expect(STUDIO_JS).toContain("data-st-slider");
+    expect(STUDIO_JS).toContain("IntersectionObserver");
   });
 
   // Scoped to studio's own sheet, not the rendered page: --stretch and

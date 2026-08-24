@@ -25,7 +25,7 @@
  * a slot the stylesheet already reserves, and counters only rewrite the text
  * of a box whose size is set by the type ramp.
  */
-export const STUDIO_JS = `(function(){
+const SOURCE = `(function(){
 "use strict";
 var reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)");
 var soft = function(){ return reduce && reduce.matches ? "auto" : "smooth"; };
@@ -150,3 +150,22 @@ function init(){
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
 else init();
 })();`;
+
+/**
+ * Comments are for the reader of this file, not for every visitor's browser.
+ * The same argument as the stylesheet's: this is inlined into every studio
+ * document, so its comments are bytes on the wire that explain nothing to the
+ * person waiting for the page.
+ *
+ * Conservative on purpose. It strips block and line comments and collapses
+ * runs of whitespace, and it is safe here only because this file contains no
+ * regex literals and no string holding "//" — a general JavaScript minifier
+ * this simple would be wrong. `studio.test.ts` parses the result, so a change
+ * that breaks it fails the build rather than the storefront.
+ */
+export const STUDIO_JS = SOURCE
+  .replace(/\/\*[\s\S]*?\*\//g, "")
+  .replace(/^[ \t]*\/\/.*$/gm, "")
+  .replace(/\n\s*\n/g, "\n")
+  .replace(/^[ \t]+/gm, "")
+  .trim();
