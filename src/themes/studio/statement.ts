@@ -37,6 +37,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { statValue } from "./stat";
 
 /* ---- inline glyphs (§4.8) --------------------------------------------
  * 24px grid, stroke-only, currentColor — the circle is drawn by the host
@@ -463,19 +464,6 @@ function splitAtMiddle(s: string): [string, string] {
   return [t.slice(0, cut), t.slice(cut + 1)];
 }
 
-/**
- * Render a stat value with a trailing "+" or "%" lifted into a real <sup>
- * (§4.8). Only a trailing run of those two characters is superscripted —
- * "230 V", "≈ 0,25 €" and "4,40 m³" keep their units on the baseline.
- */
-function statValue(v: string): string {
-  const m = /^(.*?)([+%]+)$/.exec(v.trim());
-  if (!m) return esc(v);
-  const stem = m[1] ?? "";
-  const mark = m[2] ?? "";
-  if (stem === "") return esc(v); // a bare "+" has nothing to sit above
-  return esc(stem) + "<sup>" + esc(mark) + "</sup>";
-}
 
 /**
  * §4.8 — inline-icon statement + stats. The theme's signature device.

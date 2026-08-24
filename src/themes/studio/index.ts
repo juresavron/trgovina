@@ -18,6 +18,7 @@ import {
   renderStudioGuides,
 } from "./editorial";
 import { STUDIO_PDP_CSS, renderStudioPdp } from "./pdp";
+import { STUDIO_JS } from "./behaviour";
 
 /**
  * The studio theme's public surface — one import for the render pipeline.
@@ -36,7 +37,7 @@ export const STUDIO_CSS =
   STUDIO_PDP_CSS +
   STUDIO_EFFECTS_CSS;
 
-export { renderStudioHeader, renderStudioFooter, renderStudioPdp };
+export { renderStudioHeader, renderStudioFooter, renderStudioPdp, STUDIO_JS };
 
 /**
  * Studio's own section renderers, keyed by the kernel's section vocabulary.

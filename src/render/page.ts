@@ -20,6 +20,7 @@ import {
   renderStudioHeader,
   renderStudioPdp,
   renderStudioSection,
+  STUDIO_JS,
 } from "../themes/studio";
 
 /**
@@ -96,6 +97,11 @@ export function renderDocument(o: PageOptions): string {
     "</head><body>" +
     (o.devBar ?? "") +
     o.bodyHtml +
+    // A module script is deferred by definition, so it neither blocks parsing
+    // nor paint. Inlined rather than fetched: it is under 4 KB, and a second
+    // request would cost more than the bytes. Only studio needs it — the other
+    // themes have no device that requires script.
+    (o.theme === "studio" ? '<script type="module">' + STUDIO_JS + "</script>" : "") +
     "</body></html>"
   );
 }

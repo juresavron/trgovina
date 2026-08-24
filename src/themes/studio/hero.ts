@@ -30,7 +30,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import { arrowWatermark } from "./icons";
+import { discWatermark } from "./icons";
 
 export const STUDIO_HERO_CSS = `
   /* ---- The only values this module declares ----------------------------
@@ -52,17 +52,15 @@ export const STUDIO_HERO_CSS = `
   }
 
   /* ---- §4.2 Hero triptych ----
-   * Three EQUAL full-bleed columns, no gaps, FULL viewport height. The chrome
-   * no longer subtracts: it is a fixed transparent bar overlaying this section
-   * (see chrome.ts), so the hero owns the whole viewport as the source's does.
-   * Subtracting --chrome-h now would leave a band of the next section showing
-   * above the fold. */
+   * Three EQUAL full-bleed columns, no gaps. The chrome is fixed and opaque,
+   * so it takes its height out of the viewport rather than overlaying — the
+   * band must stop where the bar starts or the fold lands mid-panel. */
   :root[data-theme="studio"] .st-hero {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
-    min-height: 100vh;
-    min-height: 100svh;
+    min-height: calc(100vh - var(--chrome-h));
+    min-height: calc(100svh - var(--chrome-h));
     overflow: clip;
   }
   :root[data-theme="studio"] .st-hero-panel {
@@ -73,24 +71,22 @@ export const STUDIO_HERO_CSS = `
      * bleed into the neighbouring column. */
     overflow: clip;
   }
-  /* All three hero panels are DARK, and that is a constraint rather than a
-   * preference. The header is a fixed transparent bar whose logo and nav are
-   * white — the source's logo file is literally fill="#fff" — so whatever sits
-   * beneath it must be dark or the navigation is unreadable. The source gets
-   * that from its hero photography; these panels stand in for the same
-   * photography, so they carry its ground.
+  /* Panel grounds, from the owner's own reference frames: the left panel is
+   * the LIGHT panel grey with the product standing on it, the centre is the
+   * dark offer panel, the right is photography.
    *
-   * The consequence lands on the photo brief: a hero image for this theme must
-   * be dark along its top edge. docs/STUDIO-BASELINE.md §4.15 carries it as a
-   * requirement. */
-  :root[data-theme="studio"] .st-hero-photo-a,
+   * An earlier revision made all three dark. That followed from the source's
+   * actual first section — a full-bleed photographic hero the header sits
+   * transparently over — but this device is not that section. It is the offer
+   * triptych, which in the source sits mid-page beneath the SOLID dark bar.
+   * Copying the wrong section's ground is how the whole band went black. */
+  :root[data-theme="studio"] .st-hero-photo-a { background: var(--bg-alt); }
   :root[data-theme="studio"] .st-hero-photo-b {
+    background: var(--tile-mid);
     --photo-ink: var(--on-invert);
-    --photo-cap-ink: var(--on-invert-mute);
+    --photo-cap-ink: var(--on-invert);
     color: var(--on-invert);
   }
-  :root[data-theme="studio"] .st-hero-photo-a { background: var(--ink-invert-2); }
-  :root[data-theme="studio"] .st-hero-photo-b { background: var(--ink-invert); }
 
   /* §4.14 watermark — the ARROW-STADIUM outline, scaled enormous and set a few
    * percent off the ground. Not a circle and not a gradient blob: it is the
@@ -106,9 +102,10 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-hero-wm .st-watermark {
     display: block; width: 100%; height: 100%;
   }
-  /* Pulled back off the panel's dark ground so it reads as a watermark. */
+  /* Barely-there on the light panel: the reference shows it as a tonal shift
+   * in the grey, not a drawn line. */
   :root[data-theme="studio"] .st-hero-photo-a .st-hero-wm {
-    color: color-mix(in srgb, var(--bg) 46%, transparent);
+    color: color-mix(in srgb, var(--ink) 5%, transparent);
   }
   /* Dark band: --ink-invert-2 is the baseline's #161616 watermark rung, one
    * step off --ink-invert (§2 token table). */
@@ -558,7 +555,7 @@ function pdpHref(ctx: RenderCtx): string {
  * technology should meet the brand motif twice.
  */
 function watermark(): string {
-  return '<span class="st-hero-wm" aria-hidden="true">' + arrowWatermark() + "</span>";
+  return '<span class="st-hero-wm" aria-hidden="true">' + discWatermark() + "</span>";
 }
 
 /**

@@ -56,7 +56,8 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import { arrowWatermark } from "./icons";
+import { statValue } from "./stat";
+import { discWatermark } from "./icons";
 
 export const STUDIO_EDITORIAL_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ----
@@ -737,19 +738,6 @@ function tileShot(): string {
   );
 }
 
-/**
- * Lift a trailing "+" or "%" into a real superscript, as §4.8 measures on the
- * stat row and §4.9 repeats on the tile overlay. Only that trailing run moves —
- * "230 V" and "4,40 m³" keep their units on the baseline.
- */
-function statValue(v: string): string {
-  const m = /^(.*?)([+%]+)$/.exec(v.trim());
-  if (!m) return esc(v);
-  const stem = m[1] ?? "";
-  const mark = m[2] ?? "";
-  if (stem === "") return esc(v); // a bare "+" has nothing to sit above
-  return esc(stem) + "<sup>" + esc(mark) + "</sup>";
-}
 
 /**
  * §4.9 — impact grid.
@@ -814,7 +802,7 @@ export function renderStudioImpact(ctx: RenderCtx): string {
  * focusable="false" keeps it out of the tab order.
  */
 function watermark(): string {
-  return '<span class="st-tst-mark" aria-hidden="true">' + arrowWatermark() + "</span>";
+  return '<span class="st-tst-mark" aria-hidden="true">' + discWatermark() + "</span>";
 }
 
 /** The B&W portrait placeholder — flat masses, no lighting. */

@@ -515,6 +515,53 @@ export const STUDIO_COMMERCE_CSS = `
   }
   :root[data-theme="studio"] .st-rail-go .st-arrow-svg { display: block; }
 
+  /* A control that cannot do anything must not look like it can, and must not
+   * take focus. aria-disabled rather than the disabled attribute because these
+   * are anchors, and an anchor that stops being focusable mid-scroll would
+   * move the user's focus somewhere unrelated. */
+  :root[data-theme="studio"] .st-rail-go[aria-disabled="true"] {
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  /* Pagination. Appended by behaviour.ts, so the slot is empty and collapses
+   * to nothing without script — the arrows alone still work as anchors. */
+  :root[data-theme="studio"] .st-dots {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding-inline: clamp(4px, 0.8vw, 12px);
+  }
+  :root[data-theme="studio"] .st-dot {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    /* 8px dot in a 24px hit area — the source's dot size, WCAG 2.5.8's target.
+     * The visible dot is drawn by the background, not the box. */
+    inline-size: 24px;
+    block-size: 24px;
+    background: radial-gradient(circle at 50% 50%,
+      var(--line) 0 4px, transparent 4px);
+    border-radius: var(--r-circle);
+    cursor: pointer;
+    transition: background 0.25s ease;
+  }
+  :root[data-theme="studio"] .st-dot:hover {
+    background: radial-gradient(circle at 50% 50%,
+      var(--ink-mute) 0 4px, transparent 4px);
+  }
+  :root[data-theme="studio"] .st-dot[aria-current="true"] {
+    background: radial-gradient(circle at 50% 50%,
+      var(--ink) 0 4px, transparent 4px);
+  }
+  :root[data-theme="studio"] .st-dot:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 2px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-dot { transition: none; }
+  }
+
   /* ---- responsive ---------------------------------------------------- */
   @media (max-width: 1000px) {
     /* Three 48px-padded cards stop being cards at this width. */
@@ -712,7 +759,7 @@ export function renderStudioRail(ctx: RenderCtx): string {
     .map((p, i) => {
       const id = "st-rail-" + String(i + 1);
       return (
-        '<li class="st-rail-item" id="' + esc(id) + '" tabindex="-1">' +
+        '<li class="st-rail-item" data-st-item id="' + esc(id) + '" tabindex="-1">' +
         '<a class="st-rail-card" href="' + esc(href) + '">' +
         '<span class="st-rail-panel">' + shot() + "</span>" +
         '<span class="st-rail-body">' +
@@ -737,19 +784,20 @@ export function renderStudioRail(ctx: RenderCtx): string {
   const nav =
     items.length < 2
       ? ""
-      : '<a class="st-rail-go st-arrow st-arrow--prev" href="' +
+      : '<a class="st-rail-go st-arrow st-arrow--prev" data-st-prev href="' +
         esc("#st-rail-1") +
-        '" aria-label="Na začetek ponudbe">' + arrowIcon("left") + "</a>" +
-        '<a class="st-rail-go st-arrow" href="' + esc(last) +
-        '" aria-label="Na konec ponudbe">' + arrowIcon("right") + "</a>";
+        '" aria-label="Prejšnji model">' + arrowIcon("left") + "</a>" +
+        '<span class="st-dots" data-st-dots></span>' +
+        '<a class="st-rail-go st-arrow" data-st-next href="' + esc(last) +
+        '" aria-label="Naslednji model">' + arrowIcon("right") + "</a>";
 
   return (
-    '<section class="st-rail-sec" aria-labelledby="st-rail-h">' +
+    '<section class="st-rail-sec" data-st-slider aria-labelledby="st-rail-h">' +
     '<div class="st-rail-head">' +
     '<p class="st-eyebrow">Ponudba</p>' +
     '<h2 class="st-sec-h" id="st-rail-h">' + esc(title) + "</h2>" +
     "</div>" +
-    '<div class="st-rail"><ul class="st-rail-track">' + cards + "</ul></div>" +
+    '<div class="st-rail" data-st-scroll><ul class="st-rail-track">' + cards + "</ul></div>" +
     (nav ? '<nav class="st-rail-nav" aria-label="Pomik po ponudbi">' + nav + "</nav>" : "") +
     "</section>"
   );

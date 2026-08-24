@@ -63,6 +63,35 @@ describe("studio renders a self-consistent sheet", () => {
     expect(sheet).not.toContain("Fragment Mono");
   });
 
+  /**
+   * The behaviour layer is progressive enhancement, and the whole contract is
+   * that the page works before it runs. So the hooks must be in the SSR HTML
+   * (not added by script), the script must be a module (deferred by
+   * definition, so it never blocks paint), and each counter must already show
+   * its final value — a counter that ships a zero and fills it in later is a
+   * broken page for anyone whose JS never arrives.
+   */
+  it("ships behaviour hooks in the server-rendered HTML", async () => {
+    const html = await render("savna").text();
+    expect(html).toContain("data-st-slider");
+    expect(html).toContain("data-st-scroll");
+    expect(html).toContain("data-st-prev");
+    expect(html).toContain("data-st-next");
+    expect(html).toContain('<script type="module">');
+    // Never a blocking classic script.
+    expect(html).not.toMatch(/<script(?![^>]*type="(module|application\/ld\+json)")/);
+  });
+
+  it("counters carry their final value as text, not just as data", async () => {
+    const html = await render("savna").text();
+    const m = [...html.matchAll(/data-st-count="(\d+)"[^>]*>([^<]+)</g)];
+    expect(m.length).toBeGreaterThan(0);
+    for (const [, target, shown] of m) {
+      const digits = (shown ?? "").replace(/[^\d]/g, "");
+      expect(digits, "counter shows " + shown + " but targets " + target).toBe(target);
+    }
+  });
+
   // Scoped to studio's own sheet, not the rendered page: --stretch and
   // --track-display are the shared kernel's, and zarja/lednik/salon still need
   // them for Archivo and Fraunces. Asserting against the whole document would

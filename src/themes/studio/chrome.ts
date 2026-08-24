@@ -87,21 +87,16 @@ export const STUDIO_CHROME_CSS = `
     left: 0;
     width: 100%;
     z-index: 8;
-    background: linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--ink-invert) 55%, transparent),
-      transparent
-    );
+    background: var(--ink-invert);
     color: var(--on-invert);
   }
-  /* A fixed bar occupies no space in flow, so every page must reserve it or
-   * its first line renders underneath the nav. The hero is the one exception:
-   * it is built to run full-bleed under the transparent bar, so it pulls the
-   * reserved space back. Anything else — PDP, placeholders, 404 — keeps it. */
+  /* A fixed bar occupies no space in flow, so every page reserves it. It is
+   * opaque, so nothing may slide underneath: an earlier revision pulled the
+   * hero up behind a transparent bar, which is what the source does over its
+   * photographic hero — but our first section is the offer triptych with a
+   * light left panel, and white nav type on that is 2.5:1. The bar stays
+   * solid and the content starts below it. */
   :root[data-theme="studio"] main { padding-top: var(--chrome-h); }
-  :root[data-theme="studio"] main > .st-hero:first-child {
-    margin-top: calc(-1 * var(--chrome-h));
-  }
 
   :root[data-theme="studio"] .st-chrome-bar {
     /* --studio-container is the CONTENT measure and box-sizing is border-box,

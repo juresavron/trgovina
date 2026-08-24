@@ -38,14 +38,23 @@ export function arrowIcon(dir: "left" | "right"): string {
 }
 
 /**
- * The watermark: the same stadium outline, unstroked-thin and enormous.
- * Rendered with preserveAspectRatio="none" so it can be stretched across a
- * band the way the source does, and always aria-hidden — it carries no meaning.
+ * The band watermark is NOT the stadium. The owner's reference frames settle
+ * this: behind the offer panel and the testimonial heading sits a large
+ * concentric ELLIPSE — a thin outer ring with a solid, slightly darker disc
+ * inside it, both a step off the band's ground.
+ *
+ * The stadium above is the arrow's frame and belongs to buttons; using it here
+ * put the wrong mark across two whole bands. Both readings have been wrong
+ * once, in opposite directions, which is why each now says what it is for.
+ *
+ * Always aria-hidden — it carries no meaning. preserveAspectRatio="none" lets
+ * it stretch to whatever band it backs.
  */
-export function arrowWatermark(): string {
+export function discWatermark(): string {
   return (
-    '<svg class="st-watermark" viewBox="0 0 36 35" preserveAspectRatio="none" fill="none" aria-hidden="true" focusable="false">' +
-    '<path stroke="currentColor" stroke-width="0.5" d="' + STADIUM + '"/>' +
+    '<svg class="st-watermark" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none" aria-hidden="true" focusable="false">' +
+    '<ellipse cx="50" cy="50" rx="49.6" ry="49.6" stroke="currentColor" stroke-width="0.5"/>' +
+    '<ellipse cx="50" cy="50" rx="26" ry="26" fill="currentColor" fill-opacity="0.55"/>' +
     "</svg>"
   );
 }
