@@ -1,4 +1,5 @@
-import type { ProductCard, ShopContent } from "./types";
+import type { PdpContent, ProductCard, ShopContent } from "./types";
+import type { PolaModel } from "../catalog/pola";
 import {
   POLA_MODELS,
   footprint,
@@ -29,12 +30,69 @@ const models: ProductCard[] = POLA_MODELS.map((m) => ({
   meta: metaLine(m),
   price: modelPrice(m),
   art: "pool" as const,
+  slug: m.slug,
   ...(m.jets === 55 ? { badge: "Največ šob" } : {}),
   ...(m.mm[0] === 1950 ? { badge: "Najmanjši tloris" } : {}),
 }));
 
 /** The flagship: the larger shell in its more wanted layout, two loungers. */
 const flagship = POLA_MODELS.find((m) => m.code === "ZR801")!;
+
+/**
+ * One product page per model.
+ *
+ * The parts that differ between models are derived from the specification;
+ * the parts that are the shop's promise rather than the product's — how it
+ * gets there, what the connection needs, what the service costs — are the
+ * same sentences on all nine, because they are the same offer.
+ */
+function pdpFor(m: PolaModel): PdpContent {
+  return {
+    slug: m.slug,
+    eyebrow: m.lounges === 2 ? "Dva ležalnika" : m.lounges === 1 ? "Ležalnik in pet sedežev" : "Šest sedežev",
+    title: m.name,
+    sub:
+      "Akrilni masažni bazen " +
+      footprint(m) +
+      " za " +
+      seating(m) +
+      ": " +
+      m.jets +
+      " nastavljivih šob, ogrevanje in filtracija.",
+    price: modelPrice(m),
+    priceCents: modelPriceCents(m),
+    // Option names without figures: the supplier prices these in USD FOB too,
+    // so a euro price for a cover lifter needs the same landed-cost pass the
+    // shells need. An option listed without a price is honest; one listed with
+    // a guessed price is not.
+    cfg: [
+      ["Termo pokrov", ["Osnovni", "S škarjastim dvigalom"], 0],
+      ["Priklop", ["Moj električar (navodila)", "Naš partner — po ponudbi"], 0],
+      ["Servis", ["Osnovni", "Letni pregled — po ponudbi"], 0],
+    ],
+    freight: [
+      ["Dostava z ekipo in opremo za prenos", "po ponudbi", false],
+      ["Zagon, umeritev in predaja", "vključeno", true],
+      ["Ogled lokacije pred dostavo", "vključeno", true],
+    ],
+    note: "Cenik logistike: razred pallet_xl · cona SI. Ogled uskladimo pred potrditvijo termina.",
+    // Straight from the supplier's sheet. Nothing here is rounded to suit the
+    // layout — the weights in particular are what the terrace has to carry.
+    spec: [
+      ["Kapaciteta", seating(m)],
+      ["Šobe", String(m.jets)],
+      ["Črpalke", m.jetPumps[0] + " × " + m.jetPumps[1] + " KM + obtočna 0,35 KM"],
+      ["Krmilnik", "Balboa BP200 G2+ · " + m.topside + " · grelec 3 kW"],
+      ["Filter", m.filterSf + " sf"],
+      ["Školjka", "ameriški akril, 7 barv · izolacija 2 cm"],
+      ["Mere", footprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
+      ["Teža", m.dryKg + " kg prazen · " + m.filledKg + " kg poln"],
+      ["Priklop", "220 V / 380 V"],
+      ["Garancija", "2–5 let, odvisno od sklopa"],
+    ],
+    bar: [m.name, seating(m) + " · " + m.jets + " šob", modelPrice(m), "V košarico"],
+  };
+}
 
 export const bazenContent: ShopContent = {
   nav: ["Bazeni", "Primerjava", "Vodniki", "Dostava in montaža", "Kontakt"],
@@ -99,52 +157,8 @@ export const bazenContent: ShopContent = {
     ["Cene 2026", "Koliko stane masažni bazen? Nakup in obratovanje."],
     ["Pozimi", "Masažni bazen pozimi: stroški in nasveti."],
   ],
-  pdp: {
-    slug: flagship.slug,
-    eyebrow: "Dva ležalnika",
-    title: flagship.name,
-    sub:
-      "Akrilni masažni bazen " +
-      footprint(flagship) +
-      " za " +
-      seating(flagship) +
-      ": " +
-      flagship.jets +
-      " nastavljivih šob, dve črpalki, ogrevanje in filtracija.",
-    price: modelPrice(flagship),
-    priceCents: modelPriceCents(flagship),
-    // Option names without figures: the supplier prices these in USD FOB too,
-    // so a euro price for a cover lifter needs the same landed-cost pass the
-    // shells need. Listing an option with no price is honest; listing one with
-    // a guessed price is not.
-    cfg: [
-      ["Model", POLA_MODELS.map((m) => m.name), 1],
-      ["Termo pokrov", ["Osnovni", "S škarjastim dvigalom"], 0],
-      ["Priklop", ["Moj električar (navodila)", "Naš partner — po ponudbi"], 0],
-      ["Servis", ["Osnovni", "Letni pregled — po ponudbi"], 0],
-    ],
-    freight: [
-      ["Dostava z ekipo in opremo za prenos", "po ponudbi", false],
-      ["Zagon, umeritev in predaja", "vključeno", true],
-      ["Ogled lokacije pred dostavo", "vključeno", true],
-    ],
-    note: "Cenik logistike: razred pallet_xl · cona SI. Ogled uskladimo pred potrditvijo termina.",
-    // Straight from the supplier's sheet. Nothing here is rounded to suit the
-    // layout: the weights in particular are what the terrace has to carry.
-    spec: [
-      ["Kapaciteta", seating(flagship)],
-      ["Šobe", String(flagship.jets)],
-      ["Črpalke", flagship.jetPumps[0] + " × " + flagship.jetPumps[1] + " KM + obtočna 0,35 KM"],
-      ["Krmilnik", "Balboa BP200 G2+ · " + flagship.topside + " · grelec 3 kW"],
-      ["Filter", flagship.filterSf + " sf"],
-      ["Školjka", "ameriški akril, 7 barv · izolacija 2 cm"],
-      ["Mere", footprint(flagship) + " · višina " + flagship.mm[2] / 10 + " cm"],
-      ["Teža", flagship.dryKg + " kg prazen · " + flagship.filledKg + " kg poln"],
-      ["Priklop", "220 V / 380 V"],
-      ["Garancija", "2–5 let, odvisno od sklopa"],
-    ],
-    bar: [flagship.name, seating(flagship) + " · " + flagship.jets + " šob", modelPrice(flagship), "V košarico"],
-  },
+  pdp: pdpFor(flagship),
+  pdps: POLA_MODELS.map(pdpFor),
   footNote:
     "Specialist za masažne bazene v Sloveniji. Razstavni bazen v Ljubljani — pridite ga pogledat v živo.",
 };

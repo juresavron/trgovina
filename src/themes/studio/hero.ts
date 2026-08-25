@@ -713,7 +713,7 @@ function eager(img: string): string {
 }
 
 function pdpHref(ctx: RenderCtx): string {
-  return ctx.shop.routeSlugs["/product"] + "/" + ctx.content.pdp.slug + ctx.q;
+  return ctx.shop.routeSlugs["/product"] + "/" + ctx.pdp.slug + ctx.q;
 }
 
 /**
@@ -745,7 +745,7 @@ function compareAt(d: RenderCtx["content"]["pdp"]): string | null {
  */
 export function renderStudioHero(ctx: RenderCtx): string {
   const c = ctx.content;
-  const was = compareAt(c.pdp);
+  const was = compareAt(ctx.pdp);
   return (
     '<section class="st-hero">' +
     '<div class="st-hero-panel st-hero-photo-a">' +
@@ -783,9 +783,9 @@ export function renderStudioHero(ctx: RenderCtx): string {
     // not.
     '<span class="st-photo-cap">simbolična fotografija</span>' +
     '<div class="st-hero-scrim">' +
-    '<span class="st-hero-name">' + esc(c.pdp.title) + "</span>" +
+    '<span class="st-hero-name">' + esc(ctx.pdp.title) + "</span>" +
     '<span class="st-hero-prices">' +
-    '<span class="st-hero-price">' + esc(c.pdp.price) + "</span>" +
+    '<span class="st-hero-price">' + esc(ctx.pdp.price) + "</span>" +
     // The <s> alone is silent in most screen readers; the hidden prefix is
     // what makes "prejšnja cena 3.499 €" the announced relationship.
     (was
@@ -803,7 +803,7 @@ export function renderStudioHero(ctx: RenderCtx): string {
  * hero owns the page's only h1.
  */
 export function renderStudioWordmarkBand(ctx: RenderCtx): string {
-  const d = ctx.content.pdp;
+  const d = ctx.pdp;
   // The callout label is content, not chrome — the shop's first trust claim.
   // noUncheckedIndexedAccess: a shop may ship an empty trust list.
   const note = ctx.content.trust[0];

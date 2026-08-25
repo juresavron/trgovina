@@ -865,8 +865,8 @@ function shot(ctx: RenderCtx, variant = 0): string {
   );
 }
 
-function pdpHref(ctx: RenderCtx): string {
-  return ctx.shop.routeSlugs["/product"] + "/" + ctx.content.pdp.slug + ctx.q;
+function pdpHref(ctx: RenderCtx, slug?: string): string {
+  return ctx.shop.routeSlugs["/product"] + "/" + (slug ?? ctx.pdp.slug) + ctx.q;
 }
 
 /**
@@ -937,6 +937,8 @@ function capFirst(s: string, locale: string): string {
  * comparison tile in the middle of its product list keeps it here too.
  */
 export function renderStudioProducts(ctx: RenderCtx): string {
+  // A shop with one model links every card at the flagship; a shop with a
+  // catalogue links each card at its own page.
   const href = pdpHref(ctx);
   const cards = ctx.content.products
     .map((p: ProductCard | UtilCard, i: number) => {
@@ -951,7 +953,7 @@ export function renderStudioProducts(ctx: RenderCtx): string {
       }
       const was = compareAt(p);
       return (
-        '<a class="st-card" href="' + esc(href) + '">' +
+        '<a class="st-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-card-panel">' +
         (p.badge ? '<span class="st-badge">' + esc(p.badge) + "</span>" : "") +
         shot(ctx, i) +
@@ -1032,7 +1034,7 @@ export function renderStudioRail(ctx: RenderCtx): string {
       const id = "st-rail-" + String(i + 1);
       return (
         '<li class="st-rail-item" data-st-item id="' + esc(id) + '" tabindex="-1">' +
-        '<a class="st-rail-card" href="' + esc(href) + '">' +
+        '<a class="st-rail-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-rail-panel">' + shot(ctx, i) + "</span>" +
         '<span class="st-rail-body">' +
         '<span class="st-rail-name">' + esc(p.name) + "</span>" +

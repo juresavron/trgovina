@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { handleRequest } from "../worker";
 import { SHOPS } from "../tenants";
 import { MEDIA_WIDTHS } from "../themes/studio/media-widths";
+import { CONTENT } from "../content";
 
 /**
  * Structural audit of every rendered page.
@@ -120,7 +121,16 @@ describe("every rendered page is structurally sound", () => {
   for (const key of Object.keys(SHOPS)) {
     it(key + " passes the structural audit on every route", async () => {
       const found: string[] = [];
-      for (const path of routes) {
+      // Every product page the shop serves, not just the flagship. A shop
+      // with a catalogue has most of its pages here, and they are generated
+      // rather than hand-written — exactly the ones a structural slip would
+      // reach nine at a time.
+      const shop = SHOPS[key]!;
+      const content = CONTENT[key]!;
+      const pdps = (content.pdps ?? [content.pdp]).map(
+        (d) => shop.routeSlugs["/product"] + "/" + d.slug,
+      );
+      for (const path of [...routes, ...pdps]) {
         const html = await handleRequest(
           new Request("https://trgovina.worldfans.workers.dev" + path + "?shop=" + key, {
             headers: { host: "trgovina.worldfans.workers.dev" },

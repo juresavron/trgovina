@@ -1,5 +1,5 @@
 import type { ShopConfig } from "../tenants/types";
-import type { ShopContent } from "../content/types";
+import type { PdpContent, ShopContent } from "../content/types";
 import { THEME_CATALOG, type ThemeKey } from "../themes/catalog";
 import { MAX_SECTIONS_PER_PAGE } from "../themes/shared/sections";
 import { SHOPS } from "../tenants";
@@ -143,15 +143,15 @@ export function organizationJsonLd(s: ShopConfig): object {
   };
 }
 
-export function productJsonLd(s: ShopConfig, c: ShopContent): object {
+export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c.pdp): object {
   // NOTE deliberately absent: Review / AggregateRating. Placeholder reviews
   // render as page copy only — fabricated review schema is a manual-action
   // magnet, and this network's strategy is SEO (docs/SEO.md §3).
   const product: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: c.pdp.title,
-    description: c.pdp.sub,
+    name: pdp.title,
+    description: pdp.sub,
     brand: { "@type": "Brand", name: s.name },
   };
   // No Offer without a price. priceCents is 0 while a shop's prices are still
@@ -160,12 +160,12 @@ export function productJsonLd(s: ShopConfig, c: ShopContent): object {
   // nobody made — the same class of error that keeps Review schema off these
   // pages. A Product without an Offer is valid; a Product with a false one is
   // the kind that earns a manual action.
-  if (c.pdp.priceCents > 0) {
+  if (pdp.priceCents > 0) {
     product["offers"] = {
       "@type": "Offer",
-      url: s.siteUrl + s.routeSlugs["/product"] + "/" + c.pdp.slug,
+      url: s.siteUrl + s.routeSlugs["/product"] + "/" + pdp.slug,
       priceCurrency: s.currency,
-      price: (c.pdp.priceCents / 100).toFixed(2),
+      price: (pdp.priceCents / 100).toFixed(2),
       availability: "https://schema.org/PreOrder",
       itemCondition: "https://schema.org/NewCondition",
     };
@@ -173,10 +173,17 @@ export function productJsonLd(s: ShopConfig, c: ShopContent): object {
   return product;
 }
 
-export function buildCtx(shop: ShopConfig, content: ShopContent, q: string): RenderCtx {
+export function buildCtx(
+  shop: ShopConfig,
+  content: ShopContent,
+  q: string,
+  /** The model being rendered. Defaults to the shop's flagship. */
+  pdp: PdpContent = content.pdp,
+): RenderCtx {
   return {
     shop,
     content,
+    pdp,
     q,
     phoneHref: "tel:" + shop.contact.phone.replace(/\s+/g, ""),
     phoneDisplay: shop.contact.phone,
@@ -211,8 +218,9 @@ export function renderPdp(
   content: ShopContent,
   q: string,
   theme: ThemeKey,
+  pdp: PdpContent = content.pdp,
 ): string {
-  const ctx = buildCtx(shop, content, q);
+  const ctx = buildCtx(shop, content, q, pdp);
   if (theme === "studio") {
     return renderStudioHeader(ctx) + "<main>" + renderStudioPdp(ctx) + "</main>" + renderStudioFooter(ctx);
   }

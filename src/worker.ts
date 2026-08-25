@@ -123,7 +123,13 @@ export function handleRequest(request: Request): Response {
   // sitemap.xml — only for live shops on their real domain.
   if (path === "/sitemap.xml") {
     if (!shop.live || dev) return new Response("Not found", { status: 404 });
-    const urls = ["/", shop.routeSlugs["/product"] + "/" + content.pdp.slug];
+    // Every model page, not just the flagship. A catalogue whose sitemap
+    // lists one of nine is a catalogue eight of whose pages are only
+    // discoverable by crawl.
+    const urls = [
+      "/",
+      ...(content.pdps ?? [content.pdp]).map((d) => shop!.routeSlugs["/product"] + "/" + d.slug),
+    ];
     const body =
       '<?xml version="1.0" encoding="UTF-8"?>' +
       '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
@@ -180,23 +186,29 @@ export function handleRequest(request: Request): Response {
     return htmlResponse(doc, 200, baseHeaders);
   }
 
-  // Flagship PDP.
-  const pdpPath = shop.routeSlugs["/product"] + "/" + content.pdp.slug;
-  if (path === pdpPath) {
-    const doc = renderDocument({
-      shop,
-      content,
-      theme,
-      path: pdpPath,
-      title: content.pdp.title + " — " + shop.keyword.primary + " | " + shop.name,
-      description: content.pdp.sub,
-      noindex: dev,
-      q,
-      devBar,
-      bodyHtml: renderPdp(shop, content, q, theme),
-      jsonLd: [organizationJsonLd(shop), productJsonLd(shop, content)],
-    });
-    return htmlResponse(doc, 200, baseHeaders);
+  // Product pages. A shop may sell one model or a catalogue; the flagship is
+  // simply the first entry, so there is one code path either way.
+  const productBase = shop.routeSlugs["/product"] + "/";
+  if (path.startsWith(productBase)) {
+    const wanted = path.slice(productBase.length);
+    const pdp = (content.pdps ?? [content.pdp]).find((d) => d.slug === wanted);
+    if (pdp) {
+      const pdpPath = productBase + pdp.slug;
+      const doc = renderDocument({
+        shop,
+        content,
+        theme,
+        path: pdpPath,
+        title: pdp.title + " — " + shop.keyword.primary + " | " + shop.name,
+        description: pdp.sub,
+        noindex: dev,
+        q,
+        devBar,
+        bodyHtml: renderPdp(shop, content, q, theme, pdp),
+        jsonLd: [organizationJsonLd(shop), productJsonLd(shop, content, pdp)],
+      });
+      return htmlResponse(doc, 200, baseHeaders);
+    }
   }
 
   // Known top-level routes render a styled placeholder (noindex until real).
