@@ -58,6 +58,37 @@ for (const shop of SHOPS) {
   await page.goto(BASE + "/?shop=" + shop, { waitUntil: "networkidle" });
   await page.waitForTimeout(250);
 
+  // THE HERO IMAGE MUST ACTUALLY BE THERE.
+  //
+  // Everything below measures white type against the ground it lands on. If
+  // the hero photograph failed to load, that ground is the section's own dark
+  // fill — which every run clears comfortably, so the gate reports a clean
+  // pass for an image it never saw. That is worse than no gate: it is a green
+  // light with nothing behind it.
+  //
+  // It is not hypothetical. The hero moved to Supabase and is served through
+  // /media/, which a sandbox without network access cannot fetch — so the
+  // first run after that change would have passed against a blank hero.
+  const heroOk = await page.evaluate(() => {
+    const img = document.querySelector(".st-hero-bg");
+    if (!img) return "none";        // no hero image declared at all
+    return img.complete && img.naturalWidth > 0 ? "ok" : "broken";
+  });
+  if (heroOk === "broken") {
+    console.error(
+      "  FAIL " + shop.padEnd(9) +
+      "hero image did not load — every measurement below would be against an " +
+      "empty ground.\n         Run this where /media/ is reachable, or the " +
+      "gate is measuring nothing.",
+    );
+    failures++;
+    await page.close();
+    continue;
+  }
+  if (heroOk === "none" && process.env.VERBOSE) {
+    console.log("  note " + shop.padEnd(9) + "no hero image — measuring the veil alone");
+  }
+
   const boxes = await page.evaluate((sels) => {
     const out = [];
     for (const sel of sels) {

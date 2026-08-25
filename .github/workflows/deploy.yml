@@ -129,23 +129,35 @@ jobs:
           # day that file was deleted — which is a broken assertion reported as
           # a broken deploy, the most expensive kind of false alarm. Asking the
           # repo what it actually ships cannot go stale.
-          ASSET=$(cd public && find img -type f -name '*.webp' | sort | head -1)
+          # ANY shipped asset, not specifically an image. The imagery moved to
+          # Supabase and public/img emptied out, which would have made an
+          # image-only check skip silently — leaving the binding unverified
+          # exactly when the self-hosted FONTS became the only thing it
+          # serves, and a page with no fonts is a page nobody can read.
+          ASSET=$(cd public && find . -type f ! -name '.*' | sed 's|^\./||' | sort | head -1)
           if [ -z "$ASSET" ]; then
-            echo "no .webp under public/img — skipping the asset-binding check"
+            echo "public/ ships no files — nothing to check"
           else
             echo "asset check: /$ASSET"
             icode=000
             for i in 1 2 3 4 5 6; do
-              icode=$(curl -s -o /tmp/img.webp -w "%{http_code}" "https://${WORKERS_DEV_HOST}/$ASSET") || true
+              icode=$(curl -s -o /tmp/asset.bin -w "%{http_code}" "https://${WORKERS_DEV_HOST}/$ASSET") || true
               [ "$icode" = "200" ] && break
               echo "asset attempt $i: HTTP $icode — retrying"; sleep 5
             done
             if [ "$icode" != "200" ]; then
               echo "FAIL: /$ASSET returned $icode after 6 attempts — assets are not serving"; exit 1
             fi
-            if ! file /tmp/img.webp | grep -qi "web/p\|webp"; then
-              echo "FAIL: /$ASSET is not a WebP — the Worker answered instead of the asset store"
-              head -c 200 /tmp/img.webp; exit 1
+            # The binding's silent failure mode is the WORKER answering the
+            # request instead of the asset store, which returns a page rather
+            # than the file. Any HTML here means exactly that.
+            if head -c 400 /tmp/asset.bin | grep -qi "<!doctype html\|<html"; then
+              echo "FAIL: /$ASSET came back as HTML — the Worker answered instead of the asset store"
+              head -c 200 /tmp/asset.bin; exit 1
+            fi
+            # And it must match the bytes the repo shipped.
+            if ! cmp -s /tmp/asset.bin "public/$ASSET"; then
+              echo "FAIL: /$ASSET does not match the file in the repo"; exit 1
             fi
           fi
 

@@ -48,6 +48,19 @@ const BASE = "/img/";
  */
 const OWN = BASE + "own/";
 
+/**
+ * Anything paintable: a repo asset, which always knows its own size, or a
+ * Supabase-served photograph, which does not. See the note in own-media.ts —
+ * every frame carrying one sets its own aspect-ratio and sizes the image to
+ * 100%, so the box is reserved by CSS and an absent width/height costs no
+ * layout stability. Inventing the numbers would cost correctness.
+ */
+export interface Paintable {
+  readonly src: string;
+  readonly w?: number;
+  readonly h?: number;
+}
+
 export interface Media {
   /** Path served by the Worker's static-asset binding. */
   readonly src: string;
@@ -118,7 +131,7 @@ export function isPlaceholderMedia(src: string): boolean {
  * A hot tub is the bazen shop's; putting it on the sauna shop would be the
  * same error as the furniture, made with better pictures.
  */
-export const SHOP_HERO: Readonly<Partial<Record<string, Media>>> = OWN_HERO;
+export const SHOP_HERO: Readonly<Partial<Record<string, Paintable>>> = OWN_HERO;
 
 /**
  * The width ladder for a master file, as `srcset` syntax, or "" when the build
@@ -183,19 +196,6 @@ export function productImg(
     (eager ? ' loading="eager" fetchpriority="high"' : ' loading="lazy"') +
     ' decoding="async" alt="' + alt.replace(/"/g, "&quot;") + '">'
   );
-}
-
-/**
- * Anything paintable: a repo asset, which always knows its own size, or a
- * Supabase-served photograph, which does not. See the note in own-media.ts —
- * every frame carrying one sets its own aspect-ratio and sizes the image to
- * 100%, so the box is reserved by CSS and an absent width/height costs no
- * layout stability. Inventing the numbers would cost correctness.
- */
-export interface Paintable {
-  readonly src: string;
-  readonly w?: number;
-  readonly h?: number;
 }
 
 export function decorativeImg(media: Paintable, cls: string, sizes: string): string {
