@@ -214,12 +214,20 @@ const categories: Category[] = [
       " · za 5 ali 6 oseb",
     price: familyRange(OFFERED_MODELS.map((m) => modelPrice(m))),
     href: "/masazni-bazeni",
-    // The family the shop has photographed. A real picture beside a drawing is
-    // not a mismatch here — each card is telling the truth about its own
-    // family, and the drawing is the honest state of the other one.
-    ...(photosFor(OFFERED_MODELS[2] ?? OFFERED_MODELS[0]!)[1]
-      ? { photo: photosFor(OFFERED_MODELS[2] ?? OFFERED_MODELS[0]!)[1]! }
-      : {}),
+    // The photograph supplied for this family, under a clean alias because the
+    // file in the bucket is named "Generated Image August 25, 2026 - 6_06PM
+    // Large" — see src/media-aliases.ts. It replaced a ZR801 product shot,
+    // which was a picture of ONE model standing for the whole family.
+    //
+    // The alt says only what is certain. This build cannot open the file, and
+    // "na terasi" — which is what it said a moment ago — was a guess about a
+    // setting nobody here has seen. An alt is the picture for a screen reader
+    // user; inventing its contents is worse than describing less.
+    photo: {
+      src: "/media/kategorija-masazni-bazeni.jpeg",
+      widths: [],
+      alt: "Masažni bazen",
+    },
     art: "pool" as const,
   },
   {
@@ -236,16 +244,17 @@ const categories: Category[] = [
       (swimSpaFamilyHasSwimJets() ? " · s protitočno šobo" : " · za plavanje in sprostitev"),
     price: familyRange(OFFERED_SWIMSPAS.map((m) => swimModelPrice(m))),
     href: "/swim-spa",
-    // A real photograph now, served under a clean alias because the file in
-    // the bucket is named "Generated Image August 25, 2026 - 6_06PM Large" —
-    // see src/media-aliases.ts. The drawing stays as the fallback: it is
-    // drawn to the right PROPORTION on purpose, because length is the entire
-    // difference between the two cards.
-    photo: {
-      src: "/media/kategorija-swim-spa.jpeg",
-      widths: [],
-      alt: "Swim spa bazen na vrtu",
-    },
+    // One of the family's OWN photographs rather than the drawing. Taken from
+    // the SWIM 580 HIDRO set specifically because that model is not in the
+    // home page's four-card selection, so the category card and the cards
+    // below it never show the same picture twice on one screen.
+    //
+    // Chosen by position in the set, not by looking: this build cannot reach
+    // the bucket, so which frame is the best category image is a judgement
+    // nobody has made yet. Worth a second pass by someone who can see them.
+    ...(swimPhotosFor(OFFERED_SWIMSPAS[1] ?? OFFERED_SWIMSPAS[0]!)[0]
+      ? { photo: swimPhotosFor(OFFERED_SWIMSPAS[1] ?? OFFERED_SWIMSPAS[0]!)[0]! }
+      : {}),
     art: "swimspa" as const,
   },
 ];

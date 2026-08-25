@@ -48,10 +48,10 @@ describe("media caching matches how the file is named", () => {
  */
 describe("media aliases", () => {
   it("resolves only paths spelled out in the table", () => {
-    expect(aliasTarget("kategorija-swim-spa.jpeg")).toBe(
+    expect(aliasTarget("kategorija-masazni-bazeni.jpeg")).toBe(
       "Generated Image August 25, 2026 - 6_06PM Large.jpeg",
     );
-    for (const p of ["", "hero.png", "../../etc/passwd", "kategorija-swim-spa", "KATEGORIJA-SWIM-SPA.JPEG"]) {
+    for (const p of ["", "hero.png", "../../etc/passwd", "kategorija-masazni-bazeni", "KATEGORIJA-MASAZNI-BAZENI.JPEG"]) {
       expect(aliasTarget(p), p).toBeNull();
     }
   });
