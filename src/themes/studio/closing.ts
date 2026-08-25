@@ -180,6 +180,32 @@ export const STUDIO_CLOSING_CSS = `
      * loading="lazy", and a tile that scrolls in under transform can paint a
      * frame or two late. The panel grey reads as an empty tile, not a hole. */
     background: var(--bg-alt);
+    /* The photography is studio cutouts on a white sweep and the band's
+     * ground is --bg: without an edge the tiles dissolve into the page and
+     * the strip reads as loose product shadows drifting by, not six
+     * photographs. The same hairline the PDP gallery frames these exact
+     * files with (--bw-line / --line, pdp.ts). box-sizing is border-box
+     * globally, so the border draws INSIDE the tile edge and the tile stays
+     * exactly var(--studio-soc-tile) wide — the -50% seam depends on that
+     * width and must not learn about the border. */
+    border: var(--bw-line) solid var(--line);
+  }
+  /* One perceived speed across tiers, and slow enough to look at a picture.
+   *
+   * effects.ts runs every marquee at 38s per half-track, and a half-track
+   * here is 6 x (tile + 24px gap): 2664px at the 420px desktop tile but only
+   * 1584px on the phone floor — same duration, so the desktop strip ran
+   * 70 px/s against the phone's 42 px/s (measured), which is words-ticker
+   * pace, not photograph pace. 64s brings the desktop half-track to
+   * 2664 / 64 = 41.6 px/s — the phone's own measured speed — so the band
+   * moves at one pace everywhere and each tile gets ~10s in view instead of
+   * ~6. Scoped to the strip (0,5,0 beats effects' 0,3,0) above the same
+   * 809px line the card move below uses, so the tiers never overlap; the
+   * phone tier keeps effects.ts's 38s, which at its 1584px half-track is
+   * already 41.7 px/s. Duration only — keyframes, hover/checked pause and
+   * the reduced-motion stop all stay effects.ts's. */
+  @media (min-width: 810px) {
+    :root[data-theme="studio"] .st-mq.st-soc-mq .st-mq-track { animation-duration: 64s; }
   }
 
   /* The floating card. Not a tile: a sibling layer, absolutely placed over the
@@ -345,7 +371,10 @@ export const STUDIO_CLOSING_CSS = `
       width: max-content;
       flex-wrap: nowrap;
     }
-    :root[data-theme="studio"] .st-mq-viewport.st-soc-viewport { padding-inline-end: 0; }
+    /* No padding-inline-end reset here any more: hero.ts's reduced-motion
+     * gutter pad on .st-mq-viewport is (0,3,0), and this module's base
+     * padding: 0 on the compound (0,4,0) already outranks it — the reset
+     * was re-winning a fight the base rule had already won. */
     :root[data-theme="studio"] .st-mq-toggle.st-soc-toggle { display: none; }
   }
 `;
@@ -409,7 +438,22 @@ function socialIdentity(ctx: RenderCtx): { handle: string; href: string; cta: st
 export function renderStudioSocial(ctx: RenderCtx): string {
   const id = socialIdentity(ctx);
   if (OWN_PHOTOS.length === 0) return "";
-  const group = [0, 1, 2, 3, 4, 5]
+  // A CONSECUTIVE run of offsets, because consecutive is what keeps the six
+  // tiles six DIFFERENT pictures at any pool size: pick() indexes mod
+  // OWN_PHOTOS.length, and six consecutive integers stay distinct mod any
+  // n >= 6 — so no tile ever repeats, and in particular the seam pair (last
+  // tile against the clone's first) can never be the same photograph however
+  // the pool grows or shrinks. A hand-picked scatter of offsets would lose
+  // that guarantee the day the pool count changes.
+  //
+  // WHY 25–30 and not 0–5: the other OWN_PHOTOS slots on this page hold
+  // offsets 2 and 13 (editorial tiles), 5 (hero), 7 and 11 (statement), 9
+  // (editorial room) and 17 + review-index (testimonial discs, two reviews
+  // today). The old 0–5 run collided with 2 and 5, so the strip re-ran the
+  // hero's photograph and the "why us" band's — the same picture twice on
+  // one page reads as a stocking error. 25–30 clears every taken offset and
+  // leaves 19–24 free as growth room for the testimonial run above it.
+  const group = [25, 26, 27, 28, 29, 30]
     .map((i) => pick(OWN_PHOTOS, ctx.shop.key, i))
     .map((m) => decorativeImg(m, "st-soc-img", TILE_SIZES))
     .join("");

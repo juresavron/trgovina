@@ -133,6 +133,45 @@ export const STUDIO_HERO_CSS = `
         color-mix(in srgb, var(--ink) 12%, transparent),
         color-mix(in srgb, var(--ink) 12%, transparent)
       );
+    /* The same veil, re-declared with PIXEL FLOORS under the foot band's
+     * stops. The stops above are percentages of the hero, the hero is the
+     * viewport, and the foot's stack is pixel-sized — so on a short viewport
+     * the text climbs, in pixels, into a fade that shrank with the viewport.
+     * Measured on a 844x390 landscape phone: the h1's top line sat 182px up,
+     * which is 47% of that hero, where the band holds ~49% ink — under the
+     * ~58% a white run needs over a worst-case white pixel. Portrait phones
+     * and desktops never hit this; landscape phones and half-height laptop
+     * windows do.
+     *
+     * max() keeps each stop at least far enough up in PIXELS to stay under
+     * the tallest foot stack (pill 30 + h1 at the widest tier 112 + two gaps
+     * + button 46 + bottom padding, ~290px, plus headroom). On any viewport
+     * 615px and taller every max() resolves to the same percentage as the
+     * declaration above, so the composition is untouched where it was
+     * measured; below that the band only ever gets DARKER, never thinner.
+     * Two declarations rather than one because a browser without max() in
+     * gradient stops drops the whole value — this way it drops the floors
+     * and keeps the measured veil, instead of dropping the veil. */
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--ink) 72%, transparent) 0%,
+        color-mix(in srgb, var(--ink) 46%, transparent) 9%,
+        transparent 22%
+      ),
+      linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--ink) 88%, transparent) 0%,
+        color-mix(in srgb, var(--ink) 82%, transparent) max(26%, 160px),
+        color-mix(in srgb, var(--ink) 62%, transparent) max(42%, 230px),
+        color-mix(in srgb, var(--ink) 28%, transparent) max(54%, 285px),
+        transparent max(64%, 330px)
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--ink) 12%, transparent),
+        color-mix(in srgb, var(--ink) 12%, transparent)
+      );
   }
 
   /* The wordmark, fit to the container's width.
@@ -163,6 +202,23 @@ export const STUDIO_HERO_CSS = `
     max-inline-size: var(--studio-container);
     block-size: auto;
     display: block;
+    /* The wordmark's height is width-driven (the SVG keeps its aspect) while
+     * the foot block is pixel-sized from the bottom edge, so on a wide-and-
+     * short viewport the two met: at 844x390 the pill printed straight across
+     * the wordmark's letters, and at 1300x450 so did the heading's first
+     * line. This cap spends surplus height on the wordmark and takes scarce
+     * height away from it. 340px is the tallest foot stack plus the mark's
+     * own top offset plus breathing room, so the cap only binds where a
+     * collision was coming — under ~535px of height at full desktop width,
+     * landscape-phone heights below that — and resolves above the natural
+     * height everywhere else, changing nothing. When it does bind, the
+     * viewBox letterboxes inside the full-width viewport and the default
+     * preserveAspectRatio centres the drawing, so the mark renders smaller,
+     * centred, and never under the foot. The 44px floor keeps the device
+     * present rather than letting the subtraction collapse it to a sliver on
+     * the shortest landscapes. */
+    max-block-size: max(44px, calc(100vh - 340px));
+    max-block-size: max(44px, calc(100svh - 340px));
   }
   :root[data-theme="studio"] .st-hero-mark text {
     font-family: var(--f-display);
@@ -248,24 +304,21 @@ export const STUDIO_HERO_CSS = `
     outline-offset: 3px;
   }
 
-  :root[data-theme="studio"] .st-hero-cap {
-    position: absolute; z-index: 4;
-    inset-block-end: clamp(14px, 2vh, 24px);
-    inset-inline-end: var(--studio-gutter);
-    font-family: var(--f-label);
-    font-size: var(--t-label);
-    font-weight: var(--w-label);
-    letter-spacing: var(--ls-label);
-    line-height: var(--lh-label-tight);
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--on-invert) 72%, transparent);
-  }
+  /* .st-hero-cap is GONE. It dressed the bottom-right "simbolična
+   * fotografija" plate, and that markup left with the borrowed room (see the
+   * note at the end of renderStudioHero: the only photograph left is the
+   * shop's own, which is not symbolic of anything). The rule outlived its
+   * element and matched nothing on any page. scripts/verify-hero-contrast.mjs
+   * dropped its matching entry in the same change. */
 
   /* Below 900px the wordmark rides higher so the foot block keeps its own
-   * air. */
+   * air. This block used to re-assert the h1's size, tracking and leading
+   * here too — but it re-read the very same --t-h3/--ls-h3/--lh-h3 the base
+   * rule already reads, and those tokens switch per breakpoint tier on their
+   * own, so the override resolved to identical values at every width it
+   * covered. Removed as dead weight; the ramp tokens are the mechanism. */
   @media (max-width: 900px) {
     :root[data-theme="studio"] .st-hero-mark { inset-block-start: clamp(92px, 15vh, 150px); }
-    :root[data-theme="studio"] .st-hero-foot h1 { font-size: var(--t-h3); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
   }
   @media (prefers-reduced-motion: reduce) {
     :root[data-theme="studio"] .st-hero-cta { transition: none; }
