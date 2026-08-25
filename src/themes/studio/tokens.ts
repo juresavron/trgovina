@@ -47,17 +47,12 @@
  * The specimen the owner picked from, with the full ranking and the method:
  * https://claude.ai/code/artifact/1640ac21-c764-4632-9298-89b0749c6006
  *
- * Switching faces is a two-line change — this href and the --f-* stacks below.
+ * The faces are SELF-HOSTED. scripts/vendor-fonts.mjs downloads the latin and
+ * latin-ext subsets into public/fonts and generates ./fonts.ts, so there is no
+ * third-party origin on the critical path at all. Switching faces means
+ * re-running that script and editing the --f-* stacks below;
  * scripts/verify-fonts.mjs re-checks glyph coverage and must pass first.
- *
- * One origin, not three: this also retires the render-blocking Fontshare
- * stylesheet that docs/SEO.md §4 called out as debt.
  */
-export const STUDIO_FONTS_HREF =
-  "https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;700" +
-  "&family=DM+Sans:opsz,wght@9..40,400..500" +
-  "&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap";
-
 export const STUDIO_TOKENS = `
   :root[data-theme="studio"] {
     /* ---- Ground -----------------------------------------------------------
@@ -220,7 +215,6 @@ export const STUDIO_TOKENS = `
     --f-body: "Plus Jakarta Sans", "DM Sans", system-ui, sans-serif;
     --f-label: "DM Sans", system-ui, sans-serif;
     --w-display: 500;
-    --w-display-bold: 700;
     --w-body: 400;
     --w-body-med: 500;
     --w-label: 500;

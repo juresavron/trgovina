@@ -13,7 +13,6 @@ import {
   type RenderCtx,
 } from "./sections";
 
-import { STUDIO_FONTS_HREF } from "../themes/studio/tokens";
 import {
   renderStudioExtras,
   renderStudioFooter,
@@ -24,22 +23,41 @@ import {
 } from "../themes/studio";
 
 /**
- * Font payload per theme — no page should pay for faces it cannot render.
+ * Fonts.
+ *
+ * Studio self-hosts: its faces are vendored into /fonts and declared inline as
+ * part of the theme sheet, so there is no third-party origin on the critical
+ * path at all — no DNS, no TLS, no round trip before the first glyph can be
+ * requested. That closes the debt docs/SEO.md §4 recorded against this theme.
+ *
+ * Only the display face is preloaded. It paints the h1, which is the LCP
+ * element on every landing page; the prose faces are discovered from the sheet
+ * a few milliseconds later and swap in without moving layout. Preloading all
+ * ten files would compete with the image that shares that budget.
+ *
+ * The other themes still use Google — they are not the flagship and have not
+ * earned the vendoring work.
  */
 const FONTS_BASE =
   "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Archivo:wdth,wght@62..125,400..800&family=Hanken+Grotesk:wght@300..800&family=Marcellus&display=swap";
 
-/**
- * One font origin per theme. Studio used to need a second (Fontshare, for
- * Clash Display and Satoshi); substituting those for verified Google faces
- * retired it, which also closed the render-blocking-third-party debt
- * docs/SEO.md §4 had recorded against this theme.
- */
+/** The two files that carry the headline, including šumniki. */
+const STUDIO_PRELOAD = [
+  "/fonts/chivo-500-latin.woff2",
+  "/fonts/chivo-500-latin-ext.woff2",
+];
+
 function fontLinks(theme: ThemeKey): string {
+  if (theme === "studio") {
+    return STUDIO_PRELOAD.map(
+      (href) =>
+        '<link rel="preload" as="font" type="font/woff2" href="' + href + '" crossorigin>',
+    ).join("");
+  }
   return (
     '<link rel="preconnect" href="https://fonts.googleapis.com">' +
     '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>' +
-    '<link rel="stylesheet" href="' + (theme === "studio" ? STUDIO_FONTS_HREF : FONTS_BASE) + '">'
+    '<link rel="stylesheet" href="' + FONTS_BASE + '">'
   );
 }
 

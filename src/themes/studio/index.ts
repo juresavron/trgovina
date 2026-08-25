@@ -19,6 +19,7 @@ import {
 } from "./editorial";
 import { STUDIO_PDP_CSS, renderStudioPdp } from "./pdp";
 import { STUDIO_JS } from "./behaviour";
+import { STUDIO_FONT_FACE_CSS } from "./fonts";
 
 /**
  * The studio theme's public surface — one import for the render pipeline.
@@ -28,6 +29,10 @@ import { STUDIO_JS } from "./behaviour";
  * state without a specificity fight.
  */
 export const STUDIO_CSS =
+  // @font-face first: the faces must be declared before anything asks for
+  // them. Self-hosted, so this replaces a render-blocking third-party
+  // stylesheet rather than adding to one (scripts/vendor-fonts.mjs).
+  STUDIO_FONT_FACE_CSS +
   STUDIO_TOKENS +
   STUDIO_CHROME_CSS +
   STUDIO_HERO_CSS +
