@@ -72,13 +72,14 @@ function photosFor(m: PolaModel): PdpPhoto[] {
   const set = OWN_MEDIA["bazen/" + m.slug] ?? [];
   return set.map((p, i) => ({
     src: p.src,
-    w: p.w,
-    h: p.h,
+    ...(p.w && p.h ? { w: p.w, h: p.h } : {}),
     widths: p.widths,
-    // A photograph with no alt would fail the structural audit, and a generic
-    // one is worse than none for search. Falling back to the model name plus
-    // its position is at least true.
-    alt: PHOTO_ALT[m.slug]?.[i] ?? m.name + " — fotografija " + (i + 1) + ".",
+    // Alt now travels WITH the photograph, from Supabase through the
+    // generated index, because that is where the picture itself lives and the
+    // two must not be edited in different places. PHOTO_ALT below is the
+    // older local table, kept only as the fallback for anything the index
+    // has not described.
+    alt: p.alt || PHOTO_ALT[m.slug]?.[i] || m.name + " — fotografija " + (i + 1) + ".",
   }));
 }
 

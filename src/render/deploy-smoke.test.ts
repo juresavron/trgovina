@@ -14,18 +14,24 @@ describe("deploy smoke assertions hold locally", () => {
       headers: { host: "trgovina.worldfans.workers.dev" },
     }));
 
-  it("home is 200 and names the savna shop", async () => {
+  it("home is 200 and names the bazen shop", async () => {
     const r = get("/");
     expect(r.status).toBe(200);
-    expect(await r.text()).toContain("Infrardeča savna");
+    expect(await r.text()).toContain("Masažni bazen");
   });
 
   it("home sends x-robots-tag noindex", () => {
     expect(get("/").headers.get("x-robots-tag")).toMatch(/noindex/i);
   });
 
-  it("?shop=kad names the kad shop", async () => {
-    expect(await get("/?shop=kad").text()).toContain("Ledena kad");
+  it("an unknown ?shop override falls back rather than 500ing", async () => {
+    // The switcher used to prove itself by naming a second shop. With one
+    // shop there is no second name to check, so what is worth asserting is
+    // the failure mode the override always had: a key that is not in SHOPS
+    // must resolve to the dev shop, not throw.
+    const r = get("/?shop=kad");
+    expect(r.status).toBe(200);
+    expect(await r.text()).toContain("Masažni bazen");
   });
 
   it("robots.txt is closed", async () => {

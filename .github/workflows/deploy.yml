@@ -58,11 +58,15 @@ jobs:
           # Capture-then-grep, never `curl | grep -q`: under pipefail, grep -q
           # exits on first match, curl takes a write error (23) and the
           # pipeline reports failure for a check that PASSED.
-          grep -q "Infrardeča savna" /tmp/home.html
+          grep -q "Masažni bazen" /tmp/home.html
           curl -s -D /tmp/headers.txt -o /dev/null "https://${WORKERS_DEV_HOST}/"
           grep -qi "x-robots-tag: noindex" /tmp/headers.txt
-          curl -s -o /tmp/kad.html "https://${WORKERS_DEV_HOST}/?shop=kad"
-          grep -q "Ledena kad" /tmp/kad.html
+          # An unknown ?shop override must fall back to the dev shop, not 500.
+          # This used to name a second shop; the network is one shop now, so
+          # what is left worth checking is the override's failure mode.
+          code=$(curl -s -o /tmp/override.html -w "%{http_code}" "https://${WORKERS_DEV_HOST}/?shop=kad")
+          [ "$code" = "200" ] || { echo "unknown ?shop override returned $code"; exit 1; }
+          grep -q "Masažni bazen" /tmp/override.html
           curl -s -o /tmp/robots.txt "https://${WORKERS_DEV_HOST}/robots.txt"
           grep -q "Disallow: /" /tmp/robots.txt
 

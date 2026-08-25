@@ -73,8 +73,13 @@ export interface PdpAddon {
 /** A photograph of the product, with the alt it must carry. */
 export interface PdpPhoto {
   src: string;
-  w: number;
-  h: number;
+  /**
+   * Intrinsic size, WHERE IT IS KNOWN. Supabase-served photography carries
+   * none — the build cannot reach the bucket to measure it, and the frames
+   * that paint these set their own aspect-ratio anyway. See own-media.ts.
+   */
+  w?: number;
+  h?: number;
   widths: readonly (readonly [string, number])[];
   alt: string;
 }

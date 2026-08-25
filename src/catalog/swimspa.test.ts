@@ -1,0 +1,138 @@
+import { describe, it, expect } from "vitest";
+import {
+  SWIMSPA_MODELS,
+  OFFERED_SWIMSPAS,
+  ZR7860_DUAL_ZONE_CONFIRMED,
+  footprint,
+  metaLine,
+  seating,
+  swimSpaBySlug,
+} from "./swimspa";
+import { OFFERED_MODELS } from "./pola";
+
+/**
+ * The catalogue is a TRANSCRIPTION of a supplier document, and the failure
+ * mode that matters is not a crash — it is a page that quietly claims a
+ * specification nobody stated. These assert the shape of the transcription and
+ * the invariants that keep a claim honest.
+ */
+describe("swim spa catalogue", () => {
+  it("carries all nine models the price list quotes", () => {
+    expect(SWIMSPA_MODELS).toHaveLength(9);
+  });
+
+  it("gives every model a unique code and slug", () => {
+    // The supplier's own list reuses ZR7809 for the turbine variant. If that
+    // ever gets pasted back in verbatim, two SKUs share an identity and an
+    // order cannot be matched to a unit.
+    expect(new Set(SWIMSPA_MODELS.map((m) => m.code)).size).toBe(9);
+    expect(new Set(SWIMSPA_MODELS.map((m) => m.slug)).size).toBe(9);
+  });
+
+  it("never collides with a hot tub slug", () => {
+    // Both lines hang off a shop's /product route. A shared slug would serve
+    // one product's page under the other's URL.
+    const hot = new Set(OFFERED_MODELS.map((m) => m.slug));
+    for (const m of SWIMSPA_MODELS) expect(hot.has(m.slug), m.slug).toBe(false);
+  });
+
+  it("states a length no shorter than 3.9 m", () => {
+    // The category's floor. Anything shorter is a hot tub, and the whole
+    // reason this module is separate from pola.ts is that the two are not
+    // interchangeable.
+    for (const m of SWIMSPA_MODELS) expect(m.mm[0], m.code).toBeGreaterThanOrEqual(3900);
+  });
+
+  it("keeps the jet breakdown discrepancy field honest", () => {
+    // Unlike the Pola list, every stated breakdown here reconciles. If a
+    // future edit introduces one, it must be recorded rather than resolved.
+    for (const m of SWIMSPA_MODELS) {
+      if (m.jetPartsSum !== undefined) expect(m.jetPartsSum, m.code).not.toBe(m.jets);
+    }
+  });
+
+  it("does not invent a mass for the three models that state none", () => {
+    // Filled mass is what a terrace is engineered against. A figure guessed
+    // from a similar model is worse than a missing one, so the omission is
+    // deliberate and asserted.
+    const silent = ["ZR6802", "ZR6803", "ZR7801"];
+    for (const code of silent) {
+      const m = SWIMSPA_MODELS.find((x) => x.code === code)!;
+      expect(m.dryKg, code).toBeUndefined();
+      expect(m.filledKg, code).toBeUndefined();
+    }
+  });
+
+  it("does not invent a cover price for ZR7801", () => {
+    // The one model on the list with no thermal cover quoted. Charging a
+    // customer a price nobody stated is the error this guards.
+    const m = SWIMSPA_MODELS.find((x) => x.code === "ZR7801")!;
+    expect(m.addons.some((x) => x.key === "cover")).toBe(false);
+    // Every other model does quote one.
+    for (const other of SWIMSPA_MODELS.filter((x) => x.code !== "ZR7801")) {
+      expect(other.addons.some((x) => x.key === "cover"), other.code).toBe(true);
+    }
+  });
+
+  it("offers the three the owner chose, shortest first", () => {
+    expect(OFFERED_SWIMSPAS.map((m) => m.code)).toEqual(["ZR6801", "ZR6802", "ZR7860"]);
+    // Shortest first is the ladder a buyer walks, and length is the decision.
+    const mm = OFFERED_SWIMSPAS.map((m) => m.mm[0]);
+    expect([...mm].sort((x, y) => x - y)).toEqual(mm);
+    expect(swimSpaBySlug("swim-390")?.code).toBe("ZR6801");
+    // Not offered, so not routable: an unoffered model must 404 rather than
+    // render a page for something the shop does not sell.
+    expect(swimSpaBySlug("swim-580-turbo")).toBeUndefined();
+  });
+
+  it("gives every offered model a tier and no other model one", () => {
+    for (const m of SWIMSPA_MODELS) {
+      const offered = OFFERED_SWIMSPAS.some((o) => o.code === m.code);
+      expect(Boolean(m.tier), m.code).toBe(offered);
+    }
+  });
+
+  it("holds the dual-zone claim until the supplier confirms it", () => {
+    // The ZR7860's price jump is sold on two temperatures at once. The sheet
+    // shows two control systems, two circulation pumps and two ozonators —
+    // but one "3kw" heater and no partition, and two heated volumes need two
+    // heaters. Until that is confirmed the claim cannot go on a page.
+    expect(ZR7860_DUAL_ZONE_CONFIRMED).toBe(false);
+  });
+
+  it("knows the mid model gains length and loses two jets", () => {
+    // Easy to sell as a pure length upgrade, and nearly is — but a comparison
+    // table that prints jets as rising would be printing a number backwards.
+    const entry = SWIMSPA_MODELS.find((m) => m.code === "ZR6801")!;
+    const mid = SWIMSPA_MODELS.find((m) => m.code === "ZR6802")!;
+    expect(mid.mm[0]).toBeGreaterThan(entry.mm[0]);
+    expect(mid.jets).toBeLessThan(entry.jets);
+    // What genuinely is unchanged, and what the pitch rests on.
+    expect(mid.jetPumps).toEqual(entry.jetPumps);
+    expect(mid.filterSf).toBe(entry.filterSf);
+    expect(mid.fobUsd - entry.fobUsd).toBe(910);
+  });
+
+  it("keeps the premium model's build claims true to the sheet", () => {
+    const p = SWIMSPA_MODELS.find((m) => m.code === "ZR7860")!;
+    // Heaviest on the list — by 80 kg over the ZR7809 Turbine, not by 270.
+    const heaviest = Math.max(...SWIMSPA_MODELS.map((m) => m.dryKg ?? 0));
+    expect(p.dryKg).toBe(heaviest);
+    // Best filtration: three skimmers where everything else has two.
+    expect(p.skimmers).toBe(3);
+    expect(Math.max(...SWIMSPA_MODELS.map((m) => m.skimmers))).toBe(3);
+    // 1 HP circulation pumps — but NOT "instead of the 0.35 HP used
+    // everywhere else": three other models use 1 HP too.
+    expect(p.circPumps).toEqual([2, 1]);
+    expect(SWIMSPA_MODELS.filter((m) => m.circPumps[1] === 1)).toHaveLength(4);
+  });
+
+  it("renders Slovenian number and grammar forms", () => {
+    const m = SWIMSPA_MODELS.find((x) => x.code === "ZR7807")!;
+    expect(footprint(m)).toBe("5,80 × 2,24 m");
+    expect(seating(m)).toBe("7 oseb · 1 ležalnik");
+    // The card leads with LENGTH, because that is what this category is
+    // bought on — the hot tub's line leads with seating.
+    expect(metaLine(m).startsWith("5,80 × 2,24 m")).toBe(true);
+  });
+});

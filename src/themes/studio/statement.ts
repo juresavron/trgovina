@@ -60,7 +60,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import { ROOMS, decorativeImg, pick } from "./media";
+import { OWN_PHOTOS, decorativeImg, pick } from "./media";
 import { statValue } from "./stat";
 
 /* ---- inline glyphs (§4.8) --------------------------------------------
@@ -574,22 +574,31 @@ export function renderStudioStatement(ctx: RenderCtx): string {
     '<div class="st-story">' +
     '<div class="st-story-lead">' +
     '<p class="st-story-copy">' + esc(c.sub) + "</p>" +
-    '<figure class="st-story-fig2"><div class="st-story-frame2">' +
-    decorativeImg(
-      pick(ROOMS, ctx.shop.key, 1),
-      "st-story-photo",
-      "(max-width: 809px) 57vw, (max-width: 1439px) 31vw, 440px",
-    ) +
-    "</div></figure></div>" +
+    // The story block's two frames were borrowed rooms. They now take the
+    // shop's own photography, at offsets the social strip does not use, or
+    // the figures are omitted entirely — an empty frame is a hole, not a
+    // composition.
+    (OWN_PHOTOS.length > 0
+      ? '<figure class="st-story-fig2"><div class="st-story-frame2">' +
+        decorativeImg(
+          pick(OWN_PHOTOS, ctx.shop.key, 7),
+          "st-story-photo",
+          "(max-width: 809px) 57vw, (max-width: 1439px) 31vw, 440px",
+        ) +
+        "</div></figure>"
+      : "") +
+    "</div>" +
     '<figure class="st-story-fig">' +
     // figcaption first: the source puts this label ABOVE the frame.
     '<figcaption class="st-story-label">' + esc(ctx.shop.keyword.category) + "</figcaption>" +
     '<div class="st-story-frame">' +
-    decorativeImg(
-      pick(ROOMS, ctx.shop.key, 3),
-      "st-story-photo",
-      "(max-width: 809px) 92vw, (max-width: 1439px) 47vw, 660px",
-    ) +
+    (OWN_PHOTOS.length > 0
+      ? decorativeImg(
+          pick(OWN_PHOTOS, ctx.shop.key, 11),
+          "st-story-photo",
+          "(max-width: 809px) 92vw, (max-width: 1439px) 47vw, 660px",
+        )
+      : "") +
     "</div></figure></div></div></section>"
   );
 }
