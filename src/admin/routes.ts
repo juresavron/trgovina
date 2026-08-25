@@ -77,9 +77,37 @@ function seeOther(location: string, extra: Record<string, string> = {}): Respons
  * same-origin and sit in Cloudflare's cache at the edge nearest the visitor,
  * and the second request never leaves the country.
  *
- * Immutable caching is safe because uploads are content-addressed: a new file
- * gets a new UUID, and an edited image is a new upload.
+ * CACHING IS SPLIT BY WHETHER THE PATH IS CONTENT-ADDRESSED, and getting this
+ * wrong is how an image appears to be frozen.
+ *
+ * Everything here used to be served `immutable` for a year, on the stated
+ * grounds that "uploads are content-addressed: a new file gets a new UUID".
+ * That is true of /admin uploads, which are <shop>/<slug>/<uuid>.webp — a
+ * replacement is a different URL, so the old one can be cached forever.
+ *
+ * It is FALSE for anything uploaded through the Supabase dashboard, where a
+ * human picks the name. Replace hero.png in place and the bytes at that URL
+ * change while the URL does not — so Cloudflare keeps serving the old file
+ * for a year, and every browser that already fetched it keeps its own copy
+ * for a year too. The picture simply never updates, with nothing in the logs
+ * and nothing failing.
+ *
+ * So: a UUID stem gets the immutable year. A human-named file gets five
+ * minutes and a revalidation, which still serves the overwhelming majority of
+ * requests from the edge while letting a replacement actually land.
  */
+
+/**
+ * True for a path whose filename is a UUID, optionally with a -<width> rung:
+ * the shape crypto.randomUUID() produces in the admin upload. Those URLs
+ * change when their content changes, which is the whole precondition for
+ * caching something forever.
+ */
+export function isContentAddressed(path: string): boolean {
+  return /(^|\/)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(-\d+)?\.[a-z0-9]+$/i.test(
+    path,
+  );
+}
 export async function handleMedia(request: Request, env: Env): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
     return new Response("Method not allowed", { status: 405 });
@@ -92,15 +120,20 @@ export async function handleMedia(request: Request, env: Env): Promise<Response>
     return new Response("Not found", { status: 404 });
   }
 
+  const forever = isContentAddressed(path);
+  const ttl = forever ? 31536000 : 300;
+
   const upstream = env.SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + path;
-  const res = await fetch(upstream, { cf: { cacheEverything: true, cacheTtl: 31536000 } } as RequestInit);
+  const res = await fetch(upstream, { cf: { cacheEverything: true, cacheTtl: ttl } } as RequestInit);
   if (!res.ok) return new Response("Not found", { status: 404 });
 
   return new Response(res.body, {
     status: 200,
     headers: {
       "content-type": res.headers.get("content-type") ?? "image/webp",
-      "cache-control": "public, max-age=31536000, immutable",
+      "cache-control": forever
+        ? "public, max-age=31536000, immutable"
+        : "public, max-age=300, must-revalidate",
     },
   });
 }
