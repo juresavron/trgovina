@@ -26,6 +26,7 @@
  */
 export const MEDIA_ALIASES: Readonly<Record<string, string>> = {
   "kategorija-masazni-bazeni.jpeg": "Generated Image August 25, 2026 - 6_06PM Large.jpeg",
+  "kategorija-swim-spa.jpeg": "Generated Image August 25, 2026 - 6_26PM Large.jpeg",
 };
 
 /**

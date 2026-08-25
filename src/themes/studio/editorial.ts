@@ -243,10 +243,26 @@ export const STUDIO_EDITORIAL_CSS = `
    * object-fit is contain rather than cover, because the shop's photography
    * is studio cutouts on white: cover would crop a centred product against
    * its own empty background and cut the tub in half to do it. */
+  /* The quiet tile insets its picture so the label below has clean ground.
+   *
+   * The insets used to be the whole rule, with auto sizes. That does not do
+   * what it reads as. An absolutely positioned REPLACED element with
+   * inline-size:auto takes its INTRINSIC width — the insets do not shrink it,
+   * and the over-constrained equation is resolved by dropping right/bottom.
+   * Measured, a 900x900 photograph painted at 900x900 inside a 407x407 tile:
+   * 541px past the right edge and 533px past the bottom, straight over the
+   * caption. It only looked fine while the images were lazy and offscreen,
+   * because an unloaded image has no intrinsic size and measures 0x0.
+   *
+   * So the inset becomes PADDING on a full-bleed image. box-sizing is
+   * border-box globally, and object-fit lays the pixels out inside the
+   * content box, so the picture fits the inset frame with one set of numbers
+   * and no way to overflow it. */
   :root[data-theme="studio"] .st-imp-quiet .st-imp-photo {
-    inset: 10% 12% 30%;
-    inline-size: auto;
-    block-size: auto;
+    inset: 0;
+    padding: 10% 12% 30%;
+    inline-size: 100%;
+    block-size: 100%;
     object-fit: contain;
   }
 
@@ -604,6 +620,16 @@ export const STUDIO_EDITORIAL_CSS = `
    * stays the drawn placeholder (see media.ts on what a product slot claims).
    * It carries no text, so it simply drops below 1080px where the quote needs
    * the width more than the band needs the ornament. */
+  /* The photograph fills the circle — object-fit:cover, not contain: a disc
+   * is a crop by definition, and a contained image inside a circle leaves
+   * two crescents of background that read as a rendering fault. */
+  :root[data-theme="studio"] .st-tst-disc-photo {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
   :root[data-theme="studio"] .st-tst-disc {
     position: relative;
     overflow: hidden;
@@ -1177,8 +1203,15 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
         portrait(ctx, i) +
         quoteBlock(r) +
         '<div class="st-tst-disc" aria-hidden="true">' +
-        '<span class="st-tst-disc-mass"></span>' +
-        '<span class="st-tst-disc-floor"></span>' +
+        // A photograph, not the grey disc. The rule above says the frame is
+        // composition and the picture inside it is inventory, "until a shop
+        // owns photography" — it owns 43 files now, and two empty discs beside
+        // the reviews were the last of the placeholder furniture on this page.
+        // Offset 17 + i keeps them off the pictures the bands above already
+        // took, and off each other.
+        (OWN_PHOTOS.length > 0
+          ? decorativeImg(pick(OWN_PHOTOS, ctx.shop.key, 17 + i), "st-tst-disc-photo", "(max-width: 1080px) 0px, 15vw")
+          : '<span class="st-tst-disc-mass"></span><span class="st-tst-disc-floor"></span>') +
         "</div>" +
         "</figure></li>"
       );

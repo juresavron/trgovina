@@ -11,6 +11,7 @@ import { STUDIO_EDITORIAL_CSS } from "./editorial";
 import { STUDIO_PDP_CSS } from "./pdp";
 import { STUDIO_EFFECTS_CSS } from "./effects";
 import { STUDIO_JS } from "./behaviour";
+import { OWN_PHOTOS } from "./media";
 
 /**
  * The studio theme was transcribed from a source stylesheet, and the token
@@ -154,4 +155,45 @@ describe("studio renders a self-consistent sheet", () => {
     }
     expect(collisions, collisions.join("\n")).toEqual([]);
   });
+});
+
+/**
+ * No empty placeholder boxes on a page of a shop that owns photography.
+ *
+ * The placeholders are real elements with a background and a shadow, drawn
+ * where a picture belongs: .st-photo-mass, .st-imp-mass, .st-tst-disc-mass.
+ * Every one of them was written before the shop had photographs, each behind
+ * its own "until the photography exists" fallback, and each of those
+ * fallbacks was left wired up after the photography arrived. Nothing failed —
+ * the page rendered a grey box and looked finished. One of them, 449x320,
+ * sat across the middle of the wordmark and turned MASAŽNI BAZEN into
+ * MASAŽ▯EN.
+ *
+ * A grey box is the hardest kind of missing picture to notice, so this is a
+ * test rather than a code review: while OWN_PHOTOS has anything in it, no
+ * rendered page may contain one.
+ */
+describe("no placeholder masses survive the photography", () => {
+  const MASSES = ["st-photo-mass", "st-imp-mass", "st-imp-floor", "st-tst-disc-mass", "st-tst-disc-floor"];
+  const PAGES = ["/", "/masazni-bazeni", "/swim-spa", "/trgovina", "/bazen/veliki-230", "/bazen/swim-580-maxi"];
+
+  for (const path of PAGES) {
+    it("renders " + path + " with no empty picture box", async () => {
+      const res = handleRequest(
+        new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
+          headers: { host: "trgovina.workers.dev" },
+        }),
+      );
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      // Guard the guard: the rule only holds while there ARE photographs, and
+      // a test that passes because the page rendered nothing is worse than no
+      // test. Every one of these pages must be showing real pictures.
+      expect(OWN_PHOTOS.length, "no photography — the rule below is vacuous").toBeGreaterThan(0);
+      expect(html, path + " serves no photograph").toContain('src="/media/');
+      for (const mass of MASSES) {
+        expect(html.includes('class="' + mass), path + " still paints " + mass).toBe(false);
+      }
+    });
+  }
 });

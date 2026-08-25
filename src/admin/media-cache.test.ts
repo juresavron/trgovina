@@ -48,8 +48,17 @@ describe("media caching matches how the file is named", () => {
  */
 describe("media aliases", () => {
   it("resolves only paths spelled out in the table", () => {
+    // Every entry, rather than a favourite one: the table grows a row each
+    // time a picture arrives with a name a URL cannot carry, and a test that
+    // checks the first row stops testing the table the moment it has two.
+    for (const [clean, key] of Object.entries(MEDIA_ALIASES)) {
+      expect(aliasTarget(clean), clean).toBe(key);
+    }
     expect(aliasTarget("kategorija-masazni-bazeni.jpeg")).toBe(
       "Generated Image August 25, 2026 - 6_06PM Large.jpeg",
+    );
+    expect(aliasTarget("kategorija-swim-spa.jpeg")).toBe(
+      "Generated Image August 25, 2026 - 6_26PM Large.jpeg",
     );
     for (const p of ["", "hero.png", "../../etc/passwd", "kategorija-masazni-bazeni", "KATEGORIJA-MASAZNI-BAZENI.JPEG"]) {
       expect(aliasTarget(p), p).toBeNull();

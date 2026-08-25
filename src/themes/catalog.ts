@@ -78,10 +78,4 @@ export const THEME_CATALOG: Record<ThemeKey, ThemeCatalogEntry> = {
       home: ["hero", "marquee", "moat", "products", "stats", "reviews", "guides", "trust"],
     },
   },
-
-  /**
-   * SALON — bright gallery. Warm cream ground, elegant single-weight serif
-   * display (Marcellus), generous whitespace, soft arches on imagery,
-   * products first — the piece speaks before the pitch. Wellness furniture.
-   */
 };
