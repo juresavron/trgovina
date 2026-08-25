@@ -271,6 +271,53 @@ describe("a live shop can identify itself", () => {
     }
   });
 
+  it("can actually be satisfied by filling the fields in", () => {
+    // A GATE THAT CANNOT PASS IS WORSE THAN NO GATE. The first version of
+    // legalPagesReady() ran one predicate over all six fields, and that
+    // predicate ended in a phone test: strip non-digits, drop a leading 386,
+    // drop the zeros, unset if nothing survives. Correct for the placeholder
+    // phone; catastrophic for "Masažni Bazen d.o.o." and "Ljubljana", which
+    // hold no digits and therefore folded to "" and read as unset.
+    //
+    // Measured with entirely real details in place, it returned false. Nobody
+    // fills in six fields and then argues with a red test — they delete the
+    // test. So this asserts the gate OPENS, not only that it closes.
+    expect(
+      legalPagesReady(
+        { legalName: "Masažni Bazen d.o.o.", vatId: "SI12345678" },
+        {
+          phone: "+386 41 234 567",
+          address: { street: "Dunajska cesta 100", zip: "1000", city: "Ljubljana" },
+        },
+      ),
+      "real company details do not satisfy the gate — it can never be passed",
+    ).toBe(true);
+
+    // And it still closes on each field individually, so a single forgotten
+    // value cannot slip through behind five filled-in ones.
+    const real = {
+      company: { legalName: "Masažni Bazen d.o.o.", vatId: "SI12345678" },
+      contact: {
+        phone: "+386 41 234 567",
+        address: { street: "Dunajska cesta 100", zip: "1000", city: "Ljubljana" },
+      },
+    };
+    const blanks: [string, typeof real][] = [
+      ["legalName", { ...real, company: { ...real.company, legalName: "TODO d.o.o." } }],
+      ["vatId", { ...real, company: { ...real.company, vatId: "SI00000000" } }],
+      ["phone", { ...real, contact: { ...real.contact, phone: "+386 00 000 000" } }],
+      ["street", { ...real, contact: { ...real.contact, address: { ...real.contact.address, street: "TODO" } } }],
+      ["zip", { ...real, contact: { ...real.contact, address: { ...real.contact.address, zip: "0000" } } }],
+      ["city", { ...real, contact: { ...real.contact, address: { ...real.contact.address, city: "TODO" } } }],
+    ];
+    for (const [field, cfg] of blanks) {
+      expect(
+        legalPagesReady(cfg.company, cfg.contact),
+        "an unset " + field + " does not close the gate",
+      ).toBe(false);
+    }
+  });
+
   it("serves a real page, not a stub, for every legal route", () => {
     // The stub these replaced returned 200 and read "Stran je v pripravi", so
     // a regression here would look like a working site. Length is the crude

@@ -121,23 +121,49 @@ export const PAGES: readonly Page[] = [
  * than a 404, and the shop is pre-live anyway. What this gates is the flip to
  * live: see the launch test, which refuses it exactly as the pricing gate does.
  */
-export function legalPagesReady(company: { legalName: string; vatId: string }, contact: {
-  phone: string;
-  address: { street: string; zip: string; city: string };
-}): boolean {
-  const values = [
-    company.legalName,
-    company.vatId,
-    contact.phone,
-    contact.address.street,
-    contact.address.zip,
-    contact.address.city,
-  ];
-  return !values.some(
-    (v) =>
-      v.includes("TODO") ||
-      v === "SI00000000" ||
-      v === "0000" ||
-      v.replace(/[^0-9]/g, "").replace(/^386/, "").replace(/0+/g, "") === "",
+/**
+ * WHETHER A FIELD HAS BEEN FILLED IN, JUDGED PER FIELD.
+ *
+ * ⚠️ THE FIRST VERSION OF THIS COULD NEVER RETURN TRUE, and the way it failed
+ * is worth keeping. It ran ONE test over all six values, and that test ended
+ * with a phone check: strip non-digits, drop a leading 386, drop the zeros,
+ * and call it unset if nothing survives. Correct for "+386 00 000 000".
+ * Catastrophic for "Masažni Bazen d.o.o." and "Ljubljana", which contain no
+ * digits at all, so they folded to "" and read as unset — measured, with
+ * entirely real company details in place, legalPagesReady() returned FALSE.
+ *
+ * A launch gate that cannot be satisfied is worse than no gate. Nobody fills
+ * in six fields and then argues with a red test; they delete the test. So the
+ * predicate is now per field, and each one only knows how ITS OWN kind of
+ * value looks when it is missing.
+ */
+const isSet = (v: string): boolean => v.trim() !== "" && !v.includes("TODO");
+
+/** A VAT id is unset while it is the all-zero stand-in. */
+const isSetVat = (v: string): boolean =>
+  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
+
+/** A postcode is unset while every digit is a zero. */
+const isSetZip = (v: string): boolean =>
+  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
+
+/**
+ * A phone number is unset while the subscriber part is all zeros. The country
+ * code is stripped first so "+386 00 000 000" cannot be rescued by its 386.
+ */
+const isSetPhone = (v: string): boolean =>
+  isSet(v) && v.replace(/[^0-9]/g, "").replace(/^386/, "").replace(/0/g, "") !== "";
+
+export function legalPagesReady(
+  company: { legalName: string; vatId: string },
+  contact: { phone: string; address: { street: string; zip: string; city: string } },
+): boolean {
+  return (
+    isSet(company.legalName) &&
+    isSetVat(company.vatId) &&
+    isSetPhone(contact.phone) &&
+    isSet(contact.address.street) &&
+    isSetZip(contact.address.zip) &&
+    isSet(contact.address.city)
   );
 }
