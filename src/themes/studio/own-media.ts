@@ -20,6 +20,44 @@ export interface OwnPhoto {
 }
 
 export const OWN_MEDIA: Readonly<Record<string, readonly OwnPhoto[]>> = {
+  "bazen/mali-195": [
+    {
+      src: "/img/own/bazen/mali-195/zr805-1.webp",
+      w: 600,
+      h: 600,
+      widths: [["/img/own/bazen/mali-195/zr805-1-400.webp", 400], ["/img/own/bazen/mali-195/zr805-1.webp", 600]],
+    },
+    {
+      src: "/img/own/bazen/mali-195/zr805-2.webp",
+      w: 600,
+      h: 600,
+      widths: [["/img/own/bazen/mali-195/zr805-2-400.webp", 400], ["/img/own/bazen/mali-195/zr805-2.webp", 600]],
+    },
+    {
+      src: "/img/own/bazen/mali-195/zr805-4.webp",
+      w: 600,
+      h: 600,
+      widths: [["/img/own/bazen/mali-195/zr805-4-400.webp", 400], ["/img/own/bazen/mali-195/zr805-4.webp", 600]],
+    },
+    {
+      src: "/img/own/bazen/mali-195/zr805-5.webp",
+      w: 600,
+      h: 600,
+      widths: [["/img/own/bazen/mali-195/zr805-5-400.webp", 400], ["/img/own/bazen/mali-195/zr805-5.webp", 600]],
+    },
+    {
+      src: "/img/own/bazen/mali-195/zr805-6.webp",
+      w: 600,
+      h: 600,
+      widths: [["/img/own/bazen/mali-195/zr805-6-400.webp", 400], ["/img/own/bazen/mali-195/zr805-6.webp", 600]],
+    },
+    {
+      src: "/img/own/bazen/mali-195/zr805-7.webp",
+      w: 600,
+      h: 600,
+      widths: [["/img/own/bazen/mali-195/zr805-7-400.webp", 400], ["/img/own/bazen/mali-195/zr805-7.webp", 600]],
+    },
+  ],
   "bazen/veliki-230": [
     {
       src: "/img/own/bazen/veliki-230/zr801-1.webp",

@@ -85,8 +85,9 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { productArt } from "./product-art";
+import { productImg } from "./media";
 import { arrowIcon } from "./icons";
-import type { ProductCard, UtilCard } from "../../content/types";
+import type { PdpPhoto, ProductCard, UtilCard } from "../../content/types";
 
 export const STUDIO_COMMERCE_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ----
@@ -164,6 +165,26 @@ export const STUDIO_COMMERCE_CSS = `
       color-mix(in srgb, var(--ink) 9%, transparent),
       color-mix(in srgb, var(--ink) 3%, transparent)
     );
+  }
+  /* contain, not cover: these are studio shots on a plain ground and cropping
+   * one to fill the panel is how a tub loses a corner. */
+  /* A panel holding a photograph goes WHITE.
+   *
+   * The drawing needs the grey ground to read against; a studio shot taken on
+   * white does not, and on grey its own background prints as a white rectangle
+   * inside the panel — which looks like a broken crop rather than a product.
+   * Matching the panel to the photograph's ground is what makes it read as one
+   * object, and it is what the source does with its own cutouts. */
+  :root[data-theme="studio"] .st-card-panel:has(.st-shot-img),
+  :root[data-theme="studio"] .st-rail-panel:has(.st-shot-img) {
+    background: var(--surface);
+  }
+  :root[data-theme="studio"] .st-shot-img {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
   }
   :root[data-theme="studio"] .st-shot-floor {
     position: absolute;
@@ -855,7 +876,16 @@ export const STUDIO_COMMERCE_CSS = `
  * A shop with no drawing keeps the neutral mass rather than borrowing another
  * shop's product. A real photograph drops into .st-shot with no restructuring.
  */
-function shot(ctx: RenderCtx, variant = 0): string {
+function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto): string {
+  // A real photograph beats the drawing every time. The drawing exists because
+  // most models have no photography yet, not because it is preferred.
+  if (photo) {
+    return (
+      '<span class="st-shot">' +
+      productImg(photo, "st-shot-img", "(max-width: 809px) 92vw, 372px", photo.alt) +
+      "</span>"
+    );
+  }
   const art = productArt(ctx.shop.key, variant);
   return (
     '<span class="st-shot" aria-hidden="true">' +
@@ -956,7 +986,7 @@ export function renderStudioProducts(ctx: RenderCtx): string {
         '<a class="st-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-card-panel">' +
         (p.badge ? '<span class="st-badge">' + esc(p.badge) + "</span>" : "") +
-        shot(ctx, i) +
+        shot(ctx, i, p.photo) +
         "</span>" +
         '<span class="st-card-body">' +
         '<h3 class="st-card-name">' + esc(p.name) + "</h3>" +
@@ -1035,7 +1065,7 @@ export function renderStudioRail(ctx: RenderCtx): string {
       return (
         '<li class="st-rail-item" data-st-item id="' + esc(id) + '" tabindex="-1">' +
         '<a class="st-rail-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
-        '<span class="st-rail-panel">' + shot(ctx, i) + "</span>" +
+        '<span class="st-rail-panel">' + shot(ctx, i, p.photo) + "</span>" +
         '<span class="st-rail-body">' +
         '<span class="st-rail-name">' + esc(p.name) + "</span>" +
         '<span class="st-rail-meta">' + esc(p.meta) + "</span>" +
