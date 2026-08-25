@@ -624,16 +624,36 @@ export const bazenContent: ShopContent = {
     ],
     claim: ["Bazen tehta štiristo kilogramov. ", "Premaknemo ga mi."],
   },
+  // ⚠️ BOTH OF THESE ARE INVENTED, AND ARE FLAGGED AS SUCH.
+  //
+  // Nobody said these words. "Družina Novak" and "Sandra P." are not
+  // customers, and the two models they name — BAZEN RELAX 5 and PAKET TERASA
+  // — do not exist: this shop sells BAZEN 195/210/230 and SWIM 450/580. They
+  // were written as layout filler and then rendered under the heading
+  // "Preverjena mnenja strank" with a "Preverjen nakup" chip on each, which
+  // turns filler into a claim that these are verified purchases.
+  //
+  // That claim is on the Annex I blacklist of the Unfair Commercial Practices
+  // Directive (points 23b and 23c, added by Omnibus 2019/2161 and transposed
+  // in ZVPot-1) — banned outright, no balancing test. See ShopContent.reviews.
+  //
+  // They stay here, flagged, rather than being deleted, so the band still has
+  // something to lay out while the design is finished. `placeholder: true`
+  // keeps them off a live site: the launch gate refuses live: true while any
+  // review carries it. Replace them with real ones — quote, person and order
+  // — and drop the flag together.
   reviews: [
     {
       q: "Ekipa je bazen prenesla čez ograjo terase brez ene praske. Zvečer smo že sedeli v topli vodi.",
       who: "Družina Novak, Domžale",
-      model: "BAZEN RELAX 5",
+      model: "BAZEN 230",
+      placeholder: true,
     },
     {
       q: "Ogled pred nakupom je rešil vse dileme — povedali so, kam ga postaviti in kaj mora pripraviti električar.",
       who: "Sandra P., Koper",
-      model: "PAKET TERASA",
+      model: "BAZEN 195",
+      placeholder: true,
     },
   ],
   guides: [

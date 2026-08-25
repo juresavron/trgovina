@@ -219,6 +219,58 @@ describe("a live shop can identify itself", () => {
     });
   }
 
+  it("no live shop publishes an invented review as a verified purchase", () => {
+    // The storefront heads this band "Preverjena mnenja strank" and puts a
+    // "Preverjen nakup" chip on every quote. Making that claim about a review
+    // nobody wrote is Annex I point 23b/23c of the Unfair Commercial
+    // Practices Directive (Omnibus 2019/2161, transposed in ZVPot-1) — banned
+    // outright, no balancing test, so this is a gate and not a preference.
+    for (const key of Object.keys(SHOPS)) {
+      const shop = SHOPS[key]!;
+      const content = CONTENT[key];
+      if (!content) continue;
+      const invented = content.reviews.filter((r) => r.placeholder === true);
+      if (!shop.live) {
+        // Pre-live, assert the flags are still THERE. Someone deleting the
+        // flag to quiet the gate, without replacing the review, is exactly
+        // the failure this test exists to catch — and it would look like
+        // progress in a diff.
+        expect(
+          invented.length,
+          key + ": the reviews are known filler; the flag is what keeps them " +
+            "off a live site",
+        ).toBe(content.reviews.length);
+        continue;
+      }
+      expect(
+        invented.map((r) => r.who),
+        key + " is live while publishing reviews nobody wrote under a " +
+          "verified-purchase claim",
+      ).toEqual([]);
+    }
+  });
+
+  it("never attributes a review to a model the shop does not sell", () => {
+    // "BAZEN RELAX 5" and "PAKET TERASA" were both rendered in the chip and
+    // neither exists. A review naming a product that was never for sale is
+    // its own admission that the review is not real.
+    for (const key of Object.keys(SHOPS)) {
+      const content = CONTENT[key];
+      if (!content) continue;
+      const sold = new Set(
+        (content.pdps ?? [content.pdp]).map((d) => d.title.toUpperCase()),
+      );
+      for (const r of content.reviews) {
+        if (!r.model) continue;
+        expect(
+          sold.has(r.model.toUpperCase()),
+          key + ": review by " + r.who + " names " + r.model +
+            ", which is not in the catalogue",
+        ).toBe(true);
+      }
+    }
+  });
+
   it("serves a real page, not a stub, for every legal route", () => {
     // The stub these replaced returned 200 and read "Stran je v pripravi", so
     // a regression here would look like a working site. Length is the crude
