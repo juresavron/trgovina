@@ -80,8 +80,22 @@ Nothing below is an option; it is what the base FOB price includes.
 
 ## Options
 
-Priced per unit, USD, FOB. Availability and quantity vary by model — check the
-model's own page in the price list before quoting.
+Priced per unit, USD, FOB. **Availability, quantity AND price all vary by
+model**, which is why `src/catalog/pola.ts` carries them per model rather than
+as one shared list — a shared list would be shorter to write and would quote
+the wrong price on at least two pages. Three specifics worth knowing:
+
+- **The cabinet insulation is $70 on eight models and $60 on ZR807.**
+- **The rim LED at eight pieces is $85 on ZR808 and $43 on ZR809.** Same item,
+  same quantity, roughly double. One of the two is wrong.
+- **ZR802 prices the spa bag at $153**, which is also its spa cover price,
+  where every other model puts the bag at $70–83. It looks like the cover's
+  figure landed on the bag's row. Carried as printed rather than corrected,
+  and flagged here.
+- Only five models are offered an air blower at all (ZR801, ZR802, ZR804 with
+  aroma; ZR807 without; ZR810 with). The other four have no blower line.
+
+Ask the supplier to confirm the second and third before any of it is quoted.
 
 | Option | USD |
 | --- | --- |
@@ -128,7 +142,16 @@ business owns, and be quoted in EUR including DDV — required for consumer
 sales under Directive 98/6/EC as transposed in ZVPot, which is also why
 `commerce.ts` shows each model its own price rather than a range.
 
-Until that calculation exists, a shop carrying these models cannot go
+**Provisional prices are on the page now.** The business asked for figures to
+review rather than dashes, so `PROVISIONAL_EUR_PER_USD` in
+`src/catalog/pricing.ts` converts the FOB list price and nothing else. Those
+numbers are COST — no freight, no duty, no delivery labour, no margin — and
+are far too low to sell at. They are rounded to a plain ten rather than onto a
+retail point, the product page prints "Cene so informativne in še niso
+dokončne", and the Product JSON-LD omits its Offer entirely, because a price
+nobody decided must not be published as structured data.
+
+Until the real calculation exists, a shop carrying these models cannot go
 `live: true`. The same rule already applies to imagery: the launch gate in
 `src/tenants/media.test.ts` blocks a live shop that is still showing the
 source theme's furniture, and a made-up price is a worse claim than a

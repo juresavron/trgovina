@@ -11,6 +11,9 @@
  *      target, so ours jumped to the end of the rail — visibly wrong.
  *   2. pagination that reflects scroll position.
  *   3. counters that count up when they scroll into view.
+ *   4. the add-on total on a product page. Nine checkboxes cannot sum
+ *      themselves in CSS, and a configurator that shows prices but never a
+ *      total makes the customer do the arithmetic that decides the purchase.
  *
  * The cost is kept honest: no framework, no build step, one inline module
  * under 4 KB. A module script is deferred by definition, so it never blocks
@@ -143,9 +146,55 @@ function counter(el){
   io.observe(el);
 }
 
+/* ---- add-on total -------------------------------------------------------
+   Every [data-st-total] starts at its own data-st-base, which the server
+   already rendered as text. This adds the ticked options to it. If the script
+   never runs, the page still shows the shell's price and every option's price
+   beside it — correct, just not summed.
+
+   Formatted here rather than through Intl: CLDR gives Slovenian a minimum
+   grouping of two digits, so Intl renders 6990 as "6990". The server groups
+   by hand for the same reason (src/catalog/pricing.ts) and the two must
+   agree, or the total changes shape the moment a box is ticked. */
+function eur(cents){
+  var whole = String(Math.round(cents / 100));
+  var out = "";
+  for (var i = 0; i < whole.length; i++){
+    if (i > 0 && (whole.length - i) % 3 === 0) out += ".";
+    out += whole.charAt(i);
+  }
+  return out + "\u00a0\u20ac";
+}
+
+function addons(root){
+  var boxes = [].slice.call(root.querySelectorAll("[data-st-addon]"));
+  var totals = [].slice.call(document.querySelectorAll("[data-st-total]"));
+  if (!boxes.length || !totals.length) return;
+
+  function sync(){
+    var extra = 0;
+    boxes.forEach(function(b){
+      if (!b.checked) return;
+      var v = parseInt(b.value, 10);
+      if (isFinite(v)) extra += v;
+    });
+    totals.forEach(function(t){
+      var base = parseInt(t.getAttribute("data-st-base") || "", 10);
+      if (!isFinite(base)) return;
+      t.textContent = eur(base + extra);
+    });
+  }
+
+  boxes.forEach(function(b){ b.addEventListener("change", sync); });
+  /* A reload can restore ticked boxes without firing change, so the total
+     would open disagreeing with the checkboxes above it. */
+  sync();
+}
+
 function init(){
   [].forEach.call(document.querySelectorAll("[data-st-slider]"), slider);
   [].forEach.call(document.querySelectorAll("[data-st-count]"), counter);
+  [].forEach.call(document.querySelectorAll("[data-st-addons]"), addons);
 }
 if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
 else init();

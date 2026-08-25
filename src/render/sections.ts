@@ -375,6 +375,21 @@ export function renderPdpBody(ctx: RenderCtx): string {
       )
       .join("") +
     "</div>" +
+    // Add-ons. The legacy themes have no configurator device, so this is a
+    // plain priced list rather than the studio theme's checkboxes — but the
+    // information cannot simply vanish when a shop wears another theme, which
+    // is what happens when a renderer quietly ignores a content field.
+    ((d.addons ?? []).length
+      ? '<div class="cfg"><div><h3>Dodatna oprema</h3><div class="opts">' +
+        (d.addons ?? [])
+          .map(
+            (x) =>
+              '<span class="opt">' + esc(x.label) +
+              (x.qty ? " (" + esc(x.qty) + ")" : "") + " — " + esc(x.price) + "</span>",
+          )
+          .join("") +
+        "</div></div></div>"
+      : "") +
     '<div class="freightbox">' +
     d.freight
       .map(

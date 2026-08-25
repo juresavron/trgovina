@@ -154,13 +154,14 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
     description: pdp.sub,
     brand: { "@type": "Brand", name: s.name },
   };
-  // No Offer without a price. priceCents is 0 while a shop's prices are still
-  // derived from unset cost inputs (src/catalog/pricing.ts), and publishing
-  // `"price": "0.00"` would be a structured-data claim about money that
-  // nobody made — the same class of error that keeps Review schema off these
-  // pages. A Product without an Offer is valid; a Product with a false one is
-  // the kind that earns a manual action.
-  if (pdp.priceCents > 0) {
+  // No Offer without a price somebody actually set. Two ways that fails:
+  // priceCents is 0 (no price at all), or the page's prices are a provisional
+  // conversion of cost rather than a selling price (src/catalog/pricing.ts).
+  // Publishing either would be a structured-data claim about money that nobody
+  // made — the same class of error that keeps Review schema off these pages.
+  // A Product without an Offer is valid; a Product with a false one is the
+  // kind that earns a manual action.
+  if (pdp.priceCents > 0 && !pdp.pricesProvisional) {
     product["offers"] = {
       "@type": "Offer",
       url: s.siteUrl + s.routeSlugs["/product"] + "/" + pdp.slug,

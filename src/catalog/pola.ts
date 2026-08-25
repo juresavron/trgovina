@@ -20,7 +20,27 @@
  * docs/SUPPLIER-POLA-2026.md.
  */
 
-import { displayPrice, priceFromFob } from "./pricing";
+import { displayPrice, displayPriceCents, priceFromFob } from "./pricing";
+
+/**
+ * An option the supplier prices separately from the shell.
+ *
+ * Availability and price BOTH vary by model — the cabinet insulation is $70 on
+ * eight models and $60 on ZR807, the rim LED is $85 at sixteen pieces and $43
+ * at eight, and half the models are not offered an air blower at all. So these
+ * are carried per model rather than as one shared list: a shared list would be
+ * shorter to write and would quote the wrong price on at least two pages.
+ */
+export interface Addon {
+  /** Stable identity: the form field name, and later the variant SKU. */
+  key: string;
+  /** Slovenian label, as the page shows it. */
+  label: string;
+  /** The supplier's FOB price, whole US dollars. Cost basis. */
+  fobUsd: number;
+  /** Quantity, where the supplier states one that differs between models. */
+  qty?: string;
+}
 
 export interface PolaModel {
   /** The supplier's model code. The identity that survives renaming. */
@@ -56,7 +76,34 @@ export interface PolaModel {
   filledKg: number;
   /** Balboa topside control panel. */
   topside: "TP600" | "TP500S";
+  /** The options this model's page offers, in the supplier's own prices. */
+  addons: readonly Addon[];
 }
+
+/**
+ * Labels, in one place so nine models cannot disagree about what a thing is
+ * called. The keys are the supplier's own option names, flattened.
+ */
+const L = {
+  cover: "Termo pokrov",
+  lifter: "Dvigalo za termo pokrov",
+  step: "Stopnica",
+  rimLed: "LED osvetlitev roba",
+  jetLed: "LED osvetlitev šob in ventilov",
+  blower: "Zračna masaža s šobami",
+  blowerAroma: "Zračna masaža s šobami in aromaterapijo",
+  audio: "Bluetooth ojačevalnik z zvočniki",
+  skirtLed: "LED osvetlitev obloge",
+  fountain: "LED vodomet",
+  cupHolder: "LED držalo za kozarce",
+  waterfall: "LED slap z ventilom",
+  insulation: "Izolacija ohišja in dna",
+  bag: "Transportna torba",
+  pillowLed: "LED osvetlitev vzglavnika",
+} as const;
+
+const a = (key: keyof typeof L, fobUsd: number, qty?: string): Addon =>
+  qty ? { key, label: L[key], fobUsd, qty } : { key, label: L[key], fobUsd };
 
 /**
  * Ordered largest shell first, then by jet count — the order a buyer choosing
@@ -78,6 +125,22 @@ export const POLA_MODELS: readonly PolaModel[] = [
     dryKg: 410,
     filledKg: 2210,
     topside: "TP600",
+    addons: [
+      a("cover", 153),
+      a("lifter", 75),
+      a("step", 60),
+      a("rimLed", 85, "16 kosov"),
+      a("jetLed", 107, "16 šob in 4 ventili"),
+      a("blowerAroma", 120),
+      a("audio", 80),
+      a("skirtLed", 58),
+      a("fountain", 22, "2 kosa"),
+      a("cupHolder", 17, "2 kosa"),
+      a("waterfall", 15),
+      a("pillowLed", 14, "3 kosi"),
+      a("insulation", 70),
+      a("bag", 83),
+    ],
   },
   {
     code: "ZR801",
@@ -94,6 +157,20 @@ export const POLA_MODELS: readonly PolaModel[] = [
     dryKg: 410,
     filledKg: 2210,
     topside: "TP600",
+    addons: [
+      a("cover", 153),
+      a("lifter", 75),
+      a("step", 60),
+      a("rimLed", 85, "16 kosov"),
+      a("blowerAroma", 120),
+      a("audio", 80),
+      a("skirtLed", 58),
+      a("fountain", 30, "3 kosi"),
+      a("cupHolder", 36, "5 kosov"),
+      a("waterfall", 15),
+      a("insulation", 70),
+      a("bag", 83),
+    ],
   },
   {
     code: "ZR802",
@@ -110,6 +187,22 @@ export const POLA_MODELS: readonly PolaModel[] = [
     dryKg: 410,
     filledKg: 2210,
     topside: "TP600",
+    addons: [
+      a("cover", 153),
+      a("lifter", 75),
+      a("step", 60),
+      a("rimLed", 85, "16 kosov"),
+      a("blowerAroma", 120),
+      a("audio", 80),
+      a("skirtLed", 58),
+      a("fountain", 30, "3 kosi"),
+      a("waterfall", 15),
+      a("insulation", 70),
+      // The list prices this at 153, the same as the cover, where every other
+      // model puts the bag at 70–83. Carried as printed; flagged for the
+      // supplier in docs/SUPPLIER-POLA-2026.md rather than quietly corrected.
+      a("bag", 153),
+    ],
   },
   {
     code: "ZR807",
@@ -125,6 +218,23 @@ export const POLA_MODELS: readonly PolaModel[] = [
     dryKg: 410,
     filledKg: 2210,
     topside: "TP600",
+    addons: [
+      a("cover", 153),
+      a("lifter", 75),
+      a("step", 60),
+      a("rimLed", 85, "16 kosov"),
+      a("jetLed", 107, "16 šob in 4 ventili"),
+      a("blower", 100),
+      a("audio", 80),
+      a("skirtLed", 58),
+      a("fountain", 30, "3 kosi"),
+      a("cupHolder", 42, "6 kosov"),
+      a("waterfall", 15),
+      a("pillowLed", 14, "1 kos"),
+      // $60 here where every other model prices the same insulation at $70.
+      a("insulation", 60),
+      a("bag", 83),
+    ],
   },
   {
     code: "ZR803",
@@ -141,6 +251,18 @@ export const POLA_MODELS: readonly PolaModel[] = [
     dryKg: 370,
     filledKg: 1870,
     topside: "TP500S",
+    addons: [
+      a("cover", 130),
+      a("step", 60),
+      a("rimLed", 85, "16 kosov"),
+      a("jetLed", 110, "16 šob in 3 ventili"),
+      a("audio", 80),
+      a("skirtLed", 58),
+      a("fountain", 30, "3 kosi"),
+      a("cupHolder", 23, "3 kosi"),
+      a("waterfall", 15),
+      a("insulation", 70),
+    ],
   },
   {
     code: "ZR804",
@@ -156,6 +278,19 @@ export const POLA_MODELS: readonly PolaModel[] = [
     dryKg: 370,
     filledKg: 1870,
     topside: "TP500S",
+    addons: [
+      a("cover", 130),
+      a("step", 60),
+      a("rimLed", 85, "16 kosov"),
+      a("jetLed", 110, "16 šob in 3 ventili"),
+      a("blowerAroma", 120),
+      a("audio", 80),
+      a("skirtLed", 58),
+      a("fountain", 30, "3 kosi"),
+      a("cupHolder", 23, "4 kosi"),
+      a("waterfall", 15),
+      a("insulation", 70),
+    ],
   },
   {
     code: "ZR805",
@@ -172,6 +307,18 @@ export const POLA_MODELS: readonly PolaModel[] = [
     dryKg: 300,
     filledKg: 1500,
     topside: "TP500S",
+    addons: [
+      a("cover", 115),
+      a("lifter", 75),
+      a("step", 60),
+      a("rimLed", 85, "16 kosov"),
+      a("jetLed", 104, "16 šob in 3 ventili"),
+      a("audio", 80),
+      a("skirtLed", 58),
+      a("fountain", 30, "3 kosi"),
+      a("cupHolder", 17, "2 kosa"),
+      a("insulation", 70),
+    ],
   },
   {
     code: "ZR808",
@@ -187,6 +334,19 @@ export const POLA_MODELS: readonly PolaModel[] = [
     dryKg: 300,
     filledKg: 1600,
     topside: "TP500S",
+    addons: [
+      a("cover", 130),
+      a("step", 60),
+      // Eight pieces at $85 here; ZR809 prices the same eight at $43.
+      a("rimLed", 85, "8 kosov"),
+      a("jetLed", 110, "16 šob in 5 ventilov"),
+      a("audio", 80),
+      a("skirtLed", 58),
+      a("fountain", 22, "2 kosa"),
+      a("cupHolder", 23, "3 kosi"),
+      a("waterfall", 15),
+      a("insulation", 70),
+    ],
   },
   {
     code: "ZR809",
@@ -202,6 +362,20 @@ export const POLA_MODELS: readonly PolaModel[] = [
     dryKg: 300,
     filledKg: 1600,
     topside: "TP500S",
+    addons: [
+      a("cover", 130),
+      a("lifter", 75),
+      a("step", 60),
+      a("rimLed", 43, "8 kosov"),
+      a("jetLed", 110, "16 šob in 5 ventilov"),
+      a("audio", 80),
+      a("skirtLed", 58),
+      a("fountain", 22, "2 kosa"),
+      a("cupHolder", 23, "3 kosi"),
+      a("waterfall", 15),
+      a("insulation", 70),
+      a("bag", 70),
+    ],
   },
 ];
 
@@ -241,6 +415,19 @@ export function modelPrice(m: PolaModel): string {
 }
 
 /**
+ * The display price for one option. Rounded on the `addon` tier, because a
+ * €14 pillow light taken up to a shell's retail point would be priced at €90.
+ */
+export function addonPrice(x: Addon): string {
+  return displayPrice(x.fobUsd, "addon");
+}
+
+/** The same figure as a number, for the buy bar's total. 0 when unpriced. */
+export function addonPriceCents(x: Addon): number {
+  return displayPriceCents(x.fobUsd, "addon");
+}
+
+/**
  * The gross price in cents for schema.org, or 0 when the inputs are unset.
  *
  * 0 is the signal to omit the Offer entirely rather than publish one. A
@@ -249,5 +436,5 @@ export function modelPrice(m: PolaModel): string {
  * reasoning that already keeps Review schema off these pages.
  */
 export function modelPriceCents(m: PolaModel): number {
-  return priceFromFob(m.fobUsd)?.displayEur ?? 0;
+  return displayPriceCents(m.fobUsd);
 }
