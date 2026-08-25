@@ -87,7 +87,14 @@ import { esc, type RenderCtx } from "../../render/sections";
 import { productArt } from "./product-art";
 import { productImg } from "./media";
 import { arrowIcon } from "./icons";
-import type { ArtKey, Category, PdpPhoto, ProductCard, UtilCard } from "../../content/types";
+import type {
+  ArtKey,
+  Category,
+  Collection,
+  PdpPhoto,
+  ProductCard,
+  UtilCard,
+} from "../../content/types";
 
 export const STUDIO_COMMERCE_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ----
@@ -533,6 +540,45 @@ export const STUDIO_COMMERCE_CSS = `
    * of a hot tub and the other a drawing of a swim spa, and they have to read
    * as the same KIND of object at a glance for the size difference between
    * them to be the thing that stands out. */
+  /* Collection and hub pages: the intro under the H1, and the hand-off link
+   * at the foot of each band on the hub. */
+  :root[data-theme="studio"] .st-shop-intro {
+    margin: clamp(12px, 1.2vw, 20px) auto 0;
+    max-width: 62ch;
+    font-family: var(--f-body);
+    font-size: var(--t-lead);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead);
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-shop-more {
+    margin: clamp(20px, 2vw, 36px) 0 0;
+    text-align: center;
+  }
+  :root[data-theme="studio"] .st-btn-line {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--st-tap);
+    padding-inline: clamp(20px, 2vw, 32px);
+    border: var(--bw-line) solid var(--ink);
+    border-radius: var(--r-ctrl);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  @media (hover: hover) {
+    :root[data-theme="studio"] .st-btn-line { transition: background 0.2s ease, color 0.2s ease; }
+    :root[data-theme="studio"] .st-btn-line:hover { background: var(--ink); color: var(--on-invert); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-btn-line { transition: none; }
+  }
+
   :root[data-theme="studio"] .st-cat-sec {
     background: var(--bg);
     padding-block: var(--studio-rhythm);
@@ -1315,30 +1361,60 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
 
 
 /**
- * The swim spa grid — the second family, and the destination the category
- * rail's second card actually goes to.
+ * A collection page: one product family, its own H1, its own grid.
  *
- * A separate section rather than more rows in the grid above. The rail exists
- * to ask "which KIND of pool?", and one grid holding 1.95 m tubs beside 5.80 m
- * swim spas would answer that question with "it does not matter", which is the
- * opposite of true: they need different gardens, different foundations and
- * different money.
- *
- * Renders nothing when the shop offers none, so the anchor simply is not there
- * rather than being an empty heading.
+ * This replaced a swim-spa-shaped section on the HOME page. Printing every
+ * model of every family on the landing page made it a catalogue dump — and
+ * it made the page try to be the landing page for two different queries at
+ * once, which is a worse landing page for each. The home page keeps the
+ * keyword and routes; these pages do the selling.
  */
-export function renderStudioSwimSpas(ctx: RenderCtx): string {
-  const items = ctx.content.swimSpas ?? [];
-  if (items.length === 0) return "";
-  const cards = productCards(ctx, items);
-
+export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
+  const cards = productCards(ctx, c.products);
   return (
-    '<section class="st-shop" id="swim-spa"><div class="st-shop-in">' +
+    '<section class="st-shop" id="izbor"><div class="st-shop-in">' +
     '<div class="st-shop-head">' +
-    '<p class="st-eyebrow">Swim spa</p>' +
-    '<h2 class="st-sec-h">Bazen, v katerem se plava</h2>' +
+    '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
+    '<h1 class="st-sec-h">' + esc(c.h1) + "</h1>" +
+    '<p class="st-shop-intro">' + esc(c.intro) + "</p>" +
     "</div>" +
     (cards === "" ? "" : '<div class="st-grid">' + cards + "</div>") +
     "</div></section>"
+  );
+}
+
+/**
+ * The shop hub: every family on one page, each as its own band with a link
+ * into its full page.
+ *
+ * The nav needs a single "Trgovina" that answers "what do you sell?", and
+ * with two families that answer is a page rather than a redirect to one of
+ * them. Each band shows the family's grid and then hands off, so the hub is
+ * useful on its own and never a dead end.
+ */
+export function renderStudioShopHub(ctx: RenderCtx): string {
+  const cols = ctx.content.collections ?? [];
+  if (cols.length === 0) return "";
+  return (
+    '<section class="st-shop"><div class="st-shop-in">' +
+    '<div class="st-shop-head">' +
+    '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
+    '<h1 class="st-sec-h">Trgovina</h1>' +
+    "</div></div></section>" +
+    cols
+      .map(
+        (c) =>
+          '<section class="st-shop" id="' + esc(c.path.replace(/^\//, "")) + '">' +
+          '<div class="st-shop-in">' +
+          '<div class="st-shop-head">' +
+          '<h2 class="st-sec-h">' + esc(c.h1) + "</h2>" +
+          '<p class="st-shop-intro">' + esc(c.intro) + "</p>" +
+          "</div>" +
+          '<div class="st-grid">' + productCards(ctx, c.products) + "</div>" +
+          '<p class="st-shop-more"><a class="st-btn-line" href="' +
+          esc(c.path + ctx.q) + '">Vsi modeli — ' + esc(c.navLabel) + "</a></p>" +
+          "</div></section>",
+      )
+      .join("")
   );
 }

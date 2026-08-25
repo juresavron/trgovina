@@ -344,8 +344,12 @@ export function renderHeader(ctx: RenderCtx): string {
   const s = ctx.shop;
   const c = ctx.content;
   const links = [
+    // HOME · SHOP · ABOUT · BLOG · CONTACT — the five a storefront actually
+    // needs. It used to be Bazeni · Primerjava · Vodniki · Dostava · Kontakt,
+    // which is five pages ABOUT one product and no way to reach the other
+    // family. "Trgovina" is now a real hub over both.
     ["/products", c.nav[0]],
-    ["/compare", c.nav[1]],
+    ["/about", c.nav[1]],
     ["/guides", c.nav[2]],
     ["/delivery", c.nav[3]],
     ["/contact", c.nav[4]],

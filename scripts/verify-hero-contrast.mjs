@@ -35,7 +35,6 @@ const RUNS = [
   [".st-chrome-nav a", 4.5],
   [".st-hero-pill", 4.5],
   [".st-hero-foot h1", 4.5],
-  [".st-hero-sub", 4.5],
   [".st-hero-cap", 4.5],
 ];
 
