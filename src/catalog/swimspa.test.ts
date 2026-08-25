@@ -8,6 +8,7 @@ import {
   seating,
   swimSpaBySlug,
   swimSpaFamilyHasSwimJets,
+  ZR7807_DUAL_ZONE_CONFIRMED,
 } from "./swimspa";
 import { OFFERED_MODELS } from "./pola";
 
@@ -75,8 +76,8 @@ describe("swim spa catalogue", () => {
     }
   });
 
-  it("offers the three the owner chose, shortest first", () => {
-    expect(OFFERED_SWIMSPAS.map((m) => m.code)).toEqual(["ZR6801", "ZR7861", "ZR7860"]);
+  it("offers the four the owner chose, shortest first", () => {
+    expect(OFFERED_SWIMSPAS.map((m) => m.code)).toEqual(["ZR6801", "ZR7861", "ZR7807", "ZR7860"]);
     // Shortest first is the ladder a buyer walks, and length is the decision.
     const mm = OFFERED_SWIMSPAS.map((m) => m.mm[0]);
     expect([...mm].sort((x, y) => x - y)).toEqual(mm);
@@ -103,14 +104,28 @@ describe("swim spa catalogue", () => {
     expect(ZR7860_DUAL_ZONE_CONFIRMED).toBe(false);
   });
 
-  it("keeps the offered ladder to one model per size band", () => {
-    // ZR7861 replaced ZR6802 at the owner's request. At 4.50 m it sits
-    // between the 3.90 m entry and the 5.80 m top, so the ladder spreads
-    // evenly and keeps the ONLY unit under four metres — the one that fits a
-    // garden the other two cannot. Swapping the entry model instead would
-    // have clustered all three inside 1.3 m.
+  it("keeps the offered ladder ordered by length, then by price", () => {
+    // ZR7861 replaced ZR6802 (4.50 m between the 3.90 m entry and the 5.80 m
+    // top, keeping the only unit under four metres). ZR7807 joined as a
+    // fourth, so there are now two 5.80 m models and length alone no longer
+    // orders them — price breaks the tie, cheaper first, which is the
+    // direction a buyer reads a ladder in.
     const mm = OFFERED_SWIMSPAS.map((m) => m.mm[0]);
-    expect(mm).toEqual([3900, 4500, 5800]);
+    expect(mm).toEqual([3900, 4500, 5800, 5800]);
+    expect([...mm].sort((a, b) => a - b)).toEqual(mm);
+    const [a, b] = OFFERED_SWIMSPAS.slice(2);
+    expect(a!.fobUsd).toBeLessThan(b!.fobUsd);
+  });
+
+  it("claims two temperatures at once on NEITHER model", () => {
+    // The ZR7807 was added as a "Dual Zone Swim Spa and Hot Tub Combo"; the
+    // price list gives it ONE drainage outlet and ONE topside panel where the
+    // ZR7860 has two of each, and two bodies of water need two of both. The
+    // sheet and the owner disagree about which unit it is, so until that is
+    // settled neither page may make the claim — it is the strongest sentence
+    // in the category and therefore the worst one to guess at.
+    expect(ZR7860_DUAL_ZONE_CONFIRMED).toBe(false);
+    expect(ZR7807_DUAL_ZONE_CONFIRMED).toBe(false);
   });
 
   it("does not advertise a counter-current jet the range cannot deliver", () => {

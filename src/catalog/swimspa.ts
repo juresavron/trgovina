@@ -348,6 +348,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR7807",
     slug: "swim-580-maxi",
     name: "SWIM 580 MAXI",
+    tier: "Veliki",
     fobUsd: 9150,
     mm: [5800, 2240, 1350],
     seats: 7,
@@ -474,9 +475,43 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
  *     (the heaviest, by 80 kg over the ZR7809 Turbine). See the ⚠️ below
  *     before writing the dual-zone claim.
  */
-export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = ["ZR6801", "ZR7861", "ZR7860"].map(
-  (code) => SWIMSPA_MODELS.find((m) => m.code === code)!,
-);
+export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = [
+  "ZR6801",
+  "ZR7861",
+  "ZR7807",
+  "ZR7860",
+].map((code) => SWIMSPA_MODELS.find((m) => m.code === code)!);
+
+/**
+ * ⚠️ WHICH MODEL IS THE DUAL-ZONE COMBO IS NOT SETTLED, AND THE SHEET AND THE
+ * OWNER DISAGREE.
+ *
+ * The ZR7807 was added as "Dual Zone Swim Spa and Hot Tub Combo". The price
+ * list points the other way, and it points hard — a dual-zone unit is two
+ * separate bodies of water, and two bodies of water each need their own drain
+ * and their own topside panel:
+ *
+ *                     ZR7807            ZR7860
+ *   Drainage outlets  1                 2
+ *   Skimmers          2 x 100 sf        3 x 100 sf
+ *   Topside panels    1 x TP600         2 x TP600
+ *   Control systems   BP6013G3/BP200G2  1x BP200G2 + 1x BP6013G2
+ *   Circulation       2 x 0.35 HP       2 x 1 HP
+ *
+ * On that evidence the ZR7860 is the dual-zone unit and the ZR7807 is a very
+ * well-jetted single-zone swim spa — it has the most jets on the entire list,
+ * 94, which is a real distinction and not this one.
+ *
+ * Either the supplier markets the ZR7807 under that name and its sheet is
+ * abbreviated, or the two codes have been crossed. Both are ordinary; neither
+ * is guessable from here. So NEITHER model claims two temperatures at once —
+ * ZR7860_DUAL_ZONE_CONFIRMED is still false and there is no equivalent flag
+ * for the ZR7807, because a flag nobody has set is not evidence.
+ *
+ * The tiers are by LENGTH for the same reason: Vstopni, Srednji, Veliki,
+ * Vrhunski is true of all four whichever way the combo question resolves.
+ */
+export const ZR7807_DUAL_ZONE_CONFIRMED = false;
 
 /**
  * ⚠️ THE ZR7861 IS IN THE RANGE, AND THE SHEET SAYS IT HAS NO SWIM JET.

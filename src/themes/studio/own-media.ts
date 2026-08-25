@@ -58,6 +58,15 @@ export const OWN_MEDIA: Readonly<Record<string, readonly OwnPhoto[]>> = {
     { src: "/media/ZR805-5.jpg", alt: "Detajl sedeža in vzglavnika v bazenu BAZEN 195", widths: [] },
     { src: "/media/ZR805-6.jpg", alt: "Detajl masažnih šob v školjki bazena BAZEN 195", widths: [] },
   ],
+  "bazen/swim-580-maxi": [
+    { src: "/media/ZR7807-1.jpg", alt: "Swim spa SWIM 580 MAXI, pogled od zgoraj na akrilno školjko", widths: [] },
+    { src: "/media/ZR7807-2.jpg", alt: "Swim spa SWIM 580 MAXI, pogled s strani na školjko in oblogo", widths: [] },
+    { src: "/media/ZR7807-3.jpg", alt: "Swim spa SWIM 580 MAXI, pogled na dolžino školjke", widths: [] },
+    { src: "/media/ZR7807-4.jpg", alt: "Notranjost swim spa bazena SWIM 580 MAXI s sedeži in ležalnikom", widths: [] },
+    { src: "/media/ZR7807-5.jpg", alt: "Sedežni del swim spa bazena SWIM 580 MAXI z masažnimi šobami", widths: [] },
+    { src: "/media/ZR7807-7.jpg", alt: "Detajl masažnih šob v swim spa bazenu SWIM 580 MAXI", widths: [] },
+    { src: "/media/ZR7807-8.jpg", alt: "Swim spa SWIM 580 MAXI, pogled na rob in vzglavnike", widths: [] },
+  ],
   "bazen/swim-450": [
     { src: "/media/zr7861-1.webp", alt: "Swim spa SWIM 450, pogled od zgoraj na akrilno školjko", widths: [] },
     { src: "/media/zr7861-2.webp", alt: "Swim spa SWIM 450, pogled s strani na školjko in oblogo", widths: [] },

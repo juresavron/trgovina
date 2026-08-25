@@ -82,8 +82,12 @@ list — the same decision, for the same reason, as the Pola options.
 
 ## What the shop sells
 
-Three units, as of 25 Aug 2026: **ZR6801** (Vstopni, 3.90 m, $6,250) ·
-**ZR7861** (Srednji, 4.50 m, $6,859) · **ZR7860** (Vrhunski, 5.80 m, $9,330).
+Four units, as of 25 Aug 2026: **ZR6801** (Vstopni, 3.90 m, $6,250) ·
+**ZR7861** (Srednji, 4.50 m, $6,859) · **ZR7807** (Veliki, 5.80 m, $9,150) ·
+**ZR7860** (Vrhunski, 5.80 m, $9,330).
+
+Tiers are by LENGTH, not by feature, which is true of all four whichever way
+question 3 below resolves. The two 5.80 m models are ordered by price.
 
 The ZR7861 replaced the **ZR6802** at the owner's request, once eight
 photographs of it arrived. At 4.50 m it sits between the 3.90 m entry and the
@@ -141,7 +145,32 @@ either what a page claims or what a customer is charged.
    can guess, because guessing it means charging a customer a price nobody
    quoted.
 
-3. **Does the ZR7860 actually hold two temperatures at once?** This is the
+3. **WHICH model is the dual-zone combo — and does either hold two
+   temperatures at once?** The ZR7807 was added to the range as "Dual Zone
+   Swim Spa and Hot Tub Combo". The price list points the other way, and it
+   points hard. A dual-zone unit is two separate bodies of water, and two
+   bodies of water each need their own drain and their own topside panel:
+
+   | | ZR7807 | ZR7860 |
+   |---|---|---|
+   | Drainage outlets | **1** | **2** |
+   | Skimmers | 2 × 100 sf | 3 × 100 sf |
+   | Topside panels | 1 × TP600 | **2 × TP600** |
+   | Control systems | BP6013G3/BP200 G2 | 1×BP200G2 **+** 1×BP6013G2 |
+   | Circulation pumps | 2 × 0.35 HP | 2 × 1 HP |
+
+   On that evidence the **ZR7860** is the dual-zone unit and the ZR7807 is a
+   very well-jetted single-zone swim spa — it carries 94 jets, the most on the
+   entire list, which is a real distinction and not this one. Either the
+   supplier markets the ZR7807 under that name and its sheet is abbreviated,
+   or the two codes have been crossed.
+
+   Neither page claims two temperatures at once until this is settled.
+   `ZR7860_DUAL_ZONE_CONFIRMED` and `ZR7807_DUAL_ZONE_CONFIRMED` are both
+   `false` and a test holds them there. It is the strongest sentence available
+   in this category, which makes it the worst one to guess at.
+
+3b. **And separately: does the ZR7860 hold two temperatures at once?** This is the
    model's whole commercial story and the justification for the price step, so
    it is the worst thing on this page to be wrong about. The sheet lists two
    control systems (1 × BP200G2 + 1 × BP6013G2), two TP600 panels, two
