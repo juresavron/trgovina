@@ -979,10 +979,13 @@ export const STUDIO_EDITORIAL_CSS = `
      * — where it stops growing. An explicit height, NOT max-height:
      * aspect-ratio TRANSFERS a capped block axis back through the ratio, so
      * max-height shrank the tile's WIDTH off the container edge (measured
-     * 520px wide, left-aligned in a 650px column at 700px). The quiet
-     * tile's grid rows and the stat scrim are tile-relative and follow the
-     * capped box. */
+     * 520px wide, left-aligned in a 650px column at 700px) — and the same
+     * transfer rides an explicit height while ANY ratio stays declared,
+     * which is why the ratios are cleared here rather than overridden. The
+     * quiet tile's grid rows and the stat scrim are tile-relative and
+     * follow the capped box. */
     :root[data-theme="studio"] .st-imp-tile {
+      aspect-ratio: auto;
       height: min(100vw - 2 * var(--studio-gutter), 520px);
     }
     :root[data-theme="studio"] .st-imp-sub { max-width: 100%; }
