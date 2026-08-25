@@ -281,8 +281,14 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
   },
   {
     code: "ZR7809",
-    slug: "swim-580-kombi",
-    name: "SWIM 580 KOMBI",
+    // Was "SWIM 580 KOMBI". The name was invented here from "1 lounger and 6
+    // seats" and it has to go: "kombi" reads as combination unit, which is
+    // exactly the claim under dispute on the ZR7807, and asserting it on a
+    // DIFFERENT model would put the disputed word on the one page that never
+    // had any claim to it. The owner calls this one the Outdoor Hydrotherapy
+    // Swim Spa, which is what it is.
+    slug: "swim-580-hidro",
+    name: "SWIM 580 HIDRO",
     fobUsd: 8530,
     mm: [5800, 2280, 1400],
     seats: 7,
@@ -348,7 +354,9 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR7807",
     slug: "swim-580-maxi",
     name: "SWIM 580 MAXI",
-    tier: "Veliki",
+    // 94 jets is the most on the entire price list, by 32. A factual badge,
+    // and deliberately NOT "Kombinirani" — see the dual-zone note below.
+    tier: "Največ šob",
     fobUsd: 9150,
     mm: [5800, 2240, 1350],
     seats: 7,
@@ -478,6 +486,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
 export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = [
   "ZR6801",
   "ZR7861",
+  "ZR7809",
   "ZR7807",
   "ZR7860",
 ].map((code) => SWIMSPA_MODELS.find((m) => m.code === code)!);
@@ -508,8 +517,15 @@ export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = [
  * ZR7860_DUAL_ZONE_CONFIRMED is still false and there is no equivalent flag
  * for the ZR7807, because a flag nobody has set is not evidence.
  *
- * The tiers are by LENGTH for the same reason: Vstopni, Srednji, Veliki,
- * Vrhunski is true of all four whichever way the combo question resolves.
+ * TIERS ARE NOT A LADDER ANY MORE, and that is deliberate. Three of the five
+ * models are 5.80 m, so a size word cannot separate them and a made-up
+ * hierarchy (Veliki, Večji, Največji) would be inventing rank the catalogue
+ * does not have. A tier is set only where it says something true AND
+ * distinct: Vstopni for the only unit under four metres, Srednji for the
+ * 4.50, "Največ šob" for the 94-jet ZR7807, Vrhunski for the best-equipped
+ * ZR7860. The plain 5.80 m ZR7809 carries none, because there is nothing
+ * true and short to say about it that its own spec line does not already
+ * say.
  */
 export const ZR7807_DUAL_ZONE_CONFIRMED = false;
 

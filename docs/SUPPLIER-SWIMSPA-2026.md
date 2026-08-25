@@ -82,12 +82,27 @@ list — the same decision, for the same reason, as the Pola options.
 
 ## What the shop sells
 
-Four units, as of 25 Aug 2026: **ZR6801** (Vstopni, 3.90 m, $6,250) ·
-**ZR7861** (Srednji, 4.50 m, $6,859) · **ZR7807** (Veliki, 5.80 m, $9,150) ·
-**ZR7860** (Vrhunski, 5.80 m, $9,330).
+Five units, as of 25 Aug 2026, ordered by length and then by price:
 
-Tiers are by LENGTH, not by feature, which is true of all four whichever way
-question 3 below resolves. The two 5.80 m models are ordered by price.
+| Code | Name here | Length | FOB | Badge |
+|---|---|---|---|---|
+| ZR6801 | SWIM 390 | 3.90 m | $6,250 | Vstopni |
+| ZR7861 | SWIM 450 | 4.50 m | $6,859 | Srednji |
+| ZR7809 | SWIM 580 HIDRO | 5.80 m | $8,530 | — |
+| ZR7807 | SWIM 580 MAXI | 5.80 m | $9,150 | Največ šob |
+| ZR7860 | SWIM 580 DVOJNI | 5.80 m | $9,330 | Vrhunski |
+
+**Badges are not a ladder.** Three of the five are 5.80 m, so a size word
+cannot separate them and inventing rank (Veliki, Večji, Največji) would be
+manufacturing a hierarchy the catalogue has not got. A badge is set only
+where it says something true AND distinct — which is why the plain 5.80 m
+ZR7809 carries none.
+
+The ZR7809 was called **SWIM 580 KOMBI** here until the ZR7807 arrived. That
+name was invented from "1 lounger and 6 seats" and had to go: *kombi* reads
+as combination unit, which is precisely the claim under dispute on the
+ZR7807, and leaving it would have put the disputed word on the one model that
+never had any claim to it. A test now asserts no model carries it.
 
 The ZR7861 replaced the **ZR6802** at the owner's request, once eight
 photographs of it arrived. At 4.50 m it sits between the 3.90 m entry and the
