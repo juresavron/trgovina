@@ -28,26 +28,62 @@ import type { Block, Page } from "../../content/pages";
 export const STUDIO_PAGE_CSS = `
   /* The reading column.
    *
-   * MEASURED, NOT ASSUMED. This started at 68ch on the usual "45-75 characters
-   * per line" advice and rendered 92 — because ch is the width of the ZERO
-   * glyph, which in this face is far wider than the average lowercase letter,
-   * so a ch-based measure overshoots by about a third. On a page whose entire
-   * job is prose somebody reads carefully — a delivery procedure, a
-   * withdrawal right — that is the difference between comfortable and tiring.
+   * MEASURED, NOT ASSUMED — AND THE FIRST MEASUREMENT WAS STILL WRONG. This
+   * started at 68ch on the usual "45-75 characters per line" advice and
+   * rendered 92, because ch is the width of the ZERO glyph and in this face
+   * that is far wider than the average lowercase letter. It was then cut to
+   * 48ch and recorded as 66 characters. Re-counted per rendered line (a Range
+   * rect per character, so it is what the browser actually laid out, not an
+   * average-advance estimate) across all fourteen pages, 48ch is 579.7px and
+   * carries a MEDIAN of 77 characters and a maximum of 85 — still over the
+   * ceiling, worst on the legal pages whose paragraphs are longest
+   * (/zasebnost 76/85, /piskotki 80/83).
    *
-   * 48ch measures 66 characters here, the middle of the range. Kept in ch
-   * rather than px so the column still tracks the font if the ramp changes;
-   * the number is calibrated to this face and would need re-measuring with
-   * another. The mobile term is unaffected (38 characters at 390px, where the
-   * gutter calc wins). */
+   * The unit is the deeper fault, and it costs more than the count. ch is a
+   * glyph metric, so it resolves differently before and after the webfont
+   * arrives, and the faces here are font-display:swap. Measured at 1440 the
+   * column went 503.9px -> 579.7px at swap — a 15% jump that re-wraps every
+   * paragraph on the page and scored 0.0085-0.037 CLS on its own, on pages
+   * that have no images to blame. rem is a font-size, not a glyph, so it is
+   * the same length in both states and the swap costs only the re-wrap.
+   *
+   * 31rem = 496px, which counts 64 median and 73 maximum on the same pass —
+   * the middle of the range, with the worst line on the longest legal page
+   * (/piskotki 64/71, /pogoji-poslovanja 64/69) still inside it. The mobile
+   * term is untouched: at 390px and 320px the gutter calc wins and the count
+   * is 43 and 34. Re-measure if --t-body or the body face moves. */
   :root[data-theme="studio"] .st-page {
     padding-block: var(--studio-rhythm);
     background: var(--bg);
   }
   :root[data-theme="studio"] .st-page-in {
-    max-inline-size: min(48ch, calc(100% - 2 * var(--studio-gutter)));
+    max-inline-size: min(31rem, calc(100% - 2 * var(--studio-gutter)));
     margin-inline: auto;
   }
+  /* THE INK RUNGS, AND WHY THEY ARE NOT --ink-soft ANY MORE.
+   *
+   * Every quiet run on this page used to ask for --ink-soft. That name is not
+   * a studio token: it is a kernel alias declared in render/css.ts as
+   * var(--ink-body, #212121) for the components studio replaces. So a page
+   * that meant "muted" got #212121 — 16.10:1 on white, against body ink's
+   * 18.26:1. Sampled side by side those two are the same colour; the file's
+   * comments described a hierarchy that did not reach the screen, and on
+   * /o-nas the standfirst, the body, the dt labels and the "not filled in"
+   * mark all printed at one weight of grey.
+   *
+   * Three rungs now, taken from tokens.ts by the job each does:
+   *   --ink       #151515  18.26:1  headings, the question, the counter
+   *   --ink-body  #212121  16.10:1  anything somebody reads a sentence of
+   *   --ink-mute  #6d6d6d   5.17:1 on white, 4.54:1 on the panel — LABELS
+   *
+   * --ink-mute is the lightest rung tokens.ts certifies for text, and it is
+   * used only where the run is a label or a mark, never for a sentence: at
+   * 5.17:1 it clears the 4.5:1 floor the European Accessibility Act makes a
+   * legal requirement here, with room, but a paragraph read at that rung is
+   * still harder work than one read at 16:1. The CTA's sub-line stays at
+   * --ink-body for exactly that reason — it sits on the panel grey, where
+   * --ink-mute would be 4.54:1, four hundredths above the floor. */
+
   /* The masthead: eyebrow, h1, standfirst. Same three rungs as every other
    * page opening on this site, so a subpage reads as part of the shop. */
   :root[data-theme="studio"] .st-page-eyebrow {
@@ -57,7 +93,7 @@ export const STUDIO_PAGE_CSS = `
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-mute);
   }
   :root[data-theme="studio"] .st-page-h {
     margin-block-start: clamp(12px, 1.2vw, 20px);
@@ -74,7 +110,7 @@ export const STUDIO_PAGE_CSS = `
     font-family: var(--f-body);
     font-size: var(--t-lead);
     line-height: var(--lh-lead);
-    color: var(--ink-soft);
+    color: var(--ink-body);
     text-wrap: pretty;
   }
   /* A hairline closes the masthead and opens the body. */
@@ -96,19 +132,45 @@ export const STUDIO_PAGE_CSS = `
     text-wrap: balance;
   }
   :root[data-theme="studio"] .st-page-h2 + * { margin-block-start: clamp(14px, 1.4vw, 22px); }
+  /* Prose takes --ink-body, which is what tokens.ts calls body copy: a hair
+   * lighter than a heading, so a run of paragraphs under an h2 reads as one
+   * level below it rather than as more heading.
+   *
+   * overflow-wrap is insurance, not decoration. These pages carry regulator
+   * URLs and e-mail addresses inside sentences, and an unbreakable 35-
+   * character token does not fit the 270px column a 320px phone gets — it
+   * runs off the side of the screen instead of wrapping. break-word only
+   * acts when a word cannot fit at all, so it costs nothing the rest of the
+   * time. Reproduced before adding it; see .st-page-fv, where the same thing
+   * happened with a real value rather than a hypothetical one. */
   :root[data-theme="studio"] .st-page-p {
     font-family: var(--f-body);
     font-size: var(--t-body);
     line-height: var(--lh-body);
-    color: var(--ink);
+    color: var(--ink-body);
     text-wrap: pretty;
+    overflow-wrap: break-word;
   }
   :root[data-theme="studio"] .st-page-p + .st-page-p { margin-block-start: clamp(12px, 1.2vw, 20px); }
   :root[data-theme="studio"] .st-page-p a { color: var(--ink); text-underline-offset: 3px; }
 
   /* Numbered steps. The counter is the content — "third of five" is what a
-   * reader planning a delivery day needs — so it is a real ordered list. */
-  :root[data-theme="studio"] .st-page-steps { list-style: none; counter-reset: st-step; }
+   * reader planning a delivery day needs — so it is a real ordered list.
+   *
+   * THE UA DEFAULTS WERE NEVER RESET, AND THEY WERE EATING THE MEASURE.
+   * list-style:none hides the marker but leaves ol's padding-inline-start of
+   * 40px and its margin-block of 1em standing. Measured: at 1440 every step
+   * sat 40px inside the reading column the rest of the page uses, and at
+   * 320px the step body was 172px of the column's 270 — 20 characters a
+   * line, against 34 for an ordinary paragraph on the same screen. The
+   * 16.5px bottom margin was separately adding an off-scale gap under every
+   * steps block, which the clamp rhythm below is supposed to own. */
+  :root[data-theme="studio"] .st-page-steps {
+    list-style: none;
+    counter-reset: st-step;
+    margin-block: 0;
+    padding-inline-start: 0;
+  }
   :root[data-theme="studio"] .st-page-step {
     counter-increment: st-step;
     display: grid;
@@ -143,16 +205,44 @@ export const STUDIO_PAGE_CSS = `
     font-family: var(--f-body);
     font-size: var(--t-body);
     line-height: var(--lh-body);
-    color: var(--ink-soft);
+    color: var(--ink-body);
+    overflow-wrap: break-word;
+  }
+
+  /* The counter column is sized for a desktop measure, and on a phone it is
+   * charged against a column that has none to spare. At 320px a 40px circle
+   * and a 16px gutter are 56 of 270 available pixels — a fifth of the screen
+   * spent on an ordinal — and the body underneath drops to 25 characters a
+   * line even with the UA indent gone. Below the tablet tier the circle goes
+   * to 32px and the gutter to the theme's own small gap, which returns 14px
+   * to the text: 37 characters at 390px and 27 at 320px, against 43 and 34
+   * for an unindented paragraph. The circle is decoration, not a control, so
+   * nothing here is bound by a target size. */
+  @media (max-width: 809px) {
+    :root[data-theme="studio"] .st-page-step { column-gap: var(--gap-sm); }
+    :root[data-theme="studio"] .st-page-step::before { inline-size: 32px; block-size: 32px; }
   }
 
   /* Questions and answers. A native details/summary needs no script, keeps the
-   * answer in the DOM for search engines, and is keyboard-operable for free. */
+   * answer in the DOM for search engines, and is keyboard-operable for free.
+   *
+   * VERIFIED RATHER THAN ASSUMED, because the styling here does two things
+   * that are known to cost a control its semantics. Driven in Chromium: the
+   * summary still exposes role DisclosureTriangle with the question as its
+   * accessible name, focusable, carrying an expanded state that flips; Enter
+   * toggles it; the answer stays a real <p> inside <details>. Neither
+   * list-style:none nor display:flex took the role away. */
   :root[data-theme="studio"] .st-page-qa { border-block-start: var(--bw-line) solid var(--line); }
   :root[data-theme="studio"] .st-page-qi { border-block-end: var(--bw-line) solid var(--line); }
   :root[data-theme="studio"] .st-page-q {
     display: flex;
-    align-items: center;
+    /* The chevron aligns to the FIRST line, not to the middle of the block.
+     * At 390px every real question in /pogosta-vprasanja wraps to two lines
+     * and a stress-test question ran to six; centred, the chevron drifted
+     * into the middle of the paragraph and stopped reading as the control
+     * for the line it belongs to. The offset is em-based so it stays right
+     * at all three type tiers (h6 is 24/19/22px). */
+    align-items: start;
     justify-content: space-between;
     gap: 16px;
     /* 44px minimum target with the padding, and the cursor states it is a
@@ -168,11 +258,24 @@ export const STUDIO_PAGE_CSS = `
     list-style: none;
   }
   :root[data-theme="studio"] .st-page-q::-webkit-details-marker { display: none; }
+  /* The site's own focus ring, which this control was not getting. The
+   * kernel declares it as :is(a, button):focus-visible — a summary is
+   * neither, so the one keyboard-operable element on the FAQ page fell back
+   * to the UA ring: a different colour from every other focusable thing on
+   * the site, drawn at offset 0, and close enough to the border box that the
+   * rotated chevron poked through it. Same 2px --acc at 3px offset as
+   * everything else; measured 3.51:1 against the page white, above the 3:1
+   * that WCAG 1.4.11 asks of a state indicator. */
+  :root[data-theme="studio"] .st-page-q:focus-visible {
+    outline: var(--bw-ctrl) solid var(--acc);
+    outline-offset: 3px;
+  }
   :root[data-theme="studio"] .st-page-q::after {
     content: "";
     flex: none;
     inline-size: 11px;
     block-size: 11px;
+    margin-block-start: calc((var(--lh-h6) - 11px) / 2);
     border-inline-end: var(--bw-line) solid var(--ink);
     border-block-end: var(--bw-line) solid var(--ink);
     transform: rotate(45deg) translate(-3px, -3px);
@@ -185,13 +288,39 @@ export const STUDIO_PAGE_CSS = `
     font-family: var(--f-body);
     font-size: var(--t-body);
     line-height: var(--lh-body);
-    color: var(--ink-soft);
+    color: var(--ink-body);
     text-wrap: pretty;
+    overflow-wrap: break-word;
   }
 
   /* Term/definition rows. Two columns where there is room, stacked where there
-   * is not — a definition that wraps to one word per line is unreadable. */
-  :root[data-theme="studio"] .st-page-facts { display: grid; }
+   * is not — a definition that wraps to one word per line is unreadable.
+   *
+   * THE MARKUP IS THE ONE SCREEN READERS EXPECT. dl > div > (dt, dd) is
+   * valid HTML and is the form the spec added the div wrapper for: the div
+   * groups one name with one value so a row can be styled, and it is
+   * transparent to the accessibility tree, which still reads term then
+   * definition. Each row is its OWN grid rather than the dl being one grid
+   * with the rows as display:contents, because display:contents would take
+   * the box the hairline is drawn on with it.
+   *
+   * AND THE UA DEFAULTS WERE AGAIN LEFT STANDING. dd ships with
+   * margin-inline-start:40px and dl with margin-block:1em. Measured at 1440
+   * the 40px came straight off the value column — every value was set 40px
+   * narrower than the track reserved for it — and under 700px, where the row
+   * stacks to one column, it printed as a ragged indent under each label,
+   * visible on /kontakt, /odstop-od-pogodbe and /zasebnost. The dl's 16.5px
+   * bottom margin was the same off-scale gap the steps list had.
+   *
+   * A hairline now closes the top as well as the bottom. .st-page-qa, the
+   * other hairline-ruled list in this column, is closed at both ends; the
+   * facts list was open at the top and shut at the bottom, so on
+   * /odstop-od-pogodbe its last rule read as a rule under nothing. */
+  :root[data-theme="studio"] .st-page-facts {
+    display: grid;
+    margin-block: 0;
+    border-block-start: var(--bw-line) solid var(--line);
+  }
   :root[data-theme="studio"] .st-page-frow {
     display: grid;
     grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
@@ -199,6 +328,8 @@ export const STUDIO_PAGE_CSS = `
     padding-block: clamp(12px, 1.2vw, 18px);
     border-block-end: var(--bw-line) solid var(--line);
   }
+  :root[data-theme="studio"] .st-page-fk,
+  :root[data-theme="studio"] .st-page-fv { margin: 0; }
   :root[data-theme="studio"] .st-page-fk {
     font-family: var(--f-label);
     font-size: var(--t-label);
@@ -206,21 +337,45 @@ export const STUDIO_PAGE_CSS = `
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-mute);
   }
+  /* overflow-wrap here is not defensive, it is a reproduced bug. The values
+   * in this block come from ShopConfig and from the legal copy, so they are
+   * the machine-shaped strings a page carries: an e-mail address, a VAT id,
+   * a domain, a regulator's contact. Given the Information Commissioner's
+   * address as a value, the row ran off the right edge of the screen at
+   * 320px — minmax(0, 1fr) lets the TRACK be narrow but does nothing about a
+   * word that will not break. anywhere rather than break-word because it is
+   * also honoured when the track computes its own minimum. */
   :root[data-theme="studio"] .st-page-fv {
     font-family: var(--f-body);
     font-size: var(--t-body);
     line-height: var(--lh-body);
-    color: var(--ink);
+    color: var(--ink-body);
+    overflow-wrap: anywhere;
   }
-  /* An unset company fact is marked rather than left to look like content. */
+  /* A value that is a link is a TARGET, and an inline anchor's box is only
+   * as tall as its line — 19px here, under the 24px WCAG 2.2 SC 2.5.8 asks
+   * for. It is the phone and the e-mail on every page that carries a contact
+   * or imprint block, which is nine of the fourteen, so it is the most-used
+   * control these pages have. Padding on an INLINE box enlarges the hit area
+   * without entering line layout: the row keeps its height to the pixel
+   * (61.5px at 1440, 75.0px at 320, both unchanged), the hairline grid does
+   * not loosen, and the anchor can still wrap mid-value, which an
+   * inline-block could not. 19px -> 27px. */
+  :root[data-theme="studio"] .st-page-fv a { padding-block: 4px; text-underline-offset: 3px; }
+  /* An unset company fact is marked rather than left to look like content.
+   * --ink-mute is what makes that mark visible AS a mark: at --ink-soft it
+   * printed at 16.10:1, the same ink as the values around it, so five rows
+   * of "podatek še ni vpisan" read as five facts. 5.17:1 on white is quiet
+   * enough to read as an absence and still clears the 4.5:1 floor — the one
+   * line on the site that admits a gap is not the line to fail on. */
   :root[data-theme="studio"] .st-page-todo {
     font-family: var(--f-label);
     font-size: var(--t-label);
     letter-spacing: var(--ls-label);
     text-transform: uppercase;
-    color: var(--ink-soft);
+    color: var(--ink-mute);
   }
 
   /* The closing call to action. */
@@ -243,8 +398,18 @@ export const STUDIO_PAGE_CSS = `
     font-family: var(--f-body);
     font-size: var(--t-body);
     line-height: var(--lh-body);
-    color: var(--ink-soft);
+    color: var(--ink-body);
   }
+  /* The button. 44px tall and 127px wide at 1440, 109px at 390 — over the
+   * 24px SC 2.5.8 floor and over the 44px AAA one on both axes; white on
+   * --ink is 18.26:1; the kernel's focus ring reaches it because it is an
+   * anchor, and 3.51:1 against the panel grey it sits on clears 1.4.11.
+   *
+   * text-decoration is the one thing that was missing. The kernel resets it
+   * on .btn, which this is not, so the label inside a solid black button was
+   * underlined — the one place on these pages where an underline means
+   * "button" instead of "link", and the only element carrying two conflicting
+   * affordances at once. */
   :root[data-theme="studio"] .st-page-cta-a {
     display: inline-flex;
     align-items: center;
@@ -255,6 +420,7 @@ export const STUDIO_PAGE_CSS = `
     border-radius: var(--r-ctrl);
     background: var(--ink);
     color: var(--on-invert);
+    text-decoration: none;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -277,16 +443,53 @@ export const STUDIO_PAGE_CSS = `
  * "TODO d.o.o." reads as a company name to a machine and as a typo to a
  * reader. Marking it says what is true — this has not been filled in — and
  * legalPagesReady() stops the shop going live while any of them is like this.
+ *
+ * THE TEST USED TO MARK REAL COMPANIES AS UNSET. Its last clause stripped
+ * every non-digit and asked whether anything survived, which is the right
+ * question for a telephone number and the wrong one for everything else it is
+ * called with: "Bazeni d.o.o." has no digits, so a perfectly valid registered
+ * name printed as "podatek še ni vpisan" on the terms, the privacy notice and
+ * the withdrawal form. So did an address with no house number ("Glavni trg
+ * bb, Ljubljana"). The clause now asks the question it meant to ask — is
+ * there anything here but a country code, zeros and punctuation — which
+ * catches the +386 00 000 000 shape the tenant file actually uses, and leaves
+ * any value carrying a letter or a non-zero digit alone.
+ *
+ * ⚠️ legalPagesReady() in content/pages.ts still carries the digit-stripping
+ * form, so it refuses to take a shop live over a digitless legal name. That
+ * file belongs to another owner; the divergence fails closed (the page tells
+ * the truth, the launch gate is merely over-cautious) and is reported rather
+ * than fixed from here.
  */
-function fact(value: string): string {
-  const unset =
+function isUnset(value: string): boolean {
+  return (
     value.includes("TODO") ||
     value === "SI00000000" ||
     value === "0000" ||
-    value.replace(/[^0-9]/g, "").replace(/^386/, "").replace(/0+/g, "") === "";
-  return unset
+    /^[-\s+()0]*$/.test(value.replace(/^\+?\s*386/, ""))
+  );
+}
+
+function fact(value: string): string {
+  return isUnset(value)
     ? '<span class="st-page-todo">podatek še ni vpisan</span>'
     : esc(value);
+}
+
+/**
+ * A contact value as a LINK, and only while there is somewhere to go.
+ *
+ * The phone row used to be an anchor unconditionally, so with the placeholder
+ * number in tenants/bazen.ts the imprint offered tel:+38600000000 — a control
+ * whose accessible name was "podatek še ni vpisan" and whose whole behaviour
+ * was to dial nothing. On a shop that takes most of its EUR 2,400-8,400
+ * orders by telephone that is worse than showing no link: a customer who taps
+ * it learns the number is wrong from their own dialler.
+ */
+function link(href: string, value: string): string {
+  return isUnset(value)
+    ? fact(value)
+    : '<a href="' + esc(href) + '">' + esc(value) + "</a>";
 }
 
 function prose(b: Extract<Block, { kind: "prose" }>): string {
@@ -353,8 +556,8 @@ function contact(ctx: RenderCtx, h?: string): string {
   return facts(
     h ?? "Kontakt",
     [
-      ["Telefon", '<a href="' + esc(ctx.phoneHref) + '">' + fact(ctx.phoneDisplay) + "</a>"],
-      ["E-pošta", '<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + "</a>"],
+      ["Telefon", link(ctx.phoneHref, ctx.phoneDisplay)],
+      ["E-pošta", link("mailto:" + c.email, c.email)],
       ["Naslov", fact(place)],
     ],
     true,

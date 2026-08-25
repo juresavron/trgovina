@@ -696,9 +696,23 @@ export const STUDIO_CHROME_CSS = `
     color: var(--on-invert-mute);
   }
 
+  /* FOUR link columns, not the transcription's three.
+   *
+   * The transcription wins on MEASUREMENT, which is what §0's rule is about;
+   * this is inventory. When those columns were drawn, all fifteen destinations
+   * were one "v pripravi" stub, so twelve slots were plenty. They are real
+   * pages now, and three columns of four left /o-nas out of the chrome
+   * altogether and both collection pages — the two URLs that answer two
+   * different queries — reachable only from the home page's own rail.
+   *
+   * The fourth column is free on a phone: at 2 columns the old three filled
+   * three of four cells and left one blank (measured at 390px), so Podjetje
+   * lands in a hole that already existed. Its cost is one grid track at
+   * desktop, where the brand track still measures 318px at 1440 and 261px at
+   * 1200 — wider than the 229px the e-mail row needs. */
   :root[data-theme="studio"] .st-foot-cols {
     display: grid;
-    grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.5fr) repeat(4, minmax(0, 1fr));
     gap: clamp(32px, 3.4vw, 68px);
   }
   /* An ordinary paragraph — body, at the 42ch measure below. The 32px beneath
@@ -713,8 +727,15 @@ export const STUDIO_CHROME_CSS = `
     max-width: 42ch;
     margin-bottom: 32px;
   }
+  /* align-items:flex-start, so each row is as wide as its own line rather than
+   * as wide as the brand column. A stretched row made the e-mail link a 404px
+   * target at 1440 (measured): two thirds of it was empty band that lit the
+   * icon disc on hover and carried a focus ring the width of the column,
+   * neither of which points at anything. Each row still clears the 44px floor
+   * on its height and is ~230px wide, so nothing shrinks below a target. */
   :root[data-theme="studio"] .st-contacts {
-    display: flex; flex-direction: column; gap: var(--gap-md);
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: var(--gap-md);
   }
   /* Contact rows are meta rows, so the label rung — mixed case, not uppercase:
    * an address and an e-mail are read, not scanned. Tight leading so a
@@ -750,6 +771,29 @@ export const STUDIO_CHROME_CSS = `
     outline: 2px solid var(--on-invert); outline-offset: 4px; border-radius: var(--r-ctrl);
   }
   :root[data-theme="studio"] .st-contact-ico .st-ico { inline-size: 18px; block-size: 18px; }
+  /* The label half of a contact row. An e-mail address is one unbreakable
+   * token, so in the narrowest column this theme ships — the brand track at
+   * 1200px — a longer address than this shop's would push the row past its
+   * track. min-inline-size:0 lets it shrink and overflow-wrap lets it break;
+   * without both, the overflow is silent (the band clips it) and the row
+   * simply loses its end. */
+  :root[data-theme="studio"] .st-contact > span:last-child {
+    min-inline-size: 0; overflow-wrap: anywhere;
+  }
+  /* An unset company fact, marked rather than left to look like content.
+   * page.ts's .st-page-todo does this job on the legal pages and cannot be
+   * reused: its ink is --ink-soft, which is invisible on this band.
+   *
+   * The mark is QUIETER than the fact it stands in for, not louder. It began
+   * as page.ts's uppercase, which works there — a lowercase-body value column
+   * makes uppercase read as an annotation — and failed here: this band is
+   * label-cased throughout, so five uppercase marks (two contact rows, three
+   * imprint fields) shouted over every real word in the footer. The words
+   * carry the meaning; --on-invert-mute (7.33:1) keeps them legible while
+   * stepping the two white contact rows down to secondary. */
+  :root[data-theme="studio"] .st-foot-todo {
+    color: var(--on-invert-mute);
+  }
 
   /* Column heading: an eyebrow over a list, so the label rung uppercase. The
    * ramp carries ONE label tracking (0.06em); the old 0.12em was measured, and
@@ -782,8 +826,21 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-foot-col a {
     display: inline-flex;
     align-items: center;
-    block-size: var(--st-tap);
+    /* MIN, not a fixed height. At 320px "Dostava in montaža" already wraps to
+     * two lines (measured), which is 40px inside a 44px box — one line of
+     * headroom left. A third line, from a 200% text zoom or a longer label in
+     * another shop, would have overflowed a fixed box and landed on the row
+     * below; a minimum grows instead and pushes its neighbours down. */
+    min-block-size: var(--st-tap);
     margin-block: -12px;
+    /* 6px of side padding, pulled straight back out. The shared focus ring is
+     * INSET 2px (see the rule with the bar's links), and this box is exactly
+     * as wide as its label — so the ring was landing on the last glyph of
+     * every link. The padding gives it 6px to sit in, the negative margin
+     * keeps the labels flush with the column heading above them, and the tap
+     * target grows 12px wider on the way past. */
+    padding-inline: 6px;
+    margin-inline: -6px;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -837,6 +894,16 @@ export const STUDIO_CHROME_CSS = `
     :root[data-theme="studio"] .st-chrome-btn { inline-size: 34px; block-size: 34px; }
     :root[data-theme="studio"] .st-chrome-btn::before { inset: -5px; }
     :root[data-theme="studio"] .st-foot { padding-block: 100px 30px; }
+    /* The brand block takes its own row and the four columns share the width.
+     * Inline, the five tracks put 146px under each column at 1024 — measured
+     * against a 147px "Odstop od pogodbe" — so every second label wrapped and
+     * the e-mail row (229px) ran past a 219px brand track into the clip. Full
+     * width gives the brand its 42ch measure back and 210px to each column,
+     * which is more than the longest label in any of them. */
+    :root[data-theme="studio"] .st-foot-cols {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    :root[data-theme="studio"] .st-foot-brand { grid-column: 1 / -1; }
   }
 
   /* ≤900: the bar goes to TWO ROWS.
@@ -1061,6 +1128,42 @@ export function renderStudioHeader(ctx: RenderCtx): string {
 }
 
 /**
+ * WHETHER A COMPANY FACT HAS ACTUALLY BEEN FILLED IN.
+ *
+ * tenants/bazen.ts still carries "TODO d.o.o.", "SI00000000" and a TODO
+ * address on purpose, and the footer is the one block that prints them on
+ * EVERY page. Set in an imprint, "TODO d.o.o." reads as a company name to a
+ * crawler and as a typo to a reader — so an unset value is MARKED instead, in
+ * the same words src/themes/studio/page.ts marks them with on the legal pages.
+ * The rule is restated here rather than imported because that module owns its
+ * own renderer and exports neither the test nor the mark.
+ *
+ * It is restated, not copied. page.ts folds a PHONE test — "digits, minus the
+ * country code, minus the zeros, is empty" — into the same predicate it runs
+ * over every field, and a company name has no digits at all: "Masažni Bazen
+ * d.o.o." and "Ljubljana" both collapse to the empty string and would be
+ * marked unset forever. Here the phone keeps its own test and text facts keep
+ * theirs. (The same fold is why content/pages.ts legalPagesReady() returns
+ * false for a fully filled-in shop — flagged to the coordinator, not fixed
+ * here: neither file is this task's to edit.)
+ */
+const FACT_UNSET = '<span class="st-foot-todo">podatek še ni vpisan</span>';
+
+function isUnsetFact(value: string): boolean {
+  return value.includes("TODO") || value === "SI00000000" || value === "0000";
+}
+
+/** Nothing but zeros once the country code is off is not a phone number. */
+function isUnsetPhone(phone: string): boolean {
+  return phone.replace(/\D/g, "").replace(/^386/, "").replace(/0/g, "") === "";
+}
+
+/** A text fact, escaped — or the visible mark that it is not filled in yet. */
+function fact(value: string): string {
+  return isUnsetFact(value) ? FACT_UNSET : esc(value);
+}
+
+/**
  * §4.12 — footer.
  *
  * The newsletter row is not wired — there is no form, no action and no handler
@@ -1082,8 +1185,19 @@ export function renderStudioFooter(ctx: RenderCtx): string {
   const c = ctx.content;
   const a = s.contact.address;
 
-  const col = (title: string, items: readonly (readonly [string, string])[]): string =>
-    '<div class="st-foot-col"><h2>' + esc(title) + "</h2><ul>" +
+  /* The column heading is the list's accessible name, not just a line of type
+   * above it: aria-labelledby ties the two together, so a screen reader
+   * arrowing into the list hears "Pravno, list, 4 items" rather than four
+   * unattributed links at the bottom of every page. The id is stated here
+   * rather than derived from the title because a Slovenian heading would need
+   * transliterating to be a valid, stable id. */
+  const col = (
+    id: string,
+    title: string,
+    items: readonly (readonly [string, string])[],
+  ): string =>
+    '<div class="st-foot-col"><h2 id="' + id + '">' + esc(title) + "</h2>" +
+    '<ul aria-labelledby="' + id + '">' +
     items
       .map(
         ([href, label]) =>
@@ -1092,13 +1206,37 @@ export function renderStudioFooter(ctx: RenderCtx): string {
       .join("") +
     "</ul></div>";
 
-  const contact = (k: IconKey, href: string | null, label: string): string => {
+  /* html, not text: the value may be a fact() mark rather than a string, and
+   * every caller below escapes its own value.
+   *
+   * The field NAME is carried in a visually-hidden span, because sighted
+   * readers get it from the disc and nobody else got it at all: the icons are
+   * aria-hidden, so an address on its own line announced as a bare string, and
+   * an unset one announced as "podatek še ni vpisan" with no clue which datum
+   * is missing. It reads "E-pošta: info@…" in the tree and stays three icon
+   * rows on the screen. */
+  const contact = (k: IconKey, href: string | null, name: string, html: string): string => {
     const inner =
-      '<span class="st-contact-ico">' + icon(k) + "</span><span>" + esc(label) + "</span>";
+      '<span class="st-contact-ico">' + icon(k) + "</span>" +
+      '<span><span class="st-vh">' + esc(name) + ": </span>" + html + "</span>";
     return href
       ? '<a class="st-contact" href="' + esc(href) + '">' + inner + "</a>"
       : '<span class="st-contact">' + inner + "</span>";
   };
+
+  /* The two product families as their own footer destinations, read from the
+   * content rather than typed here: /masazni-bazeni and /swim-spa are the two
+   * pages that answer two different queries (docs/SEO.md §6), and until now
+   * the only chrome that linked them was the home page's own rail. A shop with
+   * no collections contributes no rows and the column still stands. */
+  const families = (c.collections ?? []).map((k) => [k.path, k.navLabel] as const);
+
+  const addressSet = ![a.street, a.zip, a.city].some(isUnsetFact);
+  const phoneSet = !isUnsetPhone(s.contact.phone);
+  const addressHtml = addressSet
+    ? esc(a.street + ", " + a.zip + " " + a.city)
+    : FACT_UNSET;
+  const phoneHtml = phoneSet ? esc(ctx.phoneDisplay) : FACT_UNSET;
 
   return (
     '<footer class="st-foot"><div class="st-foot-in">' +
@@ -1123,36 +1261,51 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     '<div class="st-foot-brand">' +
     '<p class="st-foot-blurb">' + esc(c.footNote) + "</p>" +
     '<div class="st-contacts">' +
-    contact("mail", "mailto:" + s.contact.email, s.contact.email) +
-    contact("phone", ctx.phoneHref, ctx.phoneDisplay) +
-    contact("pin", null, a.street + ", " + a.zip + " " + a.city) +
+    contact("mail", "mailto:" + s.contact.email, "E-pošta", esc(s.contact.email)) +
+    // A tel: link is what the rest of the site gives this number (the bar, the
+    // pdp, the contact page), and it is what the footer gives it the moment
+    // there is a number. While it is the placeholder, the ROW STAYS and the
+    // LINK GOES: a tap on a phone opens the dialer, and a footer that offers
+    // to dial +386 00 000 000 from every page is a broken affordance rather
+    // than an unfinished one.
+    contact("phone", phoneSet ? ctx.phoneHref : null, "Telefon", phoneHtml) +
+    contact("pin", null, "Naslov", addressHtml) +
     "</div></div>" +
-    col("Trgovina", [
-      [s.routeSlugs["/products"], c.nav[0]],
-      [s.routeSlugs["/compare"], "Primerjava modelov"],
-      [s.routeSlugs["/guides"], "Vodniki"],
-      [s.routeSlugs["/financing"], "Financiranje"],
-    ] as const) +
-    col("Pomoč", [
+    col("st-foot-c1", "Ponudba", [
+      ...families,
+      [s.routeSlugs["/products"], c.nav[0]] as const,
+      [s.routeSlugs["/compare"], "Primerjava modelov"] as const,
+    ]) +
+    col("st-foot-c2", "Pomoč", [
       [s.routeSlugs["/delivery"], "Dostava in montaža"],
+      [s.routeSlugs["/financing"], "Financiranje"],
+      [s.routeSlugs["/guides"], "Vodniki"],
       [s.routeSlugs["/faq"], "Pogosta vprašanja"],
+    ] as const) +
+    col("st-foot-c3", "Podjetje", [
+      [s.routeSlugs["/about"], "O nas"],
       [s.routeSlugs["/showroom"], "Razstavni salon"],
       [s.routeSlugs["/contact"], "Kontakt"],
     ] as const) +
-    col("Pravno", [
+    // Withdrawal sits SECOND, under the terms it belongs to: of the four, the
+    // 14-day right of withdrawal is the one a buyer actually goes looking for,
+    // and it was last in a column of four.
+    col("st-foot-c4", "Pravno", [
       [s.routeSlugs["/terms"], "Pogoji poslovanja"],
+      [s.routeSlugs["/withdrawal"], "Odstop od pogodbe"],
       [s.routeSlugs["/privacy"], "Zasebnost"],
       [s.routeSlugs["/cookies"], "Piškotki"],
-      [s.routeSlugs["/withdrawal"], "Odstop od pogodbe"],
     ] as const) +
     "</div>" +
 
+    // The imprint. Each fact is NAMED — firma, ID za DDV, sedež are the terms
+    // ZGD-1 and the VAT act use — so that a mark says WHICH obligation is
+    // still unmet instead of leaving three anonymous blanks in a row.
     '<hr class="st-foot-rule">' +
     '<p class="st-foot-legal">' +
-    esc(
-      s.company.legalName + " · ID za DDV: " + s.company.vatId + " · " +
-      a.street + ", " + a.zip + " " + a.city,
-    ) +
+    "Firma: " + fact(s.company.legalName) +
+    " · ID za DDV: " + fact(s.company.vatId) +
+    " · Sedež: " + addressHtml +
     "</p>" +
     "</div></footer>"
   );

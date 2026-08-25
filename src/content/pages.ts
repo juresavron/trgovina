@@ -21,6 +21,26 @@
  * relies on it and a regulator reads it. So identity comes from ShopConfig at
  * render time, never from prose here, and `legalPagesReady()` reports whether
  * those values are real. The launch gate consumes it.
+ *
+ * ⚠️ AND IT MAY NOT OUT-CLAIM THE CATALOGUE EITHER. These pages are prose and
+ * the product pages are generated, so when the two disagree it is always the
+ * prose that is wrong and always the prose a customer read first. The first
+ * audit of this directory found three of those, and every one of them was a
+ * sentence that sounded right:
+ *
+ *   - "poln preko dveh ton" for the hot tubs. True of the BAZEN 230 alone
+ *     (2.210 kg); the 195 is 1.500 and the 210 is 1.870. A family does not
+ *     inherit its largest member's figure.
+ *   - "cena vključuje dostavo". The product pages say the opposite —
+ *     PdpContent.freight marks the delivery "po ponudbi" — and a price
+ *     composition that differs between the terms and the page carrying the
+ *     number is a misleading price indication whichever one is right.
+ *   - a cross-reference to an "exception for installed goods" on the
+ *     withdrawal page, which states no such exception on purpose.
+ *
+ * So a figure written here is copied from catalog/pola.ts, catalog/swimspa.ts
+ * or content/bazen.ts, and a promise written here is one the product page
+ * already makes. Neither is written from memory of what the shop is like.
  */
 
 /** One unit of page content. The theme owns how each of these looks. */

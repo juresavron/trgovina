@@ -8,13 +8,15 @@
  *         its content cropped by the frame — right a room photo carrying a
  *         STAT overlay (h2-rung value + label caption) INSTEAD of a label.
  *   §4.10 Dark testimonial — inverted band, centred h2 white heading with the
- *         eye motif large and faint behind it, then one quote at a time:
- *         square portrait photograph left, an oversized opening glyph at the
- *         h1 rung over the quote and its label-rung attribution centre, a
- *         Ø300px circular product frame right, and the two 64px circular
- *         prev/next controls bottom right. It is a REAL slider — a horizontal
- *         scroll-snap container that works with no script, upgraded by
- *         behaviour.ts's generic slider to step by exactly one quote.
+ *         eye motif large and faint behind it, then one quote at a time as a
+ *         TWO-part row centred in the container: left an opening glyph at the
+ *         h2 rung over a calm lead-rung quote and its label-rung attribution,
+ *         right a circular product medallion on a light panel, and the two
+ *         64px circular prev/next controls centred beneath it. §4.10 measured
+ *         a third part, a square portrait, and it is deliberately absent — see
+ *         .st-tst-fig. It is a REAL slider — a horizontal scroll-snap
+ *         container that works with no script, upgraded by behaviour.ts's
+ *         generic slider to step by exactly one quote.
  *   §4.11 Blog cards — centred h2 heading, three ~1:1 cards (radius 16px),
  *         photo filling the frame under a bottom gradient scrim, a translucent
  *         pill chip (label rung) and an h5 white title overlaid.
@@ -54,10 +56,12 @@
  * what a slot CLAIMS: atmosphere may use the source bundle's furniture
  * photography, a PRODUCT slot may not, because it would read as a picture of
  * the thing being sold. So the room photo lands in the impact grid's stat tile
- * and on the guide cards, the portrait lands in the testimonial's face slot —
- * all atmosphere — while the impact grid's hero tile and the circle on the
- * testimonial band keep their drawn placeholder. The circle is BUILT here
+ * and on the guide cards — all atmosphere — while the impact grid's hero tile
+ * keeps its drawn placeholder. The testimonial band's circle is BUILT here
  * regardless: the frame is composition, the picture inside it is inventory.
+ * Its face slot is gone rather than filled: a portrait is the strongest truth
+ * claim a review can carry, and borrowing a stranger's for it is the one
+ * substitution this page may never make.
  *
  * Token discipline (docs/THEMES.md): colors, radii and faces are var(--…)
  * only. tokens.ts is the SINGLE declaration site — ground rungs (--bg-alt,
@@ -92,13 +96,34 @@ export const STUDIO_EDITORIAL_CSS = `
     --studio-tile-r: clamp(10px, 0.7vw, 14px);
     --studio-guide-r: clamp(10px, 0.8vw, 16px);
 
-    /* §4.10: the ground BEHIND the portrait photograph — a lifted black, so
-     * the square reads as a photo slot rather than a hole in the band while
-     * the lazy image is still in flight. */
-    --studio-portrait: color-mix(in srgb, var(--on-invert) 10%, var(--ink-invert));
     /* §4.10: the Ø300px #1C1C1C disc — mixed from tokens, never a hex, and
-     * mixed HERE rather than borrowed from another module's private var. */
+     * mixed HERE rather than borrowed from another module's private var. It is
+     * the ground of the DRAWN medallion only; a medallion holding a real
+     * photograph is a light panel instead (see .st-tst-disc--lit). */
     --studio-quote-disc: color-mix(in srgb, var(--on-invert) 12%, var(--ink-invert));
+    /* §4.10, the two numbers the testimonial band's composition is built from.
+     *
+     * The medallion's diameter is a WIDTH, so it is a clamp and belongs to no
+     * type ramp: the §4.10 measurement of 300px as the ceiling, 18vw through
+     * the middle, and a 160px floor because below that a product cutout inside
+     * it stops being a picture of anything. 18 rather than 20 because the
+     * panel inside it is white: a 288px disc at full brightness out-weighed
+     * two lines of 20px prose badly enough that the row stopped being evenly
+     * weighted and became a picture with a caption.
+     *
+     * It no longer disappears on a phone either. The band lost its portrait,
+     * and a lone column of small text under a centred heading is exactly the
+     * "three-part composition with a hole in it" this pass exists to fix.
+     * Stacked above the quote the medallion costs no width at all.
+     *
+     * --studio-tst-stage is the composition's own measure, DERIVED rather than
+     * picked: the reading measure the theme already uses for narrow prose, the
+     * medallion, and one --gap-2xl between them. Deriving it is what lets the
+     * quote column resolve to exactly --studio-read-narrow while the pair sits
+     * centred in the container, and what lets the prev/next controls sit under
+     * the medallion without a second, hand-tuned number to keep in sync. */
+    --studio-tst-disc: clamp(160px, 18vw, 300px);
+    --studio-tst-stage: min(100%, calc(var(--studio-read-narrow) + var(--gap-2xl) + var(--studio-tst-disc)));
     /* The hairline the inverted band uses for its own frames and chips. --line
      * (#dfdfdf) is a white-ground value and glares here. */
     --studio-line-invert: color-mix(in srgb, var(--on-invert) 16%, transparent);
@@ -518,6 +543,13 @@ export const STUDIO_EDITORIAL_CSS = `
   :root[data-theme="studio"] .st-tst-track {
     position: relative;
     z-index: 1;
+    /* The scrollport is the STAGE, not the container: bounding it here is what
+     * centres the two-part composition instead of stranding a 620px quote at
+     * the far left of a 1360px row with half a screen of empty band between it
+     * and the medallion. Every slide is 100% of this, so the snap geometry and
+     * behaviour.ts's measured step follow it without knowing it exists. */
+    max-inline-size: var(--studio-tst-stage);
+    margin-inline: auto;
     overflow-x: auto;
     overflow-y: hidden;
     scroll-snap-type: x mandatory;
@@ -548,79 +580,108 @@ export const STUDIO_EDITORIAL_CSS = `
     border-radius: var(--r-card);
   }
 
-  /* portrait | quote | circle, the measured three-part row. Named areas rather
-   * than source order, because <figcaption> must be a direct child of <figure>
-   * to be its caption — it cannot live inside the quote column's wrapper, so
-   * the grid puts it there instead. */
+  /* quote | medallion, and the row is TWO parts on purpose.
+   *
+   * §4.10 measured three — portrait, quote, circle — and the portrait slot is
+   * gone for good: it held stock faces of strangers standing in for people who
+   * had written the reviews beside them, which is the one image on this page
+   * that must never be borrowed. What was left behind was worse than the hole
+   * it filled. An auto-sized track holding nothing still collects a gap, so
+   * the three-part template indented every quote 46px from the container edge
+   * (measured at 1440) and left the band reading as a composition missing a
+   * limb. Two named areas, two real columns, no ghost track.
+   *
+   * The columns are DERIVED from --studio-tst-stage, so 1fr resolves to
+   * exactly --studio-read-narrow and the gap is the token the stage was built
+   * from — change the stage and the row still adds up.
+   *
+   * Named areas rather than source order, because <figcaption> must be a
+   * direct child of <figure> to be its caption — it cannot live inside the
+   * quote column's wrapper, so the grid puts it there instead. */
   :root[data-theme="studio"] .st-tst-fig {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) var(--studio-tst-disc);
     grid-template-areas:
-      "por body disc"
-      "por cap  disc";
+      "body disc"
+      "cap  disc";
     align-items: center;
-    column-gap: clamp(20px, 3.2vw, 64px);
+    column-gap: var(--gap-2xl);
     row-gap: clamp(16px, 1.8vw, 36px);
     margin: 0;
   }
-  :root[data-theme="studio"] .st-tst-portrait { grid-area: por; }
-  :root[data-theme="studio"] .st-tst-body { grid-area: body; }
-  :root[data-theme="studio"] .st-tst-cap { grid-area: cap; }
+  /* THE TWO TEXT ROWS MUST TOUCH, and centring them individually is why they
+   * did not. The medallion spans both rows and is taller than the quote, so
+   * grid distributes the surplus EQUALLY over the two spanned tracks (the spec
+   * says equally, which is what makes the rest of this reliable): measured at
+   * 1440, 288px of medallion over a 106px quote and a 31px attribution grew
+   * each row by 62px, and with align-items:center both items sat in the middle
+   * of their own inflated track — 88px of black between a sentence and the
+   * name signing it, which read as two unrelated blocks.
+   *
+   * Pinning the quote to the BOTTOM of the first row and the attribution to
+   * the TOP of the second leaves only the row-gap between them, and because
+   * the surplus is split evenly the pair lands optically centred against the
+   * medallion for free. When the quote is the taller of the two the tracks
+   * never grow and the same two rules are simply inert. */
+  :root[data-theme="studio"] .st-tst-body { grid-area: body; align-self: end; }
+  :root[data-theme="studio"] .st-tst-cap { grid-area: cap; align-self: start; }
   :root[data-theme="studio"] .st-tst-disc { grid-area: disc; }
-  /* Square portrait, ~420px, SHARP corners (§4.10) — --r-ctrl is the theme's
-   * sharp rung, the same edge its buttons use. This is the one slot on the
-   * band that is a square and not a circle, which is what makes the circle on
-   * the far side read as a deliberate shape rather than a house style. */
-  :root[data-theme="studio"] .st-tst-portrait {
-    position: relative;
-    overflow: hidden;
-    inline-size: clamp(120px, 21vw, 420px);
-    aspect-ratio: 1 / 1;
-    border-radius: var(--r-ctrl);
-    background: var(--studio-portrait);
-  }
-  /* B&W per §4.10. The crops are tall (900×1414) and the slot is square, so
-   * the frame takes the upper third where a subject's head sits rather than
-   * centring on the midriff. */
-  :root[data-theme="studio"] .st-tst-photo {
-    position: absolute;
-    inset: 0;
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
-    object-position: 50% 28%;
-    filter: grayscale(1);
-  }
 
   :root[data-theme="studio"] .st-tst-body { min-width: 0; }
-  /* The oversized opening glyph. Its SIZE is a ramp step — h1 (92/64/44) is
-   * within two px of the measured 90 — but its LEADING is the one deliberate
-   * departure in this file: it is decorative punctuation (aria-hidden), and at
-   * --lh-h1 its em box would open a 96px hole above the quote. 0.6 is a layout
-   * device on a glyph nobody reads, not an invented type step. */
+  /* The oversized opening glyph, one ramp step DOWN from where it was.
+   *
+   * It was h1 (92/64/44) against a lead-xl quote, a ratio of about 1.9:1. The
+   * quote is now the calm lead rung (20/16/18), and 92px of punctuation over
+   * 20px of prose is 4.6:1 — the mark becomes the loudest thing in the band
+   * and the reader's eye never reaches the sentence. h2 (60/50/38) restores
+   * roughly the 3:1 the source sets its own mark at: still unmistakably a
+   * display flourish, no longer the headline.
+   *
+   * Its LEADING stays the one deliberate departure in this file: it is
+   * decorative punctuation (aria-hidden), and at --lh-h2 its em box would open
+   * a 68px hole above the quote. 0.6 is a layout device on a glyph nobody
+   * reads, not an invented type step. */
   :root[data-theme="studio"] .st-tst-glyph {
     display: block;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: var(--t-h1);
-    letter-spacing: var(--ls-h1);
+    font-size: var(--t-h2);
+    letter-spacing: var(--ls-h2);
     line-height: 0.6;
     color: color-mix(in srgb, var(--on-invert) 42%, transparent);
     user-select: none;
   }
-  /* Every quote is now the band's editorial statement — there is no longer a
-   * lead one and a demoted stack — so they all take lead-xl (48/44/24, Satoshi
-   * 500, --ls-body, --lh-lead-xl): prose set large, not a heading. The measured
-   * 26px was a step the source's prose ramp does not have. max-width still
-   * tracks the measured 800-at-2000px measure. */
+  /* The quote drops a whole rung, from lead-xl to lead (20/16/18).
+   *
+   * lead-xl put it at 48px on a 1440 desktop — four lines of 48px white type
+   * on a black band, which is a headline pretending to be a sentence, and the
+   * source sets the same sentence at about 16px. A testimonial is not the
+   * band's headline; the heading above it is, and two display-scale voices in
+   * one band is why this one shouted. --t-lead is the prose ramp's own rung
+   * for prose set a step above body — the calm register the source uses —
+   * with --lh-lead (1.5em) as its partner leading rather than lead-xl's
+   * tighter 1.3em, because leading has to open up as type gets smaller.
+   *
+   * THE RUNG CHANGE MOVES THE CONTRAST FLOOR. At 48px/500 this was WCAG "large
+   * text" and answerable to 3:1; at 20px/500 it is ordinary text and owes the
+   * full 4.5:1. The ink is unchanged and unaffected either way — pure
+   * --on-invert on --ink-invert is 18.26:1 — but the muted rung a smaller
+   * quote might have invited is not available to it, and that is why this
+   * stays white.
+   *
+   * No max-width of its own any more: the grid column IS the measure. It
+   * resolves to --studio-read-narrow (620px) by construction, i.e. about 68
+   * characters at this size, and the old min(100%, max(18rem, 40vw)) would now
+   * fight it — at 1440 that formula gave 576px inside a 620px column, so the
+   * measure was set twice and neither number knew about the other. */
   :root[data-theme="studio"] .st-tst-q {
-    max-width: min(100%, max(18rem, 40vw));
-    margin: clamp(12px, 1.4vw, 28px) 0 0;
+    max-width: 100%;
+    margin: var(--gap-sm) 0 0;
     font-family: var(--f-body);
-    font-size: var(--t-lead-xl);
+    font-size: var(--t-lead);
     font-weight: var(--w-body-med);
     letter-spacing: var(--ls-body);
-    line-height: var(--lh-lead-xl);
+    line-height: var(--lh-lead);
     color: var(--on-invert);
     text-wrap: pretty;
     overflow-wrap: break-word;
@@ -629,8 +690,19 @@ export const STUDIO_EDITORIAL_CSS = `
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: clamp(10px, 1.1vw, 22px);
+    gap: var(--gap-sm) var(--gap-md);
     min-width: 0;
+  }
+  /* Both caption items are content this module does not write and cannot
+   * predict the length of — a place name, a model code, whatever the reviews
+   * turn out to carry. A flex item's automatic minimum size is its content, so
+   * one long unbroken token would push the row past a 320px phone rather than
+   * wrap inside it. These two lines are the whole guard. */
+  :root[data-theme="studio"] .st-tst-who,
+  :root[data-theme="studio"] .st-tst-chip {
+    min-width: 0;
+    max-inline-size: 100%;
+    overflow-wrap: break-word;
   }
   /* The attribution name — uppercase tracked meta, i.e. the label role: DM Sans
    * 500 at 14px, --ls-label (0.06em, the source's widest tracking — the 0.12em
@@ -646,14 +718,33 @@ export const STUDIO_EDITORIAL_CSS = `
     text-transform: uppercase;
     color: var(--on-invert-mute);
   }
-  /* Verification chip — ROUND (§3): pills and chips are round, buttons sharp.
-   * Only verified purchases render on this network, so the chip is a statement
-   * of fact about the record, not decoration. Type is the label row whole. */
+  /* The chip beside the attribution — ROUND (§3): pills and chips are round,
+   * buttons sharp. Still the label row whole, and still the same size; what
+   * changes is its WEIGHT.
+   *
+   * It was a crisp 1px outline, 36px tall and 264px wide at 1440, sitting
+   * beside a 14px name. Against a 48px quote it was merely busy; against the
+   * calm 20px quote it read as a BUTTON — the only outlined rectangle on the
+   * band, competing with the medallion's edge and with the two controls that
+   * really are buttons. The source's attribution is one quiet line of tracked
+   * caps and nothing else. So the outline goes and a low white fill takes its
+   * place: --on-invert-16 is tokens.ts's quietest on-dark white, the shape
+   * survives, and nothing on the band has a hard edge except the things that
+   * can be pressed.
+   *
+   * The fill moves the ground under the text, so the ratio is recomputed
+   * rather than inherited: #ffffff14 over #151515 flattens to #272727, and
+   * --on-invert-mute (#a4a4a4) on that is 5.9:1 — past the 4.5:1 floor this
+   * 14px text is held to. Padding drops with the border because a fill needs
+   * less room to read than an outline does.
+   *
+   * The text inside is content's, not this module's: whatever the chip ends up
+   * saying, it is one short run of tracked caps and this rule does not care. */
   :root[data-theme="studio"] .st-tst-chip {
     display: inline-block;
-    border: 1px solid var(--studio-line-invert);
     border-radius: var(--r-pill);
-    padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1.1vw, 22px);
+    background: var(--on-invert-16);
+    padding: clamp(5px, 0.4vw, 8px) clamp(10px, 0.9vw, 16px);
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -663,31 +754,75 @@ export const STUDIO_EDITORIAL_CSS = `
     color: var(--on-invert-mute);
   }
 
-  /* Ø300px circular product frame (§4.10), clipped to --r-circle with a
-   * hairline ring so it reads as a frame and not as a smudge on the band. The
-   * frame is composition and is built now; the picture inside it is inventory,
-   * and until a shop owns photography of a €1,500–15,000 sauna the interior
-   * stays the drawn placeholder (see media.ts on what a product slot claims).
-   * It carries no text, so it simply drops below 1080px where the quote needs
-   * the width more than the band needs the ornament. */
-  /* The photograph fills the circle — object-fit:cover, not contain: a disc
-   * is a crop by definition, and a contained image inside a circle leaves
-   * two crescents of background that read as a rendering fault. */
+  /* The circular product medallion (§4.10), clipped to --r-circle. The frame
+   * is composition and is built regardless; the picture inside it is
+   * inventory, and while a shop owns none the interior stays the drawn
+   * placeholder (see media.ts on what a product slot claims). */
+  :root[data-theme="studio"] .st-tst-disc {
+    position: relative;
+    overflow: hidden;
+    inline-size: var(--studio-tst-disc);
+    aspect-ratio: 1 / 1;
+    border-radius: var(--r-circle);
+    background: var(--studio-quote-disc);
+    box-shadow: inset 0 0 0 var(--bw-line) var(--studio-line-invert);
+  }
+  /* THE CROP WAS THE DEFECT, AND object-fit:cover WAS THE CROP.
+   *
+   * The note this replaces argued the opposite — "a disc is a crop by
+   * definition, and a contained image leaves two crescents of background that
+   * read as a rendering fault". That is true of a photograph of a ROOM. It is
+   * exactly wrong for the photography this shop actually owns, which is
+   * white-sweep studio cutouts: the product centred, small in frame, floating
+   * in a large field of near-white. Cover-crop one into a 216px circle and the
+   * circle fills with sweep — a white disc with a fragment of acrylic across
+   * it, which is what the owner saw and read as a broken image. The larger the
+   * product sits in frame, the worse it gets, because cover clips whatever
+   * does not fit the square and the thing being sold is what gets clipped.
+   *
+   * So the medallion becomes what the source's is: a light PANEL with the
+   * product contained inside it and air all round. Three parts, and all three
+   * are load-bearing:
+   *
+   *   1. object-fit: contain, so the whole product survives at ANY source
+   *      aspect ratio — and this bucket mixes 900x900 hot tubs with 900x620
+   *      swim spas, so a rule that only works on squares is not a rule.
+   *   2. a --surface panel behind it. Contain leaves letterboxing wherever the
+   *      picture is not square, and the crescents the old note feared are real
+   *      — they just have to be the SAME white as the sweep, and then the
+   *      panel and the picture are one continuous field with a product in it.
+   *      A darker rung (--bg-alt, say) would draw the seam it is meant to hide.
+   *   3. padding, which is the air. inset:0 on an absolutely positioned image
+   *      resolves against its containing block's PADDING box, so padding here
+   *      is the only thing that insets it — sizing it with inline-size alone
+   *      does not, because a replaced element ignores inset-shrinking and
+   *      takes its intrinsic width instead. A tenth of the diameter reads as
+   *      generous at 300px and still leaves a legible product at the 160px
+   *      floor — and it is written as a division of the token rather than as
+   *      padding:10%, because percentage padding resolves against the
+   *      CONTAINING BLOCK, not the element. Stacked on a phone the medallion
+   *      is 160px inside a 340px column, so the percentage form quietly paid
+   *      it 34px of padding a side: 42% of the disc, and a product shrunk to
+   *      a smudge in the middle of it.
+   *
+   * The ring goes with it: a white disc on a near-black band needs no help
+   * being a shape, and a 16%-white hairline over white is invisible anyway.
+   *
+   * The DRAWN fallback keeps the dark disc above, because its mass and floor
+   * shadow are white-on-transparent mixes that would vanish on a light panel.
+   * Hence a modifier rather than a redefinition: the two interiors are lit
+   * differently because they are different things. */
+  :root[data-theme="studio"] .st-tst-disc--lit {
+    background: var(--surface);
+    padding: calc(var(--studio-tst-disc) / 10);
+    box-shadow: none;
+  }
   :root[data-theme="studio"] .st-tst-disc-photo {
     position: absolute;
     inset: 0;
     inline-size: 100%;
     block-size: 100%;
-    object-fit: cover;
-  }
-  :root[data-theme="studio"] .st-tst-disc {
-    position: relative;
-    overflow: hidden;
-    inline-size: clamp(180px, 15vw, 300px);
-    aspect-ratio: 1 / 1;
-    border-radius: var(--r-circle);
-    background: var(--studio-quote-disc);
-    box-shadow: inset 0 0 0 var(--bw-line) var(--studio-line-invert);
+    object-fit: contain;
   }
   :root[data-theme="studio"] .st-tst-disc-mass {
     position: absolute;
@@ -710,19 +845,36 @@ export const STUDIO_EDITORIAL_CSS = `
     );
   }
 
-  /* The two circular controls, BOTTOM RIGHT of the band (§4.10). 64px square
+  /* The two circular controls, TUCKED UNDER THE MEDALLION (§4.10). 64px square
    * with a 2px ring — --ctrl-circle-size and --bw-ctrl are tokens.ts's own
    * entries for exactly this control and had, until now, no consumer. 64px is
-   * comfortably past WCAG 2.5.8's 44px target, so the geometry is the hit
-   * area; no padding trickery is needed. */
+   * comfortably past WCAG 2.5.8's 44px target (and past 2.5.5 AAA's), so the
+   * geometry is the hit area; no padding trickery is needed.
+   *
+   * WHERE THEY SIT IS THE POINT. Flush to the container's right edge they
+   * floated in the band's bottom-right corner with nothing above or beside
+   * them — 1360px wide of nav holding 138px of buttons, aligned to an edge no
+   * other element on the band touched. Now the nav is the same stage as the
+   * scrollport, so it ends where the medallion ends, and the inner group is
+   * exactly the medallion's width with the pair centred in it: the controls
+   * hang on the vertical axis of the circle they page. Two rules, both
+   * expressed in the same two custom properties the row above is built from,
+   * so nothing can drift out of alignment. */
   :root[data-theme="studio"] .st-tst-nav {
     position: relative;
     z-index: 1;
     display: flex;
     justify-content: flex-end;
-    align-items: center;
-    gap: var(--gap-sm);
+    max-inline-size: var(--studio-tst-stage);
+    margin-inline: auto;
     margin-top: clamp(24px, 3vw, 60px);
+  }
+  :root[data-theme="studio"] .st-tst-nav-in {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap-sm);
+    inline-size: var(--studio-tst-disc);
   }
   /* THE RING IS THE CONTROL'S BOUNDARY, so WCAG 1.4.11's 3:1 applies to it:
    * --on-invert-mute is 7.33:1 on the band, with headroom to spare, and the
@@ -953,15 +1105,38 @@ export const STUDIO_EDITORIAL_CSS = `
     outline-offset: 3px;
   }
 
-  /* ---- Below 1080px: the ornament goes before the words do ---- */
+  /* ---- Below 1080px: the row becomes a column, and KEEPS the medallion ----
+   *
+   * It used to display:none here, on the argument that "the quote needs the
+   * width more than the band needs the ornament". That was sound while the
+   * medallion was one of THREE things in a row competing for horizontal
+   * space. It is not sound now: stacked above the quote it takes no width from
+   * anything, and without it a phone gets a lone column of small text under a
+   * centred heading — the band's whole composition reduced to one part. It is
+   * also lazy and far below the fold, so what it costs is bytes a phone only
+   * spends if the reader scrolls to it.
+   *
+   * The stage collapses to the reading measure alone, which keeps the stacked
+   * block centred in the container instead of stranded against the left gutter
+   * at tablet widths, and keeps the medallion, the quote and the controls on
+   * one shared left edge. */
   @media (max-width: 1080px) {
-    :root[data-theme="studio"] .st-tst-disc { display: none; }
-    :root[data-theme="studio"] .st-tst-fig {
-      grid-template-columns: auto minmax(0, 1fr);
-      grid-template-areas:
-        "por body"
-        "por cap";
+    :root[data-theme="studio"] {
+      --studio-tst-stage: min(100%, var(--studio-read-narrow));
     }
+    :root[data-theme="studio"] .st-tst-fig {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-areas:
+        "disc"
+        "body"
+        "cap";
+      justify-items: start;
+      row-gap: clamp(20px, 2.4vw, 32px);
+    }
+    /* The controls join that left edge rather than hanging off the right of a
+     * block they are no longer under. */
+    :root[data-theme="studio"] .st-tst-nav { justify-content: flex-start; }
+    :root[data-theme="studio"] .st-tst-nav-in { inline-size: auto; }
   }
 
   /* ---- Below 860px: everything stacks (§4.9 "stacks on mobile") ---- */
@@ -992,21 +1167,12 @@ export const STUDIO_EDITORIAL_CSS = `
     /* No .st-imp-claim reset here: the chips are inline-block, so a claim
      * wider than a very narrow viewport wraps internally on its own, and a
      * 390px phone gets one whole claim per centred line. */
-    /* Portrait above the quote: a 120px square beside the lead-xl quote leaves
-     * it about eleven characters per line at 390px. */
-    :root[data-theme="studio"] .st-tst-fig {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-areas:
-        "por"
-        "body"
-        "cap";
-      justify-items: start;
-    }
-    :root[data-theme="studio"] .st-tst-q { max-width: 100%; }
+    /* Nothing left for the testimonial band to do here: the 1080px rule above
+     * already stacked it into one column and pulled the medallion, the quote
+     * and the controls onto a shared left edge, and that is the phone layout.
+     * Two 64px circles plus the 10px gap is 138px, so the controls fit a
+     * 390px viewport with room to spare and keep their measured size. */
     :root[data-theme="studio"] .st-tst-mark { width: 110%; }
-    /* Two 64px circles plus the 10px gap is 138px — it fits a 390px viewport
-     * with room to spare, so the controls keep their measured size and simply
-     * stay where they are. */
   }
 
   /* ---- Motion ---- */
@@ -1180,38 +1346,6 @@ function motif(): string {
 }
 
 /**
- * The square portrait slot (§4.10).
- *
- * Seeded by shop AND index: the brief names `pick(PORTRAITS, ctx.shop.key)`,
- * and the offset is the one thing added to it, because two quotes signed by
- * two different people must not show the same face. That is what the offset
- * argument in media.ts exists for.
- *
- * Decorative — aria-hidden with an empty alt, and the launch gate in
- * media.ts still blocks `live: true` while it is on the page: these are the
- * source bundle's crops, not the shop's own customers.
- *
- * ONE THING TO FIX UPSTREAM, NOT HERE. media.ts describes PORTRAITS as
- * "testimonial photography", but only portrait-08 is a person: portrait-03 is
- * the eye motif again and portrait-05 is a dining chair. So this slot can
- * currently show a chair next to "Marjan K., Kranj". Re-curating that list is
- * a one-line change in media.ts and belongs there — filtering it from this
- * module would put the curation in two places and quietly disagree with the
- * launch gate that reads the same list.
- */
-function portrait(_ctx: RenderCtx, _i: number): string {
-  // These were stock portraits standing in for customers next to placeholder
-  // testimonials. A face is the strongest truth claim a review can carry, and
-  // this one would have been a stranger's, attached to words nobody said. It
-  // is the single worst image on the page to borrow, and it is gone.
-  //
-  // Kept as a function rather than deleted at the call sites: real reviews
-  // will bring real photographs through the same slot, and the caller's
-  // layout does not change.
-  return "";
-}
-
-/**
  * One quote: the body column plus the figure's caption, emitted as SIBLINGS —
  * <figcaption> is only a caption when it is a direct child of <figure>, so the
  * grid (not the source tree) is what places it under the quote.
@@ -1220,11 +1354,18 @@ function portrait(_ctx: RenderCtx, _i: number): string {
  * punctuation, so it is aria-hidden and the quote text itself is NOT wrapped
  * in a second pair of marks.
  *
- * "Preverjen nakup · MODEL" is a factual chip: this network publishes only
- * reviews it can tie to an order (content/types.ts), so every rendered quote
- * has earned it. CSS uppercases it — §1 sets every chip in tracked caps.
+ * THE CHIP IS OPTIONAL, AND THE LAYOUT DOES NOT NOTICE EITHER WAY. It names
+ * the model the review is about, and a review that does not name one must not
+ * render a chip trailing a separator with nothing after it. So `model` is an
+ * optional field here and an empty one renders no element at all: the caption
+ * is a flex row whose gap only exists between items that exist, and the
+ * attribution stands alone with no hole beside it. Nothing in the stylesheet
+ * is conditioned on the chip's presence or on what it says.
  */
-function quoteBlock(r: { q: string; who: string; model: string }): string {
+function quoteBlock(r: { q: string; who: string; model?: string }): string {
+  const chip = r.model
+    ? '<span class="st-tst-chip">Preverjen nakup · ' + esc(r.model) + "</span>"
+    : "";
   return (
     '<div class="st-tst-body">' +
     '<span class="st-tst-glyph" aria-hidden="true">„</span>' +
@@ -1232,7 +1373,7 @@ function quoteBlock(r: { q: string; who: string; model: string }): string {
     "</div>" +
     '<figcaption class="st-tst-cap">' +
     '<span class="st-tst-who">' + esc(r.who) + "</span>" +
-    '<span class="st-tst-chip">Preverjen nakup · ' + esc(r.model) + "</span>" +
+    chip +
     "</figcaption>"
   );
 }
@@ -1263,21 +1404,27 @@ function quoteBlock(r: { q: string; who: string; model: string }): string {
  */
 function sliderNav(last: string): string {
   return (
+    // The inner span is the ALIGNMENT, not decoration: the <nav> spans the
+    // stage so it ends where the medallion ends, and this group is the
+    // medallion's own width so the two controls centre on the circle's
+    // vertical axis instead of hanging off the band's right edge. Both
+    // measurements come from the same custom properties the row above uses.
     '<nav class="st-tst-nav" aria-label="Pomik po mnenjih">' +
+    '<span class="st-tst-nav-in">' +
     '<a class="st-tst-go st-arrow st-arrow--prev" data-st-prev href="#st-tst-1"' +
     ' aria-label="Prejšnje mnenje">' + arrowIcon("left") + "</a>" +
     '<a class="st-tst-go st-arrow" data-st-next href="' + esc(last) + '"' +
     ' aria-label="Naslednje mnenje">' + arrowIcon("right") + "</a>" +
-    "</nav>"
+    "</span></nav>"
   );
 }
 
 /**
  * §4.10 — the inverted testimonial band, as a real slider.
  *
- * One quote per view: portrait left, glyph + quote + attribution centre, the
- * circular product frame right, the two circular controls bottom right. The
- * markup is the behaviour contract and nothing more — `data-st-slider` on the
+ * One quote per view: glyph + quote + attribution left, the circular product
+ * medallion right, the two circular controls centred beneath the medallion.
+ * The markup is the behaviour contract and nothing more — `data-st-slider` on the
  * section, `data-st-scroll` on the scroller, `data-st-item` per quote,
  * `data-st-prev`/`data-st-next` on the controls — so behaviour.ts's generic
  * slider upgrades it and this module writes no JavaScript at all.
@@ -1297,21 +1444,29 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
       // is what lets that anchor move focus into a quote that is not itself
       // interactive.
       const id = "st-tst-" + String(i + 1);
+      // A photograph, not the grey disc. The rule in the stylesheet says the
+      // frame is composition and the picture inside it is inventory, "until a
+      // shop owns photography" — it owns 43 files now, and two empty discs
+      // beside the reviews were the last of the placeholder furniture on this
+      // page. Offset 17 + i keeps them off the pictures the bands above
+      // already took (5, 13, 22, 23, 25-30, 31) and off each other.
+      //
+      // The two interiors are lit differently, so the class says which one it
+      // is: --lit is the light panel a white-sweep cutout needs to sit on, and
+      // the drawn mass would disappear into it. `sizes` follows the medallion,
+      // which now survives below 1080px stacked above the quote — it is
+      // clamp(160px, 18vw, 300px), so 200px is a safe upper bound for every
+      // viewport under the breakpoint and 18vw describes the rest.
+      const lit = OWN_PHOTOS.length > 0;
+      const disc = lit
+        ? decorativeImg(pick(OWN_PHOTOS, ctx.shop.key, 17 + i), "st-tst-disc-photo", "(max-width: 1080px) 200px, 18vw")
+        : '<span class="st-tst-disc-mass"></span><span class="st-tst-disc-floor"></span>';
       return (
         '<li class="st-tst-slide" data-st-item id="' + esc(id) + '" tabindex="-1">' +
         '<figure class="st-tst-fig">' +
-        portrait(ctx, i) +
         quoteBlock(r) +
-        '<div class="st-tst-disc" aria-hidden="true">' +
-        // A photograph, not the grey disc. The rule above says the frame is
-        // composition and the picture inside it is inventory, "until a shop
-        // owns photography" — it owns 43 files now, and two empty discs beside
-        // the reviews were the last of the placeholder furniture on this page.
-        // Offset 17 + i keeps them off the pictures the bands above already
-        // took, and off each other.
-        (OWN_PHOTOS.length > 0
-          ? decorativeImg(pick(OWN_PHOTOS, ctx.shop.key, 17 + i), "st-tst-disc-photo", "(max-width: 1080px) 0px, 15vw")
-          : '<span class="st-tst-disc-mass"></span><span class="st-tst-disc-floor"></span>') +
+        '<div class="st-tst-disc' + (lit ? " st-tst-disc--lit" : "") + '" aria-hidden="true">' +
+        disc +
         "</div>" +
         "</figure></li>"
       );

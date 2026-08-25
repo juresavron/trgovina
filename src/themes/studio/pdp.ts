@@ -20,17 +20,32 @@
  *         pills — the contrast the baseline calls the easiest thing to get
  *         wrong.
  *
- * It also carries §4.13's two SECONDARY-PAGE devices, which no other module
- * built: renderStudioShopHero() (the dark listing-page band) and
- * renderStudioFilters() (the 380px sidebar). They sit here because the sidebar
- * is the configurator's own label/hairline/square/pill vocabulary, reused
- * class for class — and because, with no JS and no filtered URLs, it renders
- * as links rather than as controls that could not filter.
+ * WHAT THIS FILE NO LONGER CARRIES. It used to hold §4.13's two secondary-page
+ * devices as well — renderStudioShopHero() (a dark listing-page band with a
+ * 92px title and a grey product mass) and renderStudioFilters() (the 380px
+ * sidebar). Both were removed, with their stylesheets, after a second pass
+ * found that NO ROUTE had ever called either one: /masazni-bazeni and
+ * /swim-spa render commerce.ts's own collection head, and nothing else in the
+ * repo referenced the exports. Neither was worth wiring up, on its own merits:
+ *
+ *   - The hero would have put a SECOND h1 above a page whose own h1, intro and
+ *     meta description are the collection's (content/types.ts Collection), and
+ *     its media slot is a grey placeholder mass on a shop that now owns forty
+ *     photographs — the exact device studio.test.ts's "no placeholder masses
+ *     survive the photography" describes.
+ *   - The sidebar filtered nothing. This Worker has no query-parameter
+ *     filtering, so the device rendered as links to /trgovina, /primerjava,
+ *     /vodniki, /financiranje — four destinations the chrome nav and the
+ *     footer already carry, wearing checkbox and pill costumes that promise a
+ *     control they are not.
+ *
+ * Deleting them took ~150 lines of CSS off a sheet that is charged twice
+ * against the budget (render-blocking AND in the HTML payload — size.test.ts).
  *
  * Scale translation: this page carries NO measured type. §4's px numbers are
  * the screenshot pass and §1's ramp wins wherever the two touch type (§0), so
- * the devices' geometry is still read off §4 — the 380px sidebar, the 22px
- * checkbox, the 4/3 frame — while every font-size, weight, tracking and
+ * the devices' geometry is still read off §4 — the 22px
+ * checkbox, the square frame — while every font-size, weight, tracking and
  * leading below is a token from the transcribed ramp, taken a whole row at a
  * time. Nothing here sets a size without the weight, tracking and leading that
  * ship with it, and nothing here tracks negatively: the source's display type
@@ -56,7 +71,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import type { PdpContent, PdpPhoto } from "../../content/types";
+import type { Collection, PdpContent, PdpPhoto } from "../../content/types";
 import { productArt } from "./product-art";
 import { productImg } from "./media";
 import { helpIcon, returnIcon, shieldIcon, truckIcon } from "./icons";
@@ -76,12 +91,21 @@ export const STUDIO_PDP_CSS = `
      * gallery column (~693px at 1440: 10 × 60 + 9 × 10 gap = 690). The 56px
      * floor keeps five per row inside 390's 340px content box. */
     --studio-pdp-thumb: clamp(56px, 4.2vw, 60px);
-    /* §4.13: the sidebar's square 22px checkbox. */
+    /* §4.13's square 22px checkbox, kept for the configurator and the add-on
+     * rows (the sidebar that shared it is gone — see the file header). */
     --studio-pdp-box: clamp(16px, 1.1vw, 22px);
-    /* The buy bar sits at the bottom of the viewport for the whole page, so an
-     * in-page anchor scrolled flush to the bottom edge landed UNDERNEATH it.
-     * The bar is the chrome band's height (--chrome-h), plus its own block
-     * padding — reserve that much at the end of every scroll. */
+  }
+  /* The buy bar sits at the bottom of the viewport for the whole page, so an
+   * in-page anchor scrolled flush to the bottom edge landed UNDERNEATH it.
+   * The bar is the chrome band's height (--chrome-h), plus its own block
+   * padding — reserve that much at the end of every scroll.
+   *
+   * Gated on the bar EXISTING. It used to sit on :root unconditionally, which
+   * is a PDP module reaching every page in the theme: the home page, the
+   * collections and the fourteen editorial pages all reserved ~122px at the
+   * end of every anchor jump for a bar none of them render. :has() is already
+   * how this sheet asks whether a frame carries a caption. */
+  :root[data-theme="studio"]:has(.st-pdp-bar) {
     scroll-padding-bottom: calc(var(--chrome-h) + clamp(18px, 1.6vw, 32px));
   }
 
@@ -273,7 +297,11 @@ export const STUDIO_PDP_CSS = `
    * aspect-ratio, exactly as the stage's frames do. contain, same argument
    * as the big picture: cropping a cutout to fill 60px is how it stops
    * reading as the product. */
-  :root[data-theme="studio"] .st-pdp-thumb img {
+  /* Selected by CLASS, not as a descendant: the renderer already puts
+   * .st-pdp-thumb-img on it (productImg takes a class argument), and a class
+   * that matches no rule is markup that looks live and is not — ten of them
+   * per page. */
+  :root[data-theme="studio"] .st-pdp-thumb-img {
     display: block;
     inline-size: 100%;
     block-size: 100%;
@@ -282,6 +310,73 @@ export const STUDIO_PDP_CSS = `
 
   /* ---- buy column ------------------------------------------------------ */
   :root[data-theme="studio"] .st-pdp-buy { min-width: 0; }
+  /* Breadcrumb — the route back to the family.
+   *
+   * The page had none. The eyebrow under it is a TIER name ("VELIKI"), which
+   * is a fact about the model and not a link, so a visitor who landed on a
+   * €8,000 model from search had no way back to the three it sits between —
+   * and the crawler had no edge from the model to its collection, on a site
+   * whose whole strategy is that /masazni-bazeni and /swim-spa are the pages
+   * that rank.
+   *
+   * An <ol>: the order IS the hierarchy. The separator is a ::before on every
+   * item after the first rather than a character in the markup, because a
+   * typed "/" is read out loud on every crumb.
+   *
+   * Label rung, sentence case. The tier eyebrow in the column below is that
+   * same rung in CAPS, and a trail set in caps too would read as a second
+   * eyebrow rather than as navigation. Separation is by case and colour,
+   * which is what the ramp gives this file everywhere else. */
+  :root[data-theme="studio"] .st-pdp-crumbs ol {
+    /* It sits above the whole grid, so the step under it is the one that
+     * separates two devices rather than two lines of one. */
+    list-style: none; margin: 0 0 clamp(16px, 1.6vw, 30px); padding: 0;
+    display: flex; flex-wrap: wrap; align-items: center;
+    gap: 2px clamp(6px, 0.6vw, 12px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    /* --ink-mute is 4.6:1 on the white page ground — the lowest rung that
+     * still clears AA, and the one the unselected configurator rows take. */
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-pdp-crumbs li {
+    display: flex; align-items: center;
+    gap: clamp(6px, 0.6vw, 12px);
+    min-width: 0;
+  }
+  :root[data-theme="studio"] .st-pdp-crumbs li + li::before {
+    content: "/";
+    color: var(--ink-mute);
+  }
+  /* The links are the loud half: --ink-body, 9.7:1, so the trail reads as two
+   * destinations and one dimmer statement of where you are. */
+  :root[data-theme="studio"] .st-pdp-crumbs a {
+    color: var(--ink-body);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+  :root[data-theme="studio"] .st-pdp-crumbs a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-pdp-crumbs a:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+    border-radius: var(--r-ctrl);
+  }
+  /* The current page. One line at every width: a long model name would
+   * otherwise wrap the trail onto a second row for a crumb that is repeated
+   * in the h1 immediately below it. */
+  :root[data-theme="studio"] .st-pdp-crumbs [aria-current] {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
   /* The label rung, uppercase (§1). --ink-body = 9.7:1 on white. */
   :root[data-theme="studio"] .st-pdp-eyebrow {
     font-family: var(--f-label);
@@ -292,11 +387,13 @@ export const STUDIO_PDP_CSS = `
     text-transform: uppercase;
     color: var(--ink-body);
   }
-  /* h2, not h1 — and the choice is about how this page is composed. The title
-   * is the PDP's dominant heading, but it sits in a ~45% decision column beside
-   * a gallery that is the largest object on the page; it never spans a band.
-   * h1 (92/64/44) is the rung the full-bleed shop hero below takes, and keeping
-   * the two apart preserves the step this file always described. The
+  /* The h2 RUNG on the page's one h1 ELEMENT — heading level and type rung are
+   * independent, and this file says so about the group labels too. The title
+   * is the PDP's dominant heading, but it sits in a ~45% decision column
+   * beside a gallery that is the largest object on the page; it never spans a
+   * band, and h1's 92/64/44 is sized for something that does. (This comment
+   * used to justify the step against "the full-bleed shop hero below" — that
+   * device was dead code and is gone; the argument stands on the column.) The
    * 600 / −0.022em / 1.15 this rule used to carry was the measured pass: §1's
    * display type is 500, tracked 0em, led 1.13em, and is never negative. */
   :root[data-theme="studio"] .st-pdp-title {
@@ -366,6 +463,20 @@ export const STUDIO_PDP_CSS = `
     font-weight: var(--w-label);
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
+    color: var(--ink-body);
+  }
+  /* The provisional disclosure under the price. Same rung and colour as "z
+   * DDV" beside the number, because it is the same kind of statement — a
+   * qualification of the figure, not a footnote about it. --ink-body (9.7:1)
+   * and not --ink-mute: a disclosure nobody reads is a disclosure that has
+   * not been made. */
+  :root[data-theme="studio"] .st-pdp-prov {
+    margin-top: clamp(6px, 0.5vw, 10px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label);
     color: var(--ink-body);
   }
 
@@ -680,6 +791,24 @@ export const STUDIO_PDP_CSS = `
     color: var(--ink);
   }
   :root[data-theme="studio"] .st-pdp-panel summary::-webkit-details-marker { display: none; }
+  /* The panel's label is an <h3> inside the summary, not loose text.
+   *
+   * "Tehnični podatki", "Opis izdelka", "Mere in teža", "Garancija" are the
+   * page's section headings by every measure except the document outline —
+   * they were the only h6-scale type on the page that a screen-reader user
+   * navigating by heading could not reach, and they carry the keywords a
+   * product page is actually read for. h3 rather than h2: they sit under the
+   * h2 group labels above them, and structure.test.ts fails a skipped level.
+   *
+   * It inherits everything, so summary keeps being the one place the panel's
+   * type is declared and the ::after chevron keeps its flex row. */
+  :root[data-theme="studio"] .st-pdp-panel-h {
+    margin: 0;
+    min-width: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+  }
   /* The chevron is drawn, not a marker glyph: a border-only square rotated
    * 45 degrees is one element and matches the hairline weight everywhere
    * else on the page. */
@@ -1169,174 +1298,15 @@ export const STUDIO_PDP_CSS = `
      * the reading area for a summary of what is already on screen. It goes
      * back into the flow, and the scroll reserve above goes with it. */
     :root[data-theme="studio"] .st-pdp-bar { position: static; }
-    :root[data-theme="studio"] { scroll-padding-bottom: 0; }
+    /* Same :has() gate as the declaration it undoes — without it this rule is
+     * a specificity step BELOW the one above and would never win. */
+    :root[data-theme="studio"]:has(.st-pdp-bar) { scroll-padding-bottom: 0; }
   }
 
-  /* ==== §4.13 secondary-page devices ==================================== */
-  /* The baseline measures two devices for the shop/listing page that no
-   * module had yet built: the dark shop hero and the 380px filter sidebar.
-   * They live here because they share this file's vocabulary — the sidebar IS
-   * the configurator's label/hairline/square/pill set, reused class for class
-   * rather than restyled. */
-
-  /* ---- shop hero: dark band, 90px title left, product right ----------- */
-  :root[data-theme="studio"] .st-shop-hero {
-    /* Positioned so the media that bleeds past the band's bottom edge paints
-     * OVER the section that follows instead of under it. */
-    position: relative;
-    z-index: 1;
-    background: var(--ink-invert);
-    color: var(--on-invert);
-    padding-block: var(--studio-rhythm);
-  }
-  :root[data-theme="studio"] .st-shop-hero-in {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
-    gap: clamp(28px, 4vw, 90px);
-    align-items: end;
-  }
-  :root[data-theme="studio"] .st-shop-hero-eyebrow {
-    font-family: var(--f-label);
-    font-size: var(--t-label);
-    font-weight: var(--w-label);
-    letter-spacing: var(--ls-label);
-    line-height: var(--lh-label-tight);
-    text-transform: uppercase;
-    color: var(--on-invert-mute);
-  }
-  /* h1 — the listing page's one dominant statement, spanning a full-bleed dark
-   * band, and the only h1-scale device in this file. §4.13 measured it at 90px,
-   * which is within a hair of the ramp's 92; the ramp value is the real one.
-   * The PDP title takes h2 for the reason given there. */
-  :root[data-theme="studio"] .st-shop-hero-h {
-    margin: clamp(14px, 1.4vw, 28px) 0 0;
-    font-family: var(--f-display);
-    font-weight: var(--w-display);
-    font-size: var(--t-h1);
-    letter-spacing: var(--ls-h1);
-    line-height: var(--lh-h1);
-    color: var(--on-invert);
-    overflow-wrap: break-word;
-    hyphens: none;
-  }
-  /* The lead rung — a standfirst under the page title (§4.13's 21px is the
-   * screenshot pass). --on-invert-mute is the rung tokens.ts carries for
-   * exactly this: quiet against the band without dropping under AA. */
-  :root[data-theme="studio"] .st-shop-hero-sub {
-    margin: clamp(12px, 1.2vw, 24px) 0 0;
-    font-family: var(--f-body);
-    font-size: var(--t-lead);
-    font-weight: var(--w-body-med);
-    letter-spacing: var(--ls-body);
-    line-height: var(--lh-lead);
-    color: var(--on-invert-mute);
-    max-width: 46ch;
-  }
-  :root[data-theme="studio"] .st-shop-hero-media {
-    position: relative;
-    aspect-ratio: 4 / 3;
-    /* A column: the caption takes the first row IN FLOW and the mass fills
-     * the rest. It was absolutely positioned over the top-left corner, which
-     * ran its second half across the grey mass at ~1.4:1 — the one line on
-     * this band whose job is a disclosure ("this is a visualization") was
-     * the one line nobody could read. */
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap-sm);
-    /* THE BLEED: the product hangs below the band's bottom edge. */
-    margin-bottom: calc(-1 * clamp(20px, 3.4vw, 76px));
-  }
-  /* Thin concentric outlines behind the product. They are drawn in the band's
-   * white ink, so the rings simply stop existing where the media crosses onto
-   * the page below — which is exactly how the source reads. */
-  :root[data-theme="studio"] .st-shop-hero-ring {
-    position: absolute;
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    aspect-ratio: 1;
-    border: 1px solid color-mix(in srgb, var(--on-invert) 18%, transparent);
-    border-radius: var(--r-circle);
-  }
-  :root[data-theme="studio"] .st-shop-hero-ring:nth-child(1) { inline-size: 98%; }
-  :root[data-theme="studio"] .st-shop-hero-ring:nth-child(2) { inline-size: 76%; }
-  :root[data-theme="studio"] .st-shop-hero-ring:nth-child(3) { inline-size: 54%; }
-  /* Photo-ready slot. Opaque mid grey, not a translucent wash: half of it
-   * hangs over the white page below, and a wash would vanish there. */
-  :root[data-theme="studio"] .st-shop-hero-mass {
-    position: relative;
-    z-index: 1;
-    display: block;
-    margin-inline: auto;
-    inline-size: 62%;
-    /* Fills whatever the caption row leaves (see .st-shop-hero-media). */
-    flex: 1 1 auto;
-    min-block-size: 0;
-    border-radius: var(--r-media);
-    border: 1px solid color-mix(in srgb, var(--on-invert) 22%, transparent);
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--tile-mid) 82%, var(--ink-invert)),
-      color-mix(in srgb, var(--tile-mid) 48%, var(--ink-invert))
-    );
-  }
-  /* In flow (first row of the media column) — never over the mass, so it
-   * only ever sits on the band, where --on-invert-mute is 7.33:1. */
-  :root[data-theme="studio"] .st-shop-hero-cap {
-    font-family: var(--f-label);
-    font-size: var(--t-label);
-    font-weight: var(--w-label);
-    letter-spacing: var(--ls-label);
-    line-height: var(--lh-label-tight);
-    text-transform: uppercase;
-    color: var(--on-invert-mute);
-  }
-
-  /* ---- filter sidebar: 380px column ----------------------------------- */
-  /* Presentation only, and honest about it: every row is a LINK to a page
-   * that exists. Nothing here filters, so nothing here is a checkbox — the
-   * squares and pills are the measured vocabulary, marked aria-hidden, and
-   * the labels are the link text. */
-  :root[data-theme="studio"] .st-filters {
-    inline-size: 100%;
-    max-inline-size: 380px;
-    display: flex; flex-direction: column;
-    gap: clamp(20px, 2vw, 40px);
-  }
-  :root[data-theme="studio"] .st-filters a.st-pdp-opt,
-  :root[data-theme="studio"] .st-filters a.st-pdp-pill {
-    text-decoration: none;
-    transition: color 0.2s ease, border-color 0.2s ease;
-  }
-  :root[data-theme="studio"] .st-filters a.st-pdp-opt:hover { color: var(--ink); }
-  :root[data-theme="studio"] .st-filters a.st-pdp-opt:hover .st-pdp-box {
-    border-color: var(--ink);
-  }
-  :root[data-theme="studio"] .st-filters a.st-pdp-pill:hover {
-    border-color: var(--line-strong);
-    color: var(--ink);
-  }
-  /* Sharp ring on the row (it carries a word), round on the pill (§3/§9). */
-  :root[data-theme="studio"] .st-filters a.st-pdp-opt:focus-visible {
-    outline: 2px solid var(--acc);
-    outline-offset: 3px;
-    border-radius: var(--r-ctrl);
-  }
-  :root[data-theme="studio"] .st-filters a.st-pdp-pill:focus-visible {
-    outline: 2px solid var(--acc);
-    outline-offset: 3px;
-    border-radius: var(--r-pill);
-  }
-
-  @media (max-width: 900px) {
-    /* Title over product, and the bleed goes away with the two-column layout:
-     * a stacked media that hangs into the next section reads as a mistake. */
-    :root[data-theme="studio"] .st-shop-hero-in { grid-template-columns: minmax(0, 1fr); }
-    :root[data-theme="studio"] .st-shop-hero-media { margin-bottom: 0; }
-    :root[data-theme="studio"] .st-filters { max-inline-size: none; }
-  }
+  /* (§4.13's two secondary-page devices — the dark .st-shop-hero band and
+   * the .st-filters sidebar — were removed here along with their renderers.
+   * No route ever called either one; see the file header for why neither was
+   * worth wiring up. 166 lines of CSS for markup nothing emitted.) */
 
   /* ---- motion ---------------------------------------------------------- */
   @media (prefers-reduced-motion: reduce) {
@@ -1345,9 +1315,8 @@ export const STUDIO_PDP_CSS = `
      * its sticky position — that is layout, not motion. */
     :root[data-theme="studio"] .st-pdp-cta,
     :root[data-theme="studio"] .st-pdp-cfg-note a,
-    :root[data-theme="studio"] .st-pdp-thumb,
-    :root[data-theme="studio"] .st-filters a.st-pdp-opt,
-    :root[data-theme="studio"] .st-filters a.st-pdp-pill {
+    :root[data-theme="studio"] .st-pdp-crumbs a,
+    :root[data-theme="studio"] .st-pdp-thumb {
       transition: none;
       transform: none;
     }
@@ -1434,21 +1403,95 @@ function compareAt(d: PdpContent): string | null {
 }
 
 /**
+ * The COLLECTION this model belongs to, or null.
+ *
+ * Read off the collection's own product list rather than guessed from the
+ * slug: content/types.ts says a Collection owns its products, and a shop that
+ * moves a model between families should not need this file edited. Two
+ * devices need it — the breadcrumb and "Ostali modeli" — and both would
+ * otherwise be answering "which family is this?" with a different rule.
+ */
+function family(ctx: RenderCtx): Collection | null {
+  const slug = ctx.pdp.slug;
+  for (const c of ctx.content.collections ?? []) {
+    if (c.products.some((p) => p.slug === slug)) return c;
+  }
+  return null;
+}
+
+/**
+ * The breadcrumb: shop → family → this model.
+ *
+ * WHY IT EXISTS. The page had no route back to its family at all. The eyebrow
+ * under the title is a tier name ("VELIKI"), which is a fact about the model
+ * rather than a link, so somebody who landed on a €8,000 shell from search
+ * could reach the cart, the phone number and fourteen add-ons — but not the
+ * two other shells it sits between. The crawler had the same problem in
+ * reverse: /masazni-bazeni links down to nine models and nothing linked back
+ * up, on a site whose ranking pages ARE the two collection URLs.
+ *
+ * The last crumb is the current page, unlinked and marked aria-current="page"
+ * — the shape schema.org's BreadcrumbList expects, so the structured data can
+ * be added later WITHOUT the visible trail and the markup disagreeing (see
+ * the note in renderStudioPdp about where that belongs).
+ *
+ * Nothing renders where a shop has no collections: the hub route itself only
+ * exists when it has some (src/worker.ts), so a two-crumb trail to a 404 is
+ * the one outcome worse than no trail.
+ */
+function crumbs(ctx: RenderCtx): string {
+  const fam = family(ctx);
+  if (!fam) return "";
+  const hub = ctx.shop.routeSlugs["/products"];
+  // The nav's own word for the hub, so the crumb and the chrome bar can never
+  // drift apart — the same argument the configurator's labels take.
+  const trail: readonly (readonly [string, string])[] = [
+    [hub, ctx.content.nav[0]],
+    [fam.path, fam.navLabel],
+  ];
+  return (
+    '<nav class="st-pdp-crumbs" aria-label="Drobtinice"><ol>' +
+    trail
+      .map(
+        ([href, label]) =>
+          '<li><a href="' + esc(href + ctx.q) + '">' + esc(label) + "</a></li>",
+      )
+      .join("") +
+    '<li><span aria-current="page">' + esc(ctx.pdp.title) + "</span></li>" +
+    "</ol></nav>"
+  );
+}
+
+/**
  * "Ostali modeli" — the source's "You may also like", built from the shop's
  * own range rather than a recommendation engine.
  *
- * Three cards, the models nearest this one in the catalogue order, which is
- * ordered by shell size and jet count — so the neighbours really are the
- * closest alternatives rather than three arbitrary rows. A shop with no
- * catalogue renders nothing at all instead of an empty band.
+ * Three cards, and THE MODEL'S OWN FAMILY FIRST. It used to walk the flat
+ * catalogue order, which on /bazen/veliki-230 offered a 2.520 € hot tub and
+ * two swim spas at 6.320 € and 7.850 € — the range boundary falls in the
+ * middle of the neighbour window, so two of the three "alternatives" were a
+ * different product at two and a half times the price. Within a family the
+ * order is shell size and jet count, so the neighbours really are the closest
+ * alternatives; the rest of the catalogue only fills seats the family cannot.
+ *
+ * A shop with no catalogue renders nothing at all instead of an empty band.
  */
 function alsoLike(ctx: RenderCtx): string {
   const all = ctx.content.pdps ?? [];
   if (all.length < 2) return "";
-  const here = all.findIndex((x) => x.slug === ctx.pdp.slug);
-  const rest = all.filter((_, i) => i !== here);
-  const start = Math.min(Math.max(0, here - 1), Math.max(0, rest.length - 3));
-  const picks = rest.slice(start, start + 3);
+  const fam = family(ctx);
+  const kin = fam ? new Set(fam.products.map((p) => p.slug)) : null;
+  const rest = all.filter((x) => x.slug !== ctx.pdp.slug);
+  const near = (list: PdpContent[]): PdpContent[] => {
+    const here = list.findIndex((x) => x.slug === ctx.pdp.slug);
+    const start = Math.min(Math.max(0, here - 1), Math.max(0, list.length - 3));
+    return list.slice(start, start + 3);
+  };
+  // Same family, in catalogue order, windowed on this model; then the rest of
+  // the range in its own order to fill a family too small to give three.
+  const own = kin ? near(all.filter((x) => kin.has(x.slug))).filter((x) => x.slug !== ctx.pdp.slug) : [];
+  const seen = new Set(own.map((x) => x.slug));
+  const picks = [...own, ...rest.filter((x) => !seen.has(x.slug))].slice(0, 3);
   if (picks.length === 0) return "";
 
   const base = ctx.shop.routeSlugs["/product"] + "/";
@@ -1553,6 +1596,7 @@ function gallery(ctx: RenderCtx): string {
 export function renderStudioPdp(ctx: RenderCtx): string {
   const d = ctx.pdp;
   const was = compareAt(d);
+  const provisional = d.pricesProvisional === true;
 
   const cfg = d.cfg
     .map((g, gi) => {
@@ -1689,12 +1733,14 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     .join("");
   const panels =
     '<div class="st-pdp-panels">' +
-    '<details class="st-pdp-panel" open><summary>Tehnični podatki</summary>' +
+    '<details class="st-pdp-panel" open><summary>' +
+    '<h3 class="st-pdp-panel-h">Tehnični podatki</h3></summary>' +
     '<div class="st-pdp-panel-b"><dl class="st-pdp-spec-table">' + specRows + "</dl></div></details>" +
     (d.panels ?? [])
       .map(
         (x) =>
-          '<details class="st-pdp-panel"><summary>' + esc(x[0]) + "</summary>" +
+          '<details class="st-pdp-panel"><summary>' +
+          '<h3 class="st-pdp-panel-h">' + esc(x[0]) + "</h3></summary>" +
           '<div class="st-pdp-panel-b"><p>' + esc(x[1]) + "</p></div></details>",
       )
       .join("") +
@@ -1738,6 +1784,14 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<section class="st-pdp">' +
     '<div class="st-pdp-in">' +
 
+    // Above the grid, not inside the buy column. The grid puts the gallery
+    // first in the DOM so it can be column one on desktop, so a breadcrumb in
+    // the buy column lands ~600px down a phone — below the stage and both
+    // rows of thumbs — which is nowhere for a navigation aid. Here it is the
+    // first thing in <main> at every width, which is where a <nav> landmark
+    // is looked for and where every other storefront puts this trail.
+    crumbs(ctx) +
+
     '<div class="st-pdp-grid">' +
     // --- gallery: one stage plus a thumb strip (see gallery()). data-st-slider
     // arms behaviour.ts only when there is more than one photograph — with one
@@ -1753,7 +1807,8 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<h1 class="st-pdp-title">' + esc(d.title) + "</h1>" +
     // Price directly under the title, as the source has it. It used to sit
     // below the paragraph, which buried the one number the page is about.
-    '<p class="st-pdp-price">' +
+    '<p class="st-pdp-price"' +
+    (provisional ? ' aria-describedby="st-pdp-prov"' : "") + ">" +
     // The struck price's only cue is the line through it, and most screen
     // readers announce neither <s> nor text-decoration — so the row would read
     // as two unqualified prices, the higher one last. A hidden word inside
@@ -1765,8 +1820,21 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       ? '<s class="st-pdp-was"><span class="st-pdp-vh">prejšnja cena </span>' +
         esc(was) + "</s>"
       : "") +
-    '<span class="st-pdp-vat">z DDV</span>' +
+    // "z DDV" only where there IS a price. With the dash (PRICE_UNSET, shown
+    // when catalog/pricing.ts can derive nothing) the row read "— z DDV",
+    // which states a tax treatment for a figure that does not exist.
+    (d.priceCents > 0 ? '<span class="st-pdp-vat">z DDV</span>' : "") +
     "</p>" +
+    // The provisional disclosure, AT the price. The same sentence already
+    // renders under the add-on total, ~2,000px further down and behind
+    // fourteen checkboxes — which is a note about the total, not about the
+    // number a visitor reads first. ZVPot (Directive 98/6/EC) is about the
+    // price shown against an identified product being clear at the point it
+    // is shown; a €8,000 figure that reads as final for two thousand pixels
+    // is not. Verbatim, not rewritten: the claim is the content layer's.
+    (provisional
+      ? '<p class="st-pdp-prov" id="st-pdp-prov">Cene so informativne in še niso dokončne.</p>'
+      : "") +
     '<p class="st-pdp-sub">' + esc(d.sub) + "</p>" +
     finishes +
     buy +
@@ -1814,121 +1882,12 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   );
 }
 
-/* ==== §4.13 secondary-page devices ====================================== */
-
-/** Slovenian sentence case: only the first letter, and via the shop's locale. */
-function upperFirst(s: string, locale: string): string {
-  const first = Array.from(s)[0];
-  return first ? first.toLocaleUpperCase(locale) + s.slice(first.length) : s;
-}
-
-/**
- * §4.13 — the shop hero.
+/* ==== REMOVED: §4.13's two secondary-page devices ======================= *
  *
- * "Dark band, page title 90px left with 21px sub; product photo right with
- * thin white circle outlines behind it, bleeding below the band." The px are
- * §4's screenshot pass; the band takes §1's h1 and lead rungs, which is the
- * same reading of the device at the transcribed sizes.
- *
- * Copy comes from what the shop already states about itself — the keyword's
- * plural is the listing page's title in every one of these stores, and the
- * kicker/sub are the shop's own hand-written lines — so nothing here is
- * templated prose and no caller has to invent a heading. Both are overridable
- * for the pages that carry their own.
+ * renderStudioShopHero(), renderStudioFilters() and their upperFirst() helper
+ * stood here for months and NO ROUTE ever called any of them — not
+ * renderCollection() in src/render/page.ts, not renderShopHub(), not
+ * src/themes/studio/index.ts, which never re-exported them. They were dead on
+ * arrival, and the file header records the merits argument for leaving them
+ * dead rather than wiring them up. Their stylesheets went with them.
  */
-export function renderStudioShopHero(ctx: RenderCtx, title?: string, sub?: string): string {
-  const s = ctx.shop;
-  const h = title ?? upperFirst(s.keyword.plural, s.locale.intl);
-  const p = sub ?? ctx.content.sub;
-
-  return (
-    '<section class="st-shop-hero"><div class="st-shop-hero-in">' +
-    "<div>" +
-    '<p class="st-shop-hero-eyebrow">' + esc(ctx.content.kicker) + "</p>" +
-    '<h1 class="st-shop-hero-h">' + esc(h) + "</h1>" +
-    '<p class="st-shop-hero-sub">' + esc(p) + "</p>" +
-    "</div>" +
-    // Decorative throughout: the rings and the mass carry no fact, and the
-    // caption states what the reader is actually looking at.
-    '<div class="st-shop-hero-media">' +
-    '<span class="st-shop-hero-cap">Vizualizacija — fotografije v pripravi</span>' +
-    '<span class="st-shop-hero-ring" aria-hidden="true"></span>' +
-    '<span class="st-shop-hero-ring" aria-hidden="true"></span>' +
-    '<span class="st-shop-hero-ring" aria-hidden="true"></span>' +
-    '<span class="st-shop-hero-mass" aria-hidden="true"></span>' +
-    "</div>" +
-    "</div></section>"
-  );
-}
-
-/**
- * §4.13 — the 380px filter sidebar.
- *
- * "Uppercase label + hairline, square 22px checkboxes with 19px labels, and
- * availability as outlined round pills." The 22px box is geometry and stands;
- * the 19px is §4's screenshot pass, and the rows take §1's body rung — they
- * reuse the configurator's classes, so they take its type with them.
- *
- * This Worker ships no JS and the catalogue has no query-parameter filtering,
- * so a checkbox here could not filter anything — and a control that cannot act
- * is worse than no control. The device is therefore rendered as what it can
- * honestly be: a column of LINKS to pages that exist, wearing the measured
- * vocabulary. The square markers and the pill outlines are the decoration;
- * the link text is the content. It reuses the configurator's classes rather
- * than restyling them, because it is literally the same device.
- *
- * When real filtering lands, the rows become <a> elements pointing at filtered
- * URLs — the markup shape does not change.
- */
-export function renderStudioFilters(ctx: RenderCtx): string {
-  const s = ctx.shop;
-  const c = ctx.content;
-
-  /** Escaped, dev-query-carrying href for one internal route. */
-  const href = (k: keyof typeof s.routeSlugs): string => esc(s.routeSlugs[k] + ctx.q);
-
-  // Square-marker rows: the shop's own sections, in the order the chrome nav
-  // states them, so the sidebar and the bar never disagree.
-  const rows: readonly (readonly [string, string])[] = [
-    [href("/products"), c.nav[0]],
-    [href("/compare"), c.nav[1]],
-    [href("/guides"), c.nav[2]],
-    [href("/financing"), "Financiranje"],
-  ] as const;
-
-  // Round pills: availability, as the baseline has it — each one a service the
-  // shop actually offers, linking to the page that spells it out.
-  const pills: readonly (readonly [string, string])[] = [
-    [href("/delivery"), "Dostava in montaža"],
-    [href("/showroom"), "Ogled v salonu"],
-    [href("/faq"), "Pogosta vprašanja"],
-  ] as const;
-
-  const box = '<span class="st-pdp-box" aria-hidden="true">' + CHECK + "</span>";
-
-  return (
-    '<aside class="st-filters" aria-label="Razdelki trgovine">' +
-    "<div>" +
-    '<h2 class="st-pdp-glabel" id="st-filters-a">Ponudba</h2>' +
-    '<ul class="st-pdp-opts" aria-labelledby="st-filters-a">' +
-    rows
-      .map(
-        ([h, label]) =>
-          '<li><a class="st-pdp-opt" href="' + h + '">' + box +
-          "<span>" + esc(label) + "</span></a></li>",
-      )
-      .join("") +
-    "</ul></div>" +
-    "<div>" +
-    '<h2 class="st-pdp-glabel" id="st-filters-b">Razpoložljivost</h2>' +
-    '<ul class="st-pdp-pills" aria-labelledby="st-filters-b">' +
-    pills
-      .map(
-        ([h, label]) =>
-          '<li><a class="st-pdp-pill" href="' + h + '">' + esc(label) + "</a></li>",
-      )
-      .join("") +
-    "</ul></div>" +
-    "</aside>"
-  );
-}

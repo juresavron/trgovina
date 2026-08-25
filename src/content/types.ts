@@ -213,6 +213,16 @@ export interface ShopContent {
    * than printing every model itself.
    */
   collections?: Collection[];
+  /**
+   * The shop hub's own meta description.
+   *
+   * It used to fall back to `metaDescription`, which is the HOME page's — so
+   * two indexable pages shipped identical descriptions, and a search engine
+   * choosing between them has nothing to choose on. Every collection already
+   * carries its own; the hub is the page that was missed because it has no
+   * Collection record of its own.
+   */
+  hubMetaDescription?: string;
   moat: {
     h2: string;
     steps: [string, string][];

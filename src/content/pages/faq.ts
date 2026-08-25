@@ -1,5 +1,27 @@
 import type { Page } from "../pages";
 
+/**
+ * The questions the shop is actually asked. Three answers here are checkable
+ * against the rest of the site rather than against a copywriter's memory:
+ *
+ *   WHAT THE PRICE COVERS follows the product pages, which are the page a
+ *   customer reads a figure on. PdpContent.freight in content/bazen.ts marks
+ *   the site survey and the commissioning "vključeno" and the delivery itself
+ *   "po ponudbi". This page said the price included delivery; it did not, and
+ *   a price composition stated one way here and another way beside the number
+ *   is the kind of contradiction ZVPot exists to punish.
+ *
+ *   THE GUARANTEE is 2–5 years by section, from the same product pages, and
+ *   is the MANUFACTURER'S voluntary one. The consumer's statutory remedy for
+ *   non-conforming goods is separate, runs against the seller and lasts two
+ *   years from delivery (ZVPot-1, transposing Directive (EU) 2019/771), so
+ *   the two are named separately rather than merged into "garancija".
+ *
+ *   THE WITHDRAWAL ANSWER CLAIMS NO EXEMPTION. It used to send people to "the
+ *   exception for installed goods" on the withdrawal page — which states no
+ *   such exception, deliberately (see pages/odstop.ts). A cross-reference to
+ *   a right-limiting rule that does not exist is worse than no answer.
+ */
 export const FAQ: Page = {
   key: "/faq",
   h1: "Pogosta vprašanja",
@@ -14,12 +36,13 @@ export const FAQ: Page = {
       items: [
         [
           "Kam lahko postavim masažni bazen?",
-          "Na podlago, ki nosi težo polnega bazena z ljudmi — to je pri masažnih bazenih preko " +
-            "dveh ton, pri swim spa bazenih bistveno več. Betonska plošča in ustrezno " +
-            "dimenzionirana terasa sta v redu. Ali to velja za vašo lokacijo, preverimo ob ogledu.",
+          "Na podlago, ki nosi težo napolnjenega bazena in ljudi v njem. Masažni bazen tehta " +
+            "napolnjen od 1.500 do 2.210 kilogramov, swim spa bazen od 5.750 do 8.490 " +
+            "kilogramov. Betonska plošča in ustrezno dimenzionirana terasa sta v redu; ali to " +
+            "velja za vašo lokacijo, preverimo ob ogledu.",
         ],
         [
-          "Ali ga lahko postavim v notranjost?",
+          "Ali ga lahko postavim v zaprt prostor?",
           "Da, vendar je treba rešiti prezračevanje in odtok. Zaprt prostor s toplo vodo pomeni " +
             "veliko vlage; brez prezračevanja se ta nabira v konstrukciji.",
         ],
@@ -46,7 +69,7 @@ export const FAQ: Page = {
             "Postopek pokažemo ob predaji.",
         ],
         [
-          "Kako pogosto se menja voda?",
+          "Kako pogosto je treba zamenjati vodo?",
           "Ob normalni uporabi in pravilnem doziranju nekajkrat letno. Točen ritem je odvisen od " +
             "števila kopalcev in kakovosti vzdrževanja.",
         ],
@@ -62,9 +85,11 @@ export const FAQ: Page = {
       h: "Nakup in dostava",
       items: [
         [
-          "Ali je dostava vključena v ceno?",
-          "Da. Cena modela vključuje dostavo, priklop in zagon po vsej Sloveniji. Ne vključuje " +
-            "priprave podlage in elektroinštalacije na vaši strani.",
+          "Kaj je vključeno v ceno modela?",
+          "Ogled lokacije pred dostavo, zagon, umeritev in predaja. Dostavo z ekipo in opremo " +
+            "za prenos obračunamo po ponudbi, ker je odvisna od lokacije in dostopa; znesek je " +
+            "v pisni ponudbi, preden karkoli potrdite. V ceni ni priprave podlage in " +
+            "elektroinštalacije na vaši strani.",
         ],
         [
           "Kako dolgo traja od naročila do dostave?",
@@ -73,7 +98,7 @@ export const FAQ: Page = {
         ],
         [
           "Ali lahko bazen vidim v živo?",
-          "Da, v razstavnem prostoru. Za obisk se dogovorimo vnaprej po telefonu.",
+          "Da, razstavni bazen je v Ljubljani. Za obisk se dogovorimo vnaprej po telefonu.",
         ],
         [
           "Ali je mogoče plačilo na obroke?",
@@ -88,9 +113,11 @@ export const FAQ: Page = {
       items: [
         [
           "Kakšna je garancija?",
-          "Garancijski rok in obseg sta navedena v garancijskem listu, ki ga dobite ob predaji, " +
-            "in se razlikujeta po sklopih (školjka, oprema, obloga). Poleg garancije vam kot " +
-            "potrošniku pripadajo tudi zakonske pravice iz naslova neskladnosti blaga.",
+          "Od dveh do petih let, odvisno od sklopa; rok in obseg sta navedena v garancijskem " +
+            "listu, ki ga dobite ob predaji. Garancija je prostovoljna zaveza proizvajalca. " +
+            "Ločeno od nje in poleg nje imate kot potrošnik zakonske pravice pri neskladnosti " +
+            "blaga: za neskladnost, ki se pokaže v dveh letih od dobave, odgovarjamo mi kot " +
+            "prodajalec.",
         ],
         [
           "Kdo popravi okvaro?",
@@ -99,8 +126,10 @@ export const FAQ: Page = {
         ],
         [
           "Ali lahko bazen vrnem?",
-          "Kot potrošnik imate pri nakupu na daljavo 14 dni za odstop od pogodbe. Postopek in " +
-            "izjema pri montiranem blagu sta opisana na strani o odstopu od pogodbe.",
+          "Kot potrošnik imate pri nakupu na daljavo 14 dni za odstop od pogodbe, brez " +
+            "navedbe razloga. Ker je bazen težak in praviloma že priklopljen, ga ne vračate " +
+            "sami — odvoz izvedemo mi. Rok, postopek in stroški so opisani na strani o odstopu " +
+            "od pogodbe.",
         ],
       ],
     },

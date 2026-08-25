@@ -50,9 +50,12 @@
  * figure label and caption the label role.
  *
  * Accent budget (§5.4): the shop hue is spent in exactly three places on the
- * whole storefront. This module owns ONE of them — the second half of the
- * stats claim (.st-claim-acc). Nothing else here is accented, focus rings
- * included; they follow chrome.ts and use --ink / --on-invert.
+ * whole storefront. This module used to own one of them — the second half of
+ * the stats claim (.st-claim-acc) — and no longer owns any. The source sets
+ * that sentence in one ink throughout, and side by side the two-tone split was
+ * the loudest reason our band read less refined than its; the slot is given up
+ * rather than moved. Nothing here is accented now, focus rings included; they
+ * follow chrome.ts and use --ink / --on-invert.
  *
  * Token discipline (docs/THEMES.md): colors, radii and faces are var(--…)
  * only. Every selector is scoped :root[data-theme="studio"] — zarja/lednik/
@@ -374,10 +377,33 @@ export const STUDIO_STATEMENT_CSS = `
   /* The signature paragraph: a big editorial statement, which is exactly what
    * lead-xl is for — the ramp's prose pull-quote rung (§1, §4.8). It is a <p>,
    * not a heading, and lead-xl is a prose rung, so the face follows the role.
-   * 1296px is the source's own container for this section — the one measure it
-   * narrows below the page container, because a CENTRED paragraph needs a
-   * shorter line than a left-aligned column does. 32px is the source's
-   * badge → statement gap (the measured pass had 68). */
+   * 32px is the source's badge → statement gap (the measured pass had 68).
+   *
+   * THE MEASURE, and why it is no longer the section container. This was
+   * 1296px — the source's own container for this band — and handing that
+   * number to a PARAGRAPH was the mistake. The source fills four full lines
+   * at 1296 because its sentence runs to about thirty words; ours is nine
+   * words and four rings, so the same cap bought one 1292px line and a 217px
+   * stub under it (measured in Chromium at 1440: "ga mi." and the closing
+   * ring, alone). A full line with a scrap hanging off it is what made this
+   * band read cheap beside the source, and no amount of ring polish fixes a
+   * rag that bad. 1015px is the measure the source gives a STATEMENT rather
+   * than a band — its [Title Content] cap, already spent on .st-statement-h
+   * above — so the page's two statements now sit on one measure, and this
+   * one settles into two full lines (909 / 626 at 1440, 834 / 574 at 1024).
+   * Nothing narrower earns its keep: at 860 the paragraph goes to three
+   * lines whose middle is a single word between two rings.
+   *
+   * text-wrap: balance is the other half, and it does engage — every number
+   * here was read off line boxes with it on and with it off. Blink balances
+   * any block of six lines or fewer, which is every tier this paragraph has.
+   * At 1440 it trades 987/548 for 909/626; at 390 it trades 307/179/274 for
+   * 269/218/274; at 320 it pulls "ga" down so the last line is 111px instead
+   * of 75. It is an ENHANCEMENT and not the fix, which is the order these two
+   * declarations have to work in: where balance is not implemented the cap
+   * alone still gives two full lines at the desktop tier, never the old line
+   * and a scrap. pretty, which this was, only guards the last line — it
+   * cannot even out the first, and at 1296 it did not. */
   :root[data-theme="studio"] .st-claim {
     /* The Ø64px ring, expressed as the source's own ratio against the 48px
      * statement it punctuates (64/48). An em, not a clamp: the ring then
@@ -386,7 +412,7 @@ export const STUDIO_STATEMENT_CSS = `
      * is relative to — so the unit resolves against lead-xl and not against
      * the root's 16px. */
     --studio-glyph: 1.333em;
-    max-width: 1296px;
+    max-width: 1015px;
     margin: 32px auto 0;
     font-family: var(--f-body);
     font-weight: var(--w-body-med);
@@ -394,14 +420,30 @@ export const STUDIO_STATEMENT_CSS = `
     letter-spacing: var(--ls-body);
     line-height: var(--lh-lead-xl);
     color: var(--ink);
-    text-wrap: pretty;
+    text-wrap: balance;
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* The accented half of the claim — one of the three places the shop hue is
-   * allowed to appear (§5.4). --acc-text is the 0.45-lightness rung, which
-   * clears 4.5:1 on white at every hue the palette factory permits. */
-  :root[data-theme="studio"] .st-claim-acc { color: var(--acc-text); }
+  /* The second clause of the claim, and it is NOT accented any more.
+   *
+   * It used to be --acc-text, spending one of the three shop-hue slots the
+   * accent budget allows (§5.4), and that colour was the single biggest
+   * reason the band read less refined than the source: the source sets this
+   * whole sentence in ONE ink, black from the first word to the closing
+   * ring, and the two-tone split turned an editorial statement into a
+   * highlighted phrase. The owner overrode the budget here on the strength
+   * of the side-by-side. The hue is not moved elsewhere — it is simply not
+   * spent, and this module now owns none of the three.
+   *
+   * The span STAYS, and it stays in the markup rather than being deleted,
+   * for two reasons: it is what marks where the second clause begins, which
+   * is the seam the closing ring is bound to (see renderStudioStats), and it
+   * is the hook any future distinction would attach to. It carries no weight
+   * change either — the source's block is one ink AND one weight, and a
+   * bolded second clause is the same two-tone mistake in another dimension.
+   * The rule is written out, rather than the selector deleted, so the next
+   * reader sees a deliberate monochrome instead of a forgotten style. */
+  :root[data-theme="studio"] .st-claim-acc { color: inherit; }
 
   /* The circular OUTLINED glyph, set INLINE in the text flow and vertically
    * centred on the line. 2px --ink is the source's ring — the same weight and
@@ -421,11 +463,30 @@ export const STUDIO_STATEMENT_CSS = `
    * overhangs the next line by ~0.14em, which clears that line's cap height
    * and its caron accents — č/š/ž reach ~0.75em and the ring stops at 0.4em.
    *
-   * No inline margin on purpose: the sentence's own word spaces already give
-   * ~0.26em either side, i.e. 12.5px at the 48px rung against the source's
-   * 14px column gap. Adding a margin on top would double it. The spaces also
-   * keep a break opportunity on both sides of the ring, so a ring can start or
-   * end a line instead of welding itself to a word. */
+   * INLINE AIR. The word space either side of a ring is 0.193em in this face
+   * — 9.3px at the 48px rung, measured, not the 0.26em an earlier pass
+   * assumed — and against a Ø64px ring that is 14% of its own diameter: the
+   * rings sat clamped between the words, which is exactly where ours read
+   * tight and the source's read planted. 0.09em of margin on each side takes
+   * the gap to 0.283em (13.6px at 48px, 6.8px at 24px), i.e. 21% of the ring
+   * at EVERY tier, because both the ring and the margin are ems off the same
+   * ramp. It is deliberately not more: the space has to stay smaller than the
+   * ring's own diameter or the sentence stops being a sentence and becomes a
+   * row of medallions. The margin is on the ring rather than on the word
+   * spaces (word-spacing) so it applies to the four ring gaps and leaves the
+   * sentence's own eight word gaps at the face's spacing.
+   *
+   * The one cost is that a ring ending a line carries its trailing margin
+   * with it — an inline margin is not trimmed at a line break the way a space
+   * is — so such a line is centred 2.2px left of true at 1440 and 1.1px at
+   * 390. Both are under a twentieth of an em and neither is visible; the
+   * alternative (trimming it with a :last-child rule) would only move the
+   * inconsistency to whichever ring lands last on a line, which changes per
+   * tier and per shop.
+   *
+   * The spaces stay real spaces, so a ring keeps a break opportunity on both
+   * sides and can start or end a line rather than welding itself to a word.
+   * The ONE exception is the closing ring — see .st-claim-end below. */
   :root[data-theme="studio"] .st-claim-ico {
     display: inline-flex;
     align-items: center;
@@ -434,6 +495,7 @@ export const STUDIO_STATEMENT_CSS = `
     inline-size: var(--studio-glyph);
     block-size: var(--studio-glyph);
     margin-block: -0.17em;
+    margin-inline: 0.09em;
     /* Optical: the ring's true centre sits slightly above the middle of a
      * lowercase line, so nudge it up by a hair of its own size. A transform,
      * so it moves the paint and not the line box. */
@@ -446,6 +508,28 @@ export const STUDIO_STATEMENT_CSS = `
     inline-size: 50%;
     block-size: 50%;
   }
+
+  /* The claim's last word and the ring that closes the sentence, bound into
+   * one unbreakable run.
+   *
+   * That ring is the only one that can end up alone. Every other ring has
+   * words behind it, but this one ends the paragraph, so the single break
+   * opportunity in front of it puts it on a line of its own at the foot of
+   * the block — a stray circle under the sentence, which is the exact kind of
+   * cheapness this band is being polished out of. It is not hypothetical:
+   * measured at 320px with the balancer turned off, the last line was 32px
+   * wide and held nothing but the ring.
+   *
+   * A non-breaking space in front of it does NOT prevent that, which is worth
+   * writing down because it is the obvious fix and it fails. Blink treats an
+   * atomic inline box as a break opportunity in its own right and breaks
+   * before the ring whatever the space in front of it is — measured, with the
+   * entity in place. Only a wrapper that forbids breaking holds it. The
+   * wrapper takes the LAST WORD and the ring and nothing else, so the clause
+   * still wraps freely everywhere else: at the 320px floor the bound run is
+   * 75px against a 270px measure, so binding it cannot overflow, and it stays
+   * the widest unbreakable thing in the paragraph at every tier. */
+  :root[data-theme="studio"] .st-claim-end { white-space: nowrap; }
 
   /* Stat row. The source shows three columns spread across the band; ours
    * shows four because every shop's content ships four figures and dropping
@@ -564,7 +648,20 @@ export const STUDIO_STATEMENT_CSS = `
      * would read twice as heavy as the 64px ring does on a desktop. Dropping
      * to the hairline weight holds the ring's ~32:1 proportion. */
     :root[data-theme="studio"] .st-claim-ico { border-width: var(--bw-line); }
-    :root[data-theme="studio"] .st-stat-row { margin-top: var(--gap-xl); }
+    /* The 2-up grid's own row gap comes down from 64px to the 40px that
+     * separates the whole block from the claim. At 64 the two rows of figures
+     * stood further apart than the block stood from the paragraph above it —
+     * a group whose internal rhythm out-measures the rhythm separating it from
+     * its neighbour, which is backwards, and on a 390px screen it read as two
+     * pairs of figures rather than one row folded in half. (64px is the
+     * desktop tier's value, where it is inert: one row, and 100px of air above
+     * it.) Nothing tighter survives a look — at --gap-lg the second row's
+     * numerals crowd the caption above them, which sits only 12px under its
+     * own figure and would start to look like a label for the wrong number. */
+    :root[data-theme="studio"] .st-stat-row {
+      margin-top: var(--gap-xl);
+      row-gap: var(--gap-xl);
+    }
   }
 
   /* ---- Motion ---- */
@@ -687,10 +784,22 @@ const CLAIM_RINGS: readonly GlyphKey[] = ["cabin", "drop", "temp"];
  * The claim's two content parts become one sentence in the source's own shape:
  * FOUR text runs alternating with FOUR rings, no ring leading the paragraph
  * and one closing it. Part one is cut into three balanced runs so two rings
- * land mid-sentence; part two is set in --acc-text and the fourth ring closes
- * the line. The rings are aria-hidden punctuation, so a screen reader hears
- * the sentence exactly as written — read it without them and it is still the
- * shop's sentence, unbroken.
+ * land mid-sentence; part two is marked by .st-claim-acc (monochrome now, see
+ * the CSS) and the fourth ring closes the line. The rings are aria-hidden
+ * punctuation, so a screen reader hears the sentence exactly as written — read
+ * it without them and it is still the shop's sentence, unbroken.
+ *
+ * THE CLOSING RING IS TIED TO THE LAST WORD. Every other ring is joined to the
+ * sentence with an ordinary space and may start or end a line as the wrap
+ * falls; the last one may not, because the one place it can land alone is the
+ * bottom of the paragraph, where a lone circle on its own line stops reading
+ * as punctuation and starts reading as a stray asset. So the sentence's last
+ * word is lifted out of the clause and re-set inside .st-claim-end together
+ * with the ring — the CSS explains why a non-breaking space, the shorter fix,
+ * does not hold. Only the last word moves: the clause span still wraps the
+ * whole clause, the reader still gets one uninterrupted sentence, and the
+ * bound run is 75px at the 320px floor against a 270px measure, so it cannot
+ * overflow. Checked at 320 — document scrollWidth still 320.
  *
  * The section has no heading — the pill is a label, not a rank in the document
  * outline — so it is labelled instead.
@@ -705,8 +814,19 @@ export function renderStudioStats(ctx: RenderCtx): string {
     const ring = CLAIM_RINGS[i];
     if (ring) parts.push(glyph(ring));
   }
-  parts.push('<span class="st-claim-acc">' + esc(claim[1]) + "</span>");
-  parts.push(glyph("waves"));
+  // The closing ring rides along INSIDE the second clause rather than joining
+  // the sentence as its own part, bound to the clause's last word so the two
+  // cannot be split across a line break (see .st-claim-end). A one-word clause
+  // simply binds that word; an empty one binds nothing and still closes.
+  const tail = claim[1].trim();
+  const cut = tail.lastIndexOf(" ");
+  const lead = cut < 0 ? "" : tail.slice(0, cut + 1);
+  const last = cut < 0 ? tail : tail.slice(cut + 1);
+  parts.push(
+    '<span class="st-claim-acc">' + esc(lead) +
+      '<span class="st-claim-end">' + esc(last) + " " + glyph("waves") + "</span>" +
+      "</span>",
+  );
   return (
     '<section class="st-stats" aria-label="Zakaj pri nas"><div class="st-stats-in">' +
     '<span class="st-stats-pill">Zakaj pri nas</span>' +

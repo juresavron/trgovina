@@ -21,7 +21,11 @@ export const FINANCING: Page = {
       kind: "steps",
       h: "Kako poteka",
       items: [
-        ["Izberete model", "Cena modela vključuje dostavo, priklop in zagon."],
+        [
+          "Izberete model in dobite ponudbo",
+          "V pisni ponudbi je končna cena z DDV — model in konfiguracija, dostava, priklop in " +
+            "zagon. Ta znesek je podlaga za izračun obrokov.",
+        ],
         [
           "Pripravimo izračun",
           "Za izbrani znesek in želeno dobo odplačevanja dobite konkreten izračun obroka, " +
@@ -43,8 +47,11 @@ export const FINANCING: Page = {
           "od zneska, dobe in ponudnika financiranja ter veljajo za konkretno vlogo. Objavljena " +
           "številka, ki za vaš primer ne bi držala, ni informacija, ampak zavajanje — zato jo " +
           "dobite v pisni ponudbi, ne na oglasni strani.",
-        "Vse stroške financiranja vidite pred podpisom. Če vam kaj ni jasno, vprašajte, preden " +
-          "podpišete.",
+        "Pogodbo o financiranju sklenete s ponudnikom financiranja, ne z nami. Ta vam mora " +
+          "pred podpisom izročiti predpisane predpogodbene informacije, v katerih so obrestna " +
+          "mera, efektivna obrestna mera, doba in skupni znesek, ki ga boste plačali.",
+        "Vse stroške financiranja torej vidite pred podpisom. Če vam kaj ni jasno, vprašajte, " +
+          "preden podpišete.",
       ],
     },
     {
