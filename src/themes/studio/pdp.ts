@@ -406,6 +406,137 @@ export const STUDIO_PDP_CSS = `
     border-radius: var(--r-ctrl);
   }
 
+  /* ---- add-ons: the first REAL controls on this page ------------------
+   *
+   * The configurator above states a fixed configuration and tells you to ring
+   * up for another. These are different: each one is a priced option the
+   * supplier actually sells against this model, so they are real checkboxes
+   * that move a real total.
+   *
+   * The input is visually hidden but never display:none — it stays in the tab
+   * order and keeps its native semantics, and the drawn box is its :checked
+   * sibling. Focus lands on the box because the input has no paint of its own.
+   */
+  :root[data-theme="studio"] .st-pdp-ao {
+    margin-top: clamp(24px, 2.4vw, 48px);
+    padding: 0;
+    border: 0;
+    min-inline-size: 0;
+  }
+  :root[data-theme="studio"] .st-pdp-ao-legend {
+    padding: 0 0 clamp(8px, 0.7vw, 14px);
+    inline-size: 100%;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-list {
+    list-style: none; margin: 0; padding: 0;
+  }
+  /* 44px minimum, per WCAG 2.5.8 — and these rows are the one place on the
+   * page a mis-tap costs money. */
+  :root[data-theme="studio"] .st-pdp-ao-lab {
+    /* Containing block for the visually-hidden input, exactly as .st-pdp-opt
+     * does for its hidden "izbrano". Without it the input's absolute box
+     * resolves against <body>: it happens to land next to its label today
+     * because it falls back to its static position, and it would fly to the
+     * page corner the moment any ancestor gained a position. */
+    position: relative;
+    display: flex; align-items: flex-start;
+    gap: clamp(9px, 0.8vw, 16px);
+    min-block-size: 44px;
+    padding-block: clamp(9px, 0.8vw, 14px);
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-in {
+    position: absolute;
+    inline-size: 1px; block-size: 1px;
+    margin: 0; padding: 0; border: 0;
+    clip-path: inset(50%);
+    overflow: hidden; white-space: nowrap;
+  }
+  :root[data-theme="studio"] .st-pdp-ao-box {
+    flex: 0 0 auto;
+    display: inline-flex; align-items: center; justify-content: center;
+    inline-size: var(--studio-pdp-box);
+    block-size: var(--studio-pdp-box);
+    margin-top: 0.15em;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-ctrl);
+    background: var(--surface);
+    color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-box svg {
+    inline-size: 68%; block-size: 68%;
+    opacity: 0;
+  }
+  :root[data-theme="studio"] .st-pdp-ao-in:checked + .st-pdp-ao-box {
+    background: var(--ink-invert);
+    border-color: var(--ink-invert);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-in:checked + .st-pdp-ao-box svg { opacity: 1; }
+  :root[data-theme="studio"] .st-pdp-ao-in:focus-visible + .st-pdp-ao-box {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-pdp-ao-lab:hover .st-pdp-ao-box {
+    border-color: var(--ink-invert);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-in:checked ~ .st-pdp-ao-name {
+    color: var(--ink);
+    font-weight: var(--w-body-med);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-name { min-width: 0; }
+  :root[data-theme="studio"] .st-pdp-ao-qty {
+    color: var(--ink-mute);
+  }
+  /* Tabular figures so a column of prices lines up on its digits. */
+  :root[data-theme="studio"] .st-pdp-ao-price {
+    margin-inline-start: auto;
+    padding-inline-start: var(--gap-sm);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-total {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: var(--gap-sm);
+    margin-top: clamp(12px, 1.1vw, 22px);
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-sum {
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    line-height: var(--lh-lead);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-note {
+    margin-top: clamp(8px, 0.7vw, 14px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    color: var(--ink-mute);
+  }
+
   /* ---- freight box: hairline frame, included lines in accent ---------- */
   :root[data-theme="studio"] .st-pdp-freight {
     margin-top: clamp(24px, 2.4vw, 48px);
@@ -932,6 +1063,49 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     })
     .join("");
 
+  // Add-ons. Real controls, unlike the configurator above: each one is a
+  // priced option the supplier sells against this model.
+  //
+  // The total is server-rendered at the base price and upgraded by
+  // behaviour.ts as boxes are ticked. Without script the page is still
+  // correct — the shell's price is right and every option's price is beside
+  // it — which is the same contract the counters and the rail keep.
+  const priced = (d.addons ?? []).filter((x) => x.priceCents > 0);
+  const addons =
+    (d.addons ?? []).length === 0
+      ? ""
+      : '<fieldset class="st-pdp-ao" data-st-addons>' +
+        '<legend class="st-pdp-ao-legend">Dodatna oprema</legend>' +
+        '<ul class="st-pdp-ao-list">' +
+        (d.addons ?? [])
+          .map((x, i) => {
+            const id = "st-ao-" + String(i + 1);
+            return (
+              '<li><label class="st-pdp-ao-lab" for="' + id + '">' +
+              '<input class="st-pdp-ao-in" type="checkbox" id="' + id + '"' +
+              ' name="' + esc(x.key) + '" data-st-addon' +
+              ' value="' + String(x.priceCents) + '">' +
+              '<span class="st-pdp-ao-box">' + CHECK + "</span>" +
+              '<span class="st-pdp-ao-name">' + esc(x.label) +
+              (x.qty ? ' <span class="st-pdp-ao-qty">' + esc(x.qty) + "</span>" : "") +
+              "</span>" +
+              '<span class="st-pdp-ao-price">' + esc(x.price) + "</span>" +
+              "</label></li>"
+            );
+          })
+          .join("") +
+        "</ul>" +
+        (priced.length > 0 && d.priceCents > 0
+          ? '<p class="st-pdp-ao-total">' +
+            "<span>Skupaj z izbrano opremo</span>" +
+            '<span class="st-pdp-ao-sum" data-st-total data-st-base="' +
+            String(d.priceCents) + '">' + esc(d.price) + "</span></p>"
+          : "") +
+        (d.pricesProvisional
+          ? '<p class="st-pdp-ao-note">Cene so informativne in še niso dokončne.</p>'
+          : "") +
+        "</fieldset>";
+
   const freight = d.freight
     .map(
       (r) =>
@@ -990,6 +1164,7 @@ export function renderStudioPdp(ctx: RenderCtx): string {
         esc(ctx.phoneHref) + '">' +
         esc(ctx.phoneDisplay) + "</a>.</p>"
       : "") +
+    addons +
     '<section class="st-pdp-freight" aria-labelledby="st-pdp-fh">' +
     '<h2 class="st-pdp-glabel" id="st-pdp-fh">Dostava in montaža</h2>' +
     '<dl class="st-pdp-frows">' + freight + "</dl>" +
@@ -1014,7 +1189,13 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<span class="st-pdp-sum-name">' + esc(d.bar[0]) + "</span>" +
     '<span class="st-pdp-sum-cfg">' + esc(d.bar[1]) + "</span>" +
     "</span>" +
-    '<span class="st-pdp-bar-price">' + esc(d.bar[2]) + "</span>" +
+    // Same figure, same hook: a bar that keeps showing the base price while
+    // the total above it has moved is worse than a bar with no price.
+    '<span class="st-pdp-bar-price"' +
+    (priced.length > 0 && d.priceCents > 0
+      ? ' data-st-total data-st-base="' + String(d.priceCents) + '"'
+      : "") +
+    ">" + esc(d.bar[2]) + "</span>" +
     '<a class="st-pdp-cta" href="' + esc(ctx.shop.routeSlugs["/cart"] + ctx.q) + '">' +
     esc(d.bar[3]) + "</a>" +
     "</div></div>" +

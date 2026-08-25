@@ -74,9 +74,51 @@ export interface CostInputs {
  */
 export const COST_INPUTS: CostInputs | null = null;
 
-/** Whether derived prices can be produced at all. */
+/**
+ * PROVISIONAL PRICING — the euro obtained for one dollar, used only until
+ * COST_INPUTS exists.
+ *
+ * The business asked for the catalogue to carry numbers now and to settle the
+ * full price later, so this converts the supplier's list price and nothing
+ * else. What it produces is COST, not a selling price: no freight, no duty,
+ * no delivery labour, no margin. It is therefore far too low to sell at, and
+ * it exists so the product page can be designed and reviewed against real
+ * figures instead of dashes.
+ *
+ * Two things keep that from becoming a live mistake. `catalogPricingReady()`
+ * still reports false — it asks about COST_INPUTS, not about this — so the
+ * launch gate still refuses to let a shop go live. And provisional numbers
+ * are rounded to a plain ten rather than onto a retail point: a price ending
+ * in 90 reads as a decision somebody made, and nobody has made one yet.
+ * (Rounding to ten does land on a x90 ending about one time in ten — ZR801
+ * comes out at 2.890 € — so this is about not aiming for one, not a promise
+ * that none occurs.)
+ *
+ * Set to null to go back to dashes.
+ */
+export const PROVISIONAL_EUR_PER_USD: number | null = 0.92;
+
+/**
+ * Whether prices are DERIVED — the full landed-cost calculation, safe to
+ * sell at. Provisional conversion deliberately does not count: this is what
+ * the launch gate asks, and a shop may not go live on cost-basis numbers.
+ */
 export function catalogPricingReady(): boolean {
   return COST_INPUTS !== null;
+}
+
+/**
+ * Which rounding a price gets.
+ *
+ * A shell and a cup holder do not round the same way: taking €14 up to the
+ * next retail point would price it at €90. `unit` is the tub, `addon` is
+ * everything bolted to it.
+ */
+export type PriceTier = "unit" | "addon";
+
+/** Up to the next whole multiple. Never down — see retailPoint. */
+function roundUpTo(cents: number, step: number): number {
+  return Math.ceil(cents / step) * step;
 }
 
 /** Every step of the calculation, in integer cents, for auditing. */
@@ -193,8 +235,32 @@ export function formatEur(cents: number): string {
  */
 export const PRICE_UNSET = "—";
 
-/** The display price for a unit, or PRICE_UNSET while the inputs are unset. */
-export function displayPrice(fobUsd: number): string {
-  const p = priceFromFob(fobUsd);
-  return p ? formatEur(p.displayEur) : PRICE_UNSET;
+/**
+ * The price in cents that a slot shows: derived when the inputs exist,
+ * the provisional conversion while they do not, and 0 when neither is
+ * available.
+ *
+ * One function so the string and the number can never disagree — a page that
+ * prints 2.420 € beside a total built from a different figure is worse than
+ * a page with no total.
+ */
+export function displayPriceCents(fobUsd: number, tier: PriceTier = "unit"): number {
+  const derived = priceFromFob(fobUsd);
+  if (derived) {
+    return tier === "unit" ? derived.displayEur : roundUpTo(derived.grossEur, 500);
+  }
+  if (PROVISIONAL_EUR_PER_USD === null) return 0;
+  // Ten euro for a tub, one for an add-on: enough to look tidy, not enough to
+  // look chosen.
+  return roundUpTo(Math.round(fobUsd * PROVISIONAL_EUR_PER_USD * 100), tier === "unit" ? 1000 : 100);
+}
+
+/**
+ * What a slot shows: the derived selling price when the inputs exist, the
+ * provisional conversion while they do not, and the dash when neither is
+ * available.
+ */
+export function displayPrice(fobUsd: number, tier: PriceTier = "unit"): string {
+  const cents = displayPriceCents(fobUsd, tier);
+  return cents > 0 ? formatEur(cents) : PRICE_UNSET;
 }

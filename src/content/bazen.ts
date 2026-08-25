@@ -1,7 +1,10 @@
 import type { PdpContent, ProductCard, ShopContent } from "./types";
 import type { PolaModel } from "../catalog/pola";
+import { catalogPricingReady } from "../catalog/pricing";
 import {
   POLA_MODELS,
+  addonPrice,
+  addonPriceCents,
   footprint,
   metaLine,
   modelPrice,
@@ -65,8 +68,10 @@ function pdpFor(m: PolaModel): PdpContent {
     // so a euro price for a cover lifter needs the same landed-cost pass the
     // shells need. An option listed without a price is honest; one listed with
     // a guessed price is not.
+    // The cover moved out of here and into `addons`, where it is a real
+    // priced option rather than a choice with no figure beside it. What is
+    // left is the two decisions that are genuinely a conversation.
     cfg: [
-      ["Termo pokrov", ["Osnovni", "S škarjastim dvigalom"], 0],
       ["Priklop", ["Moj električar (navodila)", "Naš partner — po ponudbi"], 0],
       ["Servis", ["Osnovni", "Letni pregled — po ponudbi"], 0],
     ],
@@ -91,6 +96,17 @@ function pdpFor(m: PolaModel): PdpContent {
       ["Garancija", "2–5 let, odvisno od sklopa"],
     ],
     bar: [m.name, seating(m) + " · " + m.jets + " šob", modelPrice(m), "V košarico"],
+    addons: m.addons.map((x) => ({
+      key: x.key,
+      label: x.label,
+      price: addonPrice(x),
+      priceCents: addonPriceCents(x),
+      ...(x.qty ? { qty: x.qty } : {}),
+    })),
+    // Every figure on this page is a provisional conversion of the supplier's
+    // cost until COST_INPUTS is set. The page shows them; the structured data
+    // does not.
+    pricesProvisional: !catalogPricingReady(),
   };
 }
 

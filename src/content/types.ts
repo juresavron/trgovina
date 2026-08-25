@@ -39,6 +39,28 @@ export interface UtilCard {
   cta: string;
 }
 
+/**
+ * An option offered alongside the product, priced separately.
+ *
+ * Kept as display strings rather than numbers because the content layer is
+ * what the renderer reads, and the renderer must never do arithmetic on money
+ * — the price a page shows and the price a customer is charged come from two
+ * different trust levels (db/schema.sql's display/charge split). `priceCents`
+ * rides along for the total the buy bar shows and for the cart, once there
+ * is one.
+ */
+export interface PdpAddon {
+  /** Stable identity: the form field name, and later the variant SKU. */
+  key: string;
+  label: string;
+  /** Display string, already formatted and rounded. */
+  price: string;
+  /** Gross cents, or 0 when no price is available. */
+  priceCents: number;
+  /** Quantity, where the supplier states one ("16 kosov"). */
+  qty?: string;
+}
+
 export interface PdpContent {
   /** URL segment under routeSlugs["/product"] ('quattro' → /savna/quattro). */
   slug: string;
@@ -53,6 +75,19 @@ export interface PdpContent {
   note: string;
   spec: [string, string][];
   bar: [string, string, string, string];
+  /** Options priced separately from the product. Absent where there are none. */
+  addons?: PdpAddon[];
+  /**
+   * True while the prices on this page are a provisional conversion of cost
+   * rather than a selling price the business has set.
+   *
+   * The page may show them — it is pre-live and noindexed, and a designer
+   * needs real figures to look at. Structured data may not: a Product whose
+   * Offer carries a number nobody decided is a claim about money made to a
+   * search engine, and it is the category of error that earns a manual
+   * action. productJsonLd omits the Offer entirely when this is set.
+   */
+  pricesProvisional?: boolean;
 }
 
 export interface ShopContent {

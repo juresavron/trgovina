@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   COST_INPUTS,
   PRICE_UNSET,
+  PROVISIONAL_EUR_PER_USD,
+  displayPriceCents,
   catalogPricingReady,
   formatEur,
   priceFromFob,
@@ -30,10 +32,49 @@ const SAMPLE: CostInputs = {
 };
 
 describe("the landed-cost calculation", () => {
-  it("refuses to produce a price until the business supplies inputs", () => {
+  it("produces no DERIVED price until the business supplies inputs", () => {
     expect(priceFromFob(3000)).toBeNull();
-    expect(modelPrice(POLA_MODELS[0]!)).toBe(PRICE_UNSET);
-    expect(modelPriceCents(POLA_MODELS[0]!)).toBe(0);
+    expect(catalogPricingReady()).toBe(false);
+  });
+
+  /**
+   * The provisional path exists so the product page can be designed against
+   * real figures. These assertions are what keep it from being mistaken for a
+   * decision: it must never round to a retail point, and it must never make
+   * `catalogPricingReady()` true — that is what the launch gate asks.
+   */
+  it("shows provisional prices without ever claiming they are retail", () => {
+    if (PROVISIONAL_EUR_PER_USD === null) {
+      expect(modelPrice(POLA_MODELS[0]!)).toBe(PRICE_UNSET);
+      return;
+    }
+    expect(catalogPricingReady()).toBe(false);
+    for (const m of POLA_MODELS) {
+      const cents = modelPriceCents(m);
+      expect(cents).toBeGreaterThan(0);
+      // A plain ten. Rounding to ten still lands on a x90 ending about one
+      // time in ten — ZR801 does — so this cannot assert "never looks like a
+      // retail point"; what it can assert is that nothing DELIBERATELY
+      // rounds these onto one.
+      expect(cents % 1000, m.code + " provisional price is not a plain ten").toBe(0);
+      expect(modelPrice(m)).not.toBe(PRICE_UNSET);
+    }
+  });
+
+  /**
+   * A €14 pillow light taken up to a shell's retail point would be priced at
+   * €90 — a 540% error, and one that looks perfectly plausible on a page.
+   */
+  it("rounds an add-on on its own tier, not the shell's", () => {
+    const cheapest = Math.min(
+      ...POLA_MODELS.flatMap((m) => m.addons.map((x) => x.fobUsd)),
+    );
+    expect(cheapest).toBeLessThan(20);
+    const asAddon = displayPriceCents(cheapest, "addon");
+    const asUnit = displayPriceCents(cheapest, "unit");
+    expect(asAddon).toBeLessThan(asUnit);
+    // Within a euro of the converted figure, rather than rounded to a shell.
+    expect(asAddon).toBeLessThanOrEqual(Math.ceil(cheapest * 1.0) * 100);
   });
 
   it("adds up: every intermediate is the sum of its parts", () => {
