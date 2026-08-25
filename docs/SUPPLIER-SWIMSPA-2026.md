@@ -82,8 +82,24 @@ list — the same decision, for the same reason, as the Pola options.
 
 ## What the shop sells
 
-Three units, chosen 25 Aug 2026: **ZR6801** (Vstopni, 3.90 m, $6,250) ·
-**ZR6802** (Srednji, 5.00 m, $7,160) · **ZR7860** (Vrhunski, 5.80 m, $9,330).
+Three units, as of 25 Aug 2026: **ZR6801** (Vstopni, 3.90 m, $6,250) ·
+**ZR7861** (Srednji, 4.50 m, $6,859) · **ZR7860** (Vrhunski, 5.80 m, $9,330).
+
+The ZR7861 replaced the **ZR6802** at the owner's request, once eight
+photographs of it arrived. At 4.50 m it sits between the 3.90 m entry and the
+5.80 m top, so swapping the 5.00 m model spreads the ladder evenly and keeps
+the only unit under four metres — the one that fits a garden the other two
+cannot. Swapping the entry instead would have clustered all three inside
+1.3 m.
+
+⚠️ **It is also the model in question 1 below.** The sheet gives it four
+hydrotherapy jets in total and NO counter-current jet, which is the one piece
+of equipment that makes a swim spa a swim spa. It is carried exactly as
+written — `swimJets: 0`, `jets: 4` — and nothing on the site claims otherwise:
+`swimSpaFamilyHasSwimJets()` returns false, so the category card no longer
+advertises a counter-current jet, and the model's own card and page do not
+name one. That is the honest state, not a good one. The fix is a corrected
+sheet, not different copy.
 `OFFERED_SWIMSPAS` in `src/catalog/swimspa.ts` is the list everything renders
 from; the other six stay transcribed and unoffered.
 

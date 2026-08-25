@@ -7,6 +7,7 @@ import {
   metaLine,
   seating,
   swimSpaBySlug,
+  swimSpaFamilyHasSwimJets,
 } from "./swimspa";
 import { OFFERED_MODELS } from "./pola";
 
@@ -75,7 +76,7 @@ describe("swim spa catalogue", () => {
   });
 
   it("offers the three the owner chose, shortest first", () => {
-    expect(OFFERED_SWIMSPAS.map((m) => m.code)).toEqual(["ZR6801", "ZR6802", "ZR7860"]);
+    expect(OFFERED_SWIMSPAS.map((m) => m.code)).toEqual(["ZR6801", "ZR7861", "ZR7860"]);
     // Shortest first is the ladder a buyer walks, and length is the decision.
     const mm = OFFERED_SWIMSPAS.map((m) => m.mm[0]);
     expect([...mm].sort((x, y) => x - y)).toEqual(mm);
@@ -83,6 +84,8 @@ describe("swim spa catalogue", () => {
     // Not offered, so not routable: an unoffered model must 404 rather than
     // render a page for something the shop does not sell.
     expect(swimSpaBySlug("swim-580-turbo")).toBeUndefined();
+    // The model ZR7861 displaced.
+    expect(swimSpaBySlug("swim-500")).toBeUndefined();
   });
 
   it("gives every offered model a tier and no other model one", () => {
@@ -100,17 +103,26 @@ describe("swim spa catalogue", () => {
     expect(ZR7860_DUAL_ZONE_CONFIRMED).toBe(false);
   });
 
-  it("knows the mid model gains length and loses two jets", () => {
-    // Easy to sell as a pure length upgrade, and nearly is — but a comparison
-    // table that prints jets as rising would be printing a number backwards.
-    const entry = SWIMSPA_MODELS.find((m) => m.code === "ZR6801")!;
-    const mid = SWIMSPA_MODELS.find((m) => m.code === "ZR6802")!;
-    expect(mid.mm[0]).toBeGreaterThan(entry.mm[0]);
-    expect(mid.jets).toBeLessThan(entry.jets);
-    // What genuinely is unchanged, and what the pitch rests on.
-    expect(mid.jetPumps).toEqual(entry.jetPumps);
-    expect(mid.filterSf).toBe(entry.filterSf);
-    expect(mid.fobUsd - entry.fobUsd).toBe(910);
+  it("keeps the offered ladder to one model per size band", () => {
+    // ZR7861 replaced ZR6802 at the owner's request. At 4.50 m it sits
+    // between the 3.90 m entry and the 5.80 m top, so the ladder spreads
+    // evenly and keeps the ONLY unit under four metres — the one that fits a
+    // garden the other two cannot. Swapping the entry model instead would
+    // have clustered all three inside 1.3 m.
+    const mm = OFFERED_SWIMSPAS.map((m) => m.mm[0]);
+    expect(mm).toEqual([3900, 4500, 5800]);
+  });
+
+  it("does not advertise a counter-current jet the range cannot deliver", () => {
+    // The whole category rests on this claim, and the ZR7861's sheet lists
+    // NO swim jet — four hydrotherapy jets in total, where every other unit
+    // runs 38-94 plus three swim jets. Carried exactly as written, and the
+    // family-level claim derives from the range rather than being asserted,
+    // so a card can never promise a jet one of its models has not got.
+    const zr7861 = SWIMSPA_MODELS.find((m) => m.code === "ZR7861")!;
+    expect(zr7861.swimJets).toBe(0);
+    expect(zr7861.jets).toBe(4);
+    expect(swimSpaFamilyHasSwimJets()).toBe(false);
   });
 
   it("keeps the premium model's build claims true to the sheet", () => {
