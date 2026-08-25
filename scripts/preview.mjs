@@ -26,14 +26,19 @@ import { chromium } from "playwright-core";
 import { handleRequest } from "../src/worker.ts";
 
 const OUT = process.env.PREVIEW_DIR || "/tmp/preview";
-const PAGES = {
+// Several polish agents run this harness at once, so the port must be theirs
+// to pick and the page list theirs to extend ("file.html=/path,..." pairs).
+const PORT = Number(process.env.PREVIEW_PORT || 8791);
+const PAGES = process.env.PREVIEW_PAGES
+  ? Object.fromEntries(process.env.PREVIEW_PAGES.split(",").map((e) => e.split("=")))
+  : {
   "index.html": "/",
   "masazni-bazeni.html": "/masazni-bazeni",
   "swim-spa.html": "/swim-spa",
   "trgovina.html": "/trgovina",
   "pdp.html": "/bazen/veliki-230",
   "pdp-swim.html": "/bazen/swim-580-maxi",
-};
+  };
 
 /* ---------------------------------------------------------------- pages */
 rmSync(OUT, { recursive: true, force: true });
@@ -127,8 +132,8 @@ const server = createServer(async (req, res) => {
     res.writeHead(404).end("no");
   }
 });
-await new Promise((r) => server.listen(8791, r));
-console.log("serving " + OUT + " on http://127.0.0.1:8791");
+await new Promise((r) => server.listen(PORT, r));
+console.log("serving " + OUT + " on http://127.0.0.1:" + PORT);
 
 if (process.argv.includes("--serve")) {
   await new Promise(() => {});
@@ -142,7 +147,7 @@ const browser = await chromium.launch({
 for (const [vp, size] of [["desktop", { width: 1440, height: 900 }], ["mobile", { width: 390, height: 844 }]]) {
   const page = await browser.newPage({ viewport: size, deviceScaleFactor: 1 });
   for (const file of Object.keys(PAGES)) {
-    await page.goto("http://127.0.0.1:8791/" + file, { waitUntil: "networkidle" });
+    await page.goto("http://127.0.0.1:" + PORT + "/" + file, { waitUntil: "networkidle" });
     // Scroll the whole page first. Almost every image below the fold is
     // loading="lazy", so a full-page screenshot taken from the top captures
     // empty frames and looks exactly like the bug it is meant to be showing.
