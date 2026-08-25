@@ -88,34 +88,51 @@ const ART: Record<ProductArtKey, string> = {
     // hose from tub to chiller
     '<path d="M156 118c14 0 12 12 24 12"/>',
 
-  /* Hot tub — wide, low, panelled cabinet. Read against the plunge tub it has
-   * to be obviously bigger and obviously for sitting in, so it gets the things
-   * a plunge tub does not have: cabinet seams, a seat ledge, a headrest, a
-   * topside control panel and a set of steps.
+  /* Hot tub — a SQUARE acrylic spa in three-quarter view.
    *
-   * The headrest and the control panel are drawn open-bottomed, so they sit ON
-   * the rim instead of crossing it. The steps stand clear of the cabinet for
-   * the same reason as the plunge tub's lid. */
+   * It was an oval rim on a rectangular cabinet, and the photography that
+   * arrived shows why that was wrong: all three models are square shells with
+   * a square rim and lit cabinet panels. On the Best Sellers row the drawing
+   * stood between two photographs of square tubs, describing a round one.
+   * A placeholder may be a drawing; it may not be a drawing of a different
+   * shape of product.
+   *
+   * Read against the plunge tub it still has to be obviously bigger and
+   * obviously for sitting in — but the proportion already does that work
+   * (kad is tall and round, this is wide and low), so the rim does not have
+   * to. What separates them now is what the photographs actually show: a
+   * square plan, LED strips banding the cabinet, headrests on the far rim.
+   *
+   * The headrests and the control panel are drawn open-bottomed so they sit ON
+   * the rim rather than crossing it — unfilled line art has no occlusion, and
+   * anything drawn over the shell shows through and reads as a mistake. */
   bazen:
-    // rim
-    '<ellipse cx="104" cy="86" rx="76" ry="18"/>' +
-    // inner seat ledge
-    '<ellipse cx="104" cy="89" rx="57" ry="12"/>' +
-    // cabinet, wide and low, soft-cornered at the floor
-    '<path d="M28 86v52q0 12 12 12h128q12 0 12-12V86"/>' +
-    // cabinet panel seams
-    '<path d="M72 96v52M138 96v52"/>' +
-    // jets on the near inner wall, unevenly spaced so they never pair as eyes
-    '<circle cx="78" cy="96" r="4"/><circle cx="106" cy="99" r="4"/>' +
-    '<circle cx="132" cy="95" r="4"/>' +
-    // headrest, resting on the far rim left of centre — long and low, because
-    // a tall one reads as a carry handle
-    '<path d="M56 76v-4a3 3 0 0 1 3-3h38a3 3 0 0 1 3 3v4"/>' +
-    // topside control panel
-    '<path d="M130 78v-5h20v5"/>' +
-    // steps, one stair profile standing clear to the right: two rectangles
-    // stacked here read as a second cabinet, a cut profile reads as treads
-    '<path d="M186 156h46v-16h-23v-16h-23z"/>',
+    // top rim, a square plan in three-quarter view. Deliberately NOT a
+    // symmetric diamond: the back corner sits right of the front one, so the
+    // two visible faces are different widths and the shape reads as an object
+    // rather than as a motif.
+    '<path d="M96 116L20 86l92-30 76 30z"/>' +
+    // inner seat ledge, the same plan inset
+    '<path d="M96 104L36 84l76-22 60 22z"/>' +
+    // cabinet, dropping from the three near corners to the floor
+    '<path d="M20 86v42l76 22 92-24V86"/>' +
+    // the near vertical corner, where the two lit faces meet
+    '<path d="M96 116v34"/>' +
+    // LED strips banding both faces, the detail that names these models
+    '<path d="M27 99l64 19M27 111l64 19"/>' +
+    '<path d="M101 118l80-21M101 130l80-21"/>' +
+    // jets on the inner shell, unevenly spaced so no two ever pair as eyes
+    '<circle cx="70" cy="88" r="3"/><circle cx="99" cy="82" r="3"/>' +
+    '<circle cx="127" cy="88" r="3"/><circle cx="146" cy="79" r="2.5"/>' +
+    // ONE headrest, lying ALONG the far-left rim rather than standing off it,
+    // and inside the shell line: drawn a few units out it poked past the rim
+    // and read as a handle welded to the outside of the tub. A second one on
+    // the far-right rim collided with the control panel and the pair printed
+    // as a single dark blob at card size — at 372px wide there is room for
+    // one of them, not both.
+    '<path d="M64 80l22-6 2 7-22 6z"/>' +
+    // topside control panel, in the band between the outer rim and the ledge
+    '<path d="M140 68l16 6-3 4-16-6z"/>',
 
   /* Massage chair — side profile, reclined, footrest out. The silhouette is
    * the product, so every part has to touch the next one: an earlier version

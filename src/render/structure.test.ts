@@ -3,6 +3,7 @@ import { handleRequest } from "../worker";
 import { SHOPS } from "../tenants";
 import { MEDIA_WIDTHS } from "../themes/studio/media-widths";
 import { OWN_MEDIA } from "../themes/studio/own-media";
+import { OWN_HERO } from "../themes/studio/own-hero";
 import { CONTENT } from "../content";
 
 /**
@@ -88,18 +89,22 @@ function audit(html: string): string[] {
       .map((x) => x.trim())
       .filter(Boolean)) {
       const [url, desc] = c.split(/\s+/);
-      // Two builds write images, and the gate has to know about both or it
-      // reports the shop's own photography as a missing file: the theme
+      // THREE builds write images, and the gate has to know about all of them
+      // or it reports the shop's own photography as a missing file: the theme
       // bundle (scripts/build-media.mjs -> MEDIA_WIDTHS, paths relative to
-      // /img/) and the shop's own (scripts/build-own-media.mjs -> OWN_MEDIA,
-      // absolute paths under /img/own/).
+      // /img/), the shop's model photography (scripts/build-own-media.mjs ->
+      // OWN_MEDIA) and its hero plate (scripts/build-hero-plate.mjs ->
+      // OWN_HERO), both of those absolute under /img/own/.
       const themeRung = Object.values(MEDIA_WIDTHS)
         .flat()
         .find((r) => "/img/" + r[0] === url);
       const ownRung = Object.values(OWN_MEDIA)
         .flatMap((photos) => photos.flatMap((ph) => ph.widths))
         .find((r) => r[0] === url);
-      const rung = themeRung ?? ownRung;
+      const heroRung = Object.values(OWN_HERO)
+        .flatMap((plate) => (plate ? [...plate.widths] : []))
+        .find((r) => r[0] === url);
+      const rung = themeRung ?? ownRung ?? heroRung;
       if (!rung) problems.push("srcset names a file the build did not write: " + url);
       else if (desc !== rung[1] + "w") {
         problems.push("srcset width " + desc + " but " + url + " is " + rung[1] + "px");
