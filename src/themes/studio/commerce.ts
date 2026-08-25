@@ -6,9 +6,11 @@
  *        grid is `gap:0` with `padding:1px`, and every card carries
  *        `box-shadow:0 0 0 1px #dfdfdf`. Two neighbours' rings land on the
  *        same seam, so the "grid lines" are not drawn by anything — they ARE
- *        the overlap. Card padding 32px; a tall --bg-alt panel holds the
- *        product; name, then a price row (price · struck compare-at · VAT)
- *        beneath. HOVER TURNS THE FRAME BLACK — the signature card state.
+ *        the overlap. Card padding 32px; an --bg-alt panel holds the product —
+ *        a MAT round a plate, so every cell presents the same size of picture
+ *        whatever shape the file inside it is; name, then a price row
+ *        (price · struck compare-at · VAT) beneath. HOVER TURNS THE FRAME
+ *        BLACK — the signature card state.
  *   §4.4 Category rail — centred heading, 372×500 cards that PEEK past the
  *        viewport edges (the peek is what separates a rail from a grid),
  *        name (h6, the compact-card rung) + meta line (label), price in
@@ -43,6 +45,14 @@
  *   7, 8, 9, … → three per row; the trailing 1 or 2 share that row.
  * At ≤809px every count is a single column, which is the source's own phone
  * layout (its grid becomes `display:flex; flex-flow:column` there).
+ *
+ * ONE EXCEPTION, AND IT IS THE SHAPE THIS SHOP ACTUALLY SHIPS: a grid whose
+ * LAST cell is the util tile freezes every product cell at exactly one column
+ * and lets the tile alone grow to seal the line. Growing a product cell grows
+ * its panel, and growing its panel makes the product inside it larger than the
+ * identical product one row above — the home grid's five cells had the swim
+ * spa rendering at 2.5x its own sibling's area for no reason but arithmetic.
+ * The tile is type and does not care how wide it is. See the responsive block.
  *
  * TYPE COMES FROM THE RAMP IN tokens.ts, NEVER FROM A CLAMP. An earlier pass
  * eyeballed sizes off a 2000px screenshot and expressed each as a clamp whose
@@ -250,9 +260,17 @@ export const STUDIO_COMMERCE_CSS = `
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
-  /* Left-aligned AT THE GUTTER (§4.7) — the grid heading is never centred. */
+  /* Left-aligned AT THE GUTTER (§4.7) — the grid heading is never centred.
+   *
+   * The space beneath it is now on the token scale at both ends — --gap-lg to
+   * --gap-xl, 24px to 40px — where it used to run 28px to 68px. 68 was a
+   * band-scale gap doing a component-scale job: at 1440 it measured 49px of
+   * air between a 60px heading and the table it names, which is what made the
+   * head read as a separate announcement rather than as the table's own
+   * label. 40px is two thirds of the heading's own size, and it is the rung
+   * tokens.ts already carries for exactly this distance. */
   :root[data-theme="studio"] .st-shop-head {
-    margin-bottom: clamp(28px, 3.4vw, 68px);
+    margin-bottom: clamp(var(--gap-lg), 2.8vw, var(--gap-xl));
   }
   /* THE RULED TABLE. gap: 0 and padding: 1px on the container, a 1px ring
    * on every card: two neighbours' rings land on the same seam, the later one
@@ -465,52 +483,82 @@ export const STUDIO_COMMERCE_CSS = `
     color: var(--ink-mute);
   }
 
-  /* The util tile: same ring, inverted ground. Its ring is --ink-invert rather
-   * than --line so the table's rule meets the dark cell flush instead of
-   * outlining it in grey, and its hover twin of "frame goes black" is "frame
-   * goes white" — the strongest hairline available on #151515. It needs the
-   * same z-index lift as the product card, and for the same reason. */
+  /* THE UTIL TILE WAS THE WORST CELL IN THE TABLE, and it failed on two counts
+   * at once: it was solid ink, and it was empty.
+   *
+   * MEASURED, at 1440 before this pass: the tile's own content came to 251px
+   * of heading, paragraph and button inside a cell 990px tall — 25% ink, 75%
+   * void — because a flex column with justify-content: space-between takes
+   * three children and pushes them as far apart as the cell allows. In a row
+   * whose other cell was a product card it therefore rendered as a heading
+   * pinned to the top, a paragraph adrift near the middle and a button pinned
+   * to the floor, with two black chasms between them. Nothing about that reads
+   * as a design; it reads as a page that failed to load.
+   *
+   * space-between is now centre. The three parts are one group with one gap
+   * between them, vertically centred in whatever height the row sets, so the
+   * leftover space becomes symmetric margin — which is what every other cell
+   * in this table does with its slack — instead of two holes. Stretching
+   * itself is not the fault and is not negotiable: the cells of a ruled table
+   * must be the same height or the rules do not meet, and a tile that sized
+   * itself to its own content would cut a notch out of the row.
+   *
+   * THE GROUND GOES QUIET. The source's Best Sellers table contains no black
+   * slab at all, and this one was the heaviest object in a band whose entire
+   * argument is restraint — one 990x679 rectangle of #151515 against five
+   * white cells. A dark cell can be worth that weight when it is full; this
+   * one, at 25% content, was spending the loudest ground on the emptiest cell.
+   * It takes --bg-alt instead: the same panel grey the product photographs sit
+   * on two cells away, so the tile now reads as a member of the table rather
+   * than as a hole punched in it, while still being visibly not-a-product. Ink
+   * on #f0f0f0 is 15.8:1, body ink 14.5:1.
+   *
+   * With the ground light, the ring and the hover state stop being special:
+   * --st-ring falls back to --line like every other cell, so the table's rule
+   * is one continuous hairline, and "frame goes black" on hover is inherited
+   * from .st-card rather than inverted here. Two rules deleted, one behaviour. */
   :root[data-theme="studio"] .st-util {
-    justify-content: space-between;
+    justify-content: center;
     gap: clamp(16px, 2vw, 40px);
-    background: var(--ink-invert);
-    --st-ring: var(--ink-invert);
-    color: var(--on-invert);
+    background: var(--bg-alt);
+    color: var(--ink);
   }
-  /* The z-index lift comes from .st-card:hover above — this tile carries both
-   * classes — so only the ink changes here. It has to come after that rule in
-   * the sheet, which it does. */
-  :root[data-theme="studio"] .st-util:hover,
-  :root[data-theme="studio"] .st-util:focus-visible { --st-ring: var(--on-invert); }
-  /* The util tile fills one grid slot, so its heading is a LARGE card's title
-   * → h5, the same rung as .st-card-name. The measured pass had it a rung
-   * louder (42px) than the product name; the tile keeps that emphasis through
-   * the inversion — black ground, white ink — which outshouts 10px of size. */
+  /* The tile's heading takes the same rung as a product name — h6 — for the
+   * same reason the product names came down to it: this cell sits in a run of
+   * product cells and a title a rung louder than theirs is the tile claiming a
+   * seniority it does not have. It was already carrying more emphasis than any
+   * product through its ground; now that the ground is quiet, matching the
+   * rung is what makes the row scan as one line of equals. */
   :root[data-theme="studio"] .st-util-h {
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: var(--t-h5);
-    letter-spacing: var(--ls-h5);
-    line-height: var(--lh-h5);
-    color: var(--on-invert);
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
+    color: var(--ink);
     overflow-wrap: break-word;
   }
   /* The tile's one line of prose, standing between its heading and its CTA →
    * lead, the standfirst rung (20/16/18), not body: it introduces the tile
-   * rather than being ordinary running copy. Lead is set in --w-body-med. */
+   * rather than being ordinary running copy. Lead is set in --w-body-med.
+   * --ink-body on the panel grey is 14.5:1; the old --on-invert-mute was for
+   * the dark ground and would now be 2.5:1. */
   :root[data-theme="studio"] .st-util-p {
     font-family: var(--f-body);
     font-size: var(--t-lead);
     font-weight: var(--w-body-med);
     letter-spacing: var(--ls-body);
     line-height: var(--lh-lead);
-    color: var(--on-invert-mute);
+    color: var(--ink-body);
     max-width: 34ch;
   }
-  /* Reads as a control, so it is SHARP (§9). */
+  /* Reads as a control, so it is SHARP (§9). Outlined at rest and filled on
+   * hover, exactly as before — only the grounds are the other way up, so the
+   * ring is --line-strong (15.8:1 on the panel grey, and the source's own
+   * button colour) instead of a white alpha. */
   :root[data-theme="studio"] .st-util-go {
     align-self: flex-start;
-    border: 1px solid color-mix(in srgb, var(--on-invert) 40%, transparent);
+    border: var(--bw-line) solid var(--line-strong);
     border-radius: var(--r-ctrl);
     padding: clamp(10px, 0.9vw, 18px) clamp(16px, 1.6vw, 32px);
     /* A button word is the label role, in the label face — same rung as the
@@ -521,11 +569,11 @@ export const STUDIO_COMMERCE_CSS = `
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
-    color: var(--on-invert);
+    color: var(--ink);
     transition: background-color 0.2s ease, color 0.2s ease;
   }
   :root[data-theme="studio"] .st-util:hover .st-util-go {
-    background: var(--on-invert); color: var(--ink);
+    background: var(--ink); color: var(--on-invert);
   }
 
   /* ---- §4.4 category rail -------------------------------------------- */
@@ -1032,10 +1080,45 @@ export const STUDIO_COMMERCE_CSS = `
    * full-width fourth) looks worse than a smaller complete rectangle, so a
    * quantity query turns it into 2×2. Scoped to ≥810 so it can never fight the
    * phone tier's single column, and a browser without :has() simply keeps the
-   * 3 + 1 — which is still a sealed table, just a less pleasant one. */
+   * 3 + 1 — which is still a sealed table, just a less pleasant one.
+   *
+   * It stands down when the last cell is a util tile, because the rule below
+   * settles that case better: 2×2 would make a PRODUCT cell half the table
+   * wide, which is the thing that rule exists to prevent. */
   @media (min-width: 810px) {
-    :root[data-theme="studio"] .st-grid:has(> .st-card:nth-child(4):last-child) > .st-card {
+    :root[data-theme="studio"] .st-grid:has(> .st-card:nth-child(4):last-child):not(:has(> .st-util:last-child)) > .st-card {
       flex-basis: 50%;
+    }
+    /* A PRODUCT CELL IS NEVER WIDER THAN A COLUMN. The trailing util tile
+     * absorbs whatever the last line has left over.
+     *
+     * This is the other half of the uniformity problem, and it was doing more
+     * visible damage than the panel. The home grid ships five cells — four
+     * products and the load-bearing tile — so the products filled one line and
+     * the fourth shared the next with the tile at flex: 1 1 33.3%, which grew
+     * them both to half the table. Measured at 1440: the SWIM 580 MAXI cell
+     * came out 679px wide against its own siblings' 453px, its panel 616px
+     * against 389px, and the cutout inside it painted 616x424 where the
+     * identical file one row above painted 389x268. One product rendered at
+     * 2.5 times another's area for no reason a visitor could name. No panel
+     * geometry can fix that, because the cells were not the same size.
+     *
+     * So a product cell is frozen at exactly one column and the util tile
+     * keeps its flex-grow. The tile carries no picture, so width costs it
+     * nothing — it is type, and type is happy at any measure. Whatever the
+     * product count leaves over, the tile takes: three products and it fills
+     * the line alone, four and it takes two thirds, five and it takes one
+     * column like everyone else. The table stays sealed at every count and no
+     * product is ever bigger than its neighbour.
+     *
+     * calc(100% / 3) rather than the 33.3% the basis uses elsewhere: with
+     * flex-grow off, 33.3% would leave 0.1% of the line unpainted and the
+     * table's right-hand rule would sit a pixel and a half inside the gutter. */
+    :root[data-theme="studio"] .st-grid:has(> .st-util:last-child) > .st-card {
+      flex: 0 0 calc(100% / 3);
+    }
+    :root[data-theme="studio"] .st-grid:has(> .st-util:last-child) > .st-util:last-child {
+      flex: 1 1 calc(100% / 3);
     }
   }
 
