@@ -101,9 +101,19 @@ jobs:
           # misconfigured one fails silently: the Worker still renders, every
           # <img> just 404s, and the page looks like the placeholders never
           # landed rather than like a broken deploy.
-          icode=$(curl -s -o /tmp/img.webp -w "%{http_code}" "https://${WORKERS_DEV_HOST}/img/motif-01.webp")
+          # Retried, like the page check above. The asset store is eventually
+          # consistent: wrangler reported "Uploaded 42 files" and this still
+          # 404'd 0.4s later, because the deploy returns before the edge has
+          # the objects. A single immediate request tests propagation speed,
+          # not configuration.
+          icode=000
+          for i in 1 2 3 4 5 6; do
+            icode=$(curl -s -o /tmp/img.webp -w "%{http_code}" "https://${WORKERS_DEV_HOST}/img/motif-01.webp") || true
+            [ "$icode" = "200" ] && break
+            echo "asset attempt $i: HTTP $icode — retrying"; sleep 5
+          done
           if [ "$icode" != "200" ]; then
-            echo "FAIL: /img/motif-01.webp returned $icode — asset binding is not serving"; exit 1
+            echo "FAIL: /img/motif-01.webp returned $icode after 6 attempts — assets are not serving"; exit 1
           fi
           if ! file /tmp/img.webp | grep -qi "web/p\|webp"; then
             echo "FAIL: /img/motif-01.webp is not a WebP — the Worker answered instead of the asset store"
