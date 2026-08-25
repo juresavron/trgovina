@@ -244,17 +244,18 @@ const categories: Category[] = [
       (swimSpaFamilyHasSwimJets() ? " · s protitočno šobo" : " · za plavanje in sprostitev"),
     price: familyRange(OFFERED_SWIMSPAS.map((m) => swimModelPrice(m))),
     href: "/swim-spa",
-    // One of the family's OWN photographs rather than the drawing. Taken from
-    // the SWIM 580 HIDRO set specifically because that model is not in the
-    // home page's four-card selection, so the category card and the cards
-    // below it never show the same picture twice on one screen.
+    // The photograph supplied for this family, under a clean alias for the
+    // same reason as the card above — see src/media-aliases.ts. It replaces a
+    // SWIM 580 HIDRO product shot picked by POSITION in its set, because this
+    // build cannot open the bucket and so could not choose one by looking.
+    // A picture chosen for the category beats a frame chosen by index.
     //
-    // Chosen by position in the set, not by looking: this build cannot reach
-    // the bucket, so which frame is the best category image is a judgement
-    // nobody has made yet. Worth a second pass by someone who can see them.
-    ...(swimPhotosFor(OFFERED_SWIMSPAS[1] ?? OFFERED_SWIMSPAS[0]!)[0]
-      ? { photo: swimPhotosFor(OFFERED_SWIMSPAS[1] ?? OFFERED_SWIMSPAS[0]!)[0]! }
-      : {}),
+    // The alt says only what is certain, for the reason given above.
+    photo: {
+      src: "/media/kategorija-swim-spa.jpeg",
+      widths: [],
+      alt: "Swim spa bazen",
+    },
     art: "swimspa" as const,
   },
 ];
