@@ -146,6 +146,35 @@ describe("no live shop ships an unset price", () => {
         expect(shop.live).toBe(false);
         return;
       }
+      // THE DERIVED-PRICE CHECK, and it has to come first.
+      //
+      // Everything below this line looks for the unset DASH, which is what a
+      // catalogue shows when it has no numbers at all. That was the whole
+      // gate until PROVISIONAL_EUR_PER_USD started rendering real-looking
+      // figures — and then the gate had a hole exactly where it mattered
+      // most: a shop flipped live today would have shown 2.420 EUR on a card
+      // and passed, because 2.420 EUR is not a dash.
+      //
+      // Those figures are the supplier's list price converted at 0.92 and
+      // nothing else: no freight, no duty, no delivery labour, no margin.
+      // They are BELOW landed cost, and ZVPot makes the displayed price the
+      // price the customer pays. Publishing them is not a cosmetic mistake,
+      // it is selling at a loss by arithmetic.
+      //
+      // pricing.ts has claimed in a comment since the provisional path landed
+      // that "the launch gate still refuses to let a shop go live". This is
+      // the assertion that makes that sentence true.
+      expect(
+        catalogPricingReady(),
+        key + " is live while COST_INPUTS is null — its prices are cost basis, " +
+          "not selling prices, and are below landed cost",
+      ).toBe(true);
+      expect(
+        content.pdp.pricesProvisional,
+        key + " is live with pricesProvisional set — the page is telling " +
+          "visitors its own prices are not final",
+      ).toBe(false);
+
       const unset: string[] = [];
       for (const p of content.products) {
         if ("util" in p) continue;

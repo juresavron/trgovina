@@ -36,15 +36,20 @@
   // 5. When launch gates pass: set live: true in src/tenants/<shop>.ts,
   //    is_live = true on the shops row, redeploy. GSC + Bing + sitemap.
   //
+  // ONE SHOP. The other five domains that used to be listed here went with
+  // their tenants — a route for a host the resolver does not know serves a
+  // hard 404 at best, and at worst attaches a zone nobody owns.
+  //
+  // ⚠️ As of 25 Aug 2026 masazni-bazen.si resolves to 212.44.105.63, which is
+  // not a Cloudflare address. Whatever is answering there, it is not this
+  // Worker — so the zone is either not in this account or is DNS-only. Do NOT
+  // uncomment this until the zone reads Active in THIS account: step 1 above
+  // is not paperwork, it is the difference between a working deploy and
+  // error 10082 taking the whole deploy down.
+  //
   // "routes": [
-  //   { "pattern": "infrardeca-savna.si", "custom_domain": true },
-  //   { "pattern": "www.infrardeca-savna.si", "custom_domain": true },
-  //   { "pattern": "ledena-kad.si", "custom_domain": true },
-  //   { "pattern": "www.ledena-kad.si", "custom_domain": true },
   //   { "pattern": "masazni-bazen.si", "custom_domain": true },
-  //   { "pattern": "www.masazni-bazen.si", "custom_domain": true },
-  //   { "pattern": "masazni-fotelj.si", "custom_domain": true },
-  //   { "pattern": "www.masazni-fotelj.si", "custom_domain": true }
+  //   { "pattern": "www.masazni-bazen.si", "custom_domain": true }
   // ],
 
   // Static assets, served from the edge before the Worker runs. Only /img/*
