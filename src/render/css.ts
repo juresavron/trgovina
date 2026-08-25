@@ -106,7 +106,18 @@ const SHEET = `
   }
   :root[data-theme="salon"] .eyebrow { letter-spacing: 0.24em; font-weight: 600; }
 
-  .devbar { background: #0d0c0e; color: #eae7e1; border-bottom: 1px solid #262329; font-family: ui-monospace, Menlo, monospace; }
+  /* The QA switcher. It sits at the very top of the document, and the studio
+     chrome is a FIXED bar at top:0 — so the two occupied the same 33px and the
+     switcher was simply hidden underneath. That went unnoticed for as long as
+     the bar was opaque; over the full-bleed hero, where the bar is
+     transparent, the switcher shows through the nav and both become
+     unreadable. So it takes the top strip for itself and everything else moves
+     down by exactly its height. Dev-only: no production page renders it. */
+  :root { --devbar-h: 33px; }
+  .devbar { position: fixed; top: 0; left: 0; width: 100%; z-index: 9; background: #0d0c0e; color: #eae7e1; border-bottom: 1px solid #262329; font-family: ui-monospace, Menlo, monospace; }
+  /* The offsets live in chrome.ts: the studio sheet sets these same
+     properties at equal specificity and later in source order, so an
+     unprefixed rule here loses to it silently. */
   .devbar .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-top: 9px; padding-bottom: 9px; font-size: 11px; white-space: nowrap; }
   .devbar .wrap::-webkit-scrollbar { display: none; }
   .devbar .lbl { color: #7e7a85; font-size: 10px; letter-spacing: 0.14em; }

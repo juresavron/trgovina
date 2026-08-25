@@ -65,9 +65,16 @@ describe("the inlined stylesheet stays within budget", () => {
     );
     const html = await res.text();
     // A minifier that eats a space inside calc() breaks the declaration
-    // silently, so assert both operator shapes that depend on one: the hero's
-    // subtraction and the chrome bar's addition.
-    expect(html).toContain("calc(100svh - var(--chrome-h))");
+    // silently, so assert both operator shapes that depend on one: a
+    // subtraction and an addition.
+    //
+    // This used to assert the hero's `calc(100svh - var(--chrome-h))`. The
+    // hero is now full-bleed with the bar floating over it, so it no longer
+    // subtracts anything and the assertion was testing for a string the
+    // design had deliberately removed. Re-pointed at a subtraction that is
+    // still there rather than dropped — the operator shape is the point, not
+    // which rule happens to carry it.
+    expect(html).toContain("calc(100% - 2 * var(--studio-gutter))");
     expect(html).toMatch(/calc\(var\(--studio-container\) \+ 2 \* var\(--studio-gutter\)\)/);
     // Combinators must survive. The minifier deliberately leaves the space
     // around ~ and > alone rather than saving two bytes per selector, so this

@@ -10,6 +10,17 @@
   // next deploy and silently disables trgovina.worldfans.workers.dev.
   "workers_dev": true,
 
+  // Public identifiers, not secrets. The keys that ARE secret are set with
+  // `npx wrangler secret put <NAME>` and never appear in this file:
+  //   SUPABASE_SERVICE_KEY  bypasses RLS; the admin panel writes with it
+  //   ADMIN_PASSWORD        the panel's password
+  //   ADMIN_SECRET          HMAC key for session cookies; rotating it signs
+  //                         every admin session out immediately
+  // Until all four exist, /admin serves a page naming the ones it is missing.
+  "vars": {
+    "SUPABASE_URL": "https://cybwzhgretztcjfdefoy.supabase.co"
+  },
+
   // GOING LIVE (per shop — the onlyworld staged pattern):
   //
   // 1. Register the domain FRESH, add the zone to THIS Cloudflare account,

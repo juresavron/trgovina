@@ -50,6 +50,355 @@ import { SCENES, decorativeImg, pick } from "./media";
 import { productArt } from "./product-art";
 
 export const STUDIO_HERO_CSS = `
+  /* ---- §4.1 THE HERO — full-bleed photograph, wordmark, subject ----
+   *
+   * This is the source's actual first section, and it replaces the offer
+   * triptych that stood in this slot. The triptych was a real device from the
+   * source, read off correctly — it simply is not the hero; it sits mid-page
+   * under the solid bar. Putting it first meant the landing page never showed
+   * the thing the source leads with.
+   *
+   * The composition is four layers, and the ORDER is the whole idea:
+   *
+   *   1. a photograph, full bleed, edge to edge
+   *   2. a veil, because white type over a photograph is not a contrast
+   *      argument you can win by hoping
+   *   3. the wordmark, set enormous
+   *   4. the subject, painted OVER the wordmark
+   *
+   * The occlusion in (4) is the device. The name is never dimmed to fake
+   * depth — the product simply stands in front of it, which is why the
+   * wordmark may not be given a lower opacity to "help" the subject read.
+   */
+  :root[data-theme="studio"] .st-hero {
+    position: relative;
+    isolation: isolate;
+    overflow: clip;
+    /* The bar floats over this section (see chrome.ts), so the hero owns the
+     * whole viewport rather than the viewport minus the bar. */
+    min-height: 100vh;
+    min-height: 100svh;
+    display: grid;
+    background: var(--tile-mid);
+  }
+  /* The photograph. Absolute, so it contributes no layout and CLS stays at
+   * zero however slowly it arrives; the section's height comes from the
+   * viewport, not from the file. */
+  :root[data-theme="studio"] .st-hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    inline-size: 100%; block-size: 100%;
+    object-fit: cover;
+  }
+  /* The veil — THREE bands, not one ramp, and the reason is measurement.
+   *
+   * A single top-to-bottom ramp cannot be both dark enough for white type and
+   * light enough to leave the photograph worth showing: sampled against the
+   * real render, the nav came out at 3.2:1, the annotation at 1.8:1 and the
+   * h1 at 2.7:1 — all of them under the 4.5:1 floor, all of them looking
+   * perfectly fine to the eye.
+   *
+   * The source fails the same way; its own "Luxe Sofa" is white on a pale
+   * floor. We do not get to copy that: EU 2019/882 has applied to e-commerce
+   * since June 2025 and the floor is a floor. So the composition is the
+   * source's and the legibility is ours — the two bands sit exactly where
+   * type lands and the middle stays open, which is where the room is the
+   * point.
+   *
+   * The measurement is on the BRIGHTEST pixel under each text run, not the
+   * average: a thin white stroke fails on the one bright pixel it crosses. */
+  :root[data-theme="studio"] .st-hero-veil {
+    position: absolute; inset: 0; z-index: 1;
+    background:
+      /* the bar */
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--ink) 72%, transparent) 0%,
+        color-mix(in srgb, var(--ink) 46%, transparent) 9%,
+        transparent 22%
+      ),
+      /* the foot block. It has to hold its darkness well ABOVE the words: the
+       * pill sits at 58% of the viewport and the heading runs to 76%, and a
+       * band that has already faded by 42% leaves both of them at ~3:1. */
+      linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--ink) 88%, transparent) 0%,
+        color-mix(in srgb, var(--ink) 82%, transparent) 26%,
+        color-mix(in srgb, var(--ink) 62%, transparent) 42%,
+        color-mix(in srgb, var(--ink) 28%, transparent) 54%,
+        transparent 64%
+      ),
+      /* an even wash, so the wordmark has something to be white against */
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--ink) 12%, transparent),
+        color-mix(in srgb, var(--ink) 12%, transparent)
+      );
+  }
+
+  /* The wordmark, fit to the container's width.
+   *
+   * SVG rather than a font-size in vw, because "fit the text to this box" is
+   * exactly what textLength does and nothing else does it without measuring.
+   * A vw-based size would fit one shop's name and clip or strand every other:
+   * these run from "Ledena Kad" to "Prostostoječa Kad", and a size that suits
+   * ten characters leaves nineteen hanging off the screen.
+   *
+   * lengthAdjust="spacing" and not "spacingAndGlyphs": spacing absorbs the
+   * difference in the TRACKING, which is what a designer would do to a
+   * wordmark. spacingAndGlyphs would stretch the letterforms themselves, and
+   * a stretched typeface is the single most obvious way to make a brand look
+   * cheap. */
+  :root[data-theme="studio"] .st-hero-mark {
+    position: absolute; z-index: 2;
+    inset-block-start: clamp(84px, 13vh, 190px);
+    inset-inline: 0;
+    margin: 0;
+    padding-inline: var(--studio-gutter);
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+  }
+  :root[data-theme="studio"] .st-hero-mark svg {
+    inline-size: 100%;
+    max-inline-size: var(--studio-container);
+    block-size: auto;
+    display: block;
+  }
+  :root[data-theme="studio"] .st-hero-mark text {
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    fill: var(--on-invert);
+  }
+
+  /* The subject, in front of the wordmark. */
+  :root[data-theme="studio"] .st-hero-subject {
+    position: absolute; z-index: 3;
+    inset-block-end: 25%;
+    inset-inline-start: 61%;
+    transform: translateX(-50%);
+    inline-size: min(41%, 580px);
+    aspect-ratio: 4 / 3;
+    color: var(--on-invert);
+  }
+  /* The subject needs a ground of its own.
+   *
+   * In the source this layer is a photograph: it has mass, so it occludes the
+   * wordmark simply by being opaque. Ours is a LINE drawing in the same white
+   * as the letters, and drawn straight over them the two dissolve into each
+   * other — legible as neither. So the subject brings its own soft darkening
+   * with it, which is the occlusion the composition depends on, done the only
+   * way an outline can do it. */
+  :root[data-theme="studio"] .st-hero-subject::before {
+    content: "";
+    position: absolute;
+    inset: -10% -8%;
+    z-index: -1;
+    border-radius: var(--r-circle);
+    background: radial-gradient(
+      54% 54% at 50% 54%,
+      color-mix(in srgb, var(--ink) 54%, transparent) 0%,
+      color-mix(in srgb, var(--ink) 30%, transparent) 56%,
+      transparent 76%
+    );
+  }
+  :root[data-theme="studio"] .st-hero-subject .st-art {
+    position: relative;
+    inline-size: 100%; block-size: 100%;
+  }
+
+  /* The annotation and its leader line.
+   *
+   * The line is ONE element with two borders and a rounded corner — the same
+   * construction the source uses — rather than two elements pretending to be
+   * a corner. A dot at each end: one against the words, one where the line
+   * arrives at the product. */
+  :root[data-theme="studio"] .st-hero-note {
+    position: absolute; z-index: 4;
+    inset-block-end: 47%;
+    inset-inline-end: 58%;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--on-invert);
+    pointer-events: none;
+  }
+  :root[data-theme="studio"] .st-hero-note::before {
+    content: "";
+    position: absolute;
+    inset: -95% -34% -105% -26%;
+    z-index: -1;
+    border-radius: var(--r-circle);
+    background: radial-gradient(
+      52% 52% at 50% 50%,
+      color-mix(in srgb, var(--ink) 84%, transparent) 0%,
+      color-mix(in srgb, var(--ink) 66%, transparent) 54%,
+      color-mix(in srgb, var(--ink) 24%, transparent) 76%,
+      transparent 88%
+    );
+  }
+  :root[data-theme="studio"] .st-hero-note p {
+    margin: 0;
+    max-inline-size: 19ch;
+    text-align: right;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+  }
+  :root[data-theme="studio"] .st-hero-dot {
+    flex: 0 0 auto;
+    inline-size: 5px; block-size: 5px;
+    margin-block-start: 0.55em;
+    border-radius: var(--r-circle);
+    background: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-hero-lead {
+    position: relative;
+    flex: 0 0 auto;
+    inline-size: clamp(52px, 7vw, 116px);
+    block-size: clamp(34px, 5vh, 62px);
+    margin-block-start: 0.55em;
+    border-block-start: var(--bw-line) solid var(--on-invert);
+    border-inline-end: var(--bw-line) solid var(--on-invert);
+    border-start-end-radius: 8px;
+  }
+  :root[data-theme="studio"] .st-hero-lead::after {
+    content: "";
+    position: absolute;
+    inset-block-end: -3px; inset-inline-end: -3px;
+    inline-size: 6px; block-size: 6px;
+    border-radius: var(--r-circle);
+    background: var(--on-invert);
+  }
+
+  /* The foot block: pill, heading, one button. */
+  :root[data-theme="studio"] .st-hero-foot {
+    position: relative; z-index: 4;
+    align-self: end;
+    inline-size: 100%;
+    max-inline-size: calc(var(--studio-container) + 2 * var(--studio-gutter));
+    margin-inline: auto;
+    padding: 0 var(--studio-gutter) clamp(34px, 6vh, 76px);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(14px, 1.6vw, 24px);
+    color: var(--on-invert);
+  }
+  /* The source's badge, with one measured change: its wash is 8% WHITE, and a
+   * white wash under white type is the wrong direction. With the blur pulling
+   * in the bright wall behind it, the label came out at 3.0:1. The hairline,
+   * the radius and the blur are the source's; the wash is inverted to a dark
+   * one, which is the same glass effect and the only version that clears the
+   * floor. */
+  :root[data-theme="studio"] .st-hero-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 14px;
+    border: var(--bw-line) solid color-mix(in srgb, var(--on-invert) 32%, transparent);
+    border-radius: var(--r-pill);
+    background: color-mix(in srgb, var(--ink) 62%, transparent);
+    backdrop-filter: blur(6px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-hero-foot h1 {
+    margin: 0;
+    max-inline-size: 16ch;
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h3);
+    letter-spacing: var(--ls-h3);
+    line-height: var(--lh-h3);
+    color: var(--on-invert);
+  }
+  /* The source has no paragraph here at all — pill, title, button. Ours keeps
+   * one because it is the only place on the page those specifics appear, and
+   * dropping page copy to match a layout is a bad trade on a site whose whole
+   * strategy is the search result. It is held to a narrow measure so the block
+   * stays the source's proportion rather than becoming a text column. */
+  :root[data-theme="studio"] .st-hero-sub {
+    margin: 0;
+    max-inline-size: 38ch;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-hero-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-block-size: var(--st-tap, 44px);
+    padding: 12px 30px;
+    border: var(--bw-line) solid var(--on-invert);
+    border-radius: var(--r-ctrl);
+    background: var(--on-invert);
+    color: var(--ink);
+    text-decoration: none;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    transition: background-color .2s ease, color .2s ease;
+  }
+  :root[data-theme="studio"] .st-hero-cta:hover {
+    background: transparent;
+    color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-hero-cta:focus-visible {
+    outline: 2px solid var(--on-invert);
+    outline-offset: 3px;
+  }
+
+  :root[data-theme="studio"] .st-hero-cap {
+    position: absolute; z-index: 4;
+    inset-block-end: clamp(14px, 2vh, 24px);
+    inset-inline-end: var(--studio-gutter);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--on-invert) 72%, transparent);
+  }
+
+  /* Below 900px the annotation goes first: at 390px the leader line has
+   * nowhere to travel and the words sit on top of the product. The subject
+   * shrinks and drops, and the wordmark rides higher so the foot block keeps
+   * its own air. */
+  @media (max-width: 900px) {
+    :root[data-theme="studio"] .st-hero-note { display: none; }
+    /* The foot block is much taller here — the heading wraps to two lines and
+     * the paragraph to four — so it reaches well above where the subject sits
+     * on a wide screen. Measured at 390x844 it occupies the bottom ~45%, and
+     * the drawing was landing across the pill and the heading. It goes above
+     * that, and smaller, so the two share the screen instead of the picture
+     * winning. */
+    :root[data-theme="studio"] .st-hero-subject {
+      inline-size: min(66%, 330px);
+      inset-block-end: 50%;
+      inset-inline-start: 52%;
+      transform: translateX(-50%);
+    }
+    :root[data-theme="studio"] .st-hero-sub { max-inline-size: 34ch; }
+    :root[data-theme="studio"] .st-hero-mark { inset-block-start: clamp(92px, 15vh, 150px); }
+    :root[data-theme="studio"] .st-hero-foot h1 { font-size: var(--t-h3); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-hero-cta { transition: none; }
+  }
+
   /* ---- The only values this module declares ----------------------------
    * tokens.ts is the single declaration site: --studio-gutter, --tile-mid,
    * --bg-alt and --on-invert-mute live there and are consumed here as
@@ -65,153 +414,6 @@ export const STUDIO_HERO_CSS = `
      * a light or a dark ground. The default is the light case — the hero's
      * left panel and the §4.5 band object both stand on --bg-alt. */
     --photo-ink: var(--ink);
-  }
-
-  /* ---- §4.2 Hero triptych ----
-   * Three EQUAL full-bleed columns, no gaps. The chrome is fixed and opaque,
-   * so it takes its height out of the viewport rather than overlaying — the
-   * band must stop where the bar starts or the fold lands mid-panel. */
-  :root[data-theme="studio"] .st-hero {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0;
-    min-height: calc(100vh - var(--chrome-h));
-    min-height: calc(100svh - var(--chrome-h));
-    overflow: clip;
-  }
-  :root[data-theme="studio"] .st-hero-panel {
-    position: relative;
-    min-width: 0;
-    isolation: isolate;
-    /* The watermark is drawn wider than its panel; clip it here so it cannot
-     * bleed into the neighbouring column. */
-    overflow: clip;
-  }
-  /* Panel grounds, from the owner's own reference frames: the left panel is
-   * the LIGHT panel grey with the product standing on it, the centre is the
-   * dark offer panel, the right is photography.
-   *
-   * An earlier revision made all three dark. That followed from the source's
-   * actual first section — a full-bleed photographic hero the header sits
-   * transparently over — but this device is not that section. It is the offer
-   * triptych, which in the source sits mid-page beneath the SOLID dark bar.
-   * Copying the wrong section's ground is how the whole band went black. */
-  :root[data-theme="studio"] .st-hero-photo-a { background: var(--bg-alt); }
-  /* --tile-mid is the ground BEHIND the photograph, not instead of it: it is
-   * the rung a cropped product bleeds over (§2), so a slow or failed image
-   * decode shows the panel it was always meant to sit on rather than a white
-   * hole punched in the triptych. */
-  :root[data-theme="studio"] .st-hero-photo-b { background: var(--tile-mid); }
-  /* The scene fills the column. Absolutely positioned, so it contributes no
-   * layout of its own and the width/height attributes decorativeImg emits
-   * carry only the intrinsic ratio — the panel's height is the grid's, and CLS
-   * stays at zero however slowly the file arrives. */
-  :root[data-theme="studio"] .st-hero-img {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
-  }
-
-  /* §4.14 watermark — the ARROW-STADIUM outline, scaled enormous and set a few
-   * percent off the ground. Not a circle and not a gradient blob: it is the
-   * brand motif, so it is the real outline from icons.ts, rendered as an
-   * aria-hidden element BEHIND the panel content (z-index 0). The ink is
-   * currentColor, set per band below. */
-  :root[data-theme="studio"] .st-hero-wm {
-    position: absolute; z-index: 0;
-    left: 50%; top: 50%; transform: translate(-50%, -50%);
-    /* SQUARE, so the mark is a CIRCLE. discWatermark() draws concentric
-     * ellipses with preserveAspectRatio="none", which means the box decides
-     * the shape — and the box used to be 128% × 58%, i.e. a lens squashed to
-     * less than half its height. The reference frames show one large disc per
-     * panel, so the box is now square and the aspect ratio does the work.
-     * 122% of a panel that is a third of the viewport overruns the panel's
-     * height on very wide screens; that is what .st-hero-panel's overflow:clip
-     * is for, and a clipped disc is the reference's own crop. */
-    width: 122%;
-    aspect-ratio: 1 / 1;
-    pointer-events: none;
-  }
-  :root[data-theme="studio"] .st-hero-wm .st-watermark {
-    display: block; width: 100%; height: 100%;
-  }
-  /* Barely-there on the light panel: the reference shows it as a tonal shift
-   * in the grey, not a drawn line. */
-  :root[data-theme="studio"] .st-hero-photo-a .st-hero-wm {
-    color: color-mix(in srgb, var(--ink) 5%, transparent);
-  }
-  /* Dark band: --ink-invert-2 is the baseline's #161616 watermark rung, one
-   * step off --ink-invert (§2 token table). */
-  :root[data-theme="studio"] .st-hero-offer .st-hero-wm {
-    color: var(--ink-invert-2);
-  }
-
-  /* Centre: black, the whole message stack, centered. */
-  :root[data-theme="studio"] .st-hero-offer {
-    background: var(--ink-invert);
-    color: var(--on-invert);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: clamp(48px, 5.5vw, 110px) var(--studio-gutter);
-  }
-  :root[data-theme="studio"] .st-hero-stack {
-    position: relative; z-index: 1;
-    display: flex; flex-direction: column; align-items: center;
-    text-align: center;
-    /* width+max-width, not max-width alone: on a phone the stack fills the
-     * panel so a stretched CTA spans it, on desktop the measure still caps. */
-    width: 100%;
-    max-width: 30ch;
-  }
-  /* Pills are ROUND (§3) — the counterpoint to the sharp button below. */
-  :root[data-theme="studio"] .st-hero-pill {
-    border: 1px solid color-mix(in srgb, var(--on-invert) 40%, transparent);
-    border-radius: var(--r-pill);
-    padding: clamp(8px, 0.6vw, 12px) clamp(16px, 1.4vw, 28px);
-    /* An eyebrow chip — the label role, whole row: DM Sans 14px, +0.06em,
-     * uppercase. Leading is the ramp's tight label rung because a chip is one
-     * line inside its own padding. */
-    font-family: var(--f-label);
-    font-size: var(--t-label);
-    font-weight: var(--w-label);
-    letter-spacing: var(--ls-label);
-    line-height: var(--lh-label-tight);
-    text-transform: uppercase;
-    color: var(--on-invert);
-    /* measured 48px gap, pill → statement */
-    margin-bottom: var(--studio-gap-stack);
-  }
-  /* The offer statement is the page's single h1, so it takes the ramp's h1
-   * rung outright: 92/64/44 Clash Display at --w-display (500), 0em tracking,
-   * 1.04em leading. The measured pass had guessed a 650 weight and −0.03em
-   * tracking; the source sets display type at 500 and never tracks it negative. */
-  :root[data-theme="studio"] .st-hero-offer h1 {
-    margin: 0;
-    font-family: var(--f-display);
-    font-weight: var(--w-display);
-    font-size: var(--t-h1);
-    letter-spacing: var(--ls-h1);
-    line-height: var(--lh-h1);
-    text-wrap: balance;
-    /* a long Slovenian head term must fold, never push the column open */
-    overflow-wrap: break-word;
-    hyphens: none;
-  }
-  /* Sub: the standfirst under the statement, so the lead rung (20/16/18
-   * Satoshi at --w-body-med) in the lighter on-dark ink. */
-  :root[data-theme="studio"] .st-hero-sub {
-    margin: clamp(10px, 1.1vw, 22px) 0 0;
-    font-family: var(--f-body);
-    font-size: var(--t-lead);
-    font-weight: var(--w-body-med);
-    letter-spacing: var(--ls-body);
-    line-height: var(--lh-lead);
-    /* Measured #d6d6d6 — lighter than --on-invert-mute. 13.4:1 on #0d0d0d. */
-    color: var(--on-invert-mute);
   }
   /* Buttons are SHARP (--r-ctrl, §3). White on black: --bg is the fill. */
   :root[data-theme="studio"] .st-btn-light {
@@ -238,10 +440,6 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-btn-light:focus-visible {
     outline: 2px solid var(--bg);
     outline-offset: 3px;
-  }
-  :root[data-theme="studio"] .st-hero-cta {
-    /* measured 56px gap, sub → button */
-    margin-top: var(--studio-gap-cta);
   }
 
   /* Photo-ready slot: flat neutral mass + contact shadow on the panel ground.
@@ -307,83 +505,6 @@ export const STUDIO_HERO_CSS = `
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert);
-  }
-
-  /* Right column overlay: product name + price on a legibility scrim.
-   *
-   * The stops were raised (92→94% at the foot, 62→72% at the fold) when the
-   * panel stopped being a flat grey and became a photograph. The floor has to
-   * hold for the WORST pixel the scene can put under the type, i.e. pure
-   * white, so it is computed there rather than sampled off the four files we
-   * happen to ship — a fifth scene must not be able to break the page:
-   *
-   *   --on-invert on 94% #151515 over #fff → 15.7:1   (the price row)
-   *   --on-invert on 72% #151515 over #fff →  7.3:1   (the name, at the fold)
-   *   --on-invert-mute on 94% over #fff    →  6.3:1   (the struck compare-at)
-   *
-   * Every one of those is a floor, not an estimate: over any real scene the
-   * ratios only go up. */
-  :root[data-theme="studio"] .st-hero-scrim {
-    position: absolute; inset: auto 0 0 0; z-index: 2;
-    display: flex; flex-direction: column; gap: clamp(6px, 0.6vw, 12px);
-    padding: clamp(56px, 7vw, 140px) var(--studio-gutter) var(--studio-gutter);
-    background: linear-gradient(
-      to top,
-      color-mix(in srgb, var(--ink-invert) 94%, transparent) 0%,
-      color-mix(in srgb, var(--ink-invert) 72%, transparent) 46%,
-      transparent 100%
-    );
-  }
-  /* A product title, so the ramp's large-card rung, h5 (32/26/24) — this panel
-   * is the biggest "card" on the page but the element is still a product name,
-   * and the ramp is picked by role, not by the 40px the screenshot showed. */
-  :root[data-theme="studio"] .st-hero-name {
-    font-family: var(--f-display);
-    font-weight: var(--w-display);
-    font-size: var(--t-h5);
-    letter-spacing: var(--ls-h5);
-    line-height: var(--lh-h5);
-    color: var(--on-invert);
-    /* A long model name must fold inside the column, never widen the panel. */
-    overflow-wrap: break-word;
-  }
-  /* §4.2's price row: the live price white, the compare-at struck beside it. */
-  :root[data-theme="studio"] .st-hero-prices {
-    display: flex; align-items: baseline; flex-wrap: wrap;
-    gap: clamp(8px, 0.8vw, 16px);
-  }
-  /* The primary price takes the h6 rung (24/19/22 Clash Display) — the ramp's
-   * price role, which is a display face, not the body one the measured pass used. */
-  :root[data-theme="studio"] .st-hero-price {
-    font-family: var(--f-display);
-    font-size: var(--t-h6);
-    font-weight: var(--w-display);
-    letter-spacing: var(--ls-h6);
-    line-height: var(--lh-h6);
-    font-variant-numeric: tabular-nums;
-    color: var(--on-invert);
-  }
-  /* The struck compare-at drops to the body rung — secondary information beside
-   * the live price — in the muted on-dark ink (7.33:1 on the scrim's near-black:
-   * it is secondary, never illegible). */
-  :root[data-theme="studio"] .st-hero-was {
-    /* Containing block for the visually-hidden "prejšnja cena" prefix. */
-    position: relative;
-    font-family: var(--f-body);
-    font-size: var(--t-body);
-    font-weight: var(--w-body);
-    letter-spacing: var(--ls-body);
-    line-height: var(--lh-body);
-    font-variant-numeric: tabular-nums;
-    color: var(--on-invert-mute);
-    text-decoration-line: line-through;
-    text-decoration-thickness: 1px;
-  }
-  /* Local copy of chrome.ts's .st-vh: the hero must not depend on the chrome
-   * module being on the page for its screen-reader prefix to stay hidden. */
-  :root[data-theme="studio"] .st-hero-vh {
-    position: absolute; width: 1px; height: 1px; overflow: hidden;
-    clip-path: inset(50%); white-space: nowrap;
   }
 
   /* ---- §4.5 Wordmark band ---- */
@@ -609,21 +730,6 @@ export const STUDIO_HERO_CSS = `
 
   /* ---- Below 900px: the message leads, ONE photo supports it ---- */
   @media (max-width: 900px) {
-    :root[data-theme="studio"] .st-hero {
-      grid-template-columns: 1fr;
-      min-height: 0;
-    }
-    /* Black panel first — the offer, not the scenery, opens the page. */
-    :root[data-theme="studio"] .st-hero-offer {
-      order: 1;
-      padding: clamp(56px, 12vw, 96px) clamp(20px, 6vw, 44px);
-    }
-    /* The surviving photo is the one carrying the product name and price;
-     * the other is dropped outright rather than squeezing three panels. It is
-     * also the panel holding the disclosure plate, so the disclosure survives
-     * the collapse without a second copy riding a hidden panel. */
-    :root[data-theme="studio"] .st-hero-photo-b { order: 2; min-height: 58svh; }
-    :root[data-theme="studio"] .st-hero-photo-a { display: none; }
 
     :root[data-theme="studio"] .st-band { min-height: clamp(380px, 72vh, 620px); }
     :root[data-theme="studio"] .st-band-callout { display: none; }
@@ -631,11 +737,7 @@ export const STUDIO_HERO_CSS = `
      * because it hung off the band's floor and the floor moved; anchored to the
      * wordmark it tracks the wordmark, which is where it is supposed to be. */
   }
-  @media (max-width: 560px) {
-    :root[data-theme="studio"] .st-hero-photo-b { min-height: 48svh; }
-    :root[data-theme="studio"] .st-hero-cta,
-    :root[data-theme="studio"] .st-band-foot .st-btn-light { width: 100%; }
-  }
+  
 
   /* ---- Motion ----
    * effects.ts owns the reduced-motion reset for the ticker itself: the track
@@ -743,56 +845,105 @@ function compareAt(d: RenderCtx["content"]["pdp"]): string | null {
  * marquee below deliberately use non-heading elements so this stays the only
  * one on the page.
  */
+/**
+ * The wordmark as a self-scaling SVG. See the note at its call site for why
+ * the box is measured from the string.
+ */
+function markSvg(mark: string): string {
+  const chars = [...mark];
+  const spaces = chars.filter((ch) => ch === " ").length;
+  const w = Math.round((chars.length - spaces) * 0.66 * 290 + spaces * 0.26 * 290);
+  return (
+    '<p class="st-hero-mark" aria-hidden="true">' +
+    '<svg viewBox="0 0 ' + w + ' 340" role="presentation" focusable="false">' +
+    '<text x="' + Math.round(w / 2) + '" y="268" text-anchor="middle" font-size="290" ' +
+    'textLength="' + w + '" lengthAdjust="spacing">' + esc(mark) + "</text>" +
+    "</svg></p>"
+  );
+}
+
+/**
+ * §4.1 — the hero.
+ *
+ * Four layers: photograph, veil, wordmark, subject. What makes it the source's
+ * hero rather than a picture with words on it is that the subject is painted
+ * OVER the wordmark, so the name reads as something the product is standing in
+ * front of.
+ *
+ * THREE DELIBERATE DEPARTURES, all of them things that would be wrong to copy:
+ *
+ * 1. The h1 is the keyword sentence, not the wordmark. In the source the
+ *    wordmark IS the h1, which is right for a brand-led store. These are
+ *    single-keyword shops whose entire strategy is that one page ranks for one
+ *    term (docs/SEO.md), and the shop name is already in the header, the
+ *    footer and the title. So the wordmark is decorative and aria-hidden, and
+ *    the h1 stays the sentence a search result should show.
+ *
+ * 2. The subject is the shop's DRAWING, not a cutout photograph. The source
+ *    puts a sofa here, from an asset bundle we have — of furniture. A cutout
+ *    of a dining chair standing where a customer expects the sauna they are
+ *    about to buy is not a placeholder, it is a claim about the goods
+ *    (media.ts, and the launch gate that enforces it).
+ *
+ * 3. The photograph carries "simbolična fotografija". It is a room from the
+ *    same furniture bundle: fine as atmosphere, and labelled so it cannot be
+ *    read as the product.
+ */
 export function renderStudioHero(ctx: RenderCtx): string {
   const c = ctx.content;
-  const was = compareAt(ctx.pdp);
+  const art = productArt(ctx.shop.key);
+  // Uppercase through the shop's own locale: Slovenian casing is not the
+  // default one, and a wordmark is the last place to get a letter wrong.
+  const mark = ctx.shop.wordmark.join(" ").toLocaleUpperCase(ctx.shop.locale.intl);
+
   return (
     '<section class="st-hero">' +
-    '<div class="st-hero-panel st-hero-photo-a">' +
-    watermark() +
-    photoSlot(ctx) +
+    // The LCP element. Eager and high priority: it is the largest thing on the
+    // page and the one the score is measured against, so a lazy hint here
+    // would be actively wrong.
+    eager(
+      decorativeImg(pick(SCENES, ctx.shop.key), "st-hero-bg", "100vw"),
+    ) +
+    '<span class="st-hero-veil" aria-hidden="true"></span>' +
+
+    // Fit-to-width wordmark.
+    //
+    // The viewBox width is ESTIMATED from the string rather than fixed, and
+    // that is the whole trick. A fixed width with textLength forced every
+    // shop's name into the same box: "MASAŽNI BAZEN" is naturally about
+    // 2.4× a 1000-unit box at this size, so the tracking went hugely negative
+    // and the two words printed on top of each other. Estimating first means
+    // textLength only has a few percent of error to absorb, which is what
+    // spacing adjustment is for.
+    //
+    // Caps in a grotesque average ~0.66em of advance; a word space is ~0.26em.
+    // The estimate does not need to be right, only close — the SVG scales to
+    // its container, so only the RATIO matters.
+    //
+    // 340 tall against a 290 size because Š and Ž reach well above cap height
+    // and a box drawn to Latin caps clips their carons.
+    markSvg(mark) +
+
+    (art ? '<div class="st-hero-subject" aria-hidden="true">' + art + "</div>" : "") +
+
+    // The annotation points at the subject. Its words are the shop's own first
+    // trust line rather than invented copy.
+    '<div class="st-hero-note" aria-hidden="true">' +
+    "<p>" + esc(c.trust[0] ?? "") + "</p>" +
+    '<span class="st-hero-dot"></span>' +
+    '<span class="st-hero-lead"></span>' +
     "</div>" +
-    '<div class="st-hero-panel st-hero-offer">' +
-    watermark() +
-    '<div class="st-hero-stack">' +
+
+    '<div class="st-hero-foot">' +
     '<span class="st-hero-pill">' + esc(c.kicker) + "</span>" +
     "<h1>" + esc(c.h1) + "</h1>" +
     '<p class="st-hero-sub">' + esc(c.sub) + "</p>" +
-    '<a class="st-btn-light st-hero-cta" href="#izbor">' + esc(c.cta) + "</a>" +
-    "</div></div>" +
-    // The photographic panel. `sizes` describes the column, not the file: a
-    // third of the viewport once the triptych is laid out, the whole of it
-    // once the ≤900px rule collapses the grid — so the browser picks against
-    // the box it will actually paint into.
-    //
-    // Seeded by shop key, so a shop's hero is the same picture on every render
-    // (a storefront that reshuffles its photography on reload looks broken)
-    // and two shops on this theme do not open on the same scene.
-    '<div class="st-hero-panel st-hero-photo-b">' +
-    eager(
-      decorativeImg(
-        pick(SCENES, ctx.shop.key),
-        "st-hero-img",
-        "(max-width: 900px) 100vw, 34vw",
-      ),
-    ) +
-    // Not "fotografija v pripravi" any more: there IS a photograph now, and
-    // the honest claim about it is that it is not this product. "Simbolična
-    // fotografija" is the Slovenian retail formula for exactly that, and it
-    // sits on the panel that prints the price rather than the one that does
-    // not.
-    '<span class="st-photo-cap">simbolična fotografija</span>' +
-    '<div class="st-hero-scrim">' +
-    '<span class="st-hero-name">' + esc(ctx.pdp.title) + "</span>" +
-    '<span class="st-hero-prices">' +
-    '<span class="st-hero-price">' + esc(ctx.pdp.price) + "</span>" +
-    // The <s> alone is silent in most screen readers; the hidden prefix is
-    // what makes "prejšnja cena 3.499 €" the announced relationship.
-    (was
-      ? '<s class="st-hero-was"><span class="st-hero-vh">prejšnja cena </span>' +
-        esc(was) + "</s>"
-      : "") +
-    "</span></div></div></section>"
+    '<a class="st-hero-cta" href="#izbor">' + esc(c.cta) + "</a>" +
+    "</div>" +
+    // Bottom-right, out of the reading path but on the same frame as the
+    // photograph it qualifies.
+    '<span class="st-hero-cap">simbolična fotografija</span>' +
+    "</section>"
   );
 }
 

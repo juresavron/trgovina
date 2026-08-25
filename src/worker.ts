@@ -26,6 +26,8 @@ import {
   renderPdp,
   renderPlaceholder,
 } from "./render/page";
+import { handleAdmin, handleMedia } from "./admin/routes";
+import type { Env } from "./admin/supabase";
 
 function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -112,8 +114,13 @@ export function handleRequest(request: Request): Response {
   // robots.txt — closed until a shop is live; QA host permanently closed.
   if (path === "/robots.txt") {
     const open = shop.live && !dev;
+    // /admin and /media are never crawlable. /admin is behind a password and
+    // noindexed at the header, but a Disallow costs nothing and keeps it out
+    // of the crawl budget of a shop whose whole strategy is SEO. /media is
+    // image bytes: useful to a visitor, noise in a page index.
     const body = open
-      ? "User-agent: *\nAllow: /\n\nSitemap: " + shop.siteUrl + "/sitemap.xml\n"
+      ? "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /media/\n\nSitemap: " +
+        shop.siteUrl + "/sitemap.xml\n"
       : "User-agent: *\nDisallow: /\n";
     return new Response(body, {
       headers: { "content-type": "text/plain; charset=utf-8", ...baseHeaders },
@@ -246,9 +253,21 @@ export function handleRequest(request: Request): Response {
   return htmlResponse(doc, 404, { ...baseHeaders, "x-robots-tag": "noindex, nofollow" });
 }
 
+/**
+ * The entry point.
+ *
+ * The storefront's own `handleRequest` stays SYNCHRONOUS and env-free: it is
+ * pure rendering, every one of its tests calls it directly, and nothing about
+ * serving a page needs to await anything. The back office does — it talks to
+ * Supabase — so it sits in an async layer in front rather than turning the
+ * whole renderer async to accommodate it.
+ */
 export default {
-  fetch(request: Request): Response {
+  async fetch(request: Request, env: Env): Promise<Response> {
     try {
+      const path = new URL(request.url).pathname;
+      if (path === "/admin" || path.startsWith("/admin/")) return await handleAdmin(request, env);
+      if (path.startsWith("/media/")) return await handleMedia(request, env);
       return handleRequest(request);
     } catch (err) {
       console.error(err);

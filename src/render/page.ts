@@ -209,7 +209,9 @@ export function renderHome(shop: ShopConfig, content: ShopContent, theme: ThemeK
     .join("");
   return studio
     ? renderStudioHeader(ctx) +
-        "<main>" + body + renderStudioClosing(ctx) + "</main>" +
+        // data-bleed: the first section paints its own dark ground behind
+        // the fixed bar, so chrome.ts lets the bar float over it.
+        '<main data-bleed>' + body + renderStudioClosing(ctx) + "</main>" +
         renderStudioFooter(ctx)
     : renderHeader(ctx) + "<main>" + body + "</main>" + renderFooter(ctx);
 }
