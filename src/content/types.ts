@@ -63,6 +63,15 @@ export interface PdpAddon {
   group?: string;
 }
 
+/** A photograph of the product, with the alt it must carry. */
+export interface PdpPhoto {
+  src: string;
+  w: number;
+  h: number;
+  widths: readonly (readonly [string, number])[];
+  alt: string;
+}
+
 export interface PdpContent {
   /** URL segment under routeSlugs["/product"] ('quattro' → /savna/quattro). */
   slug: string;
@@ -92,6 +101,12 @@ export interface PdpContent {
   panels?: [string, string][];
   /** Finish names offered. Names rather than swatches; see catalog/pola.ts. */
   finishes?: string[];
+  /**
+   * The model's own photography, in gallery order. Absent where a model has
+   * none — the gallery then falls back to the shop's drawing, which is the
+   * honest thing to show rather than another model's pictures.
+   */
+  photos?: PdpPhoto[];
   /**
    * True while the prices on this page are a provisional conversion of cost
    * rather than a selling price the business has set.

@@ -159,6 +159,36 @@ function srcset(src: string): string {
  * to show ~13 KB of pixels, eight times down the home page. The attribute
  * looked like responsive images and was inert.
  */
+/**
+ * A photograph of the product, with a described alt.
+ *
+ * The opposite of decorativeImg in every way that matters: this one INFORMS.
+ * It is not aria-hidden and its alt is not empty, because a picture of the
+ * thing being sold is content — for a screen reader and for the image search
+ * that is a real channel at this ticket size. The schema enforces the same
+ * rule on the database side (product_media.alt is NOT NULL with a length
+ * check), so the two agree.
+ */
+export function productImg(
+  photo: { src: string; w: number; h: number; widths: readonly (readonly [string, number])[] },
+  cls: string,
+  sizes: string,
+  alt: string,
+  eager = false,
+): string {
+  const set =
+    photo.widths.length > 1
+      ? photo.widths.map((r) => r[0] + " " + r[1] + "w").join(", ")
+      : "";
+  return (
+    '<img class="' + cls + '" src="' + photo.src + '"' +
+    (set ? ' srcset="' + set + '" sizes="' + sizes + '"' : "") +
+    ' width="' + photo.w + '" height="' + photo.h + '"' +
+    (eager ? ' loading="eager" fetchpriority="high"' : ' loading="lazy"') +
+    ' decoding="async" alt="' + alt.replace(/"/g, "&quot;") + '">'
+  );
+}
+
 export function decorativeImg(media: Media, cls: string, sizes: string): string {
   const set = srcset(media.src);
   return (

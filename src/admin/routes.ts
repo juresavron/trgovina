@@ -15,7 +15,7 @@
  *   * /media is public and read-only, and can only ever proxy the one bucket.
  */
 
-import { POLA_MODELS, polaBySlug } from "../catalog/pola";
+import { OFFERED_MODELS, polaBySlug } from "../catalog/pola";
 import { SHOPS } from "../tenants";
 import {
   type Env,
@@ -41,8 +41,8 @@ import {
 } from "./session";
 
 /** Shops whose catalogue this panel can manage. */
-const CATALOGUE_SHOPS: Record<string, { models: typeof POLA_MODELS; freightClass: string }> = {
-  bazen: { models: POLA_MODELS, freightClass: "pallet_xl" },
+const CATALOGUE_SHOPS: Record<string, { models: typeof OFFERED_MODELS; freightClass: string }> = {
+  bazen: { models: OFFERED_MODELS, freightClass: "pallet_xl" },
 };
 
 const HTML = { "content-type": "text/html; charset=utf-8" };

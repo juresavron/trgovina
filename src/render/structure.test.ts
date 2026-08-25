@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { handleRequest } from "../worker";
 import { SHOPS } from "../tenants";
 import { MEDIA_WIDTHS } from "../themes/studio/media-widths";
+import { OWN_MEDIA } from "../themes/studio/own-media";
 import { CONTENT } from "../content";
 
 /**
@@ -87,16 +88,22 @@ function audit(html: string): string[] {
       .map((x) => x.trim())
       .filter(Boolean)) {
       const [url, desc] = c.split(/\s+/);
-      const rungs = MEDIA_WIDTHS[(url || "").replace("/img/", "")];
-      const master = Object.keys(MEDIA_WIDTHS).find((k) =>
-        MEDIA_WIDTHS[k]!.some((r) => "/img/" + r[0] === url),
-      );
-      const rung = master && MEDIA_WIDTHS[master]!.find((r) => "/img/" + r[0] === url);
+      // Two builds write images, and the gate has to know about both or it
+      // reports the shop's own photography as a missing file: the theme
+      // bundle (scripts/build-media.mjs -> MEDIA_WIDTHS, paths relative to
+      // /img/) and the shop's own (scripts/build-own-media.mjs -> OWN_MEDIA,
+      // absolute paths under /img/own/).
+      const themeRung = Object.values(MEDIA_WIDTHS)
+        .flat()
+        .find((r) => "/img/" + r[0] === url);
+      const ownRung = Object.values(OWN_MEDIA)
+        .flatMap((photos) => photos.flatMap((ph) => ph.widths))
+        .find((r) => r[0] === url);
+      const rung = themeRung ?? ownRung;
       if (!rung) problems.push("srcset names a file the build did not write: " + url);
       else if (desc !== rung[1] + "w") {
         problems.push("srcset width " + desc + " but " + url + " is " + rung[1] + "px");
       }
-      void rungs;
     }
   }
 

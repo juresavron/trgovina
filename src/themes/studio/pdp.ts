@@ -54,6 +54,7 @@
 import { esc, type RenderCtx } from "../../render/sections";
 import type { PdpContent } from "../../content/types";
 import { productArt } from "./product-art";
+import { productImg } from "./media";
 import { helpIcon, returnIcon, shieldIcon, truckIcon } from "./icons";
 import { renderStudioTestimonials } from "./editorial";
 import { ADDON_GROUP_ORDER } from "../../catalog/pola";
@@ -123,7 +124,19 @@ export const STUDIO_PDP_CSS = `
    * Only while the grid HAS two columns: stacked, this would pin the picture
    * over the copy. The offset clears the fixed chrome band. */
   @media (min-width: 1001px) {
-    :root[data-theme="studio"] .st-pdp-gallery {
+    /* Sticky only while the gallery is the SHORT column. With the drawing
+     * fallback it is three frames against a buy column several times its
+     * height, and pinning it keeps the product in view for that whole scroll.
+     * With real photography it is ten frames and by far the taller of the two
+     * — sticky then pins a column that is already longer than the viewport,
+     * which does nothing except stop the page scrolling as expected. */
+    :root[data-theme="studio"] .st-pdp-gallery:not([data-photos]) {
+      position: sticky;
+      top: calc(var(--chrome-h) + clamp(16px, 1.6vw, 32px));
+    }
+    /* When the gallery is the long column, the buy column is the one worth
+     * keeping in view — it holds the price and the cart. */
+    :root[data-theme="studio"] .st-pdp-gallery[data-photos] + .st-pdp-buy {
       position: sticky;
       top: calc(var(--chrome-h) + clamp(16px, 1.6vw, 32px));
     }
@@ -455,6 +468,16 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-gallery .st-pdp-frame {
     aspect-ratio: 1 / 1;
     border: var(--bw-line) solid var(--line);
+  }
+  /* object-fit: contain, not cover. These are studio shots of a product on a
+   * plain ground, and cropping one to fill a square is how a tub loses a
+   * corner. The frame's own grey is the ground the shot was taken on. */
+  :root[data-theme="studio"] .st-pdp-photo {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
   }
 
   /* ---- finishes, quantity, the cart ----------------------------------- */
@@ -1371,6 +1394,41 @@ function alsoLike(ctx: RenderCtx): string {
 }
 
 /**
+ * The gallery: the model's own photographs where they exist, the shop's
+ * drawing where they do not.
+ *
+ * Not a mixture. A model with two real pictures and a drawing to pad the
+ * column would present the drawing as a third view of the product, which it
+ * is not — and the caption that qualifies the drawing would then be sitting
+ * under photographs it does not apply to.
+ *
+ * The first frame is eager and high priority: it is the largest element above
+ * the fold on this page and the one LCP is measured against.
+ */
+function gallery(ctx: RenderCtx): string {
+  const photos = ctx.pdp.photos ?? [];
+  if (photos.length > 0) {
+    // The gallery column is ~700px at 1440 and full width once it stacks.
+    const sizes = "(max-width: 1000px) 100vw, 46vw";
+    return photos
+      .map(
+        (p, i) =>
+          '<figure class="st-pdp-frame">' +
+          productImg(p, "st-pdp-photo", sizes, p.alt, i === 0) +
+          "</figure>",
+      )
+      .join("");
+  }
+  return (
+    '<figure class="st-pdp-frame">' + shot(ctx, 0) +
+    '<figcaption class="st-pdp-cap">Vizualizacija — fotografije v pripravi</figcaption>' +
+    "</figure>" +
+    '<span class="st-pdp-frame" aria-hidden="true">' + shot(ctx, 1) + "</span>" +
+    '<span class="st-pdp-frame" aria-hidden="true">' + shot(ctx, 2) + "</span>"
+  );
+}
+
+/**
  * The PDP body — gallery left, buy column right, spec beneath, sticky buy bar.
  *
  * Consumes exactly what renderPdpBody() consumes (ctx.pdp: eyebrow,
@@ -1570,13 +1628,9 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     // A big frame over a strip of three small ones puts the product at
     // thumbnail size three times; a stack shows it three times at a size
     // worth looking at, and the buy column scrolls alongside.
-    '<div class="st-pdp-gallery">' +
-    '<figure class="st-pdp-frame">' + shot(ctx, 0) +
-    '<figcaption class="st-pdp-cap">Vizualizacija — fotografije v pripravi</figcaption>' +
-    "</figure>" +
-    '<span class="st-pdp-frame" aria-hidden="true">' + shot(ctx, 1) + "</span>" +
-    '<span class="st-pdp-frame" aria-hidden="true">' + shot(ctx, 2) + "</span>" +
-    "</div>" +
+    '<div class="st-pdp-gallery"' +
+    ((ctx.pdp.photos ?? []).length ? " data-photos" : "") + ">" +
+    gallery(ctx) + "</div>" +
 
     // --- buy column ---
     '<div class="st-pdp-buy">' +
