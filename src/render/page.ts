@@ -147,21 +147,30 @@ export function productJsonLd(s: ShopConfig, c: ShopContent): object {
   // NOTE deliberately absent: Review / AggregateRating. Placeholder reviews
   // render as page copy only — fabricated review schema is a manual-action
   // magnet, and this network's strategy is SEO (docs/SEO.md §3).
-  return {
+  const product: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: c.pdp.title,
     description: c.pdp.sub,
     brand: { "@type": "Brand", name: s.name },
-    offers: {
+  };
+  // No Offer without a price. priceCents is 0 while a shop's prices are still
+  // derived from unset cost inputs (src/catalog/pricing.ts), and publishing
+  // `"price": "0.00"` would be a structured-data claim about money that
+  // nobody made — the same class of error that keeps Review schema off these
+  // pages. A Product without an Offer is valid; a Product with a false one is
+  // the kind that earns a manual action.
+  if (c.pdp.priceCents > 0) {
+    product["offers"] = {
       "@type": "Offer",
       url: s.siteUrl + s.routeSlugs["/product"] + "/" + c.pdp.slug,
       priceCurrency: s.currency,
       price: (c.pdp.priceCents / 100).toFixed(2),
       availability: "https://schema.org/PreOrder",
       itemCondition: "https://schema.org/NewCondition",
-    },
-  };
+    };
+  }
+  return product;
 }
 
 export function buildCtx(shop: ShopConfig, content: ShopContent, q: string): RenderCtx {
