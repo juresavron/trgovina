@@ -46,7 +46,7 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { discWatermark } from "./icons";
-import { SHOP_HERO, decorativeImg } from "./media";
+import { SHOP_HERO, OWN_PHOTOS, decorativeImg, pick } from "./media";
 import { productArt } from "./product-art";
 
 export const STUDIO_HERO_CSS = `
@@ -467,10 +467,22 @@ export const STUDIO_HERO_CSS = `
     border-radius: var(--r-media);
     background: var(--bg-alt);
   }
-  /* Inside the band object the mass is the product itself, not a subject on a
-   * backdrop, so it sits tighter to the frame than in a hero panel. */
+  /* Inside the band object the subject is the product itself, not a subject on
+   * a backdrop, so it sits tighter to the frame than in a hero panel. */
   :root[data-theme="studio"] .st-band-object .st-photo-mass {
     inset: 13% 11%;
+  }
+  /* The photograph, when there is one. Inset to the same frame the mass used,
+   * expressed as PADDING rather than as insets: an absolutely positioned <img>
+   * with auto sizes takes its intrinsic width and paints straight out of the
+   * box — the bug measured at 541px of overflow in the impact band. */
+  :root[data-theme="studio"] .st-band-obj-photo {
+    position: absolute;
+    inset: 0;
+    padding: 13% 11%;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
   }
   /* Thin callout line + dot, running from the product out to a short label. */
   :root[data-theme="studio"] .st-band-callout {
@@ -843,6 +855,37 @@ export function renderStudioHero(ctx: RenderCtx): string {
 }
 
 /**
+ * What the wordmark band paints over its own letters.
+ *
+ * The occlusion IS the device here — the shop name runs behind the object, so
+ * the object has to be worth hiding letters for. It was an empty grey box:
+ * .st-photo-mass, 449x320 measured, sitting across the middle of the name and
+ * turning "MASAŽNI BAZEN" into "MASAŽ▯EN". A placeholder that covers the one
+ * word the page is ranking for is worse than no device at all.
+ *
+ * The mass was written when the shop owned no photography, and the comment on
+ * .st-tst-disc says as much: the frame is composition and is built now, the
+ * picture inside it is inventory. The inventory has arrived, so the frame
+ * gets a photograph and the empty box goes.
+ *
+ * Falls back to the drawing, then to the mass — a shop with neither still
+ * renders a valid band rather than a hole.
+ */
+function bandObject(ctx: RenderCtx): string {
+  if (OWN_PHOTOS.length > 0) {
+    return decorativeImg(
+      pick(OWN_PHOTOS, ctx.shop.key, 5),
+      "st-band-obj-photo",
+      "(max-width: 860px) 92vw, 40vw",
+    );
+  }
+  const art = productArt(ctx.shop.key);
+  return art
+    ? '<span class="st-photo-art">' + art + "</span>"
+    : '<span class="st-photo-mass"></span>';
+}
+
+/**
  * §4.5 — wordmark band. The shop name is set enormous in white and the
  * product placeholder is painted OVER it; the occlusion is the device, so the
  * name is never dimmed to fake depth. The name is a <p>, not a heading: the
@@ -850,9 +893,6 @@ export function renderStudioHero(ctx: RenderCtx): string {
  */
 export function renderStudioWordmarkBand(ctx: RenderCtx): string {
   const d = ctx.pdp;
-  // The callout label is content, not chrome — the shop's first trust claim.
-  // noUncheckedIndexedAccess: a shop may ship an empty trust list.
-  const note = ctx.content.trust[0];
   return (
     '<section class="st-band" aria-label="' + esc(ctx.shop.name) + " — " + esc(d.title) + '">' +
     '<div class="st-band-photo" aria-hidden="true"></div>' +
@@ -863,14 +903,15 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
     // block silently becomes the band again. Empty and aria-hidden, so the
     // paragraph still announces nothing but the shop name.
     '<p class="st-band-word">' + esc(ctx.shop.name) +
-    '<span class="st-band-object" aria-hidden="true">' +
-    '<span class="st-photo-mass"></span></span></p>' +
-    (note
-      ? '<p class="st-band-callout">' +
-        '<span class="st-band-dot" aria-hidden="true"></span>' +
-        '<span class="st-band-line" aria-hidden="true"></span>' +
-        '<span class="st-band-note">' + esc(note) + "</span></p>"
-      : "") +
+    '<span class="st-band-object" aria-hidden="true">' + bandObject(ctx) +
+    "</span></p>" +
+    // NO CALLOUT. It was a dot, a leader line and the shop's first trust
+    // claim — "Dostava in zagon po vsej Sloveniji" — pointing at the object.
+    // The same device was removed from the hero on the owner's instruction
+    // and for the same reason: it draws the eye to the product and then says
+    // something about logistics. The claim is untouched and still runs in the
+    // ticker and the impact band, where it is read rather than pointed at.
+    "" +
     '<div class="st-band-foot">' +
     '<span class="st-band-chip">' + esc(d.eyebrow) + "</span>" +
     '<span class="st-band-title">' + esc(d.title) + "</span>" +
