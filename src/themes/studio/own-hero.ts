@@ -20,28 +20,16 @@
  * is 100svh and .st-hero-bg is inset:0 with object-fit:cover, so the section
  * reserves the box and the image never moves it.
  *
- * ⚠️ THIS FILE IS 2.78 MB OF PNG, AND IT IS THE LCP ELEMENT.
+ * ⚠️ THE FILE IS A 346 KB JPEG, AND IT IS THE LCP ELEMENT. That replaced a
+ * 2.78 MB PNG of the same job — an 8x cut on the largest element of the page
+ * — but it is still not laddered: 346 KB goes to a 390 px phone exactly as it
+ * goes to a 2560 px desktop. Re-uploading through /admin fixes that too: the
+ * panel converts to WebP and writes a width ladder in the browser before it
+ * uploads. The Supabase dashboard does neither.
  *
- * Two separate problems, both fixable in one upload:
- *
- * FORMAT. PNG is lossless and made for flat colour and sharp edges — logos,
- * screenshots, line art. A photograph has neither, so PNG stores its noise
- * faithfully and at full price. The same picture as WebP is normally a tenth
- * of this; the banner it replaced was 187 KB.
- *
- * SIZE. 2.78 MB is not a slow hero, it is a broken one. On a typical mobile
- * connection that is well over two seconds of download before the largest
- * element on the page can paint at all — and the LCP budget for the whole
- * page is 2.5 s. The site's entire competitive argument is that it loads
- * faster than the incumbents; this single file spends that argument.
- *
- * There is also still no width ladder, so those 2.78 MB go to a 390 px phone
- * exactly as they go to a 2560 px desktop.
- *
- * All three are what /admin exists to prevent: it converts to WebP and writes
- * a width ladder IN THE BROWSER before it uploads. The Supabase dashboard
- * does neither. Re-uploading this one file through the panel fixes the
- * format, the weight and the ladder together.
+ * hero.png (the 2.78 MB PNG) is still in the bucket, unreferenced. So is a
+ * 9 MB "6_06PM.jpg" original. Neither costs anything where it lies; both are
+ * safe to delete from the dashboard.
  */
 
 export interface HeroPlate {
@@ -55,7 +43,11 @@ export interface HeroPlate {
 
 export const OWN_HERO: Readonly<Partial<Record<string, HeroPlate>>> = {
   bazen: {
-    src: "/media/hero.png",
+    // The 5_41PM banner, via the alias table (the bucket name has spaces).
+    // A NEW URL on purpose, not a re-upload over hero.png: a different path
+    // cannot be served stale by any cache, edge or browser, so the switch is
+    // visible on the next deploy rather than whenever caches feel like it.
+    src: "/media/hero-banner.jpeg",
     widths: [],
   },
 };
