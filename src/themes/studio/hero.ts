@@ -151,13 +151,19 @@ export const STUDIO_HERO_CSS = `
      * measured; below that the band only ever gets DARKER, never thinner.
      * Two declarations rather than one because a browser without max() in
      * gradient stops drops the whole value — this way it drops the floors
-     * and keeps the measured veil, instead of dropping the veil. */
+     * and keeps the measured veil, instead of dropping the veil.
+     *
+     * The bar band gets the same treatment for the same reason: the bar is
+     * 56px of fixed chrome, and 9% of a half-height laptop window is 40px,
+     * so the hold ended mid-bar and left the nav's lower pixels on the fade.
+     * 81px is exactly 9% of the 900px viewport the band was sampled on, so
+     * taller windows are untouched and shorter ones keep the sampled floor. */
     background:
       linear-gradient(
         180deg,
         color-mix(in srgb, var(--ink) 72%, transparent) 0%,
-        color-mix(in srgb, var(--ink) 46%, transparent) 9%,
-        transparent 22%
+        color-mix(in srgb, var(--ink) 46%, transparent) max(9%, 81px),
+        transparent max(22%, 141px)
       ),
       linear-gradient(
         0deg,
@@ -319,6 +325,42 @@ export const STUDIO_HERO_CSS = `
    * covered. Removed as dead weight; the ramp tokens are the mechanism. */
   @media (max-width: 900px) {
     :root[data-theme="studio"] .st-hero-mark { inset-block-start: clamp(92px, 15vh, 150px); }
+    /* Below 900px the bar doubles to two 44px rows (chrome.ts shares this
+     * exact tier), so the fixed chrome is 96px deep while 9% of a phone
+     * viewport is 55–76px — the band's hold ended mid-bar and the second
+     * row's links sat on the fade: measured at 375x667, ~35% ink under the
+     * glyph line, which a moderately bright photo top turns into ~2.9:1.
+     * The hold stretches to cover both rows with the same floor the desktop
+     * bar line gets; the fade floor moves with it so the ramp keeps its
+     * shape. On a 390x844 phone the fade still ends at 22% (185.7px against
+     * the 178px floor) — the cost is a visibly deeper cap only on shorter
+     * phones, which is the same trade the foot band already makes: the
+     * legibility is ours even where the photograph pays for it. The whole
+     * value is restated because gradients live in one background property —
+     * the foot bands and the wash are byte-identical to the base ones (and
+     * must stay that way; the base declaration is the reference). */
+    :root[data-theme="studio"] .st-hero-veil {
+      background:
+        linear-gradient(
+          180deg,
+          color-mix(in srgb, var(--ink) 72%, transparent) 0%,
+          color-mix(in srgb, var(--ink) 46%, transparent) max(9%, 132px),
+          transparent max(22%, 178px)
+        ),
+        linear-gradient(
+          0deg,
+          color-mix(in srgb, var(--ink) 88%, transparent) 0%,
+          color-mix(in srgb, var(--ink) 82%, transparent) max(26%, 160px),
+          color-mix(in srgb, var(--ink) 62%, transparent) max(42%, 230px),
+          color-mix(in srgb, var(--ink) 28%, transparent) max(54%, 285px),
+          transparent max(64%, 330px)
+        ),
+        linear-gradient(
+          180deg,
+          color-mix(in srgb, var(--ink) 12%, transparent),
+          color-mix(in srgb, var(--ink) 12%, transparent)
+        );
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     :root[data-theme="studio"] .st-hero-cta { transition: none; }

@@ -150,20 +150,23 @@ export const STUDIO_CHROME_CSS = `
    * keeps its solid ground over the hero too: plainer, never broken — the
    * same trade the :has() note above already makes for that selector.
    *
-   * 240px, a bare number for the same reason the -10px pulls are: mechanics,
-   * not a design value. It only needs to be comfortably inside the hero,
-   * which is a full viewport of photograph under a top scrim that hero.ts
-   * guarantees dark — so mid-fade the bar only ever ADDS dark over that
-   * scrim, and the nav's measured ≥4.5:1 floor cannot dip on the way. Linear,
-   * because progress IS scroll position: nothing moves that the reader did
-   * not move, which is why this animation is exempt from the
-   * prefers-reduced-motion strip at the end of the sheet — freezing it would
-   * re-open the white-on-white failure it exists to close. */
+   * 120px, a bare number for the same reason the -10px pulls are: mechanics,
+   * not a design value. The constraint it satisfies: the fade must COMPLETE
+   * while the bar is still inside the hero scrim's own guaranteed-dark band —
+   * hero.ts's top gradient runs out at 22% of a full-viewport hero, ~200px —
+   * because mid-fade the contrast floor is carried by veil and scrim
+   * TOGETHER. Fully solid by 120px of scroll, the bar (56px tall) never shows
+   * a half-veil over anything past ~176px of photograph, so the nav's
+   * measured ≥4.5:1 cannot dip even over a pale frame. Linear, because
+   * progress IS scroll position: nothing moves that the reader did not move,
+   * which is why this animation is exempt from the prefers-reduced-motion
+   * strip at the end of the sheet — freezing it would re-open the
+   * white-on-white failure it exists to close. */
   @supports (animation-timeline: scroll()) {
     :root[data-theme="studio"]:has(main[data-bleed]) .st-chrome {
       animation: st-chrome-ground linear both;
       animation-timeline: scroll();
-      animation-range: 0 240px;
+      animation-range: 0 120px;
     }
     @keyframes st-chrome-ground {
       from { background-color: transparent; }

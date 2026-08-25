@@ -38,13 +38,16 @@ var soft = function(){ return reduce && reduce.matches ? "auto" : "smooth"; };
 /* ---- sliders ------------------------------------------------------------
    The scroller is a real overflow-x container with scroll-snap, so all this
    adds is: step by exactly one item, know which item is showing, and disable
-   a control that would do nothing. */
+   a control that would do nothing. [data-st-thumb] is the PDP gallery's
+   server-rendered pagination — one anchor per item, in item order — so it
+   binds like a dot but is never created here: its href already works. */
 function slider(root){
   var scroller = root.querySelector("[data-st-scroll]");
   var items = [].slice.call(root.querySelectorAll("[data-st-item]"));
   var prev = root.querySelector("[data-st-prev]");
   var next = root.querySelector("[data-st-next]");
   var dots = root.querySelector("[data-st-dots]");
+  var thumbs = [].slice.call(root.querySelectorAll("[data-st-thumb]"));
   if (!scroller || items.length < 2) return;
 
   function step(){
@@ -70,6 +73,17 @@ function slider(root){
   bind(prev, -1);
   bind(next, 1);
 
+  /* A thumb's anchor jump would also scroll the PAGE to the slide's top;
+     intercepted, only the stage moves and the reader stays where they are. */
+  thumbs.forEach(function(t, i){
+    t.addEventListener("click", function(e){
+      var item = items[i];
+      if (!item) return;
+      e.preventDefault();
+      scroller.scrollTo({ left: item.offsetLeft - scroller.offsetLeft, behavior: soft() });
+    });
+  });
+
   var buttons = [];
   if (dots){
     items.forEach(function(item, i){
@@ -88,7 +102,7 @@ function slider(root){
   function sync(){
     if (prev){ prev.setAttribute("aria-disabled", String(atStart())); }
     if (next){ next.setAttribute("aria-disabled", String(atEnd())); }
-    if (!buttons.length) return;
+    if (!buttons.length && !thumbs.length) return;
     // Nearest item to the scroller's centre is the one on show.
     var mid = scroller.scrollLeft + scroller.clientWidth / 2;
     var best = 0, bestD = Infinity;
@@ -97,10 +111,12 @@ function slider(root){
       var d = Math.abs(c - mid);
       if (d < bestD){ bestD = d; best = i; }
     });
-    buttons.forEach(function(b, i){
-      if (i === best) b.setAttribute("aria-current", "true");
-      else b.removeAttribute("aria-current");
-    });
+    var mark = function(el, on){
+      if (on) el.setAttribute("aria-current", "true");
+      else el.removeAttribute("aria-current");
+    };
+    buttons.forEach(function(b, i){ mark(b, i === best); });
+    thumbs.forEach(function(t, i){ mark(t, i === best); });
   }
 
   var queued = false;

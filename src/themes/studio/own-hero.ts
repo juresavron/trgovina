@@ -20,16 +20,15 @@
  * is 100svh and .st-hero-bg is inset:0 with object-fit:cover, so the section
  * reserves the box and the image never moves it.
  *
- * ⚠️ THE FILE IS A 346 KB JPEG, AND IT IS THE LCP ELEMENT. That replaced a
- * 2.78 MB PNG of the same job — an 8x cut on the largest element of the page
- * — but it is still not laddered: 346 KB goes to a 390 px phone exactly as it
- * goes to a 2560 px desktop. Re-uploading through /admin fixes that too: the
- * panel converts to WebP and writes a width ladder in the browser before it
- * uploads. The Supabase dashboard does neither.
- *
- * hero.png (the 2.78 MB PNG) is still in the bucket, unreferenced. So is a
- * 9 MB "6_06PM.jpg" original. Neither costs anything where it lies; both are
- * safe to delete from the dashboard.
+ * ⚠️ THE FILE IS 2.78 MB OF PNG, AND IT IS THE LCP ELEMENT. On a typical
+ * mobile connection that is over two seconds of download before the largest
+ * element on the page can paint, against a 2.5 s budget for the whole page —
+ * and with no width ladder, all of it goes to a 390 px phone exactly as to a
+ * 2560 px desktop. The cheapest fix that keeps this exact picture is to
+ * re-upload IT through /admin, which converts to WebP and writes a ladder in
+ * the browser before uploading; that would cut it to roughly a tenth at no
+ * visible cost. The 346 KB 5_41PM banner remains in the bucket, aliased as
+ * hero-banner.jpeg, one line away if the owner changes their mind.
  */
 
 export interface HeroPlate {
@@ -43,11 +42,11 @@ export interface HeroPlate {
 
 export const OWN_HERO: Readonly<Partial<Record<string, HeroPlate>>> = {
   bazen: {
-    // The 5_41PM banner, via the alias table (the bucket name has spaces).
-    // A NEW URL on purpose, not a re-upload over hero.png: a different path
-    // cannot be served stale by any cache, edge or browser, so the switch is
-    // visible on the next deploy rather than whenever caches feel like it.
-    src: "/media/hero-banner.jpeg",
+    // hero.png, BY THE OWNER'S CHOICE. The 5_41PM banner was wired in for
+    // one deploy and the owner judged the previous image better, so it is
+    // back — this line is an aesthetic decision, not a technical one, and
+    // the technical caveat below survives it.
+    src: "/media/hero.png",
     widths: [],
   },
 };
