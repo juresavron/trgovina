@@ -30,12 +30,14 @@ const BASE = process.argv[2] || "http://127.0.0.1:8788";
 /** The network is one shop. Kept as a list so a second costs one entry. */
 const SHOPS = ["bazen"];
 
-/** The white runs on the hero, and the floor each has to clear. */
+/** The white runs on the hero, and the floor each has to clear.
+ *  .st-hero-cap is no longer listed: the "simbolična fotografija" plate left
+ *  the markup with the borrowed room it existed to label, so the selector
+ *  matched nothing and the gate silently measured zero boxes for it. */
 const RUNS = [
   [".st-chrome-nav a", 4.5],
   [".st-hero-pill", 4.5],
   [".st-hero-foot h1", 4.5],
-  [".st-hero-cap", 4.5],
 ];
 
 const rel = (v) => {

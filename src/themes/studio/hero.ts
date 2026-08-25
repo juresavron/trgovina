@@ -324,17 +324,17 @@ export const STUDIO_HERO_CSS = `
     :root[data-theme="studio"] .st-hero-cta { transition: none; }
   }
 
-  /* ---- The only values this module declares ----------------------------
+  /* ---- The only value this module declares -----------------------------
    * tokens.ts is the single declaration site: --studio-gutter, --tile-mid,
    * --bg-alt and --on-invert-mute live there and are consumed here as
    * var(--…) with no fallback — a fallback would silently resurrect the
-   * duplicate this file used to carry. What remains below is the one measure
-   * tokens.ts does not carry: the hero stack's two internal rhythms. */
+   * duplicate this file used to carry.
+   *
+   * --studio-gap-stack and --studio-gap-cta used to live here too — the
+   * §4.2 triptych's 48:56 internal rhythm. The triptych left this slot when
+   * the full-bleed hero landed and nothing consumes either variable any
+   * more (the hero foot carries its own gap); both removed as dead. */
   :root[data-theme="studio"] {
-    /* §4.2: pill→statement 48px, sub→button 56px. Kept as variables so the
-     * 48:56 ratio is edited in one place and never drifts. */
-    --studio-gap-stack: clamp(20px, 2.4vw, 48px);
-    --studio-gap-cta: clamp(24px, 2.8vw, 56px);
     /* The drawn placeholder inks itself in this, so one set of markup works on
      * a light or a dark ground. The default is the light case — the hero's
      * left panel and the §4.5 band object both stand on --bg-alt. */
