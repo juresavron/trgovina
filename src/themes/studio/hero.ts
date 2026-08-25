@@ -46,7 +46,7 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { discWatermark } from "./icons";
-import { SCENES, decorativeImg, pick } from "./media";
+import { SCENES, SHOP_HERO, decorativeImg, pick } from "./media";
 import { productArt } from "./product-art";
 
 export const STUDIO_HERO_CSS = `
@@ -58,17 +58,17 @@ export const STUDIO_HERO_CSS = `
    * under the solid bar. Putting it first meant the landing page never showed
    * the thing the source leads with.
    *
-   * The composition is four layers, and the ORDER is the whole idea:
+   * Three layers:
    *
    *   1. a photograph, full bleed, edge to edge
    *   2. a veil, because white type over a photograph is not a contrast
    *      argument you can win by hoping
    *   3. the wordmark, set enormous
-   *   4. the subject, painted OVER the wordmark
    *
-   * The occlusion in (4) is the device. The name is never dimmed to fake
-   * depth — the product simply stands in front of it, which is why the
-   * wordmark may not be given a lower opacity to "help" the subject read.
+   * The source has a fourth — a cutout product painted over the wordmark, so
+   * the name reads as something the product stands in front of. That layer is
+   * deliberately empty until there is a photograph to fill it; see the note
+   * on renderStudioHero.
    */
   :root[data-theme="studio"] .st-hero {
     position: relative;
@@ -168,42 +168,6 @@ export const STUDIO_HERO_CSS = `
     font-family: var(--f-display);
     font-weight: var(--w-display);
     fill: var(--on-invert);
-  }
-
-  /* The subject, in front of the wordmark. */
-  :root[data-theme="studio"] .st-hero-subject {
-    position: absolute; z-index: 3;
-    inset-block-end: 25%;
-    inset-inline-start: 61%;
-    transform: translateX(-50%);
-    inline-size: min(41%, 580px);
-    aspect-ratio: 4 / 3;
-    color: var(--on-invert);
-  }
-  /* The subject needs a ground of its own.
-   *
-   * In the source this layer is a photograph: it has mass, so it occludes the
-   * wordmark simply by being opaque. Ours is a LINE drawing in the same white
-   * as the letters, and drawn straight over them the two dissolve into each
-   * other — legible as neither. So the subject brings its own soft darkening
-   * with it, which is the occlusion the composition depends on, done the only
-   * way an outline can do it. */
-  :root[data-theme="studio"] .st-hero-subject::before {
-    content: "";
-    position: absolute;
-    inset: -10% -8%;
-    z-index: -1;
-    border-radius: var(--r-circle);
-    background: radial-gradient(
-      54% 54% at 50% 54%,
-      color-mix(in srgb, var(--ink) 54%, transparent) 0%,
-      color-mix(in srgb, var(--ink) 30%, transparent) 56%,
-      transparent 76%
-    );
-  }
-  :root[data-theme="studio"] .st-hero-subject .st-art {
-    position: relative;
-    inline-size: 100%; block-size: 100%;
   }
 
   /* The annotation and its leader line.
@@ -379,18 +343,6 @@ export const STUDIO_HERO_CSS = `
    * its own air. */
   @media (max-width: 900px) {
     :root[data-theme="studio"] .st-hero-note { display: none; }
-    /* The foot block is much taller here — the heading wraps to two lines and
-     * the paragraph to four — so it reaches well above where the subject sits
-     * on a wide screen. Measured at 390x844 it occupies the bottom ~45%, and
-     * the drawing was landing across the pill and the heading. It goes above
-     * that, and smaller, so the two share the screen instead of the picture
-     * winning. */
-    :root[data-theme="studio"] .st-hero-subject {
-      inline-size: min(66%, 330px);
-      inset-block-end: 50%;
-      inset-inline-start: 52%;
-      transform: translateX(-50%);
-    }
     :root[data-theme="studio"] .st-hero-sub { max-inline-size: 34ch; }
     :root[data-theme="studio"] .st-hero-mark { inset-block-start: clamp(92px, 15vh, 150px); }
     :root[data-theme="studio"] .st-hero-foot h1 { font-size: var(--t-h3); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
@@ -879,11 +831,14 @@ function markSvg(mark: string): string {
  *    footer and the title. So the wordmark is decorative and aria-hidden, and
  *    the h1 stays the sentence a search result should show.
  *
- * 2. The subject is the shop's DRAWING, not a cutout photograph. The source
- *    puts a sofa here, from an asset bundle we have — of furniture. A cutout
- *    of a dining chair standing where a customer expects the sauna they are
- *    about to buy is not a placeholder, it is a claim about the goods
- *    (media.ts, and the launch gate that enforces it).
+ * 2. There is no subject layer. The source paints a cutout sofa over its
+ *    wordmark; we carried the shop's line drawing there for a while, and it
+ *    read as an icon pasted onto a photograph rather than as a product
+ *    standing in the room — an outline has no mass, so it cannot occlude, and
+ *    it needed a halo to be legible at all, which only made it look more
+ *    stuck on. The band is the photograph and the name. When real product
+ *    photography exists it goes back in as a cutout, which is the only form
+ *    that works in this position.
  *
  * 3. The photograph carries "simbolična fotografija". It is a room from the
  *    same furniture bundle: fine as atmosphere, and labelled so it cannot be
@@ -891,7 +846,12 @@ function markSvg(mark: string): string {
  */
 export function renderStudioHero(ctx: RenderCtx): string {
   const c = ctx.content;
-  const art = productArt(ctx.shop.key);
+  // The shop's own photograph where one exists, a borrowed room otherwise.
+  // Which it is decides whether the frame carries "simbolična fotografija":
+  // a picture of the actual product is not symbolic of anything.
+  const own = SHOP_HERO[ctx.shop.key];
+  const photo = own ?? pick(SCENES, ctx.shop.key);
+
   // Uppercase through the shop's own locale: Slovenian casing is not the
   // default one, and a wordmark is the last place to get a letter wrong.
   const mark = ctx.shop.wordmark.join(" ").toLocaleUpperCase(ctx.shop.locale.intl);
@@ -901,9 +861,7 @@ export function renderStudioHero(ctx: RenderCtx): string {
     // The LCP element. Eager and high priority: it is the largest thing on the
     // page and the one the score is measured against, so a lazy hint here
     // would be actively wrong.
-    eager(
-      decorativeImg(pick(SCENES, ctx.shop.key), "st-hero-bg", "100vw"),
-    ) +
+    eager(decorativeImg(photo, "st-hero-bg", "100vw")) +
     '<span class="st-hero-veil" aria-hidden="true"></span>' +
 
     // Fit-to-width wordmark.
@@ -924,8 +882,6 @@ export function renderStudioHero(ctx: RenderCtx): string {
     // and a box drawn to Latin caps clips their carons.
     markSvg(mark) +
 
-    (art ? '<div class="st-hero-subject" aria-hidden="true">' + art + "</div>" : "") +
-
     // The annotation points at the subject. Its words are the shop's own first
     // trust line rather than invented copy.
     '<div class="st-hero-note" aria-hidden="true">' +
@@ -941,8 +897,9 @@ export function renderStudioHero(ctx: RenderCtx): string {
     '<a class="st-hero-cta" href="#izbor">' + esc(c.cta) + "</a>" +
     "</div>" +
     // Bottom-right, out of the reading path but on the same frame as the
-    // photograph it qualifies.
-    '<span class="st-hero-cap">simbolična fotografija</span>' +
+    // photograph it qualifies — and absent entirely once the photograph is
+    // the shop's own.
+    (own ? "" : '<span class="st-hero-cap">simbolična fotografija</span>') +
     "</section>"
   );
 }

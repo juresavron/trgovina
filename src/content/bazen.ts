@@ -1,9 +1,10 @@
-import type { PdpContent, ProductCard, ShopContent } from "./types";
+import type { PdpContent, PdpPhoto, ProductCard, ShopContent } from "./types";
+import { OWN_MEDIA } from "../themes/studio/own-media";
 import type { PolaModel } from "../catalog/pola";
 import { catalogPricingReady } from "../catalog/pricing";
 import {
   CABINET_FINISHES,
-  POLA_MODELS,
+  OFFERED_MODELS,
   SHELL_FINISHES,
   addonPrice,
   addonPriceCents,
@@ -29,19 +30,58 @@ import { PRICE_UNSET } from "../catalog/pricing";
  * about copy shared BETWEEN shops. These are variants of one product line
  * within one shop, which is what a catalogue is.
  */
-const models: ProductCard[] = POLA_MODELS.map((m) => ({
+const models: ProductCard[] = OFFERED_MODELS.map((m) => ({
   name: m.name,
   desc: "Akrilna školjka " + footprint(m) + ", " + m.jets + " masažnih šob, " + seating(m) + ".",
   meta: metaLine(m),
   price: modelPrice(m),
   art: "pool" as const,
   slug: m.slug,
-  ...(m.jets === 55 ? { badge: "Največ šob" } : {}),
-  ...(m.mm[0] === 1950 ? { badge: "Najmanjši tloris" } : {}),
+  ...(m.tier ? { badge: m.tier } : {}),
 }));
 
+/**
+ * Alt text for the photographs, in file order.
+ *
+ * Written from what is actually visible in each frame and no further. "Šobe v
+ * hrbtnem naslonu" is describable; the number of them is not, at this
+ * resolution, and a count invented for alt text is a specification claim made
+ * in the one place nobody proofreads.
+ *
+ * These are product photographs, so the alt is content rather than decoration
+ * — a screen reader needs it, and image search is a real channel for goods at
+ * this price.
+ */
+const VELIKI_ALT: readonly string[] = [
+  "Masažni bazen od zgoraj — dva ležalnika, trije sedeži in razporeditev masažnih šob.",
+  "Notranjost akrilne školjke z masažnimi šobami v hrbtnem naslonu.",
+  "Nožni del školjke z večjimi masažnimi šobami.",
+  "Bazen z vklopljeno modro LED osvetlitvijo školjke.",
+  "Bazen s turkizno osvetljeno školjko in svetlobnim trakom v oblogi.",
+  "Bazen z zeleno osvetljeno školjko in svetlobnim trakom v oblogi.",
+  "Bližnji posnetek dveh masažnih šob v školjki.",
+  "Sedežni del školjke z masažnimi šobami.",
+  "Bazen s strani — temna obloga s svetlobnim trakom.",
+  "Masažni bazen s tričetrtinskega pogleda — bela školjka in temna obloga.",
+];
+
+/** The photographs a model has, paired with their alt text. */
+function photosFor(m: PolaModel): PdpPhoto[] {
+  const set = OWN_MEDIA["bazen/" + m.slug] ?? [];
+  return set.map((p, i) => ({
+    src: p.src,
+    w: p.w,
+    h: p.h,
+    widths: p.widths,
+    // A photograph with no alt would fail the structural audit, and a generic
+    // one is worse than none for search. Falling back to the model name plus
+    // its position is at least true.
+    alt: VELIKI_ALT[i] ?? m.name + " — fotografija " + (i + 1) + ".",
+  }));
+}
+
 /** The flagship: the larger shell in its more wanted layout, two loungers. */
-const flagship = POLA_MODELS.find((m) => m.code === "ZR801")!;
+const flagship = OFFERED_MODELS.find((m) => m.code === "ZR801")!;
 
 /**
  * One product page per model.
@@ -54,7 +94,7 @@ const flagship = POLA_MODELS.find((m) => m.code === "ZR801")!;
 function pdpFor(m: PolaModel): PdpContent {
   return {
     slug: m.slug,
-    eyebrow: m.lounges === 2 ? "Dva ležalnika" : m.lounges === 1 ? "Ležalnik in pet sedežev" : "Šest sedežev",
+    eyebrow: m.tier ?? (m.lounges === 2 ? "Dva ležalnika" : "Ležalnik in pet sedežev"),
     title: m.name,
     sub:
       "Akrilni masažni bazen " +
@@ -150,6 +190,7 @@ function pdpFor(m: PolaModel): PdpContent {
       ],
     ],
     finishes: [...SHELL_FINISHES],
+    ...(photosFor(m).length ? { photos: photosFor(m) } : {}),
     // Every figure on this page is a provisional conversion of the supplier's
     // cost until COST_INPUTS is set. The page shows them; the structured data
     // does not.
@@ -165,10 +206,10 @@ export const bazenContent: ShopContent = {
   // No price in the hero copy while COST_INPUTS is unset. Naming a figure
   // here and a dash on the cards would be worse than naming neither, and a
   // price in an h1's sub is the one a customer remembers.
-  sub: "Devet modelov od 195 do 230 cm, od dvaintridesetih do petinpetdesetih šob, akrilna školjka in ogrevanje. Na teraso ga pripeljemo, priklopimo in zaženemo — vi pripravite kopalke.",
+  sub: "Trije modeli — mali, srednji in veliki, od 195 do 230 cm. Akrilna školjka, od petintrideset do petdeset šob, ogrevanje in filtracija. Na teraso ga pripeljemo, priklopimo in zaženemo — vi pripravite kopalke.",
   cta: "Izberite svoj bazen",
   metaDescription:
-    "Masažni bazeni za 5 ali 6 oseb, 32–55 šob, akrilna školjka in ogrevanje. Ogled lokacije, dostava na teraso in zagon po vsej Sloveniji.",
+    "Masažni bazeni za 5 ali 6 oseb, 35–50 šob, akrilna školjka in ogrevanje. Ogled lokacije, dostava na teraso in zagon po vsej Sloveniji.",
   trust: [
     "Dostava in zagon po vsej Sloveniji",
     "Ogled lokacije pred dostavo",
@@ -178,8 +219,8 @@ export const bazenContent: ShopContent = {
   // Every figure here is the supplier's own — the previous set led with a
   // temperature the price list does not state.
   stats: [
-    ["9 modelov", "od 195 do 230 cm"],
-    ["do 55", "masažnih šob"],
+    ["3 modeli", "od 195 do 230 cm"],
+    ["do 50", "masažnih šob"],
     ["3 kW", "grelec, Balboa krmilnik"],
     ["410 kg", "prazen — dostava z ekipo"],
   ],
@@ -221,7 +262,7 @@ export const bazenContent: ShopContent = {
     ["Pozimi", "Masažni bazen pozimi: stroški in nasveti."],
   ],
   pdp: pdpFor(flagship),
-  pdps: POLA_MODELS.map(pdpFor),
+  pdps: OFFERED_MODELS.map(pdpFor),
   footNote:
     "Specialist za masažne bazene v Sloveniji. Razstavni bazen v Ljubljani — pridite ga pogledat v živo.",
 };

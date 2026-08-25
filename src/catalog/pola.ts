@@ -80,6 +80,11 @@ export interface PolaModel {
   topside: "TP600" | "TP500S";
   /** The options this model's page offers, in the supplier's own prices. */
   addons: readonly Addon[];
+  /**
+   * Where this model sits in the offered range — "Mali", "Srednji", "Veliki".
+   * Absent on models the shop does not sell.
+   */
+  tier?: string;
 }
 
 /**
@@ -190,8 +195,9 @@ export const POLA_MODELS: readonly PolaModel[] = [
   },
   {
     code: "ZR801",
-    slug: "230-dva-lezalnika-50",
-    name: "BAZEN 230/50",
+    slug: "veliki-230",
+    name: "BAZEN 230",
+    tier: "Veliki",
     fobUsd: 3140,
     mm: [2300, 2300, 880],
     seats: 5,
@@ -312,8 +318,9 @@ export const POLA_MODELS: readonly PolaModel[] = [
   },
   {
     code: "ZR804",
-    slug: "210-lezalnik-37",
-    name: "BAZEN 210/37",
+    slug: "srednji-210",
+    name: "BAZEN 210",
+    tier: "Srednji",
     fobUsd: 2730,
     mm: [2100, 2100, 880],
     seats: 6,
@@ -340,8 +347,9 @@ export const POLA_MODELS: readonly PolaModel[] = [
   },
   {
     code: "ZR805",
-    slug: "195-dva-lezalnika-35",
-    name: "BAZEN 195/35",
+    slug: "mali-195",
+    name: "BAZEN 195",
+    tier: "Mali",
     fobUsd: 2630,
     mm: [1950, 1950, 820],
     seats: 5,
@@ -461,9 +469,28 @@ export const CABINET_FINISHES: readonly string[] = [
   "Grey",
 ];
 
+/**
+ * WHAT THE SHOP ACTUALLY SELLS.
+ *
+ * Three shells, one per size, smallest first — the ladder a buyer choosing a
+ * hot tub actually walks. The other six stay in POLA_MODELS above because that
+ * array is the transcription of the supplier's price list and deleting rows
+ * from it would lose data the business paid for; they simply are not offered.
+ * Everything that renders reads THIS.
+ *
+ * One thing the ladder does NOT do is track capacity, and it is worth knowing
+ * before writing copy around it: the 210 seats six (one lounger, five seats)
+ * while the 230 seats five (two loungers, three seats). "Bigger" here means
+ * more terrace and more loungers, not more people — so a card that shows only
+ * a size would mislead, and every one of them shows the seating too.
+ */
+export const OFFERED_MODELS: readonly PolaModel[] = ["ZR805", "ZR804", "ZR801"].map(
+  (code) => POLA_MODELS.find((m) => m.code === code)!,
+);
+
 /** Look one up by URL segment. */
 export function polaBySlug(slug: string): PolaModel | undefined {
-  return POLA_MODELS.find((m) => m.slug === slug);
+  return OFFERED_MODELS.find((m) => m.slug === slug);
 }
 
 /** Metres, as Slovenian writes them: "2,30 × 2,30 m". */
