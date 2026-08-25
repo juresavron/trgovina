@@ -38,6 +38,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { brandMark } from "./brand";
 import { searchIcon, basketIcon } from "./icons";
 
 /* ---- inline line icons ----------------------------------------------- */
@@ -215,6 +216,53 @@ export const STUDIO_CHROME_CSS = `
    * the difference ((24 − 44) ÷ 2 = −10px) so the 44px box grows symmetrically
    * around the 24px line without changing what the line contributes to layout.
    * The same pair appears on every other link in this bar. */
+  /* CATEGORY SMALLER, BRAND FULL SIZE. The wordmark is two halves doing two
+   * different jobs — "Masažni bazeni" is the keyword, "Vrelec" is the name —
+   * and set identically the eye reads one long phrase instead of a
+   * signature.
+   *
+   * THE HIERARCHY IS SIZE, AND THAT CHOICE WAS FORCED TWICE.
+   *
+   * Colour was tried first, muting the category to --on-invert-mute. It
+   * measures 8.42:1 on the solid bar and the audit still failed it: at 390px
+   * the bar is TRANSPARENT over the hero at rest, so that half of the
+   * wordmark sits on a photograph, and only white was ever verified against
+   * that ground. A mute rung with a fifth of white's headroom is not
+   * something to put over an image nobody has seen.
+   *
+   * Weight was the next idea and is unavailable: the display face ships as
+   * Chivo 500 alone, so a second weight would be synthesised by the browser
+   * — a faux bold, in the wordmark, which is the last place to accept one.
+   *
+   * Size is independent of both. Every run stays --on-invert, so contrast is
+   * exactly what it was before the brand existed, and the lockup still reads
+   * name-first. */
+  :root[data-theme="studio"] .st-chrome-mark > span:first-of-type,
+  :root[data-theme="studio"] .st-foot-mark > span:first-of-type {
+    font-size: 0.78em;
+  }
+  /* Two type sizes on one line have to sit on ONE baseline, and baseline is a
+   * property of the FLEX LINE, not of a single item: align-self on the small
+   * run alone left it aligned to a line whose other items were still
+   * centred, so it floated above the brand and the lockup read as two
+   * separate labels. The container aligns the line; the glyph, which has no
+   * text baseline of its own, is centred back. */
+  :root[data-theme="studio"] .st-chrome-mark,
+  :root[data-theme="studio"] .st-foot-mark {
+    align-items: baseline;
+  }
+  :root[data-theme="studio"] .st-brand-mark { align-self: center; }
+  /* The lockup: mark, optical gap, words. The mark takes its size from the
+   * wordmark's own cap height rather than a fixed px, so the two stay locked
+   * as the bar retiers. */
+  :root[data-theme="studio"] .st-brand-mark {
+    flex: none;
+    inline-size: 1.16em;
+    block-size: 1.16em;
+    margin-inline-end: 0.46em;
+    /* Optical, not geometric: a solid square sits visually high against caps. */
+    transform: translateY(0.045em);
+  }
   :root[data-theme="studio"] .st-chrome-mark {
     justify-self: start;
     display: inline-flex;
@@ -1045,9 +1093,14 @@ export const STUDIO_CHROME_CSS = `
  * of a fixed 0.3em (see .st-mark-gap), which draws the join TIGHT BUT PRESENT
  * — not closed — while leaving the word break in the text stream.
  */
-function markHtml(ctx: RenderCtx): string {
+function markHtml(ctx: RenderCtx, key: string): string {
   const w = ctx.shop.wordmark;
+  // MARK THEN WORDS. The shop is named after the product category, so the
+  // words alone read as a heading rather than as a company; the mark is what
+  // makes the lockup a signature. See brand.ts for what it draws and why it
+  // is built at 16px first.
   return (
+    brandMark(key) +
     "<span>" + esc(w[0]) + "</span>" +
     '<span class="st-mark-gap"> </span>' +
     "<span>" + esc(w[1]) + "</span>"
@@ -1098,7 +1151,7 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     // aria-label as well as the split spans: the brand name as the shop states
     // it is the name a screen reader should read for the home link.
     '<a class="st-chrome-mark" href="' + esc("/" + ctx.q) + '" aria-label="' +
-    esc(s.name) + ' — domov">' + markHtml(ctx) + "</a>" +
+    esc(s.name) + ' — domov">' + markHtml(ctx, "hd") + "</a>" +
     '<nav class="st-chrome-nav" aria-label="Glavni meni">' +
     links
       .map(
@@ -1246,7 +1299,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
   return (
     '<footer class="st-foot"><div class="st-foot-in">' +
     '<div class="st-foot-top">' +
-    '<p class="st-foot-mark">' + markHtml(ctx) + "</p>" +
+    '<p class="st-foot-mark">' + markHtml(ctx, "ft") + "</p>" +
     '<div class="st-news">' +
     '<h2 class="st-news-h">E-novice</h2>' +
     '<div class="st-news-row">' +

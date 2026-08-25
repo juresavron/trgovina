@@ -4,6 +4,18 @@ import { CONTENT } from "../content";
 import { THEME_CATALOG } from "../themes/catalog";
 import { handleRequest } from "../worker";
 
+/**
+ * The shop's production host, read from the config rather than typed here.
+ *
+ * These assertions used to spell out masazni-bazen.si. That is a fact about
+ * ONE tenant's registration, not about the routing behaviour they exist to
+ * prove, so renaming the domain failed three tests that were describing the
+ * old name rather than a defect. Derived, they now assert the same thing —
+ * canonicals point at the real domain, the real domain is gated pre-live —
+ * whatever it is called.
+ */
+const PROD_HOST = SHOPS["bazen"]!.domain;
+
 function get(path: string, host = "trgovina.worldfans.workers.dev"): Response {
   return handleRequest(new Request("https://" + host + path, { headers: { host } }));
 }
@@ -33,7 +45,7 @@ describe("QA host (workers.dev)", () => {
     expect(r.headers.get("x-robots-tag")).toContain("noindex");
     const body = await text(r);
     expect(body).toContain("Masažni bazen za pet ali šest oseb.");
-    expect(body).toContain('rel="canonical" href="https://masazni-bazen.si/"');
+    expect(body).toContain('rel="canonical" href="https://' + PROD_HOST + '/"');
     expect(body).toContain('data-theme="studio"');
   });
 
@@ -99,7 +111,7 @@ describe("QA host (workers.dev)", () => {
 
 describe("production domains (pre-live)", () => {
   it("serves 503 + noindex until live flips", async () => {
-    const r = get("/", "masazni-bazen.si");
+    const r = get("/", PROD_HOST);
     expect(r.status).toBe(503);
     expect(r.headers.get("x-robots-tag")).toContain("noindex");
     const body = await text(r);
@@ -107,11 +119,11 @@ describe("production domains (pre-live)", () => {
   });
 
   it("sitemap 404s while pre-live", () => {
-    expect(get("/sitemap.xml", "masazni-bazen.si").status).toBe(404);
+    expect(get("/sitemap.xml", PROD_HOST).status).toBe(404);
   });
 
   it("www resolves to the same shop", () => {
-    expect(get("/", "www.masazni-bazen.si").status).toBe(503);
+    expect(get("/", "www." + PROD_HOST).status).toBe(503);
   });
 
   it("404s a host that is not the shop's, with no fallback", () => {

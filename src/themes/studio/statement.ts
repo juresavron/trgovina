@@ -132,9 +132,27 @@ export const STUDIO_STATEMENT_CSS = `
    * it takes the h2 rung whole (§1, §4.3). 1015px is the source's own
    * [Title Content] cap — at the h2 rung it is what breaks the statement into
    * three lines instead of two long ones. */
+  /* The two-column opening. 1.15fr against 1fr gives the display type the
+   * larger share without letting it run to a full-width measure, and
+   * align-items:end sits the paragraph's last line on the heading's baseline
+   * rather than floating it in the middle of a tall cell. */
+  :root[data-theme="studio"] .st-statement-top {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: var(--studio-col-gap);
+    align-items: end;
+  }
+  :root[data-theme="studio"] .st-statement-aside {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--gap-lg);
+  }
   :root[data-theme="studio"] .st-statement-h {
     margin: 0;
-    max-width: 1015px;
+    /* The grid column is the measure now. The old 1015px cap was wider than
+     * the text ever needed and is what opened the void beside it. */
+    max-width: none;
     font-family: var(--f-display);
     font-weight: var(--w-display);
     font-size: var(--t-h2);
@@ -211,11 +229,18 @@ export const STUDIO_STATEMENT_CSS = `
     gap: var(--studio-col-gap);
     margin-top: var(--gap-2xl);
   }
+  /* Both columns hold a picture now, so they are bottom-aligned: two frames
+   * of different heights standing on one line read as a composition, where
+   * two frames starting at the same top edge and ending wherever their
+   * aspect ratios happen to land read as an accident. space-between is gone
+   * with the text it used to push apart — it was distributing slack that
+   * came from the taller sibling, which is how the copy and the small frame
+   * ended up 86px apart at 1440 and 20px apart at 390. */
+  :root[data-theme="studio"] .st-story { align-items: end; }
   :root[data-theme="studio"] .st-story-lead {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
-    gap: var(--gap-2xl);
+    justify-content: flex-end;
   }
   /* The band's standfirst — it carries the shop's own sub line, not running
    * body copy — so it takes the lead rung (§1, §4.3). 464px is the source's
@@ -225,7 +250,10 @@ export const STUDIO_STATEMENT_CSS = `
    * the light-ground body ink instead of borrowing a dark-band rung.) */
   :root[data-theme="studio"] .st-story-copy {
     margin: 0;
-    max-width: 464px;
+    /* The aside column is the measure. A 464px cap inside a 614px column left
+     * 150px of it empty, which is the same void this restructure removed from
+     * beside the heading. */
+    max-width: none;
     font-family: var(--f-body);
     font-size: var(--t-lead);
     font-weight: var(--w-body-med);
@@ -288,7 +316,13 @@ export const STUDIO_STATEMENT_CSS = `
    * container drops near 1200. */
   :root[data-theme="studio"] .st-story-fig2 {
     margin: 0;
-    inline-size: min(464px, 66%);
+    /* Deliberately NARROWER than its column. Filling the column was tried and
+     * measured: at 1440 the "small" figure came out 660x737 against the main
+     * frame's 723 — the supporting picture taller than the one it supports,
+     * which inverts the whole point of a pair. Capped, and bottom-aligned by
+     * .st-story, it stands on the same line as the frame at two thirds the
+     * height, which is what makes the two read as one composition. */
+    inline-size: min(464px, 70%);
   }
   /* Same --bg-under-multiply ground as the big frame, same reason. */
   :root[data-theme="studio"] .st-story-frame2 {
@@ -631,6 +665,7 @@ export const STUDIO_STATEMENT_CSS = `
     /* The copy leads on a phone; the frame follows it. (The source inverts
      * this — its picture column is ordered first below 810px. On a shop the
      * sentence that explains the offer outranks the atmosphere shot.) */
+    :root[data-theme="studio"] .st-statement-top { grid-template-columns: minmax(0, 1fr); gap: var(--gap-xl); }
     :root[data-theme="studio"] .st-story-copy { max-width: 100%; }
     :root[data-theme="studio"] .st-story-label { text-align: left; }
     /* The second picture stays on a phone, and NOT because it is needed here
@@ -716,14 +751,22 @@ export function renderStudioStatement(ctx: RenderCtx): string {
   const about = ctx.shop.routeSlugs["/about"] + ctx.q;
   return (
     '<section class="st-statement"><div class="st-statement-in">' +
+    // TOP ROW: the claim on the left, the paragraph and the link on the
+    // right. They used to stack down the left edge, which left the entire
+    // top-right of a 1360px band empty — the heading reserved 1015px and its
+    // text filled about 780 — and pushed the pictures below the fold of the
+    // composition. Reading order is unchanged: heading, paragraph, link.
+    '<div class="st-statement-top">' +
     '<h2 class="st-statement-h">' + esc(c.moat.h2) + "</h2>" +
+    '<div class="st-statement-aside">' +
+    '<p class="st-story-copy">' + esc(c.sub) + "</p>" +
     '<a class="st-statement-link" href="' + esc(about) + '">' +
     '<span class="st-statement-txt">Naša zgodba</span>' +
     '<span class="st-statement-arrow" aria-hidden="true">→</span>' +
     "</a>" +
+    "</div></div>" +
     '<div class="st-story">' +
     '<div class="st-story-lead">' +
-    '<p class="st-story-copy">' + esc(c.sub) + "</p>" +
     // Small frame, offset 23: the clad side view — a product detail with its
     // own tone, shown WHOLE via the frame's object-fit: contain plate. The
     // offset choice and the page-wide collision list live in the doc comment
