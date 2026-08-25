@@ -87,7 +87,7 @@ import { esc, type RenderCtx } from "../../render/sections";
 import { productArt } from "./product-art";
 import { productImg } from "./media";
 import { arrowIcon } from "./icons";
-import type { PdpPhoto, ProductCard, UtilCard } from "../../content/types";
+import type { ArtKey, Category, PdpPhoto, ProductCard, UtilCard } from "../../content/types";
 
 export const STUDIO_COMMERCE_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ----
@@ -522,6 +522,118 @@ export const STUDIO_COMMERCE_CSS = `
   }
 
   /* ---- §4.4 category rail -------------------------------------------- */
+  /* ---- Category rail (§4.4 as the source uses it: FAMILIES, not models) ----
+   *
+   * A grid rather than a scroller. The model rail below is full-bleed and
+   * scrolls because a catalogue grows; this row has one card per product
+   * family and that count is small and stable, so the cards get real width
+   * and the page gets no controls it cannot honour.
+   *
+   * The panel is deliberately tall-ish and pale: one card holds a photograph
+   * of a hot tub and the other a drawing of a swim spa, and they have to read
+   * as the same KIND of object at a glance for the size difference between
+   * them to be the thing that stands out. */
+  :root[data-theme="studio"] .st-cat-sec {
+    background: var(--bg);
+    padding-block: var(--studio-rhythm);
+  }
+  :root[data-theme="studio"] .st-cat-head {
+    max-width: var(--studio-container);
+    margin-inline: auto;
+    padding-inline: var(--studio-gutter);
+    text-align: center;
+    margin-bottom: clamp(28px, 3.4vw, 68px);
+  }
+  :root[data-theme="studio"] .st-cat-head .st-sec-h {
+    max-width: 24ch;
+    margin-inline: auto;
+  }
+  :root[data-theme="studio"] .st-cat-row {
+    list-style: none;
+    margin: 0 auto;
+    padding-inline: var(--studio-gutter);
+    max-width: var(--studio-container);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    gap: clamp(16px, 1.6vw, 32px);
+  }
+  :root[data-theme="studio"] .st-cat-card {
+    display: flex; flex-direction: column;
+    height: 100%;
+    padding: clamp(12px, 1.2vw, 24px);
+    background: var(--surface);
+    border: var(--bw-line) solid var(--line);
+    border-radius: var(--r-card);
+    text-decoration: none;
+  }
+  :root[data-theme="studio"] .st-cat-panel {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 3;
+    border-radius: var(--r-media);
+    background: var(--bg-alt);
+    overflow: hidden;
+  }
+  /* Both panels keep the SAME pale ground. Giving the photo card a white one
+   * looked right in isolation and wrong in the row: the surface behind it is
+   * white too, so that card lost its panel entirely while its neighbour kept
+   * one, and two cards meant to be read as a pair stopped matching. The model
+   * cards have carried studio cutouts on --bg-alt all along. */
+  :root[data-theme="studio"] .st-cat-img {
+    inline-size: 100%; block-size: 100%;
+    object-fit: contain;
+  }
+  :root[data-theme="studio"] .st-cat-art {
+    display: block;
+    inline-size: 76%;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-cat-art svg { display: block; inline-size: 100%; height: auto; }
+  :root[data-theme="studio"] .st-cat-body {
+    display: flex; flex-direction: column;
+    gap: clamp(4px, 0.4vw, 8px);
+    margin-block-start: clamp(12px, 1.2vw, 22px);
+  }
+  :root[data-theme="studio"] .st-cat-name {
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-cat-meta {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    color: var(--ink-body);
+  }
+  /* The family's price SPAN. Legal on a category card in a way it is not on a
+   * model card — see the note on renderCategoryRail. */
+  :root[data-theme="studio"] .st-cat-price {
+    margin-block-start: clamp(2px, 0.3vw, 6px);
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
+    color: var(--ink);
+  }
+  @media (hover: hover) {
+    :root[data-theme="studio"] .st-cat-card { transition: border-color 0.2s ease, transform 0.2s ease; }
+    :root[data-theme="studio"] .st-cat-card:hover {
+      border-color: var(--ink);
+      transform: translateY(-2px);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-cat-card { transition: none; }
+    :root[data-theme="studio"] .st-cat-card:hover { transform: none; }
+  }
+
   :root[data-theme="studio"] .st-rail-sec {
     background: var(--bg);
     padding-block: var(--studio-rhythm);
@@ -876,7 +988,7 @@ export const STUDIO_COMMERCE_CSS = `
  * A shop with no drawing keeps the neutral mass rather than borrowing another
  * shop's product. A real photograph drops into .st-shot with no restructuring.
  */
-function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto): string {
+function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto, artKey?: ArtKey): string {
   // A real photograph beats the drawing every time. The drawing exists because
   // most models have no photography yet, not because it is preferred.
   if (photo) {
@@ -886,7 +998,16 @@ function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto): string {
       "</span>"
     );
   }
-  const art = productArt(ctx.shop.key, variant);
+  // The CARD's drawing, not the shop's.
+  //
+  // This keyed off ctx.shop.key, which was correct while a shop sold one kind
+  // of thing: every card wanted the same silhouette. It stopped being correct
+  // the day the shop added swim spas — three 5.8 m pools rendered as the
+  // square 2 m hot tub, under their own heading, next to their own lengths.
+  // A drawing of the wrong shape of product is the same error as a photograph
+  // of the wrong model, and it is harder to spot because a drawing already
+  // looks approximate.
+  const art = productArt(artKey === "swimspa" ? "swimspa" : ctx.shop.key, variant);
   return (
     '<span class="st-shot" aria-hidden="true">' +
     (art ? '<span class="st-shot-art">' + art + "</span>" : '<span class="st-shot-mass"></span>') +
@@ -966,11 +1087,18 @@ function capFirst(s: string, locale: string): string {
  * `"util" in p` narrows UtilCard from ProductCard — so a shop that ships a
  * comparison tile in the middle of its product list keeps it here too.
  */
-export function renderStudioProducts(ctx: RenderCtx): string {
-  // A shop with one model links every card at the flagship; a shop with a
-  // catalogue links each card at its own page.
+/**
+ * The grid's cards, for a given set.
+ *
+ * Extracted because the shop now sells two families and each gets its own
+ * grid — the category rail above sends a visitor to one or the other, and a
+ * single grid mixing 2 m tubs with 5.8 m swim spas would undo that. Both
+ * grids are the same construction on purpose: they are the same kind of
+ * choice, made twice.
+ */
+function productCards(ctx: RenderCtx, items: readonly (ProductCard | UtilCard)[]): string {
   const href = pdpHref(ctx);
-  const cards = ctx.content.products
+  return items
     .map((p: ProductCard | UtilCard, i: number) => {
       if ("util" in p) {
         return (
@@ -986,7 +1114,7 @@ export function renderStudioProducts(ctx: RenderCtx): string {
         '<a class="st-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-card-panel">' +
         (p.badge ? '<span class="st-badge">' + esc(p.badge) + "</span>" : "") +
-        shot(ctx, i, p.photo) +
+        shot(ctx, i, p.photo, p.art) +
         "</span>" +
         '<span class="st-card-body">' +
         '<h3 class="st-card-name">' + esc(p.name) + "</h3>" +
@@ -1006,6 +1134,10 @@ export function renderStudioProducts(ctx: RenderCtx): string {
       );
     })
     .join("");
+}
+
+export function renderStudioProducts(ctx: RenderCtx): string {
+  const cards = productCards(ctx, ctx.content.products);
 
   return (
     '<section class="st-shop" id="izbor"><div class="st-shop-in">' +
@@ -1039,6 +1171,18 @@ export function renderStudioProducts(ctx: RenderCtx): string {
  * neither the measured device nor the measured shape.
  */
 export function renderStudioRail(ctx: RenderCtx): string {
+  // CATEGORIES FIRST, where the shop has them.
+  //
+  // This device is the page's second act, straight under the hero, and its
+  // job is to answer "which KIND of thing?" before the grid further down
+  // answers "which of these?". While the shop sold one family that question
+  // had no content and the rail printed model cards instead. It sells two
+  // now — 1.95-2.30 m tubs and 3.90-5.80 m swim spas — and a buyer with a
+  // terrace and a buyer with a garden are not choosing between neighbouring
+  // options, so the models are the wrong first question by a wide margin.
+  const cats = ctx.content.categories ?? [];
+  if (cats.length > 0) return renderCategoryRail(ctx, cats);
+
   const items = ctx.content.products.filter(
     (p: ProductCard | UtilCard): p is ProductCard => !("util" in p),
   );
@@ -1065,7 +1209,7 @@ export function renderStudioRail(ctx: RenderCtx): string {
       return (
         '<li class="st-rail-item" data-st-item id="' + esc(id) + '" tabindex="-1">' +
         '<a class="st-rail-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
-        '<span class="st-rail-panel">' + shot(ctx, i, p.photo) + "</span>" +
+        '<span class="st-rail-panel">' + shot(ctx, i, p.photo, p.art) + "</span>" +
         '<span class="st-rail-body">' +
         '<span class="st-rail-name">' + esc(p.name) + "</span>" +
         '<span class="st-rail-meta">' + esc(p.meta) + "</span>" +
@@ -1105,5 +1249,96 @@ export function renderStudioRail(ctx: RenderCtx): string {
     '<div class="st-rail" data-st-scroll><ul class="st-rail-track">' + cards + "</ul></div>" +
     (nav ? '<nav class="st-rail-nav" aria-label="Pomik po ponudbi">' + nav + "</nav>" : "") +
     "</section>"
+  );
+}
+
+
+/**
+ * The category rail: one card per product family.
+ *
+ * Two differences from the model rail above, and both are the point.
+ *
+ * The card carries a PRICE RANGE. A model card may not — ZVPot, transposing
+ * Directive 98/6/EC, requires the price shown against an identified product to
+ * be that product's, which is why the model rail pushes its range up into the
+ * section head. A range against a family is not a claim about any one unit; it
+ * is what the family costs, and it is the number that tells a visitor within a
+ * second whether to keep reading.
+ *
+ * And there is no scroller. Two cards do not need arrows, dots or a scroll
+ * container: with a fixed, small number of families the row is a grid, and a
+ * carousel control that cannot move anything is a promise the page does not
+ * keep. The model rail keeps its arrows because a catalogue grows.
+ */
+function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
+  const cards = cats
+    .map((c, i) => {
+      // A photograph where the family has one, its drawing where it does not.
+      // Never the other family's picture: the whole row exists to show that
+      // these two are different sizes of thing.
+      const art = c.art ? productArt(c.art === "swimspa" ? "swimspa" : ctx.shop.key, i) : null;
+      const visual = c.photo
+        ? productImg(
+            c.photo,
+            "st-cat-img",
+            "(max-width: 809px) 92vw, (max-width: 1199px) 46vw, 560px",
+            c.photo.alt,
+          )
+        : art
+          ? '<span class="st-cat-art" aria-hidden="true">' + art + "</span>"
+          : "";
+      return (
+        '<li class="st-cat-item">' +
+        '<a class="st-cat-card" href="' + esc(c.href) + '">' +
+        '<span class="st-cat-panel">' +
+        visual +
+        "</span>" +
+        '<span class="st-cat-body">' +
+        '<span class="st-cat-name">' + esc(c.name) + "</span>" +
+        '<span class="st-cat-meta">' + esc(c.meta) + "</span>" +
+        '<span class="st-cat-price">' + esc(c.price) + "</span>" +
+        "</span></a></li>"
+      );
+    })
+    .join("");
+
+  return (
+    '<section class="st-cat-sec" aria-labelledby="st-cat-h">' +
+    '<div class="st-cat-head">' +
+    '<p class="st-eyebrow">Ponudba</p>' +
+    '<h2 class="st-sec-h" id="st-cat-h">Izberite vrsto bazena</h2>' +
+    "</div>" +
+    '<ul class="st-cat-row">' + cards + "</ul>" +
+    "</section>"
+  );
+}
+
+
+/**
+ * The swim spa grid — the second family, and the destination the category
+ * rail's second card actually goes to.
+ *
+ * A separate section rather than more rows in the grid above. The rail exists
+ * to ask "which KIND of pool?", and one grid holding 1.95 m tubs beside 5.80 m
+ * swim spas would answer that question with "it does not matter", which is the
+ * opposite of true: they need different gardens, different foundations and
+ * different money.
+ *
+ * Renders nothing when the shop offers none, so the anchor simply is not there
+ * rather than being an empty heading.
+ */
+export function renderStudioSwimSpas(ctx: RenderCtx): string {
+  const items = ctx.content.swimSpas ?? [];
+  if (items.length === 0) return "";
+  const cards = productCards(ctx, items);
+
+  return (
+    '<section class="st-shop" id="swim-spa"><div class="st-shop-in">' +
+    '<div class="st-shop-head">' +
+    '<p class="st-eyebrow">Swim spa</p>' +
+    '<h2 class="st-sec-h">Bazen, v katerem se plava</h2>' +
+    "</div>" +
+    (cards === "" ? "" : '<div class="st-grid">' + cards + "</div>") +
+    "</div></section>"
   );
 }

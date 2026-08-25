@@ -1,5 +1,14 @@
-import type { PdpContent, PdpPhoto, ProductCard, ShopContent } from "./types";
+import type { Category, PdpContent, PdpPhoto, ProductCard, ShopContent } from "./types";
 import { OWN_MEDIA } from "../themes/studio/own-media";
+import type { SwimSpaModel } from "../catalog/swimspa";
+import {
+  OFFERED_SWIMSPAS,
+  footprint as swimFootprint,
+  metaLine as swimMetaLine,
+  modelPrice as swimModelPrice,
+  modelPriceCents as swimModelPriceCents,
+  seating as swimSeating,
+} from "../catalog/swimspa";
 import type { PolaModel } from "../catalog/pola";
 import { catalogPricingReady } from "../catalog/pricing";
 import {
@@ -82,6 +91,105 @@ function photosFor(m: PolaModel): PdpPhoto[] {
     alt: p.alt || PHOTO_ALT[m.slug]?.[i] || m.name + " — fotografija " + (i + 1) + ".",
   }));
 }
+
+/**
+ * THE TWO FAMILIES, as the rail under the hero shows them.
+ *
+ * The shop sells one thing in two very different sizes, and until now the rail
+ * printed three MODEL cards — which meant the page's second device answered
+ * "which of these three?" before it had answered "which kind of thing?". With
+ * a 3.90–5.80 m line alongside a 1.95–2.30 m one that is the wrong first
+ * question by a wide margin: a buyer with a terrace and a buyer with a garden
+ * are not choosing between neighbouring options, they are in different
+ * markets.
+ *
+ * Each card carries a RANGE, which a model card may not. A range against an
+ * identified product would breach ZVPot (Directive 98/6/EC — the price shown
+ * for an identified product must be that product's); against a family it is
+ * simply what the family costs, and it is the number that tells a visitor
+ * whether to keep reading.
+ *
+ * The measurement in `meta` is the one each family is actually chosen on:
+ * hot tubs by how much terrace they need, swim spas by how long a swim is.
+ */
+function familyRange(prices: string[]): string {
+  const nums = prices
+    .map((p) => Number(p.replace(/[^0-9]/g, "")))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  if (nums.length === 0) return PRICE_UNSET;
+  const lo = prices[nums.indexOf(Math.min(...nums))]!;
+  const hi = prices[nums.indexOf(Math.max(...nums))]!;
+  // U+2013 EN DASH between endpoints, per Slovenian typographic practice.
+  return lo === hi ? lo : lo + " – " + hi;
+}
+
+/** Centimetres, shortest to longest: "195–230 cm". */
+function sizeSpan(mms: number[]): string {
+  const cm = mms.map((mm) => Math.round(mm / 10));
+  const lo = Math.min(...cm);
+  const hi = Math.max(...cm);
+  return lo === hi ? lo + " cm" : lo + "–" + hi + " cm";
+}
+
+/**
+ * The swim spa cards.
+ *
+ * No photography exists for this family, so every card wears the drawing —
+ * which is the honest state, and the drawing is drawn to the right proportion
+ * so a card cannot imply a 2 m tub. The description leads with LENGTH because
+ * that is what the family is chosen on; the hot tub cards lead with the
+ * footprint for the mirror-image reason.
+ */
+const swimSpas: ProductCard[] = OFFERED_SWIMSPAS.map((m) => ({
+  name: m.name,
+  desc:
+    "Akrilna školjka " +
+    swimFootprint(m) +
+    " s protitočno šobo, " +
+    m.jets +
+    " masažnih šob, " +
+    swimSeating(m) +
+    ".",
+  meta: swimMetaLine(m),
+  price: swimModelPrice(m),
+  art: "swimspa" as const,
+  slug: m.slug,
+  ...(m.tier ? { badge: m.tier } : {}),
+}));
+
+const categories: Category[] = [
+  {
+    name: "Masažni bazeni",
+    meta:
+      OFFERED_MODELS.length +
+      " modeli · " +
+      sizeSpan(OFFERED_MODELS.map((m) => m.mm[0])) +
+      " · za 5 ali 6 oseb",
+    price: familyRange(OFFERED_MODELS.map((m) => modelPrice(m))),
+    href: "#izbor",
+    // The family the shop has photographed. A real picture beside a drawing is
+    // not a mismatch here — each card is telling the truth about its own
+    // family, and the drawing is the honest state of the other one.
+    ...(photosFor(OFFERED_MODELS[2] ?? OFFERED_MODELS[0]!)[1]
+      ? { photo: photosFor(OFFERED_MODELS[2] ?? OFFERED_MODELS[0]!)[1]! }
+      : {}),
+    art: "pool" as const,
+  },
+  {
+    name: "Swim spa bazeni",
+    meta:
+      OFFERED_SWIMSPAS.length +
+      " modeli · " +
+      sizeSpan(OFFERED_SWIMSPAS.map((m) => m.mm[0])) +
+      " · s protitočno šobo",
+    price: familyRange(OFFERED_SWIMSPAS.map((m) => swimModelPrice(m))),
+    href: "#swim-spa",
+    // No photography exists for this family yet, so it wears the drawing —
+    // which is drawn to the right PROPORTION on purpose, because the length
+    // is the entire difference between the two cards.
+    art: "swimspa" as const,
+  },
+];
 
 const models: ProductCard[] = OFFERED_MODELS.map((m) => ({
   name: m.name,
@@ -212,6 +320,130 @@ function pdpFor(m: PolaModel): PdpContent {
   };
 }
 
+/**
+ * One product page per swim spa.
+ *
+ * Mirrors pdpFor above and differs exactly where the product does. The shop's
+ * promise — delivery, the site survey, the return right, the warranty — is
+ * the same sentences, because it is the same offer. What is not the same:
+ *
+ *   - The spec leads with LENGTH and carries the counter-current jets, which
+ *     are what make this a swim spa rather than a long hot tub.
+ *   - The mass line is conditional. Three models in the supplier's list state
+ *     none, and one of the three we sell is among them. A filled mass is the
+ *     figure a terrace is engineered against, so the row is OMITTED rather
+ *     than filled with an estimate — see docs/SUPPLIER-SWIMSPA-2026.md.
+ *   - There is no dual-zone claim anywhere, on any model. The ZR7860's
+ *     hardware is consistent with one and the sheet never states it; the
+ *     claim stays off the page until the supplier confirms a partition and a
+ *     second heater.
+ */
+function pdpForSwim(m: SwimSpaModel): PdpContent {
+  const swimJets =
+    m.swimJets > 0 ? m.swimJets + " protitočne šobe" : "protitočna šoba ni navedena";
+  return {
+    slug: m.slug,
+    eyebrow: m.tier ?? "Swim spa",
+    title: m.name,
+    sub:
+      "Akrilni swim spa " +
+      swimFootprint(m) +
+      " za " +
+      swimSeating(m) +
+      ": " +
+      swimJets +
+      ", " +
+      m.jets +
+      " masažnih šob, ogrevanje in filtracija.",
+    price: swimModelPrice(m),
+    priceCents: swimModelPriceCents(m),
+    cfg: [
+      ["Priklop", ["Moj električar (navodila)", "Naš partner — po ponudbi"], 0],
+      ["Servis", ["Osnovni", "Letni pregled — po ponudbi"], 0],
+    ],
+    freight: [
+      ["Dostava z ekipo in opremo za prenos", "po ponudbi", false],
+      ["Zagon, umeritev in predaja", "vključeno", true],
+      ["Ogled lokacije in preveritev nosilnosti", "vključeno", true],
+    ],
+    note:
+      "Swim spa je izredni tovor: dostop, podlago in nosilnost preverimo na " +
+      "lokaciji, preden potrdimo termin.",
+    spec: [
+      ["Dolžina", swimFootprint(m)],
+      ["Kapaciteta", swimSeating(m)],
+      ["Protitočne šobe", m.swimJets > 0 ? String(m.swimJets) : "—"],
+      ["Masažne šobe", String(m.jets)],
+      [
+        "Črpalke",
+        (m.turbine ? "turbina + " : "") +
+          m.jetPumps[0] + " × " + m.jetPumps[1] + " KM · obtočna " +
+          m.circPumps[0] + " × " + String(m.circPumps[1]).replace(".", ",") + " KM",
+      ],
+      ["Krmilnik", "Balboa · " + m.topside + " · grelec 3 kW"],
+      ["Filtracija", m.skimmers + " × " + m.filterSf + " sf"],
+      ["Školjka", "ameriški akril · izolacija 2 cm"],
+      ["Mere", swimFootprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
+      // Omitted entirely where the supplier states no mass. A dash would read
+      // as "none"; an estimate would be a structural claim nobody made.
+      ...(m.dryKg && m.filledKg
+        ? ([["Teža", m.dryKg + " kg prazen · " + m.filledKg + " kg poln"]] as [string, string][])
+        : []),
+      ["Priklop", "220 V / 380 V"],
+      ["Garancija", "2–5 let, odvisno od sklopa"],
+    ],
+    bar: [m.name, swimFootprint(m) + " · " + m.jets + " šob", swimModelPrice(m), "V košarico"],
+    addons: m.addons.map((x) => ({
+      key: x.key,
+      label: x.label,
+      price: addonPrice(x),
+      priceCents: addonPriceCents(x),
+      group: x.group,
+      ...(x.qty ? { qty: x.qty } : {}),
+    })),
+    assure: [
+      ["Dostava po vsej Sloveniji", "z ekipo in opremo za prenos"],
+      ["14 dni za vračilo", "zakonska pravica ob nakupu na daljavo"],
+      ["Ogled pred dostavo", "preverimo dostop, podlago in nosilnost"],
+      ["Servis in rezervni deli", "lastna servisna mreža"],
+    ],
+    panels: [
+      [
+        "Opis izdelka",
+        "Akrilna školjka " +
+          swimFootprint(m) +
+          " z izolacijo 2 cm, pocinkan nosilni okvir in PS obloga. " +
+          (m.swimJets > 0
+            ? m.swimJets +
+              " protitočne šobe ustvarijo tok, v katerem se plava na mestu — "
+            : "") +
+          "poleg " + m.jets + " masažnih šob za sprostitev po plavanju.",
+      ],
+      [
+        "Mere in prostor",
+        swimFootprint(m) + ", višina " + m.mm[2] / 10 + " cm. " +
+          (m.dryKg && m.filledKg
+            ? "Prazen tehta " + m.dryKg + " kg, napolnjen " + m.filledKg + " kg. "
+            : "Teže dobavitelj za ta model ne navaja; pred dostavo jo pridobimo " +
+              "in preverimo nosilnost podlage. ") +
+          "Swim spa praviloma stoji na betonski plošči, ne na terasi.",
+      ],
+      [
+        "Dostava in montaža",
+        "Swim spa pripeljemo, postavimo, priklopimo in zaženemo. Zaradi " +
+          "dolžine je to izredni tovor — dostop in prostor za dvig " +
+          "preverimo na lokaciji pred potrditvijo termina.",
+      ],
+      [
+        "Garancija",
+        "2–5 let, odvisno od sklopa. Rezervni deli in servis prek naše mreže.",
+      ],
+    ],
+    finishes: [...SHELL_FINISHES],
+    pricesProvisional: !catalogPricingReady(),
+  };
+}
+
 export const bazenContent: ShopContent = {
   nav: ["Bazeni", "Primerjava", "Vodniki", "Dostava in montaža", "Kontakt"],
   artKey: "pool",
@@ -275,8 +507,12 @@ export const bazenContent: ShopContent = {
     ["Cene 2026", "Koliko stane masažni bazen? Nakup in obratovanje."],
     ["Pozimi", "Masažni bazen pozimi: stroški in nasveti."],
   ],
+  categories,
+  swimSpas,
   pdp: pdpFor(flagship),
-  pdps: OFFERED_MODELS.map(pdpFor),
+  // Both families' pages. The router matches any slug in here, so the swim
+  // spa cards link at real pages rather than at a 404.
+  pdps: [...OFFERED_MODELS.map(pdpFor), ...OFFERED_SWIMSPAS.map(pdpForSwim)],
   footNote:
     "Specialist za masažne bazene v Sloveniji. Razstavni bazen v Ljubljani — pridite ga pogledat v živo.",
 };

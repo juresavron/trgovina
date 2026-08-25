@@ -70,26 +70,18 @@ function saunaSvg(w: number): string {
   );
 }
 
-const ART: Record<ArtKey, string> = {
-  saunaDuo: saunaSvg(136),
-  saunaQuattro: saunaSvg(190),
-  tub:
-    '<svg viewBox="0 0 240 190" aria-hidden="true">' +
-    '<defs><linearGradient id="gt" x1="0" y1="0" x2="0" y2="1">' +
-    '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.6"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.25"/></linearGradient></defs>' +
-    // chiller unit: accent status light, grill, hose into the tub
-    '<rect x="178" y="56" width="42" height="110" rx="7" fill="var(--ink)" opacity="0.35"/>' +
-    '<g stroke="var(--bg)" stroke-width="2.5" opacity="0.8"><line x1="186" y1="76" x2="212" y2="76"/><line x1="186" y1="88" x2="212" y2="88"/><line x1="186" y1="100" x2="212" y2="100"/></g>' +
-    '<circle cx="212" cy="64" r="3" fill="var(--acc)"/>' +
-    '<path d="M160 118 C 172 118 172 132 182 138" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="5" fill="none" stroke-linecap="round"/>' +
-    // tub with in-water ripples (no floating steam)
-    '<path d="M20 76 Q20 62 38 62 L142 62 Q160 62 160 76 L156 138 Q154 162 118 162 L60 162 Q26 162 24 138 Z" fill="url(#gt)"/>' +
-    '<ellipse cx="90" cy="70" rx="62" ry="13" fill="var(--acc)" opacity="0.55"/>' +
-    '<ellipse cx="90" cy="70" rx="46" ry="9" fill="var(--bg)" opacity="0.45"/>' +
-    '<ellipse cx="90" cy="70" rx="32" ry="6" fill="none" stroke="var(--ink)" stroke-opacity="0.35" stroke-width="1.5"/>' +
-    '<ellipse cx="90" cy="70" rx="18" ry="3.5" fill="none" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="1.5"/>' +
-    '<g stroke="var(--ink)" stroke-opacity="0.2" stroke-width="2"><line x1="34" y1="92" x2="34" y2="130"/><line x1="146" y1="92" x2="146" y2="130"/></g>' +
-    '</svg>',
+/**
+ * The KERNEL's drawings, for a theme that has not supplied its own.
+ *
+ * Partial on purpose. Studio overrides the products section and draws from
+ * src/themes/studio/product-art.ts, so nothing here is reached today — and
+ * "swimspa" is deliberately absent rather than aliased to "pool". A 5.8 m
+ * shell drawn as a 2 m square tub is the same class of error as a photograph
+ * of the wrong model, and an unreachable fallback is exactly where that kind
+ * of lie survives unnoticed. A missing key renders the neutral panel, which
+ * is the same choice product-art.ts makes by returning null.
+ */
+const ART: Partial<Record<ArtKey, string>> = {
   pool:
     // Side elevation, deliberately asymmetric — the earlier top view kept
     // reading as a face (paired headrests = eyes). One headrest, one control
@@ -116,76 +108,12 @@ const ART: Record<ArtKey, string> = {
     '<rect x="40" y="163" width="16" height="7" rx="2" fill="var(--ink)" opacity="0.45"/>' +
     '<rect x="184" y="163" width="16" height="7" rx="2" fill="var(--ink)" opacity="0.45"/>' +
     '</svg>',
-  bathtub:
-    // Side elevation of a freestanding slipper tub: the silhouette IS the
-    // product here (it is bought as an object, not a fixture), so the rim
-    // curve and the floor-standing tap carry the whole read.
-    '<svg viewBox="0 0 240 190" aria-hidden="true">' +
-    '<defs><linearGradient id="gb" x1="0" y1="0" x2="0" y2="1">' +
-    '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.5"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.2"/></linearGradient></defs>' +
-    // floor-standing tap and riser
-    '<path d="M196 150 V72 q0 -12 -12 -12 h-14" stroke="var(--ink)" stroke-opacity="0.45" stroke-width="4" fill="none" stroke-linecap="round"/>' +
-    '<rect x="188" y="150" width="16" height="6" rx="2" fill="var(--ink)" opacity="0.4"/>' +
-    // tub body: high back, low front, soft slipper curve
-    '<path d="M34 78 q0 -14 18 -14 q60 0 108 0 q16 0 16 12 l-6 56 q-3 24 -34 24 H72 q-31 0 -34 -24 Z" fill="url(#gb)"/>' +
-    // rim + inner shadow
-    '<path d="M34 78 q0 -14 18 -14 q60 0 108 0 q16 0 16 12" stroke="var(--acc)" stroke-opacity="0.75" stroke-width="6" fill="none" stroke-linecap="round"/>' +
-    '<path d="M50 82 q54 -6 122 0 l-5 46 q-2 18 -26 18 H79 q-24 0 -26 -18 Z" fill="var(--bg)" opacity="0.4"/>' +
-    // waterline
-    '<path d="M60 104 q12 -5 24 0 t24 0 t24 0 t24 0" stroke="var(--ink)" stroke-opacity="0.28" stroke-width="2.5" fill="none" stroke-linecap="round"/>' +
-    // plinth
-    '<rect x="62" y="156" width="96" height="8" rx="3" fill="var(--ink)" opacity="0.35"/>' +
-    '</svg>',
-  billiard:
-    // Three-quarter view: rails, six pockets and the rack. Drawn from above at
-    // a slight angle because that is how a table is actually judged — a flat
-    // side elevation reads as a bench.
-    '<svg viewBox="0 0 240 190" aria-hidden="true">' +
-    '<defs><linearGradient id="gbl" x1="0" y1="0" x2="0" y2="1">' +
-    '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.62"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.3"/></linearGradient></defs>' +
-    // legs
-    '<rect x="40" y="132" width="14" height="34" rx="3" fill="var(--ink)" opacity="0.42"/>' +
-    '<rect x="186" y="132" width="14" height="34" rx="3" fill="var(--ink)" opacity="0.42"/>' +
-    // outer rail frame
-    '<path d="M26 58 L214 58 L200 140 L40 140 Z" fill="var(--ink)" opacity="0.4"/>' +
-    // baize bed
-    '<path d="M40 68 L200 68 L189 130 L51 130 Z" fill="url(#gbl)"/>' +
-    // six pockets
-    '<g fill="var(--ink)" opacity="0.62">' +
-    '<ellipse cx="42" cy="68" rx="7" ry="4.5"/><ellipse cx="120" cy="66" rx="7" ry="4.5"/><ellipse cx="198" cy="68" rx="7" ry="4.5"/>' +
-    '<ellipse cx="52" cy="130" rx="7.5" ry="5"/><ellipse cx="120" cy="132" rx="7.5" ry="5"/><ellipse cx="188" cy="130" rx="7.5" ry="5"/>' +
-    "</g>" +
-    // racked balls + cue ball
-    '<g fill="var(--bg)" opacity="0.85">' +
-    '<circle cx="150" cy="92" r="4"/><circle cx="158" cy="97" r="4"/><circle cx="142" cy="97" r="4"/>' +
-    '<circle cx="166" cy="102" r="4"/><circle cx="150" cy="102" r="4"/><circle cx="134" cy="102" r="4"/>' +
-    "</g>" +
-    '<circle cx="76" cy="104" r="4.5" fill="var(--ink)" opacity="0.75"/>' +
-    // cue resting across the rail
-    '<path d="M30 150 L206 96" stroke="var(--ink)" stroke-opacity="0.4" stroke-width="3" stroke-linecap="round"/>' +
-    "</svg>",
-  chair:
-    '<svg viewBox="0 0 240 190" aria-hidden="true">' +
-    '<defs><linearGradient id="gc" x1="0" y1="0" x2="0" y2="1">' +
-    '<stop offset="0" stop-color="var(--acc)" stop-opacity="0.6"/><stop offset="1" stop-color="var(--acc)" stop-opacity="0.24"/></linearGradient></defs>' +
-    // headrest pillow + back
-    '<path d="M78 26 Q104 18 112 40 L118 64 Q120 74 112 78 L88 86 Q78 88 76 78 L70 44 Q68 32 78 26 Z" fill="url(#gc)"/>' +
-    '<ellipse cx="93" cy="44" rx="16" ry="9" fill="var(--bg)" opacity="0.3" transform="rotate(-14 93 44)"/>' +
-    // seat + ottoman
-    '<path d="M70 88 Q116 74 128 92 L134 116 Q170 112 186 128 Q198 142 186 152 L120 168 Q64 176 52 148 L48 112 Q48 94 70 88 Z" fill="url(#gc)"/>' +
-    '<path d="M134 116 L186 128" stroke="var(--bg)" stroke-width="3" opacity="0.6"/>' +
-    '<path d="M60 100 Q100 88 122 98" stroke="var(--bg)" stroke-width="3" fill="none" opacity="0.55"/>' +
-    '<path d="M64 116 Q100 104 124 112" stroke="var(--bg)" stroke-width="2" fill="none" opacity="0.35"/>' +
-    // integrated feet
-    '<path d="M52 148 q-8 16 6 24 l14 -6 q-12 -6 -14 -20 Z" fill="var(--ink)" opacity="0.45"/>' +
-    '<path d="M186 152 q6 12 -4 18 l-12 -4 q10 -6 10 -16 Z" fill="var(--ink)" opacity="0.45"/>' +
-    '</svg>',
 };
 
 function scene(art: ArtKey, cap?: string): string {
   return (
     '<div class="scene">' +
-    ART[art] +
+    (ART[art] ?? "") +
     '<span class="floor"></span>' +
     (cap ? '<span class="cap">' + esc(cap) + "</span>" : "") +
     "</div>"
