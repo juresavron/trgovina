@@ -156,6 +156,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR6801",
     slug: "swim-390",
     name: "SWIM 390",
+    tier: "Vstopni",
     fobUsd: 6250,
     mm: [3900, 2280, 1350],
     seats: 3,
@@ -220,6 +221,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR6802",
     slug: "swim-500",
     name: "SWIM 500",
+    tier: "Srednji",
     fobUsd: 7160,
     mm: [5000, 2240, 1370],
     seats: 3,
@@ -230,6 +232,11 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     circPumps: [1, 0.35],
     filterSf: 100,
     skimmers: 2,
+    // ⚠️ OFFERED, AND THE SHEET GIVES NO MASS. A 5 m shell holds somewhere
+    // near seven tonnes filled and it goes on somebody's terrace; the
+    // delivery-and-commissioning promise cannot be made against a figure the
+    // supplier never gave. Not estimated from the 3.9 m model. Ask before
+    // this one is published.
     topside: "TP600",
     addons: [
       a("cover", 380),
@@ -371,6 +378,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR7860",
     slug: "swim-580-dvojni",
     name: "SWIM 580 DVOJNI",
+    tier: "Vrhunski",
     fobUsd: 9330,
     mm: [5800, 2280, 1450],
     seats: 7,
@@ -440,13 +448,55 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
 /**
  * WHAT THE SHOP ACTUALLY SELLS.
  *
- * Empty until the range is chosen. The hot tubs were narrowed from nine to
- * three — one per size — and the same call has not been made here, so nothing
- * is offered rather than all nine being published by default. The array above
- * is the transcription and stays complete; this is the shop's decision, and
- * it is a decision, not an oversight.
+ * Three units, shortest first, chosen by the owner. The other six stay in
+ * SWIMSPA_MODELS above because that array is the transcription of the
+ * supplier's price list and deleting rows would lose data the business paid
+ * for; they simply are not offered. Everything that renders reads THIS.
+ *
+ * The ladder is not one dimension, and copy written around it has to know
+ * that:
+ *
+ *   ZR6801, 3.90 m — the only unit under four metres, and the reason it is
+ *     here is not price. It fits a garden that cannot take a 5.8 m shell,
+ *     which is a different customer rather than a cheaper one. Nothing is cut
+ *     from it but length: full 3 × 3 HP jet pumps and 2 × 100 sf filtration,
+ *     the same as the step above.
+ *
+ *   ZR6802, 5.00 m — where the current becomes a swim. Same pumps, same
+ *     filtration, $910 more. NOT a pure length upgrade, though it is close
+ *     enough to sell as one: the jet count goes DOWN, 46 to 44, over a metre
+ *     more shell. Worth knowing before a comparison table prints it as an
+ *     increase.
+ *
+ *   ZR7860, 5.80 m — the one with a different story rather than more of the
+ *     same. Two control systems, two circulation pumps, two ozonators, three
+ *     skimmers at 100 sf each (the best filtration on the list), 1,530 kg dry
+ *     (the heaviest, by 80 kg over the ZR7809 Turbine). See the ⚠️ below
+ *     before writing the dual-zone claim.
  */
-export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = [];
+export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = ["ZR6801", "ZR6802", "ZR7860"].map(
+  (code) => SWIMSPA_MODELS.find((m) => m.code === code)!,
+);
+
+/**
+ * ⚠️ THE DUAL-ZONE CLAIM IS NOT YET SUPPORTED BY THE SUPPLIER'S SHEET.
+ *
+ * The ZR7860 is intended to be sold on "swim pool and hot tub at different
+ * temperatures at the same time", which is the strongest story in the
+ * category and the reason the price jump is explicable. The hardware the
+ * sheet states is consistent with it — 1 × BP200G2 + 1 × BP6013G2, two TP600
+ * panels, two circulation pumps, two ozonators — but consistent is not the
+ * same as stated. The sheet never uses the words dual zone, never mentions a
+ * partition between two bodies of water, and lists the heater exactly as
+ * every other model does: "3kw", singular.
+ *
+ * Two temperatures at once needs two heated volumes. Until the supplier
+ * confirms a partition and a second heater, this is a functional claim about
+ * the goods with nothing behind it — the exact category ZVPot and the
+ * Consumer Protection Act treat as misleading, on the single most persuasive
+ * sentence on the page. Confirm it, then write it.
+ */
+export const ZR7860_DUAL_ZONE_CONFIRMED = false;
 
 /** Look one up by URL segment. */
 export function swimSpaBySlug(slug: string): SwimSpaModel | undefined {

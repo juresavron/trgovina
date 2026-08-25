@@ -80,6 +80,34 @@ list — the same decision, for the same reason, as the Pola options.
 | Cabinet and bottom insulation | $142 / $190 / $222 / $225 / $250 |
 | Spa bag | $141 / $150 / $160 / $170 / $180 / $220 |
 
+## What the shop sells
+
+Three units, chosen 25 Aug 2026: **ZR6801** (Vstopni, 3.90 m, $6,250) ·
+**ZR6802** (Srednji, 5.00 m, $7,160) · **ZR7860** (Vrhunski, 5.80 m, $9,330).
+`OFFERED_SWIMSPAS` in `src/catalog/swimspa.ts` is the list everything renders
+from; the other six stay transcribed and unoffered.
+
+Three things about that ladder are worth having straight before copy is
+written, because two of them are easy to get backwards:
+
+- **ZR6801 → ZR6802 is not a pure length upgrade.** Same 3 × 3 HP pumps, same
+  2 × 100 sf filtration, +1.10 m, +$910 — but the jet count goes **down**, 46
+  to 44. Close enough to sell as a length upgrade; not close enough for a
+  comparison table to print jets as rising.
+- **The ZR7860 is the heaviest by 80 kg, not 270.** 1,530 kg dry against the
+  ZR7809 Turbine's 1,450 and the ZR7809's 1,430. The 270 kg gap is to the
+  ZR7807, which is not the next heaviest.
+- **1 HP circulation pumps are not unique to it.** The ZR7861, ZR7809 and
+  ZR7809 Turbine all use 1 HP too. What IS unique is *two* of them, plus two
+  control systems, two ozonators and three skimmers.
+
+⚠️ **One of the three now being sold has no stated mass.** The ZR6802 is in
+question 5 below, and choosing it promotes that from a gap in the record to a
+blocker on a live page: a 5 m shell holding somewhere near seven tonnes filled
+goes on somebody's terrace, and the shop's delivery-and-commissioning promise
+cannot be made against a figure the supplier never gave. Ask for the ZR6802's
+dry and filled mass before this model is published.
+
 ## ⚠️ Questions for the supplier
 
 Carried in the code as written, never silently corrected. Each of these changes
@@ -97,23 +125,35 @@ either what a page claims or what a customer is charged.
    can guess, because guessing it means charging a customer a price nobody
    quoted.
 
-3. **ZR7809 appears twice under one code**, the second time as "(Turbine)" at a
+3. **Does the ZR7860 actually hold two temperatures at once?** This is the
+   model's whole commercial story and the justification for the price step, so
+   it is the worst thing on this page to be wrong about. The sheet lists two
+   control systems (1 × BP200G2 + 1 × BP6013G2), two TP600 panels, two
+   circulation pumps and two ozonators — all consistent with a dual-zone unit.
+   It also lists the heater exactly as every other model does, "3kw",
+   singular, and never mentions a partition or two bodies of water. Two heated
+   volumes need two heaters. **Confirm a partition and a second heater before
+   the claim goes on a page** — a functional claim about the goods with
+   nothing behind it is precisely what ZVPot treats as misleading.
+   `ZR7860_DUAL_ZONE_CONFIRMED` is `false` in code and a test holds it there.
+
+4. **ZR7809 appears twice under one code**, the second time as "(Turbine)" at a
    $3,000 premium. Two SKUs cannot share an identity — orders, warranty claims
    and spare parts are all matched on it. Carried in code as `ZR7809-T` pending
    a real code from the supplier.
 
-4. **Three models give no dry or filled mass**: ZR6802, ZR6803, ZR7801. For a
+5. **Three models give no dry or filled mass**: ZR6802, ZR6803, ZR7801. For a
    hot tub that is a nuisance; here it is a blocker. These units run to 8.5
    tonnes filled, which is a structural question about the terrace they stand
    on, and the site cannot promise delivery and commissioning against a mass
    nobody stated. Not estimated from a similar model — a load-bearing figure
    invented to fill a table is worse than a missing one.
 
-5. **ZR7809 has 2 × 50 sf of filtration** where the similarly sized ZR7807 has
+6. **ZR7809 has 2 × 50 sf of filtration** where the similarly sized ZR7807 has
    2 × 100 sf and the ZR7860 has 3 × 100 sf, on the same 5.8 m shell and a
    comparable water volume. Correct, or a typo?
 
-6. **ZR6803 is 1,620 mm tall** against 1,350–1,550 mm across the rest. On a
+7. **ZR6803 is 1,620 mm tall** against 1,350–1,550 mm across the rest. On a
    5.8 m shell with only 3 seats and 44 jets, that reads like a deep swim
    tank rather than a taller version of the others. Confirm what the extra
    270 mm is for — it changes both the copy and the freight envelope.
