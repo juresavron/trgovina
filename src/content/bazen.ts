@@ -236,9 +236,16 @@ const categories: Category[] = [
       (swimSpaFamilyHasSwimJets() ? " · s protitočno šobo" : " · za plavanje in sprostitev"),
     price: familyRange(OFFERED_SWIMSPAS.map((m) => swimModelPrice(m))),
     href: "/swim-spa",
-    // No photography exists for this family yet, so it wears the drawing —
-    // which is drawn to the right PROPORTION on purpose, because the length
-    // is the entire difference between the two cards.
+    // A real photograph now, served under a clean alias because the file in
+    // the bucket is named "Generated Image August 25, 2026 - 6_06PM Large" —
+    // see src/media-aliases.ts. The drawing stays as the fallback: it is
+    // drawn to the right PROPORTION on purpose, because length is the entire
+    // difference between the two cards.
+    photo: {
+      src: "/media/kategorija-swim-spa.jpeg",
+      widths: [],
+      alt: "Swim spa bazen na vrtu",
+    },
     art: "swimspa" as const,
   },
 ];
