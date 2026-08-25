@@ -15,9 +15,10 @@
  * to suit a layout.
  *
  * ⚠️ THERE IS NO SWIM SPA HERE. Every model is a square hot tub, 1.95–2.30 m
- * a side. A swim spa is a 3.8–7 m unit with a counter-current jet, and none
- * of these can be sold as one. See the note under the same heading in
- * docs/SUPPLIER-POLA-2026.md.
+ * a side. A swim spa is a 3.9–5.8 m unit with counter-current jets, and none
+ * of these can be sold as one. The swim spas arrived as their own 2026 price
+ * list and live in src/catalog/swimspa.ts — separate module, separate
+ * freight class, separate buying question. See docs/SUPPLIER-SWIMSPA-2026.md.
  */
 
 import { displayPrice, displayPriceCents, priceFromFob } from "./pricing";
