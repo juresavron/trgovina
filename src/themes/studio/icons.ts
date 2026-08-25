@@ -74,3 +74,51 @@ export function basketIcon(): string {
     '<path d="M8.5 8V6a3.5 3.5 0 0 1 7 0v2" stroke-linecap="round"/></svg>'
   );
 }
+
+/**
+ * The product page's assurance row — delivery, returns, payment, help.
+ *
+ * Same construction as the chrome glyphs above: a 24-unit box, 1.4 stroke, no
+ * fill, currentColor. Drawn rather than pulled from an icon set because four
+ * glyphs is not worth a dependency, and because a set would arrive with its
+ * own grid and stroke weight and quietly stop matching the arrow.
+ */
+function glyph(paths: string): string {
+  return (
+    '<svg class="st-assure-i" viewBox="0 0 24 24" width="18" height="18" fill="none" ' +
+    'stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" ' +
+    'aria-hidden="true" focusable="false">' + paths + "</svg>"
+  );
+}
+
+/** A box on a flatbed — delivery. */
+export function truckIcon(): string {
+  return glyph(
+    '<path d="M1.5 6.5h12v10h-12z"/><path d="M13.5 10h4l3 3v3.5h-7z"/>' +
+    '<circle cx="6" cy="18.5" r="2"/><circle cx="17" cy="18.5" r="2"/>',
+  );
+}
+
+/** An arrow turning back on itself — returns. */
+export function returnIcon(): string {
+  return glyph(
+    '<path d="M3.5 9.5h11a5 5 0 0 1 0 10H8"/><path d="M7 5.5 3 9.5l4 4"/>',
+  );
+}
+
+/** A shield — secure payment. */
+export function shieldIcon(): string {
+  return glyph(
+    '<path d="M12 2.8 20 6v6c0 4.4-3.2 7.7-8 9.2-4.8-1.5-8-4.8-8-9.2V6z"/>' +
+    '<path d="m8.6 12 2.3 2.3 4.5-4.6"/>',
+  );
+}
+
+/** A question in a circle — support. */
+export function helpIcon(): string {
+  return glyph(
+    '<circle cx="12" cy="12" r="9"/>' +
+    '<path d="M9.4 9.3A2.7 2.7 0 0 1 12 7.4c1.5 0 2.7 1 2.7 2.4 0 2.2-2.7 2-2.7 4"/>' +
+    '<path d="M12 17.2h.01"/>',
+  );
+}
