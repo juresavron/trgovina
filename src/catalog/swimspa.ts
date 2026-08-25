@@ -156,7 +156,6 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR6801",
     slug: "swim-390",
     name: "SWIM 390",
-    tier: "Vstopni",
     fobUsd: 6250,
     mm: [3900, 2280, 1350],
     seats: 3,
@@ -187,7 +186,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR7861",
     slug: "swim-450",
     name: "SWIM 450",
-    tier: "Srednji",
+    tier: "Vstopni",
     fobUsd: 6859,
     mm: [4500, 2280, 1400],
     seats: 3,
@@ -387,7 +386,6 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR7860",
     slug: "swim-580-dvojni",
     name: "SWIM 580 DVOJNI",
-    tier: "Vrhunski",
     fobUsd: 9330,
     mm: [5800, 2280, 1450],
     seats: 7,
@@ -484,12 +482,31 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
  *     before writing the dual-zone claim.
  */
 export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = [
-  "ZR6801",
   "ZR7861",
   "ZR7809",
   "ZR7807",
-  "ZR7860",
 ].map((code) => SWIMSPA_MODELS.find((m) => m.code === code)!);
+
+/**
+ * ⚠️ TWO THINGS THE SHOP GAVE UP BY NARROWING TO THESE THREE, both of which
+ * were its own stated reasons for the earlier range.
+ *
+ * THE SUB-FOUR-METRE UNIT IS GONE. The ZR6801 at 3.90 m was chosen because it
+ * "fits gardens that simply cannot take a 5.8 m unit — that's a different
+ * customer, not a cheaper one". The range now starts at 4.50 m, so that
+ * customer has nothing to buy. Worth knowing before someone asks why the
+ * small-garden enquiries stop converting.
+ *
+ * THE DUAL-ZONE CANDIDATE IS GONE. On the price list's own evidence — two
+ * drainage outlets, two topside panels, three skimmers — the ZR7860 was the
+ * unit most likely to actually hold two temperatures at once. It is not
+ * offered. The ZR7807 remains and was NAMED as the dual-zone combo, which is
+ * exactly the disagreement recorded below and now the only one that matters,
+ * because it is the only one still on sale.
+ *
+ * Both are recoverable: the models stay transcribed, and re-offering either
+ * is one entry in the array above plus photography.
+ */
 
 /**
  * ⚠️ WHICH MODEL IS THE DUAL-ZONE COMBO IS NOT SETTLED, AND THE SHEET AND THE
