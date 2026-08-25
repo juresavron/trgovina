@@ -436,7 +436,7 @@ export const STUDIO_PAGE_CSS = `
 /* -------------------------------------------------------------- render */
 
 /**
- * A company fact, or a visible mark that it is unset.
+ * WHETHER A COMPANY VALUE HAS BEEN FILLED IN, JUDGED PER FIELD.
  *
  * The TODO values in tenants/bazen.ts are placeholders, and the worst thing a
  * legal page can do with a placeholder is render it as if it were a fact:
@@ -444,36 +444,49 @@ export const STUDIO_PAGE_CSS = `
  * reader. Marking it says what is true — this has not been filled in — and
  * legalPagesReady() stops the shop going live while any of them is like this.
  *
- * THE TEST USED TO MARK REAL COMPANIES AS UNSET. Its last clause stripped
- * every non-digit and asked whether anything survived, which is the right
- * question for a telephone number and the wrong one for everything else it is
- * called with: "Bazeni d.o.o." has no digits, so a perfectly valid registered
- * name printed as "podatek še ni vpisan" on the terms, the privacy notice and
- * the withdrawal form. So did an address with no house number ("Glavni trg
- * bb, Ljubljana"). The clause now asks the question it meant to ask — is
- * there anything here but a country code, zeros and punctuation — which
- * catches the +386 00 000 000 shape the tenant file actually uses, and leaves
- * any value carrying a letter or a non-zero digit alone.
+ * ⚠️ THE OLD TEST WOULD HAVE MARKED THE REAL COMPANY AS UNSET. One predicate
+ * ran over every value and ended with a phone check — strip non-digits, drop
+ * a leading 386, drop the zeros, call it unset if nothing survives. Exactly
+ * right for "+386 00 000 000". Catastrophic for "Masažni Bazen d.o.o." and
+ * "Ljubljana", which carry no digits at all: they fold to "" and read as
+ * unset. So the day the owner filled the details in, /pogoji-poslovanja,
+ * /zasebnost and /odstop-od-pogodbe would have printed "podatek še ni
+ * vpisan" over a real registered name and a real city — on the three pages
+ * whose entire job is to identify the seller.
  *
- * ⚠️ legalPagesReady() in content/pages.ts still carries the digit-stripping
- * form, so it refuses to take a shop live over a digitless legal name. That
- * file belongs to another owner; the divergence fails closed (the page tells
- * the truth, the launch gate is merely over-cautious) and is reported rather
- * than fixed from here.
+ * Per field now, each predicate knowing only how ITS OWN kind of value looks
+ * when it is missing. Deliberately the same four predicates as
+ * content/pages.ts, whose legalPagesReady() had the identical bug and was
+ * fixed the same way: the gate that refuses to take the shop live and the
+ * mark that appears on the page have to agree, or the page claims a gap the
+ * launch check cannot see, or the other way round. They are restated here
+ * rather than imported because that file exports neither, and a theme
+ * reaching for another module's private helpers is a worse coupling than
+ * four lines of duplication that a comment ties together.
  */
-function isUnset(value: string): boolean {
-  return (
-    value.includes("TODO") ||
-    value === "SI00000000" ||
-    value === "0000" ||
-    /^[-\s+()0]*$/.test(value.replace(/^\+?\s*386/, ""))
-  );
-}
+const isSet = (v: string): boolean => v.trim() !== "" && !v.includes("TODO");
 
-function fact(value: string): string {
-  return isUnset(value)
-    ? '<span class="st-page-todo">podatek še ni vpisan</span>'
-    : esc(value);
+/** A VAT id is unset while every digit in it is a zero. */
+const isSetVat = (v: string): boolean =>
+  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
+
+/** A postcode is unset while every digit is a zero. */
+const isSetZip = (v: string): boolean =>
+  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
+
+/**
+ * A phone number is unset while the subscriber part is all zeros. The country
+ * code is stripped first so "+386 00 000 000" cannot be rescued by its 386.
+ */
+const isSetPhone = (v: string): boolean =>
+  isSet(v) && v.replace(/[^0-9]/g, "").replace(/^386/, "").replace(/0/g, "") !== "";
+
+/** The mark that stands in for a value nobody has filled in yet. */
+const UNSET = '<span class="st-page-todo">podatek še ni vpisan</span>';
+
+/** A company fact, or a visible mark that it is unset. */
+function fact(value: string, set: boolean): string {
+  return set ? esc(value) : UNSET;
 }
 
 /**
@@ -484,12 +497,11 @@ function fact(value: string): string {
  * whose accessible name was "podatek še ni vpisan" and whose whole behaviour
  * was to dial nothing. On a shop that takes most of its EUR 2,400-8,400
  * orders by telephone that is worse than showing no link: a customer who taps
- * it learns the number is wrong from their own dialler.
+ * it learns the number is wrong from their own dialler. The row stays; only
+ * the href goes, which is what the footer does with the same value.
  */
-function link(href: string, value: string): string {
-  return isUnset(value)
-    ? fact(value)
-    : '<a href="' + esc(href) + '">' + esc(value) + "</a>";
+function link(href: string, value: string, set: boolean): string {
+  return set ? '<a href="' + esc(href) + '">' + esc(value) + "</a>" : UNSET;
 }
 
 function prose(b: Extract<Block, { kind: "prose" }>): string {
@@ -531,6 +543,16 @@ function qa(b: Extract<Block, { kind: "qa" }>): string {
   );
 }
 
+/**
+ * Term/definition rows.
+ *
+ * The raw flag makes ESCAPING THE CALLER'S JOB, so it is only passed by the two
+ * callers below, which build their own anchors and their own unset marks. A
+ * row that comes from a content module never takes that path. The one value
+ * that was reaching the page unescaped — the shop's own domain, which went in
+ * as raw HTML because it travelled in the same array as the anchors — now
+ * goes through esc() at its call site like every other string in this file.
+ */
 function facts(h: string | undefined, rows: readonly (readonly [string, string])[], raw = false): string {
   return (
     (h ? '<h2 class="st-page-h2">' + esc(h) + "</h2>" : "") +
@@ -550,15 +572,20 @@ function facts(h: string | undefined, rows: readonly (readonly [string, string])
 function contact(ctx: RenderCtx, h?: string): string {
   const c = ctx.shop.contact;
   const a = c.address;
+  // The postal address is three fields, so it is three questions: a street
+  // with no house number is still a street, but a 0000 postcode is not a
+  // postcode. Judged before the parts are joined, because the joined string
+  // ("Glavni trg bb, 1000 Ljubljana") cannot be taken apart again.
+  const placeSet = isSet(a.street) && isSetZip(a.zip) && isSet(a.city);
   const place = [a.street, [a.zip, a.city].filter(Boolean).join(" ")]
     .filter(Boolean)
     .join(", ");
   return facts(
     h ?? "Kontakt",
     [
-      ["Telefon", link(ctx.phoneHref, ctx.phoneDisplay)],
-      ["E-pošta", link("mailto:" + c.email, c.email)],
-      ["Naslov", fact(place)],
+      ["Telefon", link(ctx.phoneHref, ctx.phoneDisplay, isSetPhone(ctx.phoneDisplay))],
+      ["E-pošta", link("mailto:" + c.email, c.email, isSet(c.email))],
+      ["Naslov", fact(place, placeSet)],
     ],
     true,
   );
@@ -569,9 +596,9 @@ function imprint(ctx: RenderCtx, h?: string): string {
   return facts(
     h ?? "Podatki o podjetju",
     [
-      ["Naziv", fact(co.legalName)],
-      ["Davčna številka", fact(co.vatId)],
-      ["Spletno mesto", ctx.shop.domain],
+      ["Naziv", fact(co.legalName, isSet(co.legalName))],
+      ["Davčna številka", fact(co.vatId, isSetVat(co.vatId))],
+      ["Spletno mesto", esc(ctx.shop.domain)],
     ],
     true,
   );
