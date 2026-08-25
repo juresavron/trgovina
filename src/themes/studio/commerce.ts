@@ -611,6 +611,7 @@ export const STUDIO_COMMERCE_CSS = `
     border: var(--bw-line) solid var(--line);
     border-radius: var(--r-card);
     text-decoration: none;
+    transition: border-color 0.2s ease;
   }
   :root[data-theme="studio"] .st-cat-panel {
     position: relative;
@@ -626,9 +627,18 @@ export const STUDIO_COMMERCE_CSS = `
    * white too, so that card lost its panel entirely while its neighbour kept
    * one, and two cards meant to be read as a pair stopped matching. The model
    * cards have carried studio cutouts on --bg-alt all along. */
+  /* COVER, not contain — decided by what each fit does to the frame. Contain
+   * is the cutout discipline: a product on white must never be cropped, and
+   * every model panel keeps it. But these two slots hold the owner's SCENE
+   * photographs, shot edge to edge, and for a scene any mismatch between its
+   * aspect and the 4:3 frame letterboxes: with contain the representative
+   * stand-in (7:5) painted ~11px bands of panel grey above and below the
+   * picture at 1440, reading as a broken image rather than a mat. Cover fills
+   * the frame from any source aspect and centre-crops the spill, so the pale
+   * ground now shows only before paint and behind the drawn fallback. */
   :root[data-theme="studio"] .st-cat-img {
     inline-size: 100%; block-size: 100%;
-    object-fit: contain;
+    object-fit: cover;
   }
   :root[data-theme="studio"] .st-cat-art {
     display: block;
@@ -640,6 +650,9 @@ export const STUDIO_COMMERCE_CSS = `
     display: flex; flex-direction: column;
     gap: clamp(4px, 0.4vw, 8px);
     margin-block-start: clamp(12px, 1.2vw, 22px);
+    /* Fill the card's remaining height so the price row below can pin itself
+     * to the bottom edge — see the note on .st-cat-price. */
+    flex-grow: 1;
   }
   :root[data-theme="studio"] .st-cat-name {
     font-family: var(--f-display);
@@ -658,27 +671,51 @@ export const STUDIO_COMMERCE_CSS = `
     color: var(--ink-body);
   }
   /* The family's price SPAN. Legal on a category card in a way it is not on a
-   * model card — see the note on renderCategoryRail. */
+   * model card — see the note on renderCategoryRail.
+   *
+   * Pinned to the card's bottom edge, because the two metas wrap differently:
+   * at the 810px tier "za plavanje in sprostitev" folds onto a second line
+   * while the hot-tub meta stays on one, which left the two prices 20px out
+   * of line inside two equal-height frames — the loudest number in the row,
+   * visibly staggered. The auto margin bottom-aligns the pair at every width
+   * where the cards sit side by side and costs nothing on the stacked phone
+   * layout, where there is no slack to absorb. The old margin rung survives
+   * as padding: an auto margin swallows a length margin, not a padding, so
+   * the tuned minimum distance to the meta line is unchanged. */
   :root[data-theme="studio"] .st-cat-price {
-    margin-block-start: clamp(2px, 0.3vw, 6px);
+    margin-block-start: auto;
+    padding-block-start: clamp(2px, 0.3vw, 6px);
     font-family: var(--f-display);
     font-weight: var(--w-display);
     font-size: var(--t-h6);
     letter-spacing: var(--ls-h6);
     line-height: var(--lh-h6);
+    /* Tabular figures, as on the theme's other two price slots (.st-price-row,
+     * .st-rail-price): a range is two numbers asked to be compared. */
+    font-variant-numeric: tabular-nums;
     color: var(--ink);
   }
+  /* Hover lost its 2px lift. The theme states its interaction rule twice in
+   * its own comments — on .st-card ("no lift, no shadow, no scale") and on
+   * .st-rail-go ("state is a change of frame and never a lift") — and this
+   * card was the one surface still moving on hover. The frame going dark IS
+   * the affordance, exactly as on .st-rail-card, this card's twin construction
+   * one section down; it also takes the same token, --line-strong, which
+   * tokens.ts declares for the boundary of an interactive control (--ink held
+   * the identical value, but named the wrong job). With the transform gone,
+   * the prefers-reduced-motion block that existed only to cancel it went too:
+   * a 0.2s border-colour cross-fade is not motion, and .st-rail-card ships
+   * the same transition with no such override. */
   @media (hover: hover) {
-    :root[data-theme="studio"] .st-cat-card { transition: border-color 0.2s ease, transform 0.2s ease; }
-    :root[data-theme="studio"] .st-cat-card:hover {
-      border-color: var(--ink);
-      transform: translateY(-2px);
-    }
+    :root[data-theme="studio"] .st-cat-card:hover { border-color: var(--line-strong); }
   }
-  @media (prefers-reduced-motion: reduce) {
-    :root[data-theme="studio"] .st-cat-card { transition: none; }
-    :root[data-theme="studio"] .st-cat-card:hover { transform: none; }
-  }
+  /* Keyboard parity, and not only the base sheet's accent outline: the frame
+   * darkens for focus exactly as for hover, and the rule sits OUTSIDE the
+   * hover media query because a keyboard can drive a device that has no
+   * hover at all. The accent ring itself follows the card's 8px corner — the
+   * card's own border-radius outranks the base sheet's 4px focus-ring radius
+   * on specificity, the same mechanism the rail card documents. */
+  :root[data-theme="studio"] .st-cat-card:focus-visible { border-color: var(--line-strong); }
 
   :root[data-theme="studio"] .st-rail-sec {
     background: var(--bg);
@@ -1327,7 +1364,14 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
         ? productImg(
             c.photo,
             "st-cat-img",
-            "(max-width: 809px) 92vw, (max-width: 1199px) 46vw, 560px",
+            // Measured against the layout, not guessed: at >=1200px the frame
+            // paints 632px wide (668.5px card minus its padding and border at
+            // 1440), so the old 560px would have picked a rung one size too
+            // soft once these photos get a srcset ladder through /admin. The
+            // 92vw phone term is sized for the WIDEST single-column case
+            // (~745px viewport, where the frame is ~90vw), not for a 390px
+            // phone — a sizes term must cover its whole media range.
+            "(max-width: 809px) 92vw, (max-width: 1199px) 46vw, 632px",
             c.photo.alt,
           )
         : art
