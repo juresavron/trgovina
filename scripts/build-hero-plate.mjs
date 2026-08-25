@@ -20,6 +20,16 @@
  *
  *   node scripts/build-hero-plate.mjs <shop> <source-image> [tint]
  *
+ * A SCENE photograph — the product photographed where it is actually
+ * installed, rather than on a studio sweep — needs none of that. It is
+ * already a hero: it has its own ground, its own light and its own depth, and
+ * keying a garden out from behind a hot tub would be vandalism. For those:
+ *
+ *   node scripts/build-hero-plate.mjs <shop> <source-image> --scene
+ *
+ * which skips the composition entirely and only ladders the file at its own
+ * aspect ratio, leaving the cropping to object-fit where it belongs.
+ *
  * Output is committed, so this runs when photography changes, not per build.
  */
 
@@ -29,9 +39,11 @@ import sharp from "sharp";
 
 const [shop, src, tintArg] = process.argv.slice(2);
 if (!shop || !src || !fs.existsSync(src)) {
-  console.error("usage: node scripts/build-hero-plate.mjs <shop> <source-image> [tint]");
+  console.error("usage: node scripts/build-hero-plate.mjs <shop> <source-image> [tint|--scene]");
   process.exit(1);
 }
+/** A scene is already a hero: ladder it, do not compose over it. */
+const SCENE = tintArg === "--scene";
 
 /** Plate geometry. 2000x1100 is close to a desktop hero's 16:10, so `cover`
  *  trims the sides by ~5% rather than a third of the picture. */
@@ -39,7 +51,7 @@ const W = 2000;
 const H = 1100;
 /** The rungs the hero actually paints, matching the theme's own scene ladder. */
 const LADDER = [640, 960, 1280, 1600, 2000];
-const TINT = tintArg || "#2fd4e8";
+const TINT = SCENE ? "#2fd4e8" : tintArg || "#2fd4e8";
 
 /**
  * Key the studio white out of a product shot.
@@ -96,6 +108,30 @@ async function cutout(file) {
   return sharp(file).ensureAlpha().composite([{ input: mask, blend: "dest-in" }]).png().toBuffer();
 }
 
+let PW = W;
+let PH = H;
+let plate;
+
+if (SCENE) {
+  // Keep the photograph's own aspect. Forcing it into the plate box would
+  // crop at build time, permanently and at one ratio; object-fit crops per
+  // viewport and can be steered with object-position.
+  const meta = await sharp(src).metadata();
+  PW = meta.width;
+  PH = meta.height;
+  plate = await sharp(src).png().toBuffer();
+  if (PW < 2000) {
+    console.error(
+      "warning: " + PW + "px wide. A full-viewport hero paints ~1920 CSS px, " +
+      "and 2x displays ask for more — this will ladder honestly but the top " +
+      "rung is the source, so it will look soft on a large screen.",
+    );
+  }
+} else {
+  plate = await composePlate();
+}
+
+async function composePlate() {
 const cut = await cutout(src);
 // Trim the transparent margin, so placement is about the TUB and not about
 // however much white the photographer left around it.
@@ -141,10 +177,11 @@ const ground = Buffer.from(
   '" ry="46" fill="url(#sh)"/>' +
   "</svg>");
 
-const plate = await sharp(ground)
+return await sharp(ground)
   .composite([{ input: scaled, left: LEFT, top: TOP }])
   .png()
   .toBuffer();
+}
 
 // --- the ladder ------------------------------------------------------------
 const OUT = path.join(process.cwd(), "public", "img", "own");
@@ -153,8 +190,11 @@ const stem = shop + "-hero";
 const written = [];
 let bytes = 0;
 
-for (const w of LADDER) {
-  const file = w === W ? stem + ".webp" : stem + "-" + w + ".webp";
+// Never upscale: a rung wider than the plate is the same pixels in a bigger
+// file, and its `w` descriptor is a lie the browser acts on.
+const rungs = LADDER.filter((w) => w < PW).concat(PW);
+for (const w of rungs) {
+  const file = w === PW ? stem + ".webp" : stem + "-" + w + ".webp";
   await sharp(plate).resize({ width: w, kernel: "lanczos3" }).webp({ quality: 82 })
     .toFile(path.join(OUT, file));
   bytes += fs.statSync(path.join(OUT, file)).size;
@@ -176,8 +216,8 @@ if (fs.existsSync(MODULE)) {
 
 existing[shop] = {
   src: "/img/own/" + stem + ".webp",
-  w: W,
-  h: H,
+  w: PW,
+  h: PH,
   widths: written.map((r) => ["/img/" + r[0], r[1]]),
 };
 
@@ -218,6 +258,6 @@ fs.writeFileSync(MODULE, [
 ].join("\n"));
 
 console.log(
-  shop + " hero plate from " + path.basename(src) + "  " +
-  W + "x" + H + "  " + LADDER.length + " rungs  " + (bytes / 1024).toFixed(0) + " KB total",
+  shop + (SCENE ? " hero SCENE from " : " hero plate from ") + path.basename(src) + "  " +
+  PW + "x" + PH + "  " + rungs.length + " rungs  " + (bytes / 1024).toFixed(0) + " KB total",
 );
