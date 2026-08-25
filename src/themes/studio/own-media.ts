@@ -31,9 +31,11 @@
  * Cloudflare Image Resizing is not available on workers.dev, so there is one
  * file per photograph and no srcset. Uploading through /admin fixes this —
  * the panel converts to WebP and writes a ladder in the browser before it
- * uploads — but these 25 went in through the Supabase dashboard, which does
+ * uploads — but these went in through the Supabase dashboard, which does
  * neither. The six ZR805 files are the ones that hurt: they are JPEGs at
- * 121–252 KB where the same picture as a laddered WebP was 8–25 KB.
+ * 121–252 KB where the same picture as a laddered WebP was 8–25 KB. The
+ * ZR7861 set shows what good looks like by comparison — eight WebPs at
+ * 7–12 KB each, 79 KB for the lot.
  */
 
 export interface OwnPhoto {
@@ -55,6 +57,16 @@ export const OWN_MEDIA: Readonly<Record<string, readonly OwnPhoto[]>> = {
     { src: "/media/ZR805-4.jpg", alt: "Bližnji posnetek notranjosti in masažnih šob bazena BAZEN 195", widths: [] },
     { src: "/media/ZR805-5.jpg", alt: "Detajl sedeža in vzglavnika v bazenu BAZEN 195", widths: [] },
     { src: "/media/ZR805-6.jpg", alt: "Detajl masažnih šob v školjki bazena BAZEN 195", widths: [] },
+  ],
+  "bazen/swim-450": [
+    { src: "/media/zr7861-1.webp", alt: "Swim spa SWIM 450, pogled od zgoraj na akrilno školjko", widths: [] },
+    { src: "/media/zr7861-2.webp", alt: "Swim spa SWIM 450, pogled s strani na školjko in oblogo", widths: [] },
+    { src: "/media/zr7861-3.webp", alt: "Swim spa SWIM 450 z osvetljeno oblogo", widths: [] },
+    { src: "/media/zr7861-4.webp", alt: "Notranjost swim spa bazena SWIM 450 s sedeži in šobami", widths: [] },
+    { src: "/media/zr7861-5.webp", alt: "Swim spa SWIM 450, pogled na dolžino školjke", widths: [] },
+    { src: "/media/zr7861-6.webp", alt: "Detajl sedežnega dela swim spa bazena SWIM 450", widths: [] },
+    { src: "/media/zr7861-7.webp", alt: "Detajl masažnih šob v swim spa bazenu SWIM 450", widths: [] },
+    { src: "/media/zr7861-8.webp", alt: "Swim spa SWIM 450, pogled na rob in vzglavnike", widths: [] },
   ],
   "bazen/srednji-210": [
     { src: "/media/zr804-1.webp", alt: "Masažni bazen BAZEN 210", widths: [] },

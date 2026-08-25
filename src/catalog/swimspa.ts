@@ -187,6 +187,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR7861",
     slug: "swim-450",
     name: "SWIM 450",
+    tier: "Srednji",
     fobUsd: 6859,
     mm: [4500, 2280, 1400],
     seats: 3,
@@ -221,7 +222,6 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR6802",
     slug: "swim-500",
     name: "SWIM 500",
-    tier: "Srednji",
     fobUsd: 7160,
     mm: [5000, 2240, 1370],
     seats: 3,
@@ -474,9 +474,37 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
  *     (the heaviest, by 80 kg over the ZR7809 Turbine). See the ⚠️ below
  *     before writing the dual-zone claim.
  */
-export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = ["ZR6801", "ZR6802", "ZR7860"].map(
+export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = ["ZR6801", "ZR7861", "ZR7860"].map(
   (code) => SWIMSPA_MODELS.find((m) => m.code === code)!,
 );
+
+/**
+ * ⚠️ THE ZR7861 IS IN THE RANGE, AND THE SHEET SAYS IT HAS NO SWIM JET.
+ *
+ * The owner supplied eight photographs of it and asked for it in the range,
+ * in place of the ZR6802 — it is 4.50 m, which sits between the 3.90 m entry
+ * and the 5.80 m top, and swapping the 5.00 m model keeps the only unit under
+ * four metres, which serves a garden the others cannot fit.
+ *
+ * What has not changed is question 1 in docs/SUPPLIER-SWIMSPA-2026.md. The
+ * price list gives this model FOUR hydrotherapy jets in total and lists no
+ * counter-current jet at all, where every other unit on the same sheet runs
+ * 38–94 jets plus three swim jets. A counter-current jet is not a feature of
+ * a swim spa, it is the definition of one: without it a 4.5 m shell is a very
+ * long hot tub.
+ *
+ * So the specification is carried EXACTLY as written — swimJets: 0, jets: 4 —
+ * and nothing on the page claims otherwise. `swimSpaFamilyHasSwimJets()`
+ * below exists so the category card cannot advertise a counter-current jet
+ * for a family in which one of three models has none.
+ *
+ * That is the honest state, not a good one: the page will describe a swim spa
+ * whose stated equipment does not match the category it sits in. The fix is a
+ * corrected sheet from the supplier, not different copy.
+ */
+export function swimSpaFamilyHasSwimJets(): boolean {
+  return OFFERED_SWIMSPAS.every((m) => m.swimJets > 0);
+}
 
 /**
  * ⚠️ THE DUAL-ZONE CLAIM IS NOT YET SUPPORTED BY THE SUPPLIER'S SHEET.

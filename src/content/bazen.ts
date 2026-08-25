@@ -3,6 +3,7 @@ import { OWN_MEDIA } from "../themes/studio/own-media";
 import type { SwimSpaModel } from "../catalog/swimspa";
 import {
   OFFERED_SWIMSPAS,
+  swimSpaFamilyHasSwimJets,
   footprint as swimFootprint,
   metaLine as swimMetaLine,
   modelPrice as swimModelPrice,
@@ -140,12 +141,26 @@ function sizeSpan(mms: number[]): string {
  * that is what the family is chosen on; the hot tub cards lead with the
  * footprint for the mirror-image reason.
  */
+/** The photographs a swim spa has, paired with their alt text. */
+function swimPhotosFor(m: SwimSpaModel): PdpPhoto[] {
+  const set = OWN_MEDIA["bazen/" + m.slug] ?? [];
+  return set.map((p) => ({
+    src: p.src,
+    ...(p.w && p.h ? { w: p.w, h: p.h } : {}),
+    widths: p.widths,
+    alt: p.alt || m.name,
+  }));
+}
+
 const swimSpas: ProductCard[] = OFFERED_SWIMSPAS.map((m) => ({
   name: m.name,
+  // The counter-current jet is named only where the model HAS one. It was
+  // written into every card as a constant, which was true of the range until
+  // the ZR7861 joined it — the one model whose sheet lists none.
   desc:
     "Akrilna školjka " +
     swimFootprint(m) +
-    " s protitočno šobo, " +
+    (m.swimJets > 0 ? " s protitočno šobo, " : ", ") +
     m.jets +
     " masažnih šob, " +
     swimSeating(m) +
@@ -154,6 +169,8 @@ const swimSpas: ProductCard[] = OFFERED_SWIMSPAS.map((m) => ({
   price: swimModelPrice(m),
   art: "swimspa" as const,
   slug: m.slug,
+  // A photograph beats the drawing. Only the ZR7861 has any today.
+  ...(swimPhotosFor(m)[0] ? { photo: swimPhotosFor(m)[0]! } : {}),
   ...(m.tier ? { badge: m.tier } : {}),
 }));
 
@@ -177,11 +194,16 @@ const categories: Category[] = [
   },
   {
     name: "Swim spa bazeni",
+    // The counter-current claim is DERIVED, not written. It is the one thing
+    // that separates this family from the hot tubs, so it is exactly the
+    // claim that must not survive a model joining the range without one —
+    // and the ZR7861's sheet lists none. See the note on
+    // swimSpaFamilyHasSwimJets().
     meta:
       OFFERED_SWIMSPAS.length +
       " modeli · " +
       sizeSpan(OFFERED_SWIMSPAS.map((m) => m.mm[0])) +
-      " · s protitočno šobo",
+      (swimSpaFamilyHasSwimJets() ? " · s protitočno šobo" : " · za plavanje in sprostitev"),
     price: familyRange(OFFERED_SWIMSPAS.map((m) => swimModelPrice(m))),
     href: "#swim-spa",
     // No photography exists for this family yet, so it wears the drawing —
@@ -339,8 +361,15 @@ function pdpFor(m: PolaModel): PdpContent {
  *     second heater.
  */
 function pdpForSwim(m: SwimSpaModel): PdpContent {
-  const swimJets =
-    m.swimJets > 0 ? m.swimJets + " protitočne šobe" : "protitočna šoba ni navedena";
+  // Named where the model HAS one, omitted where it does not — never
+  // announced as missing. "protitočna šoba ni navedena" is accurate and it is
+  // terrible copy: it puts a negative in the one sentence a buyer reads
+  // before deciding to keep reading, and it reads as a defect rather than as
+  // a gap in a supplier's spreadsheet. The absence is still stated, in the
+  // spec table where a buyer goes looking for it, as an em dash against
+  // "Protitočne šobe". Not claiming is honest; advertising an absence is
+  // just bad writing.
+  const swimJets = m.swimJets > 0 ? m.swimJets + " protitočne šobe, " : "";
   return {
     slug: m.slug,
     eyebrow: m.tier ?? "Swim spa",
@@ -352,7 +381,6 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       swimSeating(m) +
       ": " +
       swimJets +
-      ", " +
       m.jets +
       " masažnih šob, ogrevanje in filtracija.",
     price: swimModelPrice(m),
@@ -440,6 +468,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ],
     ],
     finishes: [...SHELL_FINISHES],
+    ...(swimPhotosFor(m).length ? { photos: swimPhotosFor(m) } : {}),
     pricesProvisional: !catalogPricingReady(),
   };
 }
