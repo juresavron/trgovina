@@ -125,19 +125,19 @@ export const SHOP_HERO: Readonly<Partial<Record<string, Media>>> = OWN_HERO;
  * wrote only one width (the cutouts, and any source too small to ladder).
  */
 function srcset(src: string): string {
-  // Own photography carries its own ladder: MEDIA_WIDTHS only knows the files
-  // scripts/build-media.mjs wrote, so a hero plate looked up there would find
-  // nothing and ship the 2000px master to a phone.
+  // The hero plate is the one image left under /img/own/, and it carries its
+  // own ladder in a generated module rather than in MEDIA_WIDTHS — a lookup
+  // there would find nothing and ship the 2000px master to a phone.
+  //
+  // Model photography used to be handled here too. It lives in Supabase now
+  // and is served from /media/, so it never reaches this branch; a lookup for
+  // it here would be dead code that reads like a working path. Those files
+  // have no ladder at all until they are re-uploaded through /admin, and
+  // OwnPhoto.widths is empty for every one of them — see own-media.ts.
   if (src.startsWith(OWN)) {
-    // Own photography carries its own ladder, in one of two generated
-    // modules: the hero plate (build-hero-plate.mjs) and the model
-    // photography (build-own-media.mjs). Neither is in MEDIA_WIDTHS, so a
-    // lookup there would find nothing and ship the master to a phone.
     const plate = Object.values(OWN_HERO).find((p) => p?.src === src);
-    if (plate) return plate.widths.length < 2 ? "" : plate.widths.map((r) => r[0] + " " + r[1] + "w").join(", ");
-    const photo = Object.values(OWN_MEDIA).flat().find((p) => p.src === src);
-    if (photo) return photo.widths.length < 2 ? "" : photo.widths.map((r) => r[0] + " " + r[1] + "w").join(", ");
-    return "";
+    if (!plate || plate.widths.length < 2) return "";
+    return plate.widths.map((r) => r[0] + " " + r[1] + "w").join(", ");
   }
   const rungs = MEDIA_WIDTHS[src.slice(BASE.length)];
   if (!rungs || rungs.length < 2) return "";
