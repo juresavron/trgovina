@@ -504,6 +504,22 @@ function link(href: string, value: string, set: boolean): string {
   return set ? '<a href="' + esc(href) + '">' + esc(value) + "</a>" : UNSET;
 }
 
+/**
+ * A contact value as a LINK, and only while there is somewhere to go.
+ *
+ * The phone row used to be an anchor unconditionally, so with the placeholder
+ * number in tenants/bazen.ts the imprint offered tel:+38600000000 — a control
+ * whose accessible name was "podatek še ni vpisan" and whose whole behaviour
+ * was to dial nothing. On a shop that takes most of its EUR 2,400-8,400
+ * orders by telephone that is worse than showing no link: a customer who taps
+ * it learns the number is wrong from their own dialler.
+ */
+function link(href: string, value: string): string {
+  return isUnset(value)
+    ? fact(value)
+    : '<a href="' + esc(href) + '">' + esc(value) + "</a>";
+}
+
 function prose(b: Extract<Block, { kind: "prose" }>): string {
   return (
     (b.h ? '<h2 class="st-page-h2">' + esc(b.h) + "</h2>" : "") +
