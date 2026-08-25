@@ -12,6 +12,7 @@ import {
 } from "./pricing";
 import { POLA_MODELS, modelPrice, modelPriceCents } from "./pola";
 import { SHOPS } from "../tenants";
+import { PAGES, legalPagesReady } from "../content/pages";
 import { CONTENT } from "../content";
 
 /**
@@ -185,6 +186,52 @@ describe("no live shop ships an unset price", () => {
       expect(content.pdp.priceCents, key + " is live with no priceCents").toBeGreaterThan(0);
     });
   }
+
+/**
+ * The second launch gate: a live shop must be able to say who it is.
+ *
+ * The terms name a seller, the withdrawal notice names who the goods go back
+ * to, and the privacy notice names the controller — all three are the same
+ * three fields in ShopConfig, and all three are TODO today. A privacy notice
+ * whose controller cannot be identified does not satisfy GDPR Article
+ * 13(1)(a); terms with no seller are not terms.
+ *
+ * The pages render either way, with the gaps visibly marked. What this blocks
+ * is publishing them as if they were finished, exactly as the pricing gate
+ * blocks publishing cost basis as if it were retail.
+ */
+describe("a live shop can identify itself", () => {
+  for (const key of Object.keys(SHOPS)) {
+    const shop = SHOPS[key]!;
+    it(key + (shop.live ? " (LIVE)" : " (pre-live)") + " honours the legal-identity gate", () => {
+      if (!shop.live) {
+        // Pre-live: assert the gate is CLOSED and says why, so the day someone
+        // flips live the failure names the six fields rather than a boolean.
+        expect(legalPagesReady(shop.company, shop.contact)).toBe(false);
+        return;
+      }
+      expect(
+        legalPagesReady(shop.company, shop.contact),
+        key + " is live while its registered name, VAT number, phone or address " +
+          "is still a placeholder — the terms, the withdrawal notice and the " +
+          "privacy notice all identify the company by these fields",
+      ).toBe(true);
+    });
+  }
+
+  it("serves a real page, not a stub, for every legal route", () => {
+    // The stub these replaced returned 200 and read "Stran je v pripravi", so
+    // a regression here would look like a working site. Length is the crude
+    // but honest signal: the stub body was ~105 characters.
+    for (const page of PAGES.filter((p) => p.legal)) {
+      expect(page.blocks.length, page.key + " has no content").toBeGreaterThan(2);
+      const words = page.blocks
+        .flatMap((b) => (b.kind === "prose" ? b.p : []))
+        .join(" ");
+      expect(words.length, page.key + " states almost nothing").toBeGreaterThan(200);
+    }
+  });
+});
 
   it("says plainly whether derived prices are available at all", () => {
     // Not an assertion about which state is correct — a readout, so the
