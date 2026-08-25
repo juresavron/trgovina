@@ -20,12 +20,28 @@
  * is 100svh and .st-hero-bg is inset:0 with object-fit:cover, so the section
  * reserves the box and the image never moves it.
  *
- * The ladder is the real cost here, and it is the LCP element: one 187 KB
- * file goes to a 390px phone and a 2560px desktop alike. Supabase's free plan
- * has no image transformation and Cloudflare Image Resizing is unavailable on
- * workers.dev, so the fix is to upload through /admin — which converts and
- * ladders in the browser before it uploads — rather than through the Supabase
- * dashboard, which does neither.
+ * ⚠️ THIS FILE IS 2.78 MB OF PNG, AND IT IS THE LCP ELEMENT.
+ *
+ * Two separate problems, both fixable in one upload:
+ *
+ * FORMAT. PNG is lossless and made for flat colour and sharp edges — logos,
+ * screenshots, line art. A photograph has neither, so PNG stores its noise
+ * faithfully and at full price. The same picture as WebP is normally a tenth
+ * of this; the banner it replaced was 187 KB.
+ *
+ * SIZE. 2.78 MB is not a slow hero, it is a broken one. On a typical mobile
+ * connection that is well over two seconds of download before the largest
+ * element on the page can paint at all — and the LCP budget for the whole
+ * page is 2.5 s. The site's entire competitive argument is that it loads
+ * faster than the incumbents; this single file spends that argument.
+ *
+ * There is also still no width ladder, so those 2.78 MB go to a 390 px phone
+ * exactly as they go to a 2560 px desktop.
+ *
+ * All three are what /admin exists to prevent: it converts to WebP and writes
+ * a width ladder IN THE BROWSER before it uploads. The Supabase dashboard
+ * does neither. Re-uploading this one file through the panel fixes the
+ * format, the weight and the ladder together.
  */
 
 export interface HeroPlate {
@@ -39,7 +55,7 @@ export interface HeroPlate {
 
 export const OWN_HERO: Readonly<Partial<Record<string, HeroPlate>>> = {
   bazen: {
-    src: "/media/product-banner.webp",
+    src: "/media/hero.png",
     widths: [],
   },
 };

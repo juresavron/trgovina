@@ -140,9 +140,6 @@ export const STUDIO_CHROME_CSS = `
    * down by its height. These carry the studio prefix on purpose: the rules
    * they override are studio's own and set the same properties, so an
    * unprefixed version loses on source order and does nothing. */
-  :root[data-theme="studio"]:has(.devbar) .st-chrome { top: var(--devbar-h); }
-  :root[data-theme="studio"]:has(.devbar) main { padding-top: calc(var(--chrome-h) + var(--devbar-h)); }
-  :root[data-theme="studio"]:has(.devbar) main[data-bleed] { padding-top: var(--devbar-h); }
 
   :root[data-theme="studio"] .st-chrome-bar {
     /* --studio-container is the CONTENT measure and box-sizing is border-box,

@@ -14,7 +14,7 @@ import type { ThemeComposition } from "./shared/sections";
  * Slovene words, lowercase keys, ASCII.
  */
 
-export type ThemeKey = "zarja" | "lednik" | "salon" | "studio";
+export type ThemeKey = "studio";
 
 /** Soft hint for the picker — a theme stays selectable for every shop. */
 export type ProductTemperament = "heat" | "cold" | "wellness" | "neutral";
@@ -36,52 +36,23 @@ export interface ThemeCatalogEntry {
   composition: ThemeComposition;
 }
 
+/**
+ * ONE THEME. zarja (ember editorial), lednik (clinical spec-first) and salon
+ * (bright gallery) lived here alongside studio, and the QA host carried a bar
+ * for switching between them.
+ *
+ * They existed to serve the anti-doorway rule: six single-keyword shops from
+ * one owner on one design is the site-network pattern Google polices, so the
+ * shops differed by theme as well as by copy. The network is one shop now, so
+ * three of the four themes had no shop to wear them, and the switcher offered
+ * a choice of one against a choice of one at the top of every page.
+ *
+ * The SHAPE stays: ThemeCatalogEntry, the per-shop `design.theme` key and the
+ * renderer's theme dispatch are all untouched, so adding a second theme is
+ * adding an entry rather than rebuilding the mechanism. What went is three
+ * unworn designs and the furniture for choosing between them.
+ */
 export const THEME_CATALOG: Record<ThemeKey, ThemeCatalogEntry> = {
-  /**
-   * ZARJA — ember editorial. Near-black warm ground, serif display
-   * (Fraunces), hairline rules, sharp edges, numbered acts. Evening-spa
-   * mood: heat products at dusk. The moat section sits high — the promise
-   * is the story.
-   */
-  zarja: {
-    key: "zarja",
-    name: "Zarja",
-    voice: "Temna, žareča, uredniška — izdelek kot večerni ritual.",
-    surface: "dark",
-    radius: { card: "0px", control: "999px" },
-    displayFont: "Fraunces",
-    recommendedFor: ["heat", "wellness"],
-    composition: {
-      home: ["hero", "trust", "products", "moat", "reviews", "guides"],
-    },
-  },
-
-  /**
-   * LEDNIK — glacial precision. Near-white cold ground, extra-wide grotesk
-   * (Archivo Expanded), thin rules, data-forward: stat tiles directly under
-   * the hero, spec-sheet energy throughout. Cold and recovery products.
-   */
-  lednik: {
-    key: "lednik",
-    name: "Lednik",
-    voice: "Hladna, natančna, merljiva — tehnični list kot oblikovanje.",
-    surface: "light",
-    radius: { card: "4px", control: "4px" },
-    displayFont: "Archivo",
-    recommendedFor: ["cold"],
-    composition: {
-      home: ["hero", "stats", "products", "moat", "reviews", "guides"],
-    },
-  },
-
-  /**
-   * STUDIO — poster commerce, transcribed from the owner's FURNEXA Framer
-   * theme: a dark chrome bar over a white page, display statements set
-   * open and light (weight 500, positive tracking), a scrolling USP marquee,
-   * and photography-first construction. Not monochrome — the source carries an
-   * amber accent with cream and coral companions, spent sparingly on badges
-   * and status. Exact values: docs/STUDIO-BASELINE.md §0–§3.
-   */
   studio: {
     key: "studio",
     name: "Studio",
@@ -113,16 +84,4 @@ export const THEME_CATALOG: Record<ThemeKey, ThemeCatalogEntry> = {
    * display (Marcellus), generous whitespace, soft arches on imagery,
    * products first — the piece speaks before the pitch. Wellness furniture.
    */
-  salon: {
-    key: "salon",
-    name: "Salon",
-    voice: "Svetla, galerijska, umirjena — izdelek kot kos pohištva.",
-    surface: "light",
-    radius: { card: "18px", control: "999px" },
-    displayFont: "Marcellus",
-    recommendedFor: ["wellness", "neutral"],
-    composition: {
-      home: ["hero", "products", "trust", "reviews", "moat", "guides"],
-    },
-  },
 };

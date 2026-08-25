@@ -5,8 +5,7 @@
  * Host header (onlyworld doctrine). Unknown host = hard 404 at the edge —
  * cross-shop canonical leakage is the worst available bug in a keyword
  * network. Pre-live shops serve 503 + noindex on their real domains; the
- * workers.dev host is the QA surface (always noindex) with a dev-only
- * shop/theme switcher.
+ * workers.dev host is the QA surface (always noindex).
  *
  * v0 renders home + flagship PDP fully, placeholders for the remaining
  * routes. Checkout, guides and the interactive islands land in later
@@ -20,7 +19,6 @@ import { THEME_CATALOG, type ThemeKey } from "./themes/catalog";
 import {
   organizationJsonLd,
   productJsonLd,
-  renderDevBar,
   renderDocument,
   renderHome,
   renderPdp,
@@ -76,24 +74,26 @@ export function handleRequest(request: Request): Response {
 
   const dev = isDevHost(host);
 
-  // Dev-only overrides, validated against known keys — never reflected raw.
-  let theme: ThemeKey = shop.design.theme;
-  let q = "";
-  if (dev) {
-    const qsShop = url.searchParams.get("shop");
-    if (qsShop && SHOPS[qsShop]) shop = SHOPS[qsShop];
-    theme = shop.design.theme;
-    const qsTheme = url.searchParams.get("theme");
-    if (qsTheme && (THEME_CATALOG as Record<string, unknown>)[qsTheme]) {
-      theme = qsTheme as ThemeKey;
-    }
-    const parts: string[] = [];
-    if (qsShop && SHOPS[qsShop]) parts.push("shop=" + shop.key);
-    if (qsTheme && qsTheme !== shop.design.theme && (THEME_CATALOG as Record<string, unknown>)[qsTheme]) {
-      parts.push("theme=" + theme);
-    }
-    q = parts.length ? "?" + parts.join("&") : "";
-  }
+  // NO OVERRIDES, AND NO SWITCHER.
+  //
+  // The QA host used to carry a bar across the top listing every shop and
+  // every theme, with ?shop= and ?theme= to move between them. It earned its
+  // place when the network was six storefronts across four themes and the
+  // only way to see a combination was to visit it. There is one shop and one
+  // theme now, so the bar listed a choice of one against a choice of one,
+  // above the hero, on every page a reviewer looked at.
+  //
+  // The query-propagation machinery went with it. `q` was appended to every
+  // internal link so an override survived navigation; with nothing to
+  // override it is an empty string that every href still concatenates, which
+  // is cheap enough to leave and clearer than removing the parameter from
+  // forty call sites.
+  //
+  // Unknown query parameters are simply ignored, as they always were — the
+  // overrides were validated against known keys and never reflected raw, and
+  // that property is now trivially true.
+  const theme: ThemeKey = shop.design.theme;
+  const q = "";
 
   // Canonicalization: lowercase path, no trailing slash (root excepted).
   let path = url.pathname;
@@ -173,7 +173,6 @@ export function handleRequest(request: Request): Response {
     });
   }
 
-  const devBar = dev ? renderDevBar(shop.key, theme) : undefined;
 
   // Home — THE keyword landing page.
   if (path === "/") {
@@ -186,7 +185,6 @@ export function handleRequest(request: Request): Response {
       description: content.metaDescription,
       noindex: dev,
       q,
-      devBar,
       bodyHtml: renderHome(shop, content, theme, q),
       jsonLd: [organizationJsonLd(shop)],
     });
@@ -210,7 +208,6 @@ export function handleRequest(request: Request): Response {
         description: pdp.sub,
         noindex: dev,
         q,
-        devBar,
         bodyHtml: renderPdp(shop, content, q, theme, pdp),
         jsonLd: [organizationJsonLd(shop), productJsonLd(shop, content, pdp)],
       });
@@ -230,7 +227,6 @@ export function handleRequest(request: Request): Response {
         description: content.metaDescription,
         noindex: true,
         q,
-        devBar,
         bodyHtml: renderPlaceholder(shop, content, title, q, theme),
       });
       return htmlResponse(doc, 200, { ...baseHeaders, "x-robots-tag": "noindex, nofollow" });
@@ -247,7 +243,6 @@ export function handleRequest(request: Request): Response {
     description: content.metaDescription,
     noindex: true,
     q,
-    devBar,
     bodyHtml: renderPlaceholder(shop, content, "Te strani ni.", q, theme),
   });
   return htmlResponse(doc, 404, { ...baseHeaders, "x-robots-tag": "noindex, nofollow" });

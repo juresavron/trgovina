@@ -37,17 +37,36 @@ describe("QA host (workers.dev)", () => {
     expect(body).toContain('data-theme="studio"');
   });
 
-  it("dev overrides swap theme, and reject anything not a known key", async () => {
-    // The shop override no longer has a second shop to swap TO. What it still
-    // has to do — and what actually carries the security weight — is refuse a
-    // key that is not in SHOPS rather than reflecting it, so both halves are
-    // exercised with hostile input.
-    const body = await text(get("/?theme=salon"));
-    expect(body).toContain('data-theme="salon"');
+  it("ignores ?shop= and ?theme= entirely, and never reflects them", async () => {
+    // There are no overrides any more: one shop, one theme, and the QA
+    // switcher that drove them is gone. What still matters is that a query
+    // parameter carrying hostile input is IGNORED rather than echoed.
+    //
+    // This test used to assert `?theme=salon` produced data-theme="salon",
+    // and it kept passing after the override was removed — because the dead
+    // theme's CSS was still being shipped on every page and `toContain`
+    // matched the STYLESHEET. So it now reads the attribute off the <html>
+    // tag itself, which is the only thing that can be true or false here.
+    const themeOf = (html: string) => (html.match(/<html[^>]*data-theme="([^"]+)"/) || [])[1];
+
+    expect(themeOf(await text(get("/?theme=salon")))).toBe("studio");
     const hostile = await text(get("/?shop=../../etc&theme=<img>"));
+    expect(themeOf(hostile)).toBe("studio");
     expect(hostile).toContain("Masažni bazen");
     expect(hostile).not.toContain("<img>");
     expect(hostile).not.toContain("../../etc");
+  });
+
+  it("ships no stylesheet for a theme nothing wears", () => {
+    // The dead CSS was not merely waste — it made the test above pass for
+    // three months of edits it should have failed.
+    const html = "";
+    return text(get("/")).then((body) => {
+      for (const dead of ["zarja", "lednik", "salon"]) {
+        expect(body, dead + " CSS is still shipping").not.toContain('data-theme="' + dead + '"');
+      }
+      expect(html).toBe("");
+    });
   });
 
   it("every shop × theme combination renders", () => {

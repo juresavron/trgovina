@@ -75,7 +75,6 @@ export interface PageOptions {
   /** Dev-only query suffix propagated on internal links. */
   q: string;
   /** Dev-only switcher bar. */
-  devBar?: string | undefined;
   bodyHtml: string;
   jsonLd?: object[];
 }
@@ -114,7 +113,6 @@ export function renderDocument(o: PageOptions): string {
     "<style>" + BASE_CSS + "</style>" +
     jsonLd +
     "</head><body>" +
-    (o.devBar ?? "") +
     o.bodyHtml +
     // A module script is deferred by definition, so it neither blocks parsing
     // nor paint. Inlined rather than fetched: it is under 4 KB, and a second
@@ -252,28 +250,3 @@ export function renderPlaceholder(
   );
 }
 
-/** Dev-only switcher: links across shops and themes on the QA host. */
-export function renderDevBar(currentShop: string, currentTheme: ThemeKey): string {
-  const shopLinks = Object.keys(SHOPS)
-    .map(
-      (k) =>
-        '<a href="/?shop=' + k + '"' + (k === currentShop ? ' aria-current="true"' : "") + ">" +
-        k.toUpperCase() + "</a>",
-    )
-    .join("");
-  const themeLinks = (Object.keys(THEME_CATALOG) as ThemeKey[])
-    .map(
-      (k) =>
-        '<a href="/?shop=' + currentShop + "&theme=" + k + '"' +
-        (k === currentTheme ? ' aria-current="true"' : "") + ">" + k.toUpperCase() + "</a>",
-    )
-    .join("");
-  return (
-    '<div class="devbar"><div class="wrap">' +
-    "<span>TRGOVINA·KERNEL</span>" +
-    '<span class="lbl">TRGOVINA</span><span>' + shopLinks + "</span>" +
-    '<span class="lbl">TEMA</span><span>' + themeLinks + "</span>" +
-    '<span class="lbl">QA — noindex</span>' +
-    "</div></div>"
-  );
-}

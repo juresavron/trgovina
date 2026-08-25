@@ -28,50 +28,35 @@ const SHOP_ACCENTS = Object.values(SHOPS)
 
 const SHEET = `
 
-  :root[data-theme="zarja"] {
-    --bg: #171210; --bg-alt: #1d1713; --surface: #231c16; --surface2: #2a221b;
-    --line: #372c24; --line-soft: #2b221b;
-    --ink: #f1e8dd; --ink-soft: #cfbfab; --ink-mute: #a08e79;
-    --acc: oklch(0.68 var(--c) var(--hue));
-    --acc-text: oklch(0.79 calc(var(--c) - 0.02) var(--hue));
-    --on-acc: oklch(0.17 0.03 var(--hue));
-    --wash: oklch(0.68 var(--c) var(--hue) / 0.14);
+  /* SEVEN TOKENS THE KERNEL'S MARKUP USES AND NO THEME NOW DECLARES.
+   *
+   * They were declared only inside the zarja, lednik and salon blocks, and
+   * they are referenced by the kernel's own components (.shophead, .nav,
+   * .act, .card, .step, .buy) — which studio replaces, so on a studio page
+   * the rules that want them mostly do not match. "Mostly" is the problem:
+   * the placeholder routes still render kernel markup, and a border declared
+   * as var(--line-soft) with nothing behind it is not a soft line, it is no
+   * line at all.
+   *
+   * That was ALREADY true before those blocks were deleted — a
+   * :root[data-theme="zarja"] declaration never applied to a studio page.
+   * The "no undeclared custom properties" test did not catch it because it
+   * reads the stylesheet as one text and asks whether each name appears on
+   * both sides, which it did. Deleting the blocks is what made the omission
+   * visible rather than what caused it.
+   *
+   * Aliased to studio's palette rather than given invented values, so the
+   * kernel's fallback components look like the theme the site actually
+   * wears.
+   */
+  :root {
+    --line-soft: color-mix(in srgb, var(--line) 55%, var(--bg));
+    --ink-soft: var(--ink-body, #212121);
+    --surface2: var(--bg-alt, #f0f0f0);
     --wash-strong: oklch(0.62 var(--c) var(--hue) / 0.28);
-    --r-card: 0px; --r-ctrl: 999px; --r-scene: 0px;
-    --f-display: "Fraunces", Georgia, serif;
-    --f-body: "Hanken Grotesk", system-ui, sans-serif;
-    --stretch: 100%; --w-display: 430; --track-display: -0.018em;
-    --shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
-  }
-  :root[data-theme="lednik"] {
-    --bg: #f2f5f8; --bg-alt: #e9edf2; --surface: #ffffff; --surface2: #f7f9fb;
-    --line: #d4dbe3; --line-soft: #e2e7ed;
-    --ink: #101922; --ink-soft: #3b4c5b; --ink-mute: #5a6b7b;
-    --acc: oklch(0.55 var(--c) var(--hue));
-    --acc-text: oklch(0.42 var(--c) var(--hue));
-    --on-acc: #ffffff;
-    --wash: oklch(0.55 var(--c) var(--hue) / 0.1);
-    --wash-strong: oklch(0.55 var(--c) var(--hue) / 0.2);
-    --r-card: 4px; --r-ctrl: 4px; --r-scene: 4px;
-    --f-display: "Archivo", "Helvetica Neue", sans-serif;
-    --f-body: "Hanken Grotesk", system-ui, sans-serif;
-    --stretch: 121%; --w-display: 730; --track-display: -0.012em;
-    --shadow: 0 24px 50px rgba(16, 25, 34, 0.10);
-  }
-  :root[data-theme="salon"] {
-    --bg: #faf7f1; --bg-alt: #f3eee5; --surface: #ffffff; --surface2: #f8f4ec;
-    --line: #e3dbcc; --line-soft: #ece5d8;
-    --ink: #221d15; --ink-soft: #564b3b; --ink-mute: #6e6353;
-    --acc: oklch(0.6 var(--c) var(--hue));
-    --acc-text: oklch(0.43 var(--c) var(--hue));
-    --on-acc: #ffffff;
-    --wash: oklch(0.6 var(--c) var(--hue) / 0.11);
-    --wash-strong: oklch(0.6 var(--c) var(--hue) / 0.2);
-    --r-card: 18px; --r-ctrl: 999px; --r-scene: 200px 200px 18px 18px;
-    --f-display: "Marcellus", "Times New Roman", serif;
-    --f-body: "Hanken Grotesk", system-ui, sans-serif;
-    --stretch: 100%; --w-display: 400; --track-display: 0.004em;
-    --shadow: 0 26px 60px rgba(60, 46, 20, 0.13);
+    --r-scene: var(--r-media, 8px);
+    --stretch: 100%;
+    --track-display: 0em;
   }
 
   * { box-sizing: border-box; }
@@ -104,7 +89,6 @@ const SHEET = `
     font-size: 12.5px; font-weight: 700; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--acc-text);
   }
-  :root[data-theme="salon"] .eyebrow { letter-spacing: 0.24em; font-weight: 600; }
 
   /* The QA switcher. It sits at the very top of the document, and the studio
      chrome is a FIXED bar at top:0 — so the two occupied the same 33px and the
@@ -113,16 +97,9 @@ const SHEET = `
      transparent, the switcher shows through the nav and both become
      unreadable. So it takes the top strip for itself and everything else moves
      down by exactly its height. Dev-only: no production page renders it. */
-  :root { --devbar-h: 33px; }
-  .devbar { position: fixed; top: 0; left: 0; width: 100%; z-index: 9; background: #0d0c0e; color: #eae7e1; border-bottom: 1px solid #262329; font-family: ui-monospace, Menlo, monospace; }
   /* The offsets live in chrome.ts: the studio sheet sets these same
      properties at equal specificity and later in source order, so an
      unprefixed rule here loses to it silently. */
-  .devbar .wrap { display: flex; align-items: center; gap: 14px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-top: 9px; padding-bottom: 9px; font-size: 11px; white-space: nowrap; }
-  .devbar .wrap::-webkit-scrollbar { display: none; }
-  .devbar .lbl { color: #7e7a85; font-size: 10px; letter-spacing: 0.14em; }
-  .devbar a { text-decoration: none; color: #a5a0ac; padding: 4px 11px; border-radius: 999px; }
-  .devbar a[aria-current="true"] { background: #ece8e1; color: #171519; }
 
   .shophead { border-bottom: 1px solid var(--line-soft); background: var(--bg); }
   .shophead .wrap { display: flex; align-items: center; gap: 30px; flex-wrap: wrap; min-height: 76px; padding-top: 12px; padding-bottom: 12px; }
@@ -136,11 +113,9 @@ const SHEET = `
 
   .act { padding: clamp(70px, 9vw, 128px) 0; }
   .act + .act { border-top: 1px solid var(--line-soft); }
-  :root[data-theme="salon"] .act + .act { border-top: 0; }
   .act-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; margin-bottom: clamp(36px, 5vw, 56px); flex-wrap: wrap; }
   .act-head h2 { font-size: clamp(1.8rem, 3.4vw, 2.6rem); max-width: 24ch; }
   .act-head .lede { color: var(--ink-soft); max-width: 50ch; font-size: 1.02rem; }
-  :root[data-theme="salon"] .act-head { flex-direction: column; align-items: center; text-align: center; }
 
   .btn {
     display: inline-flex; align-items: center; gap: 10px;
@@ -152,23 +127,9 @@ const SHEET = `
   .btn-fill:hover { filter: brightness(1.06); box-shadow: 0 8px 28px var(--wash-strong); }
   .btn-ghost { border-color: var(--line); background: transparent; color: var(--ink); }
   .btn-ghost:hover { border-color: var(--ink-mute); }
-  :root[data-theme="lednik"] .btn { font-family: var(--f-display); font-stretch: 110%; letter-spacing: 0.04em; text-transform: uppercase; font-size: 13.5px; }
 
   .hero { padding: 0; }
   .hero-canvas { border-bottom: 1px solid var(--line-soft); position: relative; overflow: clip; }
-  :root[data-theme="zarja"] .hero-canvas {
-    background:
-      radial-gradient(58% 52% at 16% 100%, var(--wash-strong), transparent 70%),
-      radial-gradient(40% 34% at 82% 6%, rgba(241, 232, 221, 0.05), transparent 70%),
-      linear-gradient(180deg, var(--bg-alt), #14100c);
-  }
-  :root[data-theme="lednik"] .hero-canvas {
-    background:
-      radial-gradient(60% 55% at 84% 0%, #ffffff, transparent 65%),
-      radial-gradient(50% 45% at 8% 100%, var(--wash-strong), transparent 72%),
-      linear-gradient(168deg, #eef2f6, #dde5ee);
-  }
-  :root[data-theme="salon"] .hero-canvas { background: linear-gradient(180deg, var(--bg), var(--bg-alt)); }
   .hero-grid {
     display: grid; grid-template-columns: minmax(0, 6.2fr) minmax(0, 5fr);
     gap: clamp(32px, 5vw, 80px); align-items: center;
@@ -177,11 +138,6 @@ const SHEET = `
   .hero h1 { font-size: clamp(2.7rem, 5.8vw, 4.7rem); max-width: 15ch; }
   .hero .sub { color: var(--ink-soft); font-size: clamp(1.05rem, 1.5vw, 1.22rem); max-width: 46ch; margin-top: 24px; line-height: 1.65; }
   .hero .ctas { display: flex; gap: 14px; margin-top: 38px; flex-wrap: wrap; align-items: center; }
-  :root[data-theme="salon"] .hero-grid { grid-template-columns: 1fr; text-align: center; gap: clamp(40px, 5vw, 64px); padding-bottom: clamp(48px, 6vw, 72px); }
-  :root[data-theme="salon"] .hero h1 { max-width: 20ch; margin: 0 auto; }
-  :root[data-theme="salon"] .hero .sub { margin-left: auto; margin-right: auto; }
-  :root[data-theme="salon"] .hero .ctas { justify-content: center; }
-  :root[data-theme="salon"] .hero-scene { max-width: 640px; margin: 0 auto; width: 100%; }
 
   .scene {
     aspect-ratio: 4 / 3.3; border-radius: var(--r-scene);
@@ -189,47 +145,21 @@ const SHEET = `
     position: relative; overflow: hidden;
     display: grid; place-items: end center;
   }
-  :root[data-theme="zarja"] .scene {
-    background:
-      radial-gradient(85% 65% at 50% 108%, var(--wash-strong), transparent 72%),
-      repeating-linear-gradient(90deg, rgba(241, 232, 221, 0.025) 0 2px, transparent 2px 92px),
-      linear-gradient(180deg, #241c16, #17110d);
-  }
-  :root[data-theme="lednik"] .scene {
-    background:
-      radial-gradient(90% 70% at 50% -12%, #ffffff, transparent 66%),
-      radial-gradient(80% 55% at 50% 112%, var(--wash-strong), transparent 74%),
-      linear-gradient(180deg, #f2f6fa, #dfe7ef);
-  }
-  :root[data-theme="salon"] .scene {
-    background:
-      radial-gradient(85% 60% at 50% 110%, var(--wash-strong), transparent 75%),
-      linear-gradient(180deg, #fdfbf7, #f0e9dc);
-  }
   .scene svg { width: 80%; height: auto; display: block; margin-bottom: 5%; }
   .scene .floor {
     position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%);
     width: 62%; height: 7%; border-radius: 50%;
     background: radial-gradient(50% 50% at 50% 50%, rgba(0, 0, 0, 0.32), transparent 70%);
   }
-  :root[data-theme="lednik"] .scene .floor,
-  :root[data-theme="salon"] .scene .floor {
-    background: radial-gradient(50% 50% at 50% 50%, rgba(20, 30, 40, 0.18), transparent 70%);
-  }
   .scene .cap {
     position: absolute; bottom: 12px; right: 16px;
     font-family: ui-monospace, Menlo, monospace; font-size: 9.5px;
     letter-spacing: 0.08em; color: var(--ink-mute); opacity: 0.75;
   }
-  :root[data-theme="salon"] .scene .cap { display: none; }
 
   .trust-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
   .trust-item { font-size: 14px; color: var(--ink-soft); display: flex; gap: 12px; align-items: baseline; }
   .trust-item::before { content: "—"; color: var(--acc-text); flex: none; }
-  :root[data-theme="lednik"] .trust-item { border: 1px solid var(--line); background: var(--surface); padding: 16px 18px; border-radius: var(--r-card); }
-  :root[data-theme="salon"] .trust-grid { max-width: 1000px; margin: 0 auto; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); padding: 30px 10px; }
-  :root[data-theme="salon"] .trust-item { flex-direction: column; align-items: center; text-align: center; gap: 8px; }
-  :root[data-theme="salon"] .trust-item::before { content: "·"; color: var(--acc-text); font-size: 22px; line-height: 0.5; }
   .act-trust { padding: clamp(36px, 4vw, 52px) 0; }
 
   .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
@@ -245,7 +175,6 @@ const SHEET = `
   }
   .card:hover { transform: translateY(-3px); border-color: var(--ink-mute); box-shadow: var(--shadow); }
   .card .scene { aspect-ratio: 4 / 3; border: 0; border-bottom: 1px solid var(--line-soft); box-shadow: none; border-radius: 0; }
-  :root[data-theme="salon"] .card .scene { border-radius: 160px 160px 0 0; margin: 18px 18px 0; border: 1px solid var(--line-soft); }
   .card .scene svg { width: 66%; }
   .badge {
     position: absolute; top: 16px; left: 16px; z-index: 2;
@@ -253,14 +182,12 @@ const SHEET = `
     font-size: 11px; font-weight: 800; letter-spacing: 0.09em; text-transform: uppercase;
     padding: 6px 13px; border-radius: 999px;
   }
-  :root[data-theme="lednik"] .badge { border-radius: 3px; }
   .card .body { padding: 24px 24px 26px; display: flex; flex-direction: column; gap: 9px; flex: 1; }
   .card h3 { font-size: clamp(1.15rem, 1.6vw, 1.35rem); }
   .card .desc { color: var(--ink-soft); font-size: 14.5px; }
   .card .meta { color: var(--ink-mute); font-family: ui-monospace, Menlo, monospace; font-size: 11.5px; letter-spacing: 0.03em; }
   .card .price-row { margin-top: auto; padding-top: 18px; display: flex; align-items: baseline; gap: 8px; }
   .card .price { font-size: 21px; font-weight: 800; font-variant-numeric: tabular-nums; }
-  :root[data-theme="lednik"] .card .price { font-family: var(--f-display); font-stretch: 112%; }
   .card .vat { color: var(--ink-mute); font-size: 12px; }
   .card .go { margin-left: auto; color: var(--acc-text); font-weight: 700; font-size: 14px; }
   .card.util { align-items: flex-start; justify-content: flex-start; padding: 26px 26px 24px; gap: 12px; background: var(--surface2); border-top: 3px solid var(--acc); }
@@ -278,18 +205,15 @@ const SHEET = `
     font-family: var(--f-display); font-stretch: var(--stretch);
     font-size: 1.5rem; font-weight: var(--w-display); color: var(--acc-text); line-height: 1;
   }
-  :root[data-theme="lednik"] .step::before { font-size: 0.85rem; font-weight: 750; border: 1px solid var(--line); background: var(--surface); padding: 6px 10px; display: inline-block; border-radius: 3px; }
   .step h3 { font-size: 1.05rem; margin-bottom: 8px; font-family: var(--f-body); font-weight: 700; }
   .step p { color: var(--ink-soft); font-size: 13.5px; }
   .moat-claim { margin-top: clamp(40px, 5vw, 56px); font-size: clamp(1.25rem, 2.2vw, 1.65rem); max-width: 36ch; }
   .moat-claim em { font-style: normal; color: var(--acc-text); }
-  :root[data-theme="salon"] .moat-claim { margin-left: auto; margin-right: auto; text-align: center; }
 
   .rev-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
   .rev { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-card); padding: 30px; display: flex; flex-direction: column; gap: 16px; }
   .stars { color: var(--acc-text); letter-spacing: 4px; font-size: 13px; }
   .rev blockquote { margin: 0; font-size: 1.1rem; line-height: 1.6; font-family: var(--f-display); font-weight: 400; font-stretch: 100%; }
-  :root[data-theme="lednik"] .rev blockquote { font-family: var(--f-body); font-weight: 500; }
   .rev .who { color: var(--ink-mute); font-size: 13px; display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
   .rev .vrf {
     color: var(--acc-text); font-family: ui-monospace, Menlo, monospace; font-size: 10.5px;
