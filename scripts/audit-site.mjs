@@ -27,6 +27,7 @@ import sharp from "sharp";
 import { chromium } from "playwright-core";
 import { handleRequest } from "../src/worker.ts";
 import { SHOPS } from "../src/tenants/index.ts";
+import { CONTENT } from "../src/content/index.ts";
 
 const OUT = process.env.AUDIT_DIR || "/tmp/site-audit";
 const PORT = Number(process.env.AUDIT_PORT || 8890);
@@ -52,6 +53,13 @@ function routes() {
     if (NOT_PAGES.has(key)) continue;
     r.add(slug);
   }
+  // COLLECTION PAGES ARE NOT IN routeSlugs. /masazni-bazeni and /swim-spa are
+  // declared in content.collections, so a route table derived from the slug
+  // map alone silently skips the two pages built to rank — which is exactly
+  // how an h1 -> h3 skip on both of them survived this audit's first run.
+  // The lesson generalises: derive the list from every place a route can be
+  // declared, or the audit's coverage quietly tracks one of them.
+  for (const c of CONTENT["bazen"]?.collections ?? []) r.add(c.path);
   return [...r].filter((p) => p && p.startsWith("/"));
 }
 
@@ -67,8 +75,15 @@ for (const path of PAGES) {
   statuses[path] = res.status;
   docs[path] = await res.text();
 }
-// Product pages too — one per family is enough to catch a template fault.
-for (const p of ["/bazen/veliki-230", "/bazen/swim-580-maxi"]) {
+// Every product page. Two used to be "enough to catch a template fault",
+// which is true only for faults the template has everywhere; a spec row or a
+// numeral that is wrong on ONE model is exactly what a sample misses.
+const shopCfg = SHOPS["bazen"];
+const content0 = CONTENT["bazen"];
+const productPaths = (content0?.pdps ?? (content0 ? [content0.pdp] : [])).map(
+  (d) => shopCfg.routeSlugs["/product"] + "/" + d.slug,
+);
+for (const p of productPaths) {
   const res = handleRequest(new Request(HOST + p + "?shop=bazen"));
   statuses[p] = res.status;
   docs[p] = await res.text();

@@ -1836,9 +1836,21 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       ? '<p class="st-pdp-prov" id="st-pdp-prov">Cene so informativne in še niso dokončne.</p>'
       : "") +
     '<p class="st-pdp-sub">' + esc(d.sub) + "</p>" +
-    finishes +
+    // Standfirst, then the CONTROL, then the four promises that sit under a
+    // control everywhere on the web — and only then the reference material.
+    //
+    // The shell colours used to sit between the standfirst and the buy row:
+    // ten unselectable pills, 185px at 1440 and 217px at 390, in front of the
+    // one control in this column. Measured at 1440x900 that put the button's
+    // bottom edge at 837px with the sticky bar's top edge at 825 — the page's
+    // primary CTA was twelve pixels under the bar at first paint. It is also
+    // the wrong order on its own terms: the panel below says only SEVEN of
+    // those ten are actually available per model, which makes the row
+    // reference rather than a step in the decision. Moved below the promises,
+    // the button lands at 598-652 and is clear of the bar at every height.
     buy +
     assure +
+    finishes +
     (cfg
       ? '<div class="st-pdp-cfg">' + cfg + "</div>" +
         '<p class="st-pdp-cfg-note">Prikazana je izbrana konfiguracija. ' +

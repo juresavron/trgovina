@@ -1413,7 +1413,22 @@ function capFirst(s: string, locale: string): string {
  * grids are the same construction on purpose: they are the same kind of
  * choice, made twice.
  */
-function productCards(ctx: RenderCtx, items: readonly (ProductCard | UtilCard)[]): string {
+/**
+ * `level` is the heading rank the card names take, and it has to be told
+ * rather than fixed.
+ *
+ * On the home page the grid sits under an h2 section heading, so a card name
+ * is an h3 and the outline reads h1 -> h2 -> h3. A COLLECTION page has no
+ * section heading — its h1 IS "Masažni bazeni" — so the same h3 produced
+ * h1 -> h3 on /masazni-bazeni and /swim-spa: a skipped level on the two
+ * pages the site is built to rank, invisible for as long as the audit's
+ * route table was derived from routeSlugs, which does not contain them.
+ */
+function productCards(
+  ctx: RenderCtx,
+  items: readonly (ProductCard | UtilCard)[],
+  level: "h2" | "h3" = "h3",
+): string {
   const href = pdpHref(ctx);
   return items
     .map((p: ProductCard | UtilCard, i: number) => {
@@ -1432,7 +1447,7 @@ function productCards(ctx: RenderCtx, items: readonly (ProductCard | UtilCard)[]
           // carry them, a <span> may not.
           '<a class="st-card st-util" href="' + esc(href) + '">' +
           '<div class="st-util-txt">' +
-          '<h3 class="st-util-h">' + esc(p.h) + "</h3>" +
+          "<" + level + ' class="st-util-h">' + esc(p.h) + "</" + level + ">" +
           '<p class="st-util-p">' + esc(p.p) + "</p>" +
           "</div>" +
           '<span class="st-util-go">' + esc(p.cta) + "</span>" +
@@ -1447,7 +1462,7 @@ function productCards(ctx: RenderCtx, items: readonly (ProductCard | UtilCard)[]
         shot(ctx, i, p.photo, p.art) +
         "</span>" +
         '<span class="st-card-body">' +
-        '<h3 class="st-card-name">' + esc(p.name) + "</h3>" +
+        "<" + level + ' class="st-card-name">' + esc(p.name) + "</" + level + ">" +
         '<span class="st-price-row">' +
         // The struck price's only cue is the line through it, and most screen
         // readers announce neither <s> nor text-decoration — so the row would
@@ -1661,7 +1676,9 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
  * keyword and routes; these pages do the selling.
  */
 export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
-  const cards = productCards(ctx, c.products);
+  // h2: this page's h1 is the collection name, and nothing sits between it
+  // and the grid.
+  const cards = productCards(ctx, c.products, "h2");
   return (
     '<section class="st-shop" id="izbor"><div class="st-shop-in">' +
     '<div class="st-shop-head">' +

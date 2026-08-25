@@ -1072,7 +1072,12 @@ export function renderStudioHeader(ctx: RenderCtx): string {
   const c = ctx.content;
   const links = [
     ["/products", c.nav[0]],
-    ["/compare", c.nav[1]],
+    // nav[1] is "O nas". It pointed at /compare, so the About link on every
+    // page of the site went to the model comparison instead. It stayed
+    // invisible because /o-nas was a stub until an hour ago: nothing in the
+    // chrome linked the About page at all, so there was no wrong destination
+    // to notice — only a right one that was missing.
+    ["/about", c.nav[1]],
     ["/guides", c.nav[2]],
     ["/delivery", c.nav[3]],
     ["/contact", c.nav[4]],
