@@ -237,9 +237,55 @@ export const STUDIO_CHROME_CSS = `
    * Size is independent of both. Every run stays --on-invert, so contrast is
    * exactly what it was before the brand existed, and the lockup still reads
    * name-first. */
-  :root[data-theme="studio"] .st-chrome-mark > span:first-of-type,
-  :root[data-theme="studio"] .st-foot-mark > span:first-of-type {
+  :root[data-theme="studio"] .st-chrome-mark > span:first-of-type {
     font-size: 0.78em;
+  }
+
+  /* THE FOOTER SIGNATURE STACKS, DELIBERATELY.
+   *
+   * The footer sets the wordmark at 108px, which fitted while the shop was
+   * called "Masažni Bazen". "Masažni bazeni Vrelec" does not: measured at
+   * 1440 it was 748x230 — two lines — and the break fell MID-PHRASE, so the
+   * mark stood beside a lone "MASAŽNI" and "BAZENI VRELEC" ran underneath
+   * it. An accidental break inside the category is the worst of both
+   * layouts.
+   *
+   * So the break is chosen rather than suffered: the mark and the category
+   * take the first line, the name takes the second at full size. That is
+   * what a signature does anyway — says the category quietly and the name
+   * loudly — and it means the lockup gets narrower as the viewport does
+   * instead of finding a new place to break.
+   *
+   * flex-basis on the brand is what forces it: a 100% basis cannot share a
+   * line, so the wrap lands between the two halves and nowhere else. */
+  :root[data-theme="studio"] .st-foot-mark {
+    /* display:flex is what makes any of this work. The element is a <p>, so
+     * the first version of this rule set flex-wrap, align-items and a
+     * flex-basis on a BLOCK container and every one of them was inert — the
+     * spans went on flowing inline and the 108px name simply sat after the
+     * 28px category on one line, overflowing its own box by 34px. */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: clamp(2px, 0.4vw, 8px);
+  }
+  :root[data-theme="studio"] .st-foot-mark > span:first-of-type {
+    /* Small enough to read as a descriptor rather than as a first line of
+     * the name, and it keeps its own tracking at that size. */
+    font-size: 0.26em;
+    letter-spacing: var(--ls-label);
+  }
+  :root[data-theme="studio"] .st-foot-mark > span:last-of-type {
+    flex-basis: 100%;
+  }
+  /* The space between the halves has no job once they are on two lines. */
+  :root[data-theme="studio"] .st-foot-mark .st-mark-gap { display: none; }
+  /* The glyph pairs with the small category line, not with the 108px name. */
+  :root[data-theme="studio"] .st-foot-mark .st-brand-mark {
+    inline-size: 0.34em;
+    block-size: 0.34em;
+    margin-inline-end: 0.14em;
+    transform: none;
   }
   /* Two type sizes on one line have to sit on ONE baseline, and baseline is a
    * property of the FLEX LINE, not of a single item: align-self on the small
