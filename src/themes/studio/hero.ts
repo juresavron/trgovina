@@ -170,72 +170,6 @@ export const STUDIO_HERO_CSS = `
     fill: var(--on-invert);
   }
 
-  /* The annotation and its leader line.
-   *
-   * The line is ONE element with two borders and a rounded corner — the same
-   * construction the source uses — rather than two elements pretending to be
-   * a corner. A dot at each end: one against the words, one where the line
-   * arrives at the product. */
-  :root[data-theme="studio"] .st-hero-note {
-    position: absolute; z-index: 4;
-    inset-block-end: 47%;
-    inset-inline-end: 58%;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    color: var(--on-invert);
-    pointer-events: none;
-  }
-  :root[data-theme="studio"] .st-hero-note::before {
-    content: "";
-    position: absolute;
-    inset: -95% -34% -105% -26%;
-    z-index: -1;
-    border-radius: var(--r-circle);
-    background: radial-gradient(
-      52% 52% at 50% 50%,
-      color-mix(in srgb, var(--ink) 84%, transparent) 0%,
-      color-mix(in srgb, var(--ink) 66%, transparent) 54%,
-      color-mix(in srgb, var(--ink) 24%, transparent) 76%,
-      transparent 88%
-    );
-  }
-  :root[data-theme="studio"] .st-hero-note p {
-    margin: 0;
-    max-inline-size: 19ch;
-    text-align: right;
-    font-family: var(--f-body);
-    font-size: var(--t-body);
-    font-weight: var(--w-body);
-    letter-spacing: var(--ls-body);
-    line-height: var(--lh-body);
-  }
-  :root[data-theme="studio"] .st-hero-dot {
-    flex: 0 0 auto;
-    inline-size: 5px; block-size: 5px;
-    margin-block-start: 0.55em;
-    border-radius: var(--r-circle);
-    background: var(--on-invert);
-  }
-  :root[data-theme="studio"] .st-hero-lead {
-    position: relative;
-    flex: 0 0 auto;
-    inline-size: clamp(52px, 7vw, 116px);
-    block-size: clamp(34px, 5vh, 62px);
-    margin-block-start: 0.55em;
-    border-block-start: var(--bw-line) solid var(--on-invert);
-    border-inline-end: var(--bw-line) solid var(--on-invert);
-    border-start-end-radius: 8px;
-  }
-  :root[data-theme="studio"] .st-hero-lead::after {
-    content: "";
-    position: absolute;
-    inset-block-end: -3px; inset-inline-end: -3px;
-    inline-size: 6px; block-size: 6px;
-    border-radius: var(--r-circle);
-    background: var(--on-invert);
-  }
-
   /* The foot block: pill, heading, one button. */
   :root[data-theme="studio"] .st-hero-foot {
     position: relative; z-index: 4;
@@ -337,12 +271,9 @@ export const STUDIO_HERO_CSS = `
     color: color-mix(in srgb, var(--on-invert) 72%, transparent);
   }
 
-  /* Below 900px the annotation goes first: at 390px the leader line has
-   * nowhere to travel and the words sit on top of the product. The subject
-   * shrinks and drops, and the wordmark rides higher so the foot block keeps
-   * its own air. */
+  /* Below 900px the wordmark rides higher so the foot block keeps its own
+   * air. */
   @media (max-width: 900px) {
-    :root[data-theme="studio"] .st-hero-note { display: none; }
     :root[data-theme="studio"] .st-hero-sub { max-inline-size: 34ch; }
     :root[data-theme="studio"] .st-hero-mark { inset-block-start: clamp(92px, 15vh, 150px); }
     :root[data-theme="studio"] .st-hero-foot h1 { font-size: var(--t-h3); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
@@ -882,13 +813,15 @@ export function renderStudioHero(ctx: RenderCtx): string {
     // and a box drawn to Latin caps clips their carons.
     markSvg(mark) +
 
-    // The annotation points at the subject. Its words are the shop's own first
-    // trust line rather than invented copy.
-    '<div class="st-hero-note" aria-hidden="true">' +
-    "<p>" + esc(c.trust[0] ?? "") + "</p>" +
-    '<span class="st-hero-dot"></span>' +
-    '<span class="st-hero-lead"></span>' +
-    "</div>" +
+    // NO ANNOTATION. There was a leader line here pointing at the subject,
+    // captioned with the shop's first trust line. It came from the source
+    // theme, where it labels a piece of furniture in a styled room and earns
+    // its place. Here it pointed at a hot tub and said "Dostava in zagon po
+    // vsej Sloveniji" — a delivery promise, not a description of the thing it
+    // was aimed at, so the line drew the eye to the product and then said
+    // something about logistics. Removed on the owner's instruction; the
+    // trust line itself is unchanged and still runs in the strip below, which
+    // is where a delivery promise belongs.
 
     '<div class="st-hero-foot">' +
     '<span class="st-hero-pill">' + esc(c.kicker) + "</span>" +

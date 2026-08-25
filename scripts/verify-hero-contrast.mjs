@@ -27,8 +27,8 @@ import { chromium } from "playwright-core";
 
 const BASE = process.argv[2] || "http://127.0.0.1:8788";
 
-/** Every shop, because each one opens on a different photograph. */
-const SHOPS = ["savna", "kad", "bazen", "fotelj", "kopalna", "biljard"];
+/** The network is one shop. Kept as a list so a second costs one entry. */
+const SHOPS = ["bazen"];
 
 /** The white runs on the hero, and the floor each has to clear. */
 const RUNS = [
@@ -36,7 +36,6 @@ const RUNS = [
   [".st-hero-pill", 4.5],
   [".st-hero-foot h1", 4.5],
   [".st-hero-sub", 4.5],
-  [".st-hero-note p", 4.5],
   [".st-hero-cap", 4.5],
 ];
 

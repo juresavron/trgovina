@@ -1,22 +1,28 @@
 import type { ShopConfig } from "./types";
-import { savna } from "./savna";
-import { kad } from "./kad";
 import { bazen } from "./bazen";
-import { fotelj } from "./fotelj";
-import { kopalna } from "./kopalna";
-import { biljard } from "./biljard";
 
 export type { ShopConfig, InternalRouteKey } from "./types";
 export { isValidStatementDescriptor, isValidRouteSlug } from "./types";
 
-/** All shops, keyed by shop key. Adding a shop = adding one entry. */
+/**
+ * All shops, keyed by shop key. Adding a shop = adding one entry.
+ *
+ * ONE SHOP, AS OF 25 AUG 2026. The network was six single-keyword storefronts
+ * — infrardeča savna, ledena kad, masažni bazen, masažni fotelj, prostostoječa
+ * kad, biljardna miza — and the owner narrowed it to masazni-bazen.si to put
+ * the effort behind one shop that sells rather than six that are nearly ready.
+ * The other five are deleted, not disabled: a half-maintained tenant that
+ * nobody renders is a place for bugs to live. They are in git history at
+ * e7e8269 if the range widens again.
+ *
+ * The MECHANISM is deliberately unchanged. Host-header tenancy still resolves,
+ * still 404s unknown hosts, and ShopConfig still carries everything per shop,
+ * because none of that costs anything with one entry and all of it would have
+ * to be rebuilt to add a second. What was removed is five shops, not the
+ * ability to have them.
+ */
 export const SHOPS: Record<string, ShopConfig> = {
-  savna,
-  kad,
   bazen,
-  fotelj,
-  kopalna,
-  biljard,
 };
 
 /**
@@ -27,7 +33,7 @@ export const SHOPS: Record<string, ShopConfig> = {
  * is how a keyword network gets itself devalued as one site), so unknown
  * hosts get null and callers respond 404 at the edge, before the router runs.
  */
-export const DEV_SHOP: ShopConfig = savna;
+export const DEV_SHOP: ShopConfig = bazen;
 
 const DEV_HOST_PATTERNS: RegExp[] = [
   /^localhost(:\d+)?$/i,
