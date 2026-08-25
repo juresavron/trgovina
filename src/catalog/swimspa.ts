@@ -281,8 +281,14 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
   },
   {
     code: "ZR7809",
-    slug: "swim-580-kombi",
-    name: "SWIM 580 KOMBI",
+    // Was "SWIM 580 KOMBI". The name was invented here from "1 lounger and 6
+    // seats" and it has to go: "kombi" reads as combination unit, which is
+    // exactly the claim under dispute on the ZR7807, and asserting it on a
+    // DIFFERENT model would put the disputed word on the one page that never
+    // had any claim to it. The owner calls this one the Outdoor Hydrotherapy
+    // Swim Spa, which is what it is.
+    slug: "swim-580-hidro",
+    name: "SWIM 580 HIDRO",
     fobUsd: 8530,
     mm: [5800, 2280, 1400],
     seats: 7,
@@ -348,6 +354,9 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     code: "ZR7807",
     slug: "swim-580-maxi",
     name: "SWIM 580 MAXI",
+    // 94 jets is the most on the entire price list, by 32. A factual badge,
+    // and deliberately NOT "Kombinirani" — see the dual-zone note below.
+    tier: "Največ šob",
     fobUsd: 9150,
     mm: [5800, 2240, 1350],
     seats: 7,
@@ -474,9 +483,51 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
  *     (the heaviest, by 80 kg over the ZR7809 Turbine). See the ⚠️ below
  *     before writing the dual-zone claim.
  */
-export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = ["ZR6801", "ZR7861", "ZR7860"].map(
-  (code) => SWIMSPA_MODELS.find((m) => m.code === code)!,
-);
+export const OFFERED_SWIMSPAS: readonly SwimSpaModel[] = [
+  "ZR6801",
+  "ZR7861",
+  "ZR7809",
+  "ZR7807",
+  "ZR7860",
+].map((code) => SWIMSPA_MODELS.find((m) => m.code === code)!);
+
+/**
+ * ⚠️ WHICH MODEL IS THE DUAL-ZONE COMBO IS NOT SETTLED, AND THE SHEET AND THE
+ * OWNER DISAGREE.
+ *
+ * The ZR7807 was added as "Dual Zone Swim Spa and Hot Tub Combo". The price
+ * list points the other way, and it points hard — a dual-zone unit is two
+ * separate bodies of water, and two bodies of water each need their own drain
+ * and their own topside panel:
+ *
+ *                     ZR7807            ZR7860
+ *   Drainage outlets  1                 2
+ *   Skimmers          2 x 100 sf        3 x 100 sf
+ *   Topside panels    1 x TP600         2 x TP600
+ *   Control systems   BP6013G3/BP200G2  1x BP200G2 + 1x BP6013G2
+ *   Circulation       2 x 0.35 HP       2 x 1 HP
+ *
+ * On that evidence the ZR7860 is the dual-zone unit and the ZR7807 is a very
+ * well-jetted single-zone swim spa — it has the most jets on the entire list,
+ * 94, which is a real distinction and not this one.
+ *
+ * Either the supplier markets the ZR7807 under that name and its sheet is
+ * abbreviated, or the two codes have been crossed. Both are ordinary; neither
+ * is guessable from here. So NEITHER model claims two temperatures at once —
+ * ZR7860_DUAL_ZONE_CONFIRMED is still false and there is no equivalent flag
+ * for the ZR7807, because a flag nobody has set is not evidence.
+ *
+ * TIERS ARE NOT A LADDER ANY MORE, and that is deliberate. Three of the five
+ * models are 5.80 m, so a size word cannot separate them and a made-up
+ * hierarchy (Veliki, Večji, Največji) would be inventing rank the catalogue
+ * does not have. A tier is set only where it says something true AND
+ * distinct: Vstopni for the only unit under four metres, Srednji for the
+ * 4.50, "Največ šob" for the 94-jet ZR7807, Vrhunski for the best-equipped
+ * ZR7860. The plain 5.80 m ZR7809 carries none, because there is nothing
+ * true and short to say about it that its own spec line does not already
+ * say.
+ */
+export const ZR7807_DUAL_ZONE_CONFIRMED = false;
 
 /**
  * ⚠️ THE ZR7861 IS IN THE RANGE, AND THE SHEET SAYS IT HAS NO SWIM JET.

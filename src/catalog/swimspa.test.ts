@@ -8,6 +8,7 @@ import {
   seating,
   swimSpaBySlug,
   swimSpaFamilyHasSwimJets,
+  ZR7807_DUAL_ZONE_CONFIRMED,
 } from "./swimspa";
 import { OFFERED_MODELS } from "./pola";
 
@@ -75,8 +76,10 @@ describe("swim spa catalogue", () => {
     }
   });
 
-  it("offers the three the owner chose, shortest first", () => {
-    expect(OFFERED_SWIMSPAS.map((m) => m.code)).toEqual(["ZR6801", "ZR7861", "ZR7860"]);
+  it("offers the five the owner chose, shortest first", () => {
+    expect(OFFERED_SWIMSPAS.map((m) => m.code)).toEqual([
+      "ZR6801", "ZR7861", "ZR7809", "ZR7807", "ZR7860",
+    ]);
     // Shortest first is the ladder a buyer walks, and length is the decision.
     const mm = OFFERED_SWIMSPAS.map((m) => m.mm[0]);
     expect([...mm].sort((x, y) => x - y)).toEqual(mm);
@@ -88,10 +91,16 @@ describe("swim spa catalogue", () => {
     expect(swimSpaBySlug("swim-500")).toBeUndefined();
   });
 
-  it("gives every offered model a tier and no other model one", () => {
+  it("never badges a model the shop does not sell", () => {
+    // The inverse no longer holds: an OFFERED model may carry no tier. Three
+    // of five are 5.80 m, so a size word cannot separate them and inventing
+    // rank (Veliki, Večji, Največji) would be manufacturing a hierarchy the
+    // catalogue has not got. What must stay true is that a badge never
+    // appears on something unbuyable.
     for (const m of SWIMSPA_MODELS) {
-      const offered = OFFERED_SWIMSPAS.some((o) => o.code === m.code);
-      expect(Boolean(m.tier), m.code).toBe(offered);
+      if (m.tier) {
+        expect(OFFERED_SWIMSPAS.some((o) => o.code === m.code), m.code).toBe(true);
+      }
     }
   });
 
@@ -103,14 +112,38 @@ describe("swim spa catalogue", () => {
     expect(ZR7860_DUAL_ZONE_CONFIRMED).toBe(false);
   });
 
-  it("keeps the offered ladder to one model per size band", () => {
-    // ZR7861 replaced ZR6802 at the owner's request. At 4.50 m it sits
-    // between the 3.90 m entry and the 5.80 m top, so the ladder spreads
-    // evenly and keeps the ONLY unit under four metres — the one that fits a
-    // garden the other two cannot. Swapping the entry model instead would
-    // have clustered all three inside 1.3 m.
+  it("keeps the offered ladder ordered by length, then by price", () => {
+    // Length first, because that is what this category is bought on. Three
+    // of the five share 5.80 m, so price breaks the tie — cheaper first,
+    // which is the direction a buyer reads a ladder in.
     const mm = OFFERED_SWIMSPAS.map((m) => m.mm[0]);
-    expect(mm).toEqual([3900, 4500, 5800]);
+    expect(mm).toEqual([3900, 4500, 5800, 5800, 5800]);
+    expect([...mm].sort((a, b) => a - b)).toEqual(mm);
+    const long = OFFERED_SWIMSPAS.filter((m) => m.mm[0] === 5800).map((m) => m.fobUsd);
+    expect([...long].sort((a, b) => a - b)).toEqual(long);
+  });
+
+  it("does not call any model a combination unit", () => {
+    // "KOMBI" was invented here for the ZR7809 from "1 lounger and 6 seats",
+    // and it reads as combination unit — which is precisely the claim under
+    // dispute on the ZR7807. Left alone it would have put the disputed word
+    // on the one model that never had any claim to it.
+    for (const m of SWIMSPA_MODELS) {
+      expect(m.name, m.code).not.toMatch(/kombi/i);
+      expect(m.slug, m.code).not.toMatch(/kombi/i);
+      expect(m.tier ?? "", m.code).not.toMatch(/kombi/i);
+    }
+  });
+
+  it("claims two temperatures at once on NEITHER model", () => {
+    // The ZR7807 was added as a "Dual Zone Swim Spa and Hot Tub Combo"; the
+    // price list gives it ONE drainage outlet and ONE topside panel where the
+    // ZR7860 has two of each, and two bodies of water need two of both. The
+    // sheet and the owner disagree about which unit it is, so until that is
+    // settled neither page may make the claim — it is the strongest sentence
+    // in the category and therefore the worst one to guess at.
+    expect(ZR7860_DUAL_ZONE_CONFIRMED).toBe(false);
+    expect(ZR7807_DUAL_ZONE_CONFIRMED).toBe(false);
   });
 
   it("does not advertise a counter-current jet the range cannot deliver", () => {

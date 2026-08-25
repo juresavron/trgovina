@@ -82,8 +82,27 @@ list — the same decision, for the same reason, as the Pola options.
 
 ## What the shop sells
 
-Three units, as of 25 Aug 2026: **ZR6801** (Vstopni, 3.90 m, $6,250) ·
-**ZR7861** (Srednji, 4.50 m, $6,859) · **ZR7860** (Vrhunski, 5.80 m, $9,330).
+Five units, as of 25 Aug 2026, ordered by length and then by price:
+
+| Code | Name here | Length | FOB | Badge |
+|---|---|---|---|---|
+| ZR6801 | SWIM 390 | 3.90 m | $6,250 | Vstopni |
+| ZR7861 | SWIM 450 | 4.50 m | $6,859 | Srednji |
+| ZR7809 | SWIM 580 HIDRO | 5.80 m | $8,530 | — |
+| ZR7807 | SWIM 580 MAXI | 5.80 m | $9,150 | Največ šob |
+| ZR7860 | SWIM 580 DVOJNI | 5.80 m | $9,330 | Vrhunski |
+
+**Badges are not a ladder.** Three of the five are 5.80 m, so a size word
+cannot separate them and inventing rank (Veliki, Večji, Največji) would be
+manufacturing a hierarchy the catalogue has not got. A badge is set only
+where it says something true AND distinct — which is why the plain 5.80 m
+ZR7809 carries none.
+
+The ZR7809 was called **SWIM 580 KOMBI** here until the ZR7807 arrived. That
+name was invented from "1 lounger and 6 seats" and had to go: *kombi* reads
+as combination unit, which is precisely the claim under dispute on the
+ZR7807, and leaving it would have put the disputed word on the one model that
+never had any claim to it. A test now asserts no model carries it.
 
 The ZR7861 replaced the **ZR6802** at the owner's request, once eight
 photographs of it arrived. At 4.50 m it sits between the 3.90 m entry and the
@@ -141,7 +160,32 @@ either what a page claims or what a customer is charged.
    can guess, because guessing it means charging a customer a price nobody
    quoted.
 
-3. **Does the ZR7860 actually hold two temperatures at once?** This is the
+3. **WHICH model is the dual-zone combo — and does either hold two
+   temperatures at once?** The ZR7807 was added to the range as "Dual Zone
+   Swim Spa and Hot Tub Combo". The price list points the other way, and it
+   points hard. A dual-zone unit is two separate bodies of water, and two
+   bodies of water each need their own drain and their own topside panel:
+
+   | | ZR7807 | ZR7860 |
+   |---|---|---|
+   | Drainage outlets | **1** | **2** |
+   | Skimmers | 2 × 100 sf | 3 × 100 sf |
+   | Topside panels | 1 × TP600 | **2 × TP600** |
+   | Control systems | BP6013G3/BP200 G2 | 1×BP200G2 **+** 1×BP6013G2 |
+   | Circulation pumps | 2 × 0.35 HP | 2 × 1 HP |
+
+   On that evidence the **ZR7860** is the dual-zone unit and the ZR7807 is a
+   very well-jetted single-zone swim spa — it carries 94 jets, the most on the
+   entire list, which is a real distinction and not this one. Either the
+   supplier markets the ZR7807 under that name and its sheet is abbreviated,
+   or the two codes have been crossed.
+
+   Neither page claims two temperatures at once until this is settled.
+   `ZR7860_DUAL_ZONE_CONFIRMED` and `ZR7807_DUAL_ZONE_CONFIRMED` are both
+   `false` and a test holds them there. It is the strongest sentence available
+   in this category, which makes it the worst one to guess at.
+
+3b. **And separately: does the ZR7860 hold two temperatures at once?** This is the
    model's whole commercial story and the justification for the price step, so
    it is the worst thing on this page to be wrong about. The sheet lists two
    control systems (1 × BP200G2 + 1 × BP6013G2), two TP600 panels, two

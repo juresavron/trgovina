@@ -174,12 +174,35 @@ const swimSpas: ProductCard[] = OFFERED_SWIMSPAS.map((m) => ({
   ...(m.tier ? { badge: m.tier } : {}),
 }));
 
+/**
+ * "3 modeli", but "5 modelov".
+ *
+ * Slovenian counts in four forms and the count line was using the plural for
+ * everything, which was correct while both families had three models and
+ * became wrong the moment the swim spa range grew to five. Same class of
+ * error as "2 ležalnika" — see seating() in pola.ts — and the same
+ * consequence: a shop that gets its own numerals wrong reads as machine
+ * translated, which on a EUR 6-9k purchase is not a small thing.
+ *
+ *   1        model      (singular)
+ *   2        modela     (dual)
+ *   3, 4     modeli     (plural)
+ *   5 and up modelov    (genitive plural)
+ */
+function modelCount(n: number): string {
+  const t = n % 100;
+  if (t === 1) return n + " model";
+  if (t === 2) return n + " modela";
+  if (t === 3 || t === 4) return n + " modeli";
+  return n + " modelov";
+}
+
 const categories: Category[] = [
   {
     name: "Masažni bazeni",
     meta:
-      OFFERED_MODELS.length +
-      " modeli · " +
+      modelCount(OFFERED_MODELS.length) +
+      " · " +
       sizeSpan(OFFERED_MODELS.map((m) => m.mm[0])) +
       " · za 5 ali 6 oseb",
     price: familyRange(OFFERED_MODELS.map((m) => modelPrice(m))),
@@ -200,8 +223,8 @@ const categories: Category[] = [
     // and the ZR7861's sheet lists none. See the note on
     // swimSpaFamilyHasSwimJets().
     meta:
-      OFFERED_SWIMSPAS.length +
-      " modeli · " +
+      modelCount(OFFERED_SWIMSPAS.length) +
+      " · " +
       sizeSpan(OFFERED_SWIMSPAS.map((m) => m.mm[0])) +
       (swimSpaFamilyHasSwimJets() ? " · s protitočno šobo" : " · za plavanje in sprostitev"),
     price: familyRange(OFFERED_SWIMSPAS.map((m) => swimModelPrice(m))),
