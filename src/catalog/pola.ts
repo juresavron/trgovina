@@ -425,6 +425,42 @@ export const POLA_MODELS: readonly PolaModel[] = [
   },
 ];
 
+/**
+ * Acrylic shell finishes, as the price list names them.
+ *
+ * NAMES, NOT SWATCHES. Every model's sheet says "7 colors for options" and the
+ * colour page prints ten finish names across two groups, so which seven apply
+ * to a given model is not something this document answers — and the finishes
+ * are marbled acrylics ("Silver white marble", "Ocean Wave"), which no hex
+ * value describes. Rendering invented circles would be a picture of the goods
+ * that nobody has seen. The page lists what we actually know: the names.
+ *
+ * Ask the supplier which seven per model, and for swatch images, before this
+ * becomes a colour picker.
+ */
+export const SHELL_FINISHES: readonly string[] = [
+  "Midnight",
+  "Canyon",
+  "Silver white marble",
+  "Oyster Opal",
+  "Gypsum",
+  "Opal",
+  "Ocean Wave",
+  "Mediterranean",
+  "Sunset",
+  "Odyssey",
+];
+
+/** Cabinet panel colours. The PS skirt, not the shell. */
+export const CABINET_FINISHES: readonly string[] = [
+  "Light Grey",
+  "Gold brown",
+  "Dark Grey",
+  "Brown",
+  "Black",
+  "Grey",
+];
+
 /** Look one up by URL segment. */
 export function polaBySlug(slug: string): PolaModel | undefined {
   return POLA_MODELS.find((m) => m.slug === slug);

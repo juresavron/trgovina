@@ -80,6 +80,19 @@ export interface PdpContent {
   /** Options priced separately from the product. Absent where there are none. */
   addons?: PdpAddon[];
   /**
+   * The assurance row: four short promises with a sub-line each, in the order
+   * delivery, returns, payment, help. The icons are the renderer's.
+   */
+  assure?: [string, string][];
+  /**
+   * Collapsible sections under the buy column, as [heading, body] — product
+   * description, care, delivery terms. The spec table is generated separately
+   * and always renders first.
+   */
+  panels?: [string, string][];
+  /** Finish names offered. Names rather than swatches; see catalog/pola.ts. */
+  finishes?: string[];
+  /**
    * True while the prices on this page are a provisional conversion of cost
    * rather than a selling price the business has set.
    *

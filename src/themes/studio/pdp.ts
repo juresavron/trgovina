@@ -54,6 +54,8 @@
 import { esc, type RenderCtx } from "../../render/sections";
 import type { PdpContent } from "../../content/types";
 import { productArt } from "./product-art";
+import { helpIcon, returnIcon, shieldIcon, truckIcon } from "./icons";
+import { renderStudioTestimonials } from "./editorial";
 import { ADDON_GROUP_ORDER } from "../../catalog/pola";
 import { formatEur } from "../../catalog/pricing";
 
@@ -438,6 +440,243 @@ export const STUDIO_PDP_CSS = `
     outline: 2px solid var(--acc);
     outline-offset: 3px;
     border-radius: var(--r-ctrl);
+  }
+
+  /* ---- the gallery is a STACK ----------------------------------------- */
+  :root[data-theme="studio"] .st-pdp-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(12px, 1.2vw, 24px);
+  }
+  /* Square, like the source's, rather than the 4/3 a single frame wanted:
+   * stacked frames read as one column of equal tiles, and a square is the
+   * shape a product cut out on a plain ground sits in without a wasted band
+   * above and below it. */
+  :root[data-theme="studio"] .st-pdp-gallery .st-pdp-frame {
+    aspect-ratio: 1 / 1;
+    border: var(--bw-line) solid var(--line);
+  }
+
+  /* ---- finishes, quantity, the cart ----------------------------------- */
+  :root[data-theme="studio"] .st-pdp-finish { margin-top: clamp(24px, 2.4vw, 44px); }
+  :root[data-theme="studio"] .st-pdp-buyrow {
+    display: flex;
+    gap: clamp(10px, 1vw, 18px);
+    margin-top: clamp(20px, 2vw, 36px);
+  }
+  :root[data-theme="studio"] .st-pdp-qty {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    border: var(--bw-line) solid var(--line-strong);
+    border-radius: var(--r-ctrl);
+    background: var(--surface);
+  }
+  /* The native spinner IS the stepper. Drawing plus and minus buttons would
+   * mean two more controls to keep at 44px, two more focus rings, and a
+   * keyboard story to rebuild — the input already has all of it, and arrow
+   * keys already step it. */
+  :root[data-theme="studio"] .st-pdp-qty input {
+    inline-size: 76px;
+    min-block-size: 52px;
+    padding: 0 0 0 14px;
+    border: 0;
+    background: transparent;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-pdp-qty input:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: -2px;
+    border-radius: var(--r-ctrl);
+  }
+  :root[data-theme="studio"] .st-pdp-add {
+    flex: 1 1 auto;
+    min-block-size: 52px;
+    padding: 0 clamp(20px, 2vw, 40px);
+    border: var(--bw-line) solid var(--ink-invert);
+    border-radius: var(--r-ctrl);
+    background: var(--ink-invert);
+    color: var(--on-invert);
+    cursor: pointer;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    transition: background-color .2s ease, color .2s ease;
+  }
+  :root[data-theme="studio"] .st-pdp-add:hover {
+    background: transparent;
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-pdp-add:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+  }
+
+  /* ---- the assurance row: two by two ---------------------------------- */
+  :root[data-theme="studio"] .st-pdp-assure {
+    list-style: none; margin: clamp(22px, 2.2vw, 40px) 0 0; padding: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(14px, 1.4vw, 26px);
+  }
+  :root[data-theme="studio"] .st-pdp-assure-i {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-assure-i {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-pdp-assure-h {
+    display: block;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-pdp-assure-s {
+    display: block;
+    margin-top: 3px;
+    font-family: var(--f-body);
+    font-size: var(--t-label);
+    line-height: var(--lh-body);
+    color: var(--ink-mute);
+  }
+
+  /* ---- collapsible panels --------------------------------------------- */
+  :root[data-theme="studio"] .st-pdp-panels {
+    margin-top: clamp(26px, 2.6vw, 48px);
+    border-top: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-pdp-panel {
+    border-bottom: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-pdp-panel summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-sm);
+    min-block-size: 56px;
+    padding-block: clamp(12px, 1.1vw, 18px);
+    cursor: pointer;
+    list-style: none;
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-pdp-panel summary::-webkit-details-marker { display: none; }
+  /* The chevron is drawn, not a marker glyph: a border-only square rotated
+   * 45 degrees is one element and matches the hairline weight everywhere
+   * else on the page. */
+  :root[data-theme="studio"] .st-pdp-panel summary::after {
+    content: "";
+    flex: 0 0 auto;
+    inline-size: 8px; block-size: 8px;
+    margin-inline-end: 4px;
+    border-inline-end: var(--bw-line) solid var(--ink-body);
+    border-block-end: var(--bw-line) solid var(--ink-body);
+    transform: translateY(-2px) rotate(45deg);
+    transition: transform .18s ease;
+  }
+  :root[data-theme="studio"] .st-pdp-panel[open] summary::after {
+    transform: translateY(2px) rotate(-135deg);
+  }
+  :root[data-theme="studio"] .st-pdp-panel summary:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: -2px;
+    border-radius: var(--r-ctrl);
+  }
+  :root[data-theme="studio"] .st-pdp-panel-b {
+    padding-bottom: clamp(14px, 1.4vw, 24px);
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-pdp-panel-b p { margin: 0; max-inline-size: 62ch; }
+
+  /* ---- "ostali modeli" ------------------------------------------------- */
+  :root[data-theme="studio"] .st-also {
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
+    margin-inline: auto;
+    padding: var(--studio-rhythm) var(--studio-gutter) 0;
+  }
+  :root[data-theme="studio"] .st-also-h {
+    margin: 0 0 clamp(26px, 2.6vw, 52px);
+    text-align: center;
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h2);
+    letter-spacing: var(--ls-h2);
+    line-height: var(--lh-h2);
+    color: var(--ink);
+  }
+  /* The ruled row of §4.4: no gaps, a ring on each cell, overlapping edges
+   * making the rules. */
+  :root[data-theme="studio"] .st-also-row {
+    list-style: none; margin: 0; padding: var(--bw-line);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+  }
+  :root[data-theme="studio"] .st-also-cell { min-width: 0; }
+  :root[data-theme="studio"] .st-also-card {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 0.8vw, 14px);
+    block-size: 100%;
+    padding: clamp(16px, 1.6vw, 30px);
+    box-shadow: 0 0 0 var(--bw-line) var(--st-ring, var(--line));
+    text-decoration: none;
+    transition: box-shadow .2s ease;
+  }
+  :root[data-theme="studio"] .st-also-card:hover,
+  :root[data-theme="studio"] .st-also-card:focus-visible {
+    --st-ring: var(--line-strong);
+    position: relative;
+    z-index: 1;
+  }
+  :root[data-theme="studio"] .st-also-frame {
+    position: relative;
+    display: block;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--r-media);
+    background: var(--bg-alt);
+    overflow: hidden;
+  }
+  :root[data-theme="studio"] .st-also-name {
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-also-price {
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body-med);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  @media (max-width: 809px) {
+    :root[data-theme="studio"] .st-also-row { grid-template-columns: minmax(0, 1fr); }
+    :root[data-theme="studio"] .st-pdp-assure { grid-template-columns: minmax(0, 1fr); }
   }
 
   /* ---- add-ons: the first REAL controls on this page ------------------
@@ -1094,6 +1333,44 @@ function compareAt(d: PdpContent): string | null {
 }
 
 /**
+ * "Ostali modeli" — the source's "You may also like", built from the shop's
+ * own range rather than a recommendation engine.
+ *
+ * Three cards, the models nearest this one in the catalogue order, which is
+ * ordered by shell size and jet count — so the neighbours really are the
+ * closest alternatives rather than three arbitrary rows. A shop with no
+ * catalogue renders nothing at all instead of an empty band.
+ */
+function alsoLike(ctx: RenderCtx): string {
+  const all = ctx.content.pdps ?? [];
+  if (all.length < 2) return "";
+  const here = all.findIndex((x) => x.slug === ctx.pdp.slug);
+  const rest = all.filter((_, i) => i !== here);
+  const start = Math.min(Math.max(0, here - 1), Math.max(0, rest.length - 3));
+  const picks = rest.slice(start, start + 3);
+  if (picks.length === 0) return "";
+
+  const base = ctx.shop.routeSlugs["/product"] + "/";
+  return (
+    '<section class="st-also" aria-labelledby="st-also-h">' +
+    '<h2 class="st-also-h" id="st-also-h">Ostali modeli</h2>' +
+    '<ul class="st-also-row">' +
+    picks
+      .map(
+        (m, i) =>
+          '<li class="st-also-cell"><a class="st-also-card" href="' +
+          esc(base + m.slug + ctx.q) + '">' +
+          '<span class="st-also-frame">' + shot(ctx, i) + "</span>" +
+          '<span class="st-also-name">' + esc(m.title) + "</span>" +
+          '<span class="st-also-price">' + esc(m.price) + "</span>" +
+          "</a></li>",
+      )
+      .join("") +
+    "</ul></section>"
+  );
+}
+
+/**
  * The PDP body — gallery left, buy column right, spec beneath, sticky buy bar.
  *
  * Consumes exactly what renderPdpBody() consumes (ctx.pdp: eyebrow,
@@ -1208,6 +1485,74 @@ export function renderStudioPdp(ctx: RenderCtx): string {
           : "") +
         "</fieldset>";
 
+  // The assurance row: four promises, two by two, each an icon over a label
+  // and a sub-line. The source runs delivery / returns / payment / help, and
+  // so does this — with the shop's own promises rather than four invented
+  // ones.
+  const ICONS = [truckIcon(), returnIcon(), shieldIcon(), helpIcon()];
+  const assure = (d.assure ?? []).length
+    ? '<ul class="st-pdp-assure">' +
+      (d.assure ?? [])
+        .map(
+          (a, i) =>
+            '<li class="st-pdp-assure-i">' +
+            (ICONS[i % ICONS.length] ?? "") +
+            '<span><span class="st-pdp-assure-h">' + esc(a[0]) + "</span>" +
+            '<span class="st-pdp-assure-s">' + esc(a[1]) + "</span></span></li>",
+        )
+        .join("") +
+      "</ul>"
+    : "";
+
+  // Collapsible sections. <details>/<summary> rather than a scripted
+  // accordion: it opens with no JavaScript, it is in the tab order for free,
+  // and a screen reader already knows what an expandable section is. The
+  // chevron is the summary's own marker, restyled.
+  //
+  // The specification is always the first panel and is BUILT from the model
+  // rather than written, so it cannot drift from the spec table's source.
+  const specRows = d.spec
+    .map((row) => '<div class="st-pdp-srow"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>")
+    .join("");
+  const panels =
+    '<div class="st-pdp-panels">' +
+    '<details class="st-pdp-panel" open><summary>Tehnični podatki</summary>' +
+    '<div class="st-pdp-panel-b"><dl class="st-pdp-spec-table">' + specRows + "</dl></div></details>" +
+    (d.panels ?? [])
+      .map(
+        (x) =>
+          '<details class="st-pdp-panel"><summary>' + esc(x[0]) + "</summary>" +
+          '<div class="st-pdp-panel-b"><p>' + esc(x[1]) + "</p></div></details>",
+      )
+      .join("") +
+    "</div>";
+
+  // Finish names, not swatches — see catalog/pola.ts for why inventing a hex
+  // for "Ocean Wave" would be a picture of the goods nobody has seen.
+  const finishes = (d.finishes ?? []).length
+    ? '<div class="st-pdp-finish"><h2 class="st-pdp-glabel" id="st-pdp-fin">Barve školjke</h2>' +
+      '<ul class="st-pdp-pills" aria-labelledby="st-pdp-fin">' +
+      (d.finishes ?? [])
+        .map((f) => '<li class="st-pdp-pill">' + esc(f) + "</li>")
+        .join("") +
+      "</ul></div>"
+    : "";
+
+  // Quantity and the cart. The stepper is a real number input inside a real
+  // form that GETs the cart route with what was chosen — there is no cart yet,
+  // so it lands on the cart page rather than pretending to add anything. A
+  // stepper wired to nothing would be a control that lies.
+  const buy =
+    '<form class="st-pdp-buyrow" method="get" action="' +
+    esc(ctx.shop.routeSlugs["/cart"]) + '">' +
+    '<input type="hidden" name="model" value="' + esc(d.slug) + '">' +
+    '<span class="st-pdp-qty">' +
+    '<label class="st-pdp-vh" for="st-pdp-q">Količina</label>' +
+    '<input id="st-pdp-q" name="qty" type="number" value="1" min="1" max="9" step="1" inputmode="numeric">' +
+    "</span>" +
+    '<button class="st-pdp-add" type="submit">' + esc(d.bar[3]) + "</button>" +
+    "</form>";
+
   const freight = d.freight
     .map(
       (r) =>
@@ -1216,35 +1561,29 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     )
     .join("");
 
-  const spec = d.spec
-    .map(
-      (row) =>
-        '<div class="st-pdp-srow"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>",
-    )
-    .join("");
-
   return (
     '<section class="st-pdp">' +
     '<div class="st-pdp-in">' +
 
     '<div class="st-pdp-grid">' +
-    // --- gallery: one large frame + a detail strip ---
+    // --- gallery: a STACK of large frames, which is what the source does.
+    // A big frame over a strip of three small ones puts the product at
+    // thumbnail size three times; a stack shows it three times at a size
+    // worth looking at, and the buy column scrolls alongside.
     '<div class="st-pdp-gallery">' +
-    '<figure class="st-pdp-frame">' + shot(ctx) +
+    '<figure class="st-pdp-frame">' + shot(ctx, 0) +
     '<figcaption class="st-pdp-cap">Vizualizacija — fotografije v pripravi</figcaption>' +
     "</figure>" +
-    // Decorative: three empty frames carry no information a reader needs.
-    '<div class="st-pdp-thumbs" aria-hidden="true">' +
-    '<span class="st-pdp-thumb">' + shot(ctx, 0) + "</span>" +
-    '<span class="st-pdp-thumb">' + shot(ctx, 1) + "</span>" +
-    '<span class="st-pdp-thumb">' + shot(ctx, 2) + "</span>" +
-    "</div></div>" +
+    '<span class="st-pdp-frame" aria-hidden="true">' + shot(ctx, 1) + "</span>" +
+    '<span class="st-pdp-frame" aria-hidden="true">' + shot(ctx, 2) + "</span>" +
+    "</div>" +
 
     // --- buy column ---
     '<div class="st-pdp-buy">' +
     '<p class="st-pdp-eyebrow">' + esc(d.eyebrow) + "</p>" +
     '<h1 class="st-pdp-title">' + esc(d.title) + "</h1>" +
-    '<p class="st-pdp-sub">' + esc(d.sub) + "</p>" +
+    // Price directly under the title, as the source has it. It used to sit
+    // below the paragraph, which buried the one number the page is about.
     '<p class="st-pdp-price">' +
     // The struck price's only cue is the line through it, and most screen
     // readers announce neither <s> nor text-decoration — so the row would read
@@ -1259,6 +1598,10 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       : "") +
     '<span class="st-pdp-vat">z DDV</span>' +
     "</p>" +
+    '<p class="st-pdp-sub">' + esc(d.sub) + "</p>" +
+    finishes +
+    buy +
+    assure +
     (cfg
       ? '<div class="st-pdp-cfg">' + cfg + "</div>" +
         '<p class="st-pdp-cfg-note">Prikazana je izbrana konfiguracija. ' +
@@ -1267,6 +1610,7 @@ export function renderStudioPdp(ctx: RenderCtx): string {
         esc(ctx.phoneDisplay) + "</a>.</p>"
       : "") +
     addons +
+    panels +
     '<section class="st-pdp-freight" aria-labelledby="st-pdp-fh">' +
     '<h2 class="st-pdp-glabel" id="st-pdp-fh">Dostava in montaža</h2>' +
     '<dl class="st-pdp-frows">' + freight + "</dl>" +
@@ -1274,14 +1618,10 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     "</section>" +
     "</div></div>" +
 
-    // --- spec: heading left, hairline-ruled definition list right ---
-    '<div class="st-pdp-spec">' +
-    '<div><p class="st-pdp-eyebrow">Specifikacija</p>' +
-    '<h2 class="st-pdp-spec-h">Tehnični podatki</h2></div>' +
-    '<dl class="st-pdp-spec-table">' + spec + "</dl>" +
     "</div>" +
-
-    "</div>" +
+    // --- the rest of the range, as the source's "you may also like" ---
+    renderStudioTestimonials(ctx) +
+    alsoLike(ctx) +
 
     // --- §4.1 chrome band as the sticky buy bar ---
     // The CTA goes to the cart route, which is what its label says (bar[3]);

@@ -2,7 +2,9 @@ import type { PdpContent, ProductCard, ShopContent } from "./types";
 import type { PolaModel } from "../catalog/pola";
 import { catalogPricingReady } from "../catalog/pricing";
 import {
+  CABINET_FINISHES,
   POLA_MODELS,
+  SHELL_FINISHES,
   addonPrice,
   addonPriceCents,
   footprint,
@@ -104,6 +106,50 @@ function pdpFor(m: PolaModel): PdpContent {
       group: x.group,
       ...(x.qty ? { qty: x.qty } : {}),
     })),
+    // The assurance row. Every one of these is something the shop already
+    // promises elsewhere on the site — none of it is new copy invented to
+    // fill four boxes.
+    assure: [
+      ["Dostava po vsej Sloveniji", "z ekipo in opremo za prenos"],
+      ["14 dni za vračilo", "zakonska pravica ob nakupu na daljavo"],
+      ["Ogled pred dostavo", "brezplačno preverimo dostop in elektriko"],
+      ["Servis in rezervni deli", "lastna servisna mreža"],
+    ],
+    panels: [
+      [
+        "Opis izdelka",
+        "Akrilna školjka " +
+          footprint(m) +
+          " z izolacijo 2 cm, aluminijast nosilni okvir in PS obloga. " +
+          "Krmilnik Balboa BP200 G2+ s " +
+          m.topside +
+          " in grelcem 3 kW, ozon in podvodna osvetlitev so del osnovne opreme.",
+      ],
+      [
+        "Barve školjke in obloge",
+        "Školjka: " + SHELL_FINISHES.join(" · ") +
+          ". Obloga: " + CABINET_FINISHES.join(" · ") +
+          ". Vsak model je na voljo v sedmih barvah školjke — katerih sedmih, " +
+          "potrdimo ob naročilu.",
+      ],
+      [
+        "Mere in teža",
+        footprint(m) + ", višina " + m.mm[2] / 10 + " cm. Prazen tehta " +
+          m.dryKg + " kg, napolnjen " + m.filledKg +
+          " kg — nosilnost terase preverimo pred dostavo.",
+      ],
+      [
+        "Dostava in montaža",
+        "Bazen pripeljemo, postavimo, priklopimo in zaženemo. Pred dostavo " +
+          "brezplačno preverimo dostop, podlago in električni priklop. " +
+          "Cenik logistike: razred pallet_xl, cona SI.",
+      ],
+      [
+        "Garancija",
+        "2–5 let, odvisno od sklopa. Rezervni deli in servis prek naše mreže.",
+      ],
+    ],
+    finishes: [...SHELL_FINISHES],
     // Every figure on this page is a provisional conversion of the supplier's
     // cost until COST_INPUTS is set. The page shows them; the structured data
     // does not.
