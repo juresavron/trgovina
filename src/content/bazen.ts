@@ -531,11 +531,11 @@ const collections: Collection[] = [
     navLabel: "Swim spa",
     h1: "Swim spa bazeni",
     intro:
-      "Bazeni od 390 do 580 cm, v katerih se plava na mestu. Daljša školjka " +
+      "Bazeni od 450 do 580 cm, v katerih se plava na mestu. Daljša školjka " +
       "pomeni pravo plavanje, ne le močnejšega toka — in ob njem sedežni del " +
       "za sprostitev po treningu.",
     metaDescription:
-      "Swim spa bazeni od 390 do 580 cm za plavanje na mestu in sprostitev. " +
+      "Swim spa bazeni od 450 do 580 cm za plavanje na mestu in sprostitev. " +
       "Akrilna školjka, ogrevanje in filtracija, dostava in zagon po Sloveniji.",
     products: swimSpas,
   },

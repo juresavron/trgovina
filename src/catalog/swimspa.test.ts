@@ -11,6 +11,7 @@ import {
   ZR7807_DUAL_ZONE_CONFIRMED,
 } from "./swimspa";
 import { OFFERED_MODELS } from "./pola";
+import { OWN_MEDIA } from "../themes/studio/own-media";
 
 /**
  * The catalogue is a TRANSCRIPTION of a supplier document, and the failure
@@ -76,19 +77,19 @@ describe("swim spa catalogue", () => {
     }
   });
 
-  it("offers the five the owner chose, shortest first", () => {
-    expect(OFFERED_SWIMSPAS.map((m) => m.code)).toEqual([
-      "ZR6801", "ZR7861", "ZR7809", "ZR7807", "ZR7860",
-    ]);
+  it("offers only the models the shop has photographed", () => {
+    expect(OFFERED_SWIMSPAS.map((m) => m.code)).toEqual(["ZR7861", "ZR7809", "ZR7807"]);
     // Shortest first is the ladder a buyer walks, and length is the decision.
     const mm = OFFERED_SWIMSPAS.map((m) => m.mm[0]);
     expect([...mm].sort((x, y) => x - y)).toEqual(mm);
-    expect(swimSpaBySlug("swim-390")?.code).toBe("ZR6801");
+    expect(swimSpaBySlug("swim-450")?.code).toBe("ZR7861");
     // Not offered, so not routable: an unoffered model must 404 rather than
-    // render a page for something the shop does not sell.
-    expect(swimSpaBySlug("swim-580-turbo")).toBeUndefined();
-    // The model ZR7861 displaced.
-    expect(swimSpaBySlug("swim-500")).toBeUndefined();
+    // render a page for something the shop does not sell. Every one of these
+    // was offered at some point today, which is exactly why it is worth
+    // asserting they stopped being reachable when they stopped being sold.
+    for (const gone of ["swim-390", "swim-500", "swim-580-dvojni", "swim-580-turbo"]) {
+      expect(swimSpaBySlug(gone), gone).toBeUndefined();
+    }
   });
 
   it("never badges a model the shop does not sell", () => {
@@ -113,11 +114,11 @@ describe("swim spa catalogue", () => {
   });
 
   it("keeps the offered ladder ordered by length, then by price", () => {
-    // Length first, because that is what this category is bought on. Three
-    // of the five share 5.80 m, so price breaks the tie — cheaper first,
-    // which is the direction a buyer reads a ladder in.
+    // Length first, because that is what this category is bought on. Two of
+    // the three share 5.80 m, so price breaks the tie — cheaper first, which
+    // is the direction a buyer reads a ladder in.
     const mm = OFFERED_SWIMSPAS.map((m) => m.mm[0]);
-    expect(mm).toEqual([3900, 4500, 5800, 5800, 5800]);
+    expect(mm).toEqual([4500, 5800, 5800]);
     expect([...mm].sort((a, b) => a - b)).toEqual(mm);
     const long = OFFERED_SWIMSPAS.filter((m) => m.mm[0] === 5800).map((m) => m.fobUsd);
     expect([...long].sort((a, b) => a - b)).toEqual(long);
@@ -144,6 +145,16 @@ describe("swim spa catalogue", () => {
     // in the category and therefore the worst one to guess at.
     expect(ZR7860_DUAL_ZONE_CONFIRMED).toBe(false);
     expect(ZR7807_DUAL_ZONE_CONFIRMED).toBe(false);
+  });
+
+  it("keeps a photograph behind every offered model", () => {
+    // The range narrowed to exactly the models the shop has shot. That is not
+    // a coincidence to be re-derived later: a swim spa card with a drawing on
+    // it, next to three carrying real photographs, reads as the one nobody
+    // has actually got.
+    for (const m of OFFERED_SWIMSPAS) {
+      expect(OWN_MEDIA["bazen/" + m.slug]?.length ?? 0, m.code).toBeGreaterThan(0);
+    }
   });
 
   it("does not advertise a counter-current jet the range cannot deliver", () => {
