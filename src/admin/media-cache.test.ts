@@ -54,6 +54,9 @@ describe("media aliases", () => {
     for (const [clean, key] of Object.entries(MEDIA_ALIASES)) {
       expect(aliasTarget(clean), clean).toBe(key);
     }
+    expect(aliasTarget("hero-banner.jpeg")).toBe(
+      "Generated Image August 25, 2026 - 5_41PM Large.jpeg",
+    );
     expect(aliasTarget("kategorija-masazni-bazeni.jpeg")).toBe(
       "Generated Image August 25, 2026 - 6_06PM Large.jpeg",
     );
