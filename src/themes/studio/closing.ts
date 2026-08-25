@@ -54,7 +54,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import { ROOMS, SCENES, decorativeImg, pick } from "./media";
+import { OWN_PHOTOS, decorativeImg, pick } from "./media";
 
 export const STUDIO_CLOSING_CSS = `
   /* ---- Geometry the source measures that tokens.ts does not carry ---- */
@@ -394,16 +394,23 @@ function socialIdentity(ctx: RenderCtx): { handle: string; href: string; cta: st
  * the viewport, which puts it last in the tab order too — the strip's control
  * first, then the card's link, matching the visual order down the band.
  *
- * Six tiles, three rooms and three scenes, seeded per shop AND per index so
- * the set is stable across renders (a strip that reshuffles on reload looks
- * broken) and two shops on this theme do not show the same six pictures. The
- * group is emitted twice; the clone is aria-hidden, so a screen reader that
- * ignores the empty alts still never meets the set twice.
+ * Six tiles of the shop's OWN product photography, seeded per index so the
+ * set is stable across renders — a strip that reshuffles on reload looks
+ * broken. It used to be three borrowed rooms and three borrowed scenes, which
+ * made the band a furniture mood board under a hot tub shop's handle. Its own
+ * product is both more honest and more interesting.
+ *
+ * Renders nothing at all when the shop has no photography: six empty frames
+ * scrolling past is worse than an absent band.
+ *
+ * The group is emitted twice; the clone is aria-hidden, so a screen reader
+ * that ignores the empty alts still never meets the set twice.
  */
 export function renderStudioSocial(ctx: RenderCtx): string {
   const id = socialIdentity(ctx);
-  const group = [0, 1, 2]
-    .flatMap((i) => [pick(ROOMS, ctx.shop.key, i), pick(SCENES, ctx.shop.key, i)])
+  if (OWN_PHOTOS.length === 0) return "";
+  const group = [0, 1, 2, 3, 4, 5]
+    .map((i) => pick(OWN_PHOTOS, ctx.shop.key, i))
     .map((m) => decorativeImg(m, "st-soc-img", TILE_SIZES))
     .join("");
 
@@ -450,15 +457,16 @@ export function renderStudioSocial(ctx: RenderCtx): string {
  * its edge against the scrim is 9.1:1 in the worst case — well past the 3:1
  * that WCAG 1.4.11 asks of a control boundary.
  *
- * Offset 3 into SCENES is the one the strip above does not take (it uses 0, 1
- * and 2), and pick() is (hash + offset) % 4 — so for EVERY shop these two
- * closing bands land on different photographs. The alternative is the same
- * picture twice within one screen of scrolling, which reads as a bug.
+ * NO PHOTOGRAPH. This was a full-bleed borrowed scene under a scrim. The
+ * scrim was already carrying the contrast on its own — it is what the 9.1:1
+ * above is measured against — so removing the picture leaves the band exactly
+ * as legible and lets it read as what it is: a dark panel with an invitation
+ * on it. The shop's own photography is studio shots on white, which is the
+ * one thing that cannot go behind white type.
  */
 export function renderStudioMembership(ctx: RenderCtx): string {
   return (
     '<section class="st-mem" aria-labelledby="st-mem-h">' +
-    decorativeImg(pick(SCENES, ctx.shop.key, 3), "st-mem-photo", "100vw") +
     '<span class="st-mem-scrim" aria-hidden="true"></span>' +
     '<div class="st-mem-in">' +
     '<h2 class="st-mem-h" id="st-mem-h">Pomagamo vam izbrati ' +

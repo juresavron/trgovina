@@ -65,9 +65,32 @@ function audit(html: string): string[] {
 
   // Every image reserves its box, or it moves the layout as it decodes —
   // the CLS budget in docs/SEO.md §4 is a gate.
+  //
+  // ONE NARROW EXEMPTION: photographs served from Supabase through /media/.
+  // The build cannot reach that bucket to measure them, and the alternative
+  // to omitting the attributes is inventing them — an <img> declaring an
+  // aspect ratio its pixels do not have is worse than one declaring none,
+  // because the browser BELIEVES it and lays out against the wrong box.
+  //
+  // What actually keeps CLS at zero for these is that every frame painting
+  // one sets its own aspect-ratio and sizes the image to 100%
+  // (.st-pdp-frame 1/1, .st-shot var(--studio-pdp-frame-ar), .st-soc-img a
+  // fixed tile, .st-imp-tile its own ratio). The exemption is therefore a
+  // statement about those frames, and it expires the moment a /media/ image
+  // is dropped into a slot without one.
+  //
+  // It also expires on its own the moment the photographs go through /admin
+  // instead of the Supabase dashboard: that path converts to WebP, writes a
+  // width ladder and records the dimensions, so the attributes come back and
+  // this branch stops being reached.
+  const unmeasured = /\bsrc="\/media\//;
   for (const m of body.matchAll(/<img\b([^>]*)>/g)) {
     const a = m[1]!;
-    if (!/\bwidth=/.test(a) || !/\bheight=/.test(a)) {
+    // Only the DIMENSION check is exempt. `continue` here would also excuse
+    // these from the alt check below, which is the opposite of what is wanted:
+    // these are the photographs of the goods, so they are the images whose alt
+    // text matters most.
+    if (!unmeasured.test(a) && (!/\bwidth=/.test(a) || !/\bheight=/.test(a))) {
       problems.push("img without width/height: " + a.slice(0, 70));
     }
     if (!/\balt=/.test(a)) problems.push("img without alt: " + a.slice(0, 70));

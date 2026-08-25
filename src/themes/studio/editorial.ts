@@ -73,7 +73,7 @@
 import { esc, type RenderCtx } from "../../render/sections";
 import { statValue } from "./stat";
 import { arrowIcon } from "./icons";
-import { MOTIF_EYE, PORTRAITS, ROOMS, decorativeImg, pick } from "./media";
+import { OWN_PHOTOS, decorativeImg, pick } from "./media";
 
 export const STUDIO_EDITORIAL_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ----
@@ -231,6 +231,23 @@ export const STUDIO_EDITORIAL_CSS = `
     inline-size: 100%;
     block-size: 100%;
     object-fit: cover;
+  }
+  /* The LABELLED tile is the exception, and it has to be.
+   *
+   * .st-imp-label is pinned to the tile's bottom edge, and this photo fills
+   * the tile — so a full-bleed picture here prints "Ogled lokacije" straight
+   * across the middle of a hot tub. The grey mass this replaced never
+   * collided with it because it stopped 22% short of the bottom; the photo
+   * takes exactly that box back.
+   *
+   * object-fit is contain rather than cover, because the shop's photography
+   * is studio cutouts on white: cover would crop a centred product against
+   * its own empty background and cut the tub in half to do it. */
+  :root[data-theme="studio"] .st-imp-quiet .st-imp-photo {
+    inset: 10% 12% 30%;
+    inline-size: auto;
+    block-size: auto;
+    object-fit: contain;
   }
 
   /* Label bottom-LEFT on the quiet tile (§4.9). */
@@ -930,7 +947,24 @@ export const STUDIO_EDITORIAL_CSS = `
  * Decorative throughout — a screen reader gets the tile's text, never the
  * furniture standing in for a photograph.
  */
-function tileShot(): string {
+/**
+ * A tile's picture: the shop's own photograph, or the grey mass and its floor
+ * shadow as a last resort.
+ *
+ * The mass was the ONLY thing here, and it is exactly what product-art.ts was
+ * written to get rid of — "a rounded rectangle at 12% opacity with a soft
+ * shadow under it, which is to say, an empty grey box". It survived in this
+ * band because the band predates the photography. With the borrowed imagery
+ * gone it stopped being one placeholder among many and became the largest
+ * grey slab on the page, directly under a heading asking why customers choose
+ * this shop.
+ *
+ * `offset` keeps two tiles in one band off the same picture.
+ */
+function tileShot(ctx: RenderCtx, offset: number, cls: string, sizes: string): string {
+  if (OWN_PHOTOS.length > 0) {
+    return decorativeImg(pick(OWN_PHOTOS, ctx.shop.key, offset), cls, sizes);
+  }
   return (
     '<span class="st-imp-mass" aria-hidden="true"></span>' +
     '<span class="st-imp-floor" aria-hidden="true"></span>'
@@ -961,29 +995,30 @@ export function renderStudioImpact(ctx: RenderCtx): string {
 
   const quiet =
     '<div class="st-imp-tile st-imp-quiet">' +
-    tileShot() +
+    tileShot(ctx, 13, "st-imp-photo", "(max-width: 860px) 92vw, 30vw") +
     (label
       ? '<div class="st-imp-label"><h3 class="st-imp-t">' + esc(label[0]) + "</h3>" +
         '<p class="st-imp-p">' + esc(label[1]) + "</p></div>"
       : "") +
     "</div>";
 
-  // The hero tile carries no label by design — the crop is the content. It is
-  // also a PRODUCT slot, so it keeps the drawn placeholder while its
-  // neighbour takes a real photograph: see the media note in the header.
-  const hero = '<div class="st-imp-tile st-imp-hero">' + tileShot() + "</div>";
+  // The hero tile carries no label by design — the crop is the content, so it
+  // is the one tile that genuinely needs a picture rather than tolerating one.
+  const hero =
+    '<div class="st-imp-tile st-imp-hero">' +
+    tileShot(ctx, 2, "st-imp-photo", "(max-width: 860px) 92vw, 38vw") +
+    "</div>";
 
-  // §4.9's third tile is a room interior with the stat over it. Atmosphere,
-  // not the product, so the bundle's photography is legitimate here. Offset 3
-  // is the one ROOMS entry the three guide cards below (offsets 0–2) cannot
-  // take, so the same picture never appears twice on one page.
+  // §4.9's third tile carried a borrowed room interior with the stat over it.
+  // It now carries one of the shop's own photographs, or none — offset 9 so
+  // it does not collide with the six the social strip takes. The stat still
+  // reads either way: it sits on its own panel, not on the picture.
+  const roomPhoto = OWN_PHOTOS.length > 0 ? pick(OWN_PHOTOS, ctx.shop.key, 9) : undefined;
   const room =
     '<div class="st-imp-tile">' +
-    decorativeImg(
-      pick(ROOMS, ctx.shop.key, 3),
-      "st-imp-photo",
-      "(max-width: 860px) 92vw, 30vw",
-    ) +
+    (roomPhoto
+      ? decorativeImg(roomPhoto, "st-imp-photo", "(max-width: 860px) 92vw, 30vw")
+      : "") +
     (stat
       ? '<div class="st-imp-stat">' +
         '<span class="st-imp-v">' + statValue(stat[0]) + "</span>" +
@@ -1010,11 +1045,12 @@ export function renderStudioImpact(ctx: RenderCtx): string {
  * decorative: the wrapper is aria-hidden and so is the image inside it.
  */
 function motif(): string {
-  return (
-    '<span class="st-tst-mark" aria-hidden="true">' +
-    decorativeImg(MOTIF_EYE, "st-tst-eye", "(max-width: 809px) 110vw, 760px") +
-    "</span>"
-  );
+  // The eye was a raster from the source theme's bundle, painted large and
+  // faint behind the testimonial band. It went with the rest of the borrowed
+  // imagery. Two earlier passes tried to DRAW it and both were approximations
+  // of a file we had; drawing it now would be approximating a file we no
+  // longer have any right to. The band carries itself on type.
+  return "";
 }
 
 /**
@@ -1037,21 +1073,16 @@ function motif(): string {
  * module would put the curation in two places and quietly disagree with the
  * launch gate that reads the same list.
  */
-function portrait(ctx: RenderCtx, i: number): string {
-  return (
-    '<div class="st-tst-portrait" aria-hidden="true">' +
-    decorativeImg(
-      pick(PORTRAITS, ctx.shop.key, i),
-      "st-tst-photo",
-      // The frame is clamp(120px, 21vw, 420px) and nothing overrides it, so
-      // these are that clamp restated: 21vw clears the 120px floor above
-      // 571px and meets the 420px cap at 2000px. The old value declared a
-      // flat 420px, which at 1440px asked for a rung 39% wider than the
-      // 302px the frame actually paints.
-      "(max-width: 571px) 120px, (max-width: 2000px) 21vw, 420px",
-    ) +
-    "</div>"
-  );
+function portrait(_ctx: RenderCtx, _i: number): string {
+  // These were stock portraits standing in for customers next to placeholder
+  // testimonials. A face is the strongest truth claim a review can carry, and
+  // this one would have been a stranger's, attached to words nobody said. It
+  // is the single worst image on the page to borrow, and it is gone.
+  //
+  // Kept as a function rather than deleted at the call sites: real reviews
+  // will bring real photographs through the same slot, and the caller's
+  // layout does not change.
+  return "";
 }
 
 /**
@@ -1192,14 +1223,11 @@ export function renderStudioGuides(ctx: RenderCtx): string {
       .map(
         (g, i) =>
           '<a class="st-gd-card" href="' + href + '">' +
-          // Atmosphere, not the product: a room interior beside a buying guide
-          // claims nothing about what is for sale. Seeded by shop AND index so
-          // three cards differ and two shops do not land on the same set.
-          decorativeImg(
-            pick(ROOMS, ctx.shop.key, i),
-            "st-gd-photo",
-            "(max-width: 809px) 92vw, (max-width: 1199px) 46vw, 30vw",
-          ) +
+          // No photograph. These were borrowed room interiors, argued for as
+          // atmosphere beside a buying guide. The argument was fine and the
+          // render was a furniture catalogue. The scrim below already carries
+          // the copy, so the card works as a coloured panel with a chip and a
+          // title — which is what a guide card is anyway.
           // ONE scrim. There were two identical spans here, which quietly
           // doubled the gradient and made the declared stops a fiction; the
           // stops in the stylesheet now carry the copy on their own.

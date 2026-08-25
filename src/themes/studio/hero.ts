@@ -46,7 +46,7 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { discWatermark } from "./icons";
-import { SCENES, SHOP_HERO, decorativeImg, pick } from "./media";
+import { SHOP_HERO, decorativeImg } from "./media";
 import { productArt } from "./product-art";
 
 export const STUDIO_HERO_CSS = `
@@ -777,11 +777,16 @@ function markSvg(mark: string): string {
  */
 export function renderStudioHero(ctx: RenderCtx): string {
   const c = ctx.content;
-  // The shop's own photograph where one exists, a borrowed room otherwise.
-  // Which it is decides whether the frame carries "simbolična fotografija":
-  // a picture of the actual product is not symbolic of anything.
-  const own = SHOP_HERO[ctx.shop.key];
-  const photo = own ?? pick(SCENES, ctx.shop.key);
+  // The shop's own photograph, or NOTHING. There used to be a fallback to a
+  // borrowed room here, which is how this shop spent a day opening on a
+  // sideboard and a vase of flowers. A hero with no picture is a hero that
+  // looks unfinished; a hero with someone else's furniture on it looks
+  // finished and is wrong, and the second failure is much harder to notice.
+  //
+  // With no photograph the veil paints on the section's own dark ground and
+  // the wordmark carries the frame alone, which is a legitimate thing for
+  // this theme to do — it is a typographic design first.
+  const photo = SHOP_HERO[ctx.shop.key];
 
   // Uppercase through the shop's own locale: Slovenian casing is not the
   // default one, and a wordmark is the last place to get a letter wrong.
@@ -792,7 +797,7 @@ export function renderStudioHero(ctx: RenderCtx): string {
     // The LCP element. Eager and high priority: it is the largest thing on the
     // page and the one the score is measured against, so a lazy hint here
     // would be actively wrong.
-    eager(decorativeImg(photo, "st-hero-bg", "100vw")) +
+    (photo ? eager(decorativeImg(photo, "st-hero-bg", "100vw")) : "") +
     '<span class="st-hero-veil" aria-hidden="true"></span>' +
 
     // Fit-to-width wordmark.
@@ -832,7 +837,9 @@ export function renderStudioHero(ctx: RenderCtx): string {
     // Bottom-right, out of the reading path but on the same frame as the
     // photograph it qualifies — and absent entirely once the photograph is
     // the shop's own.
-    (own ? "" : '<span class="st-hero-cap">simbolična fotografija</span>') +
+    // No caption. It existed to mark a borrowed room as symbolic; the only
+    // photographs left are the shop's own, which are not symbolic of
+    // anything.
     "</section>"
   );
 }
