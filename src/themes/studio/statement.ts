@@ -394,14 +394,16 @@ export const STUDIO_STATEMENT_CSS = `
    * Nothing narrower earns its keep: at 860 the paragraph goes to three
    * lines whose middle is a single word between two rings.
    *
-   * text-wrap: balance is the other half. Blink balances any block of six
-   * lines or fewer, so it reaches this paragraph at every tier, and it is
-   * what pulls the phone rag straight — 390 goes from 301/177/272 to
-   * 264/214/272, and at 320 it lifts "ga mi." off a 73px last line. It is
-   * an ENHANCEMENT, not the fix: where it is not implemented the cap alone
-   * still yields the same two lines at the desktop tier, which is the order
-   * these two declarations have to work in. pretty, which this was, only
-   * guards the last line; it cannot even out the first. */
+   * text-wrap: balance is the other half, and it does engage — every number
+   * here was read off line boxes with it on and with it off. Blink balances
+   * any block of six lines or fewer, which is every tier this paragraph has.
+   * At 1440 it trades 987/548 for 909/626; at 390 it trades 307/179/274 for
+   * 269/218/274; at 320 it pulls "ga" down so the last line is 111px instead
+   * of 75. It is an ENHANCEMENT and not the fix, which is the order these two
+   * declarations have to work in: where balance is not implemented the cap
+   * alone still gives two full lines at the desktop tier, never the old line
+   * and a scrap. pretty, which this was, only guards the last line — it
+   * cannot even out the first, and at 1296 it did not. */
   :root[data-theme="studio"] .st-claim {
     /* The Ø64px ring, expressed as the source's own ratio against the 48px
      * statement it punctuates (64/48). An em, not a clamp: the ring then
@@ -484,8 +486,7 @@ export const STUDIO_STATEMENT_CSS = `
    *
    * The spaces stay real spaces, so a ring keeps a break opportunity on both
    * sides and can start or end a line rather than welding itself to a word.
-   * The ONE exception is the closing ring, which renderStudioStats binds to
-   * the last word with a non-breaking space — the reasoning is there. */
+   * The ONE exception is the closing ring — see .st-claim-end below. */
   :root[data-theme="studio"] .st-claim-ico {
     display: inline-flex;
     align-items: center;
@@ -507,6 +508,28 @@ export const STUDIO_STATEMENT_CSS = `
     inline-size: 50%;
     block-size: 50%;
   }
+
+  /* The claim's last word and the ring that closes the sentence, bound into
+   * one unbreakable run.
+   *
+   * That ring is the only one that can end up alone. Every other ring has
+   * words behind it, but this one ends the paragraph, so the single break
+   * opportunity in front of it puts it on a line of its own at the foot of
+   * the block — a stray circle under the sentence, which is the exact kind of
+   * cheapness this band is being polished out of. It is not hypothetical:
+   * measured at 320px with the balancer turned off, the last line was 32px
+   * wide and held nothing but the ring.
+   *
+   * A non-breaking space in front of it does NOT prevent that, which is worth
+   * writing down because it is the obvious fix and it fails. Blink treats an
+   * atomic inline box as a break opportunity in its own right and breaks
+   * before the ring whatever the space in front of it is — measured, with the
+   * entity in place. Only a wrapper that forbids breaking holds it. The
+   * wrapper takes the LAST WORD and the ring and nothing else, so the clause
+   * still wraps freely everywhere else: at the 320px floor the bound run is
+   * 75px against a 270px measure, so binding it cannot overflow, and it stays
+   * the widest unbreakable thing in the paragraph at every tier. */
+  :root[data-theme="studio"] .st-claim-end { white-space: nowrap; }
 
   /* Stat row. The source shows three columns spread across the band; ours
    * shows four because every shop's content ships four figures and dropping
@@ -625,7 +648,20 @@ export const STUDIO_STATEMENT_CSS = `
      * would read twice as heavy as the 64px ring does on a desktop. Dropping
      * to the hairline weight holds the ring's ~32:1 proportion. */
     :root[data-theme="studio"] .st-claim-ico { border-width: var(--bw-line); }
-    :root[data-theme="studio"] .st-stat-row { margin-top: var(--gap-xl); }
+    /* The 2-up grid's own row gap comes down from 64px to the 40px that
+     * separates the whole block from the claim. At 64 the two rows of figures
+     * stood further apart than the block stood from the paragraph above it —
+     * a group whose internal rhythm out-measures the rhythm separating it from
+     * its neighbour, which is backwards, and on a 390px screen it read as two
+     * pairs of figures rather than one row folded in half. (64px is the
+     * desktop tier's value, where it is inert: one row, and 100px of air above
+     * it.) Nothing tighter survives a look — at --gap-lg the second row's
+     * numerals crowd the caption above them, which sits only 12px under its
+     * own figure and would start to look like a label for the wrong number. */
+    :root[data-theme="studio"] .st-stat-row {
+      margin-top: var(--gap-xl);
+      row-gap: var(--gap-xl);
+    }
   }
 
   /* ---- Motion ---- */
@@ -757,13 +793,13 @@ const CLAIM_RINGS: readonly GlyphKey[] = ["cabin", "drop", "temp"];
  * sentence with an ordinary space and may start or end a line as the wrap
  * falls; the last one may not, because the one place it can land alone is the
  * bottom of the paragraph, where a lone circle on its own line stops reading
- * as punctuation and starts reading as a stray asset. A non-breaking space in
- * front of it removes that single break opportunity — no wrapper element, no
- * class, nothing for the CSS to keep in sync, and it survives whatever wrap
- * strategy the engine uses. It costs one break opportunity out of eight, so
- * the widest unbreakable unit in the paragraph becomes the last word plus the
- * ring: 73px at the 320px floor, against a 270px measure. Checked at 320 —
- * no overflow, document scrollWidth still 320.
+ * as punctuation and starts reading as a stray asset. So the sentence's last
+ * word is lifted out of the clause and re-set inside .st-claim-end together
+ * with the ring — the CSS explains why a non-breaking space, the shorter fix,
+ * does not hold. Only the last word moves: the clause span still wraps the
+ * whole clause, the reader still gets one uninterrupted sentence, and the
+ * bound run is 75px at the 320px floor against a 270px measure, so it cannot
+ * overflow. Checked at 320 — document scrollWidth still 320.
  *
  * The section has no heading — the pill is a label, not a rank in the document
  * outline — so it is labelled instead.
@@ -778,11 +814,18 @@ export function renderStudioStats(ctx: RenderCtx): string {
     const ring = CLAIM_RINGS[i];
     if (ring) parts.push(glyph(ring));
   }
-  // The closing ring rides along on the second clause rather than joining the
-  // sentence as its own part: the non-breaking space between them is the whole
-  // point, and parts.join below would put an ordinary one there.
+  // The closing ring rides along INSIDE the second clause rather than joining
+  // the sentence as its own part, bound to the clause's last word so the two
+  // cannot be split across a line break (see .st-claim-end). A one-word clause
+  // simply binds that word; an empty one binds nothing and still closes.
+  const tail = claim[1].trim();
+  const cut = tail.lastIndexOf(" ");
+  const lead = cut < 0 ? "" : tail.slice(0, cut + 1);
+  const last = cut < 0 ? tail : tail.slice(cut + 1);
   parts.push(
-    '<span class="st-claim-acc">' + esc(claim[1]) + "</span>&nbsp;" + glyph("waves"),
+    '<span class="st-claim-acc">' + esc(lead) +
+      '<span class="st-claim-end">' + esc(last) + " " + glyph("waves") + "</span>" +
+      "</span>",
   );
   return (
     '<section class="st-stats" aria-label="Zakaj pri nas"><div class="st-stats-in">' +

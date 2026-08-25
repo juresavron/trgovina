@@ -8,8 +8,10 @@
  *            In the source the card is NOT one of the ticker tiles — it is a
  *            sibling layer, which is why it stays put while the strip moves.
  *            On phone the source shifts it to top:0 / left:22.5% / width:55%.
- *   MEMBER   A full-bleed band on one wide scene photograph under a dark
- *            scrim: h2 heading, one supporting line, one primary button.
+ *   MEMBER   A full-bleed dark panel, one flat opaque token deep: h2 heading,
+ *            one supporting line, one primary button. It was a wide scene
+ *            photograph under a scrim; both are gone, and the band states its
+ *            own colour rather than compositing one.
  *
  * REUSE, NOT A SECOND TICKER. The marquee technique — the doubled track, the
  * st-marquee keyframes, the hover/focus pause and, crucially, the focusable
@@ -68,20 +70,26 @@ export const STUDIO_CLOSING_CSS = `
     --studio-soc-tile: clamp(240px, 30vw, 420px);
     /** The source's floating card: 366px wide. */
     --studio-soc-card: 366px;
-    /* The membership band's height and its scrim.
+    /* The membership band's height floor.
      *
-     * 78% is a computed floor, not a taste call. The worst case for white text
-     * over a dark scrim is a blown-out photograph: at 78% over pure white the
-     * composite ground is #484848, and --on-invert lands at 9.1:1. A real
-     * SCENE is far darker than that, so 4.5:1 holds AT ANY PHOTO — including
-     * the shop photography that replaces these placeholders later, which is
-     * the whole point of fixing the floor rather than the picture.
+     * --studio-mem-scrim is GONE, and the arithmetic that used to stand here
+     * with it. It computed the worst case for white text over a 78% veil on a
+     * blown-out photograph (#484848, 9.1:1) — a number that stopped meaning
+     * anything the day the photograph was deleted. Measured on the page as it
+     * actually renders, the veil was 78% of #151515 over a band already
+     * filled with #151515: it darkened the ground by one 8-bit step, from
+     * rgb(21,21,21) to rgb(20,20,20). Its only real effect was to put the
+     * band on a colour that no token names.
      *
-     * What that same arithmetic rules out: --on-invert-mute on the same ground
-     * is 3.67:1. So the supporting line below is white, and carries its
-     * hierarchy by rung and measure instead of by ink. */
-    --studio-mem-min: clamp(420px, 44vw, 620px);
-    --studio-mem-scrim: color-mix(in srgb, var(--ink-invert) 78%, transparent);
+     * The height floor was sized to hold that photograph — a full-bleed scene
+     * needs height to read as a picture. With no picture it framed 295px of
+     * copy in a 620px band at 1440: 325px of empty dark, more than the copy
+     * itself. The band is now content plus one band's worth of air, and the
+     * floor only stops a short keyword from leaving it a stripe rather than a
+     * panel. Measured, it binds at 1440 (content+padding 482px against a
+     * 490px floor) and at 390 (373px against 380px), and loses to the content
+     * at 1024 (350px) and 320 (400px) — so it is a floor, not the height. */
+    --studio-mem-min: clamp(380px, 34vw, 500px);
   }
 
   /* ================= Social strip ================= */
@@ -272,44 +280,64 @@ export const STUDIO_CLOSING_CSS = `
     }
   }
 
-  /* ================= Membership band ================= */
+  /* ================= Membership band =================
+   *
+   * THE GROUND IS --ink-invert-2, NOT --ink-invert, AND THAT IS THE WHOLE
+   * REASON THIS BAND STILL READS AS A BAND. chrome.ts fills the footer with
+   * --ink-invert, and this section is the last thing above it, so on that
+   * same token the page ends in one continuous 1,300px dark mass (492px of
+   * band and 819px of footer, measured at 1440) with the closing statement
+   * the same colour as the colophon.
+   *
+   * It is worth being exact about what separated them before, because the
+   * answer is an accident and accidents are what this audit is for: sampled
+   * off the rendered page there is a one-pixel rule of rgb(237,237,237)
+   * between the two, and it is not studio's. It comes from the kernel's
+   * element-level footer rule in render/css.ts, which sets border-top
+   * --line-soft for a footer standing on --bg-alt; .st-foot overrides that
+   * background and leaves the border. So the page's closing statement was
+   * being held apart from its colophon by a near-white hairline drawn for a
+   * light footer that studio does not render. That is not a boundary to
+   * depend on.
+   *
+   * --ink-invert-2 is the palette's declared dark-on-dark separation rung
+   * (#2e2e2e, tokens.ts), and the step it makes against the footer measures
+   * 1.34:1 — the same perceptual weight --line carries on white (1.33:1),
+   * which is this theme's own answer to "two surfaces, no rule between them".
+   * The band is now a surface in its own right whether or not the borrowed
+   * hairline survives someone else's pass over the footer.
+   *
+   * That the band could afford to move at all is measured, not assumed. Every
+   * run on it is --on-invert, and white on #2e2e2e is 13.58:1 against a 4.5:1
+   * floor — see .st-mem-h below. The white button keeps its own opaque fill,
+   * so its label is unchanged at 18.26:1 and its edge against the band is
+   * 13.58:1, four times what WCAG 1.4.11 asks of a control boundary.
+   *
+   * THREE RULES USED TO LIVE HERE AND ARE GONE, all of them scaffolding for a
+   * photograph that no longer exists:
+   *
+   *  - .st-mem-photo — the full-bleed <img>. The markup stopped emitting it
+   *    when the borrowed scene was deleted; the CSS stayed, styling nothing.
+   *  - .st-mem-scrim — a 78%-opaque veil of --ink-invert over a band already
+   *    painted --ink-invert. Measured on the rendered page it moved the ground
+   *    by one 8-bit step (rgb(21,21,21) to rgb(20,20,20)) and put the band on
+   *    a colour no token names. A semi-transparent black is a fragile way to
+   *    draw a dark panel: the composite is whatever happens to be behind it.
+   *    An opaque token cannot be wrong about its own colour.
+   *  - position/isolation/overflow here and position/z-index on .st-mem-in —
+   *    the stacking context that ordered photo, scrim and copy. With one
+   *    child left in flow there is nothing to stack, and overflow:hidden on a
+   *    section that no longer bleeds anything past its edge is a clip waiting
+   *    to eat a focus ring. (body carries overflow-x:clip globally, so the
+   *    page's sideways scroll was never this rule's job.) */
   :root[data-theme="studio"] .st-mem {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
     display: grid;
     align-items: center;
     min-block-size: var(--studio-mem-min);
-    padding-block: clamp(56px, 7vw, 130px);
-    /* The ground under the photograph, so the band is never a white gap while
-     * the file is in flight. */
-    background: var(--ink-invert);
-  }
-  /* The photograph fills the band; layout height comes from min-block-size and
-   * the padding, never from the image, so nothing shifts when it lands. */
-  :root[data-theme="studio"] .st-mem-photo {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: cover;
-  }
-  /* One flat scrim across the whole band rather than a gradient. A gradient
-   * would let the photo breathe, and would also mean the copy's contrast
-   * depends on where its column happens to land at a given viewport — the
-   * arithmetic above only holds if the density under the text is fixed. The
-   * cost is real (the photograph reads as texture, not as a picture) and is
-   * the right cost: this imagery is atmosphere, per media.ts. */
-  :root[data-theme="studio"] .st-mem-scrim {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    background: var(--studio-mem-scrim);
+    padding-block: clamp(56px, 6.5vw, 120px);
+    background: var(--ink-invert-2);
   }
   :root[data-theme="studio"] .st-mem-in {
-    position: relative;
-    z-index: 2;
     inline-size: 100%;
     max-inline-size: var(--studio-container);
     margin-inline: auto;
@@ -320,7 +348,17 @@ export const STUDIO_CLOSING_CSS = `
     gap: clamp(14px, 1.6vw, 30px);
     text-align: center;
   }
-  /* A band heading, so the h2 rung (60/50/38) whole. */
+  /* A band heading, so the h2 rung (60/50/38) whole. It is an h2 ELEMENT too:
+   * the hero owns the page's only h1, and this section names itself through
+   * aria-labelledby, so the outline gets one band-level heading and no
+   * invented level.
+   *
+   * --on-invert on --ink-invert-2 is 13.58:1, sampled off the rendered
+   * composite with the brightest-pixel method (scripts/verify-hero-contrast)
+   * rather than computed from the token — the point of that method is that a
+   * token cannot tell you what is actually under a glyph. The measurement is
+   * the same at 1440, 1024, 390 and 320, because the ground is now one flat
+   * opaque fill at every tier instead of a veil over something. */
   :root[data-theme="studio"] .st-mem-h {
     margin: 0;
     max-inline-size: var(--studio-read);
@@ -334,9 +372,17 @@ export const STUDIO_CLOSING_CSS = `
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* The supporting line — the lead rung (20/16/18). White, not
-   * --on-invert-mute: see the scrim's arithmetic above. Its hierarchy comes
-   * from the rung and the narrower measure. */
+  /* The supporting line — the lead rung (20/16/18), also 13.58:1.
+   *
+   * It stays WHITE, and the reason is no longer the one that used to be
+   * written here. Under the old veil --on-invert-mute measured 3.67:1 and was
+   * simply illegal; on --ink-invert-2 it is 5.45:1 and would pass. It is
+   * still not used: 5.45:1 is 21% of headroom over a legal floor for the one
+   * sentence on the page that has to survive a phone in sunlight, and the
+   * hierarchy this line needs is already carried by the rung (20px against
+   * the heading's 60px) and by the measure (--studio-read-narrow, 620px,
+   * against the heading's 863px). Buying a little greyness with most of the
+   * contrast margin is a bad trade at the bottom of a page. */
   :root[data-theme="studio"] .st-mem-p {
     margin: 0;
     max-inline-size: var(--studio-read-narrow);
@@ -347,6 +393,21 @@ export const STUDIO_CLOSING_CSS = `
     line-height: var(--lh-lead);
     color: var(--on-invert);
     text-wrap: pretty;
+  }
+  /* One extra step of remove before the control, and it is the only geometry
+   * this band adds to .st-btn-light.
+   *
+   * The stack was heading / 23px / line / 23px / button at 1440 (measured),
+   * which spaces the page's last call to action exactly like a third line of
+   * copy — it read as part of the sentence rather than as the thing to press.
+   * --gap-sm is the theme's own micro rung (10px, the most-used gap in the
+   * source), so the button sits at 33px where the paragraph sits at 23px:
+   * enough to separate the act from the argument, not enough to detach it.
+   * Nothing else about the control is touched — fill, ink, padding, radius,
+   * hover and focus ring all stay hero.ts's, which is what keeps this button
+   * the same object as the one in the hero and in the social card. */
+  :root[data-theme="studio"] .st-mem-in .st-btn-light {
+    margin-block-start: var(--gap-sm);
   }
 
   /* ---- Motion ----
@@ -496,22 +557,64 @@ export function renderStudioSocial(ctx: RenderCtx): string {
  * on purpose — the six shops' head terms are feminine and masculine, and a
  * "pravo/pravi" in front of the slot would be wrong for half of them.
  *
- * The button reuses .st-btn-light, the theme's on-dark primary (white fill,
- * --ink label): its own opaque surface, so 18.3:1 regardless of the photo, and
- * its edge against the scrim is 9.1:1 in the worst case — well past the 3:1
- * that WCAG 1.4.11 asks of a control boundary.
+ * ONE CONTROL, AND IT IS THE SHOWROOM ON PURPOSE. The obvious challenge to
+ * that is that the shop converts on a phone call or an enquiry, not on a
+ * visit — true, and it is already answered two hundred pixels higher up.
+ * socialIdentity() above sends the social card to routeSlugs["/contact"]
+ * whenever a shop has no profile to link (every shop on the network today
+ * ships socials: {}), so the closing pair as rendered is enquiry, then
+ * showroom: two destinations, no repetition, in that order. Pointing this
+ * button at /contact as well would put the same href in two consecutive
+ * bands, and the second one would be the louder — the page would end by
+ * saying the same thing twice.
  *
- * NO PHOTOGRAPH. This was a full-bleed borrowed scene under a scrim. The
- * scrim was already carrying the contrast on its own — it is what the 9.1:1
- * above is measured against — so removing the picture leaves the band exactly
- * as legible and lets it read as what it is: a dark panel with an invitation
- * on it. The shop's own photography is studio shots on white, which is the
- * one thing that cannot go behind white type.
+ * The showroom is also worth the click on its own terms now. /razstavni-salon
+ * is a written page, not the stub it was when this band was built: it states
+ * that visits are arranged by phone, tells a visitor to bring room dimensions
+ * and a photograph of the access route, and carries the address block. For
+ * goods at €2,400–8,400 that is the trust anchor, which is exactly what
+ * ShopConfig's route table calls it.
+ *
+ * What this band cannot fix by itself is the conditional: the moment a shop
+ * fills in socials, the card above becomes a link to Instagram and the
+ * enquiry leaves the closing region entirely, with this button the only thing
+ * left. That is a decision spanning both renderers, and the social strip is
+ * not this pass's to change — flagged rather than half-done.
+ *
+ * The button reuses .st-btn-light, the theme's on-dark primary (white fill,
+ * --ink label). Every figure below is sampled off the rendered pixels, not
+ * computed from the tokens: the resting label is 18.26:1 on the button's own
+ * opaque white; the button's edge against --ink-invert-2 is 13.58:1, where
+ * WCAG 1.4.11 asks 3:1 of a control boundary; hovered, the fill lands on
+ * rgb(218,218,218) and holds the label at 13.06:1 with the edge still at
+ * 9.71:1; and the focus ring is 2px of white at a 3px offset, so it sits on
+ * the band rather than on the button it is ringing — 13.58:1 against the
+ * ground, with the band showing through the offset as a dark gap that reads
+ * the ring as a ring rather than as a fatter button. The target measures
+ * 293x54 at 1440 and 259x50 at 390 and 320, past the 44px floor at every
+ * tier; at 320 it is 259px inside a 270px content box, which is the width
+ * that decides whether the label can stay on one line.
+ *
+ * NOTHING HERE ANIMATES, so there is no reduced-motion branch to write. The
+ * one transition in play is .st-btn-light's background-color, which hero.ts
+ * already stops under prefers-reduced-motion and which the kernel's global
+ * transition kill in css.ts stops a second time.
+ *
+ * NO PHOTOGRAPH, AND NOW NO SCRIM EITHER. This was a full-bleed borrowed
+ * scene under a 78% veil. The scene was deleted first and the veil was left
+ * behind, at which point it was 78% of --ink-invert over a band already
+ * painted --ink-invert: measured on the page, a one-step shift from
+ * rgb(21,21,21) to rgb(20,20,20), a transparency whose composite depended on
+ * whatever happened to sit underneath it, and a ground that matched no token.
+ * It is gone, and the band states its colour outright. The shop's own
+ * photography is studio cutouts on white, which is the one thing that cannot
+ * go behind white type, so nothing replaces the picture.
  */
 export function renderStudioMembership(ctx: RenderCtx): string {
   return (
+    // No scrim span: the band's ground is a token, so there is nothing to
+    // veil and nothing to veil it with. See the header.
     '<section class="st-mem" aria-labelledby="st-mem-h">' +
-    '<span class="st-mem-scrim" aria-hidden="true"></span>' +
     '<div class="st-mem-in">' +
     '<h2 class="st-mem-h" id="st-mem-h">Pomagamo vam izbrati ' +
     esc(ctx.shop.keyword.accusative) + "</h2>" +

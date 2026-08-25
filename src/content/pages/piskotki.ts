@@ -11,8 +11,30 @@ import type { Page } from "../pages";
  * That is why this page says the site uses no cookies instead of reciting the
  * usual four categories with a consent banner attached. If tracking is ever
  * added, this page and a consent mechanism have to land in the SAME change —
- * ZInfP requires consent before non-essential cookies are set, and a notice
+ * ZEKom-2 requires consent before non-essential cookies are set, and a notice
  * that has drifted from the code is worse than no notice.
+ *
+ * RE-VERIFIED at audit, and here is what was actually run, so the next person
+ * can repeat it rather than trust it:
+ *
+ *   - document.cookie / localStorage / sessionStorage / indexedDB / Set-Cookie
+ *     across src/ and public/ — the only hits are src/admin/session.ts, which
+ *     is the operator's own login and never reached by a shop visitor, and
+ *     this file's own comment.
+ *   - gtag / Google Analytics / GTM / Plausible / Matomo / Fathom / Hotjar /
+ *     Meta pixel / Clarity / Segment — none.
+ *   - every http(s) origin in the shipped source. fonts.googleapis.com and
+ *     fonts.gstatic.com appear only in render/page.ts's fontLinks(), on the
+ *     branch for themes OTHER than studio; this shop is studio, which serves
+ *     its ten faces from /fonts (themes/studio/fonts.ts). deploy-smoke.test.ts
+ *     asserts the shipped page reaches no third-party font origin.
+ *   - the photographs. They look like Supabase but are served same-origin
+ *     through the Worker's /media proxy (themes/studio/own-media.ts), so the
+ *     "no request to a third party" sentence below holds for images too.
+ *
+ * ⚠️ THE SELF-HOSTED-FONT CLAIM IS THEME-DEPENDENT. It is true because this
+ * shop wears studio. A shop on any other theme in THEME_CATALOG would load
+ * Google Fonts and this page would be wrong about it on that shop's domain.
  */
 export const COOKIES: Page = {
   key: "/cookies",
@@ -48,5 +70,12 @@ export const COOKIES: Page = {
       ],
     },
     { kind: "contact", h: "Vprašanja o zasebnosti" },
+    {
+      kind: "cta",
+      h: "Kaj pa osebni podatki",
+      p: "Kdo je upravljavec, kaj obdelujemo, na kateri podlagi in kakšne pravice imate.",
+      label: "Zasebnost",
+      href: "/zasebnost",
+    },
   ],
 };

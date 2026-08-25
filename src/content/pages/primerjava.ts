@@ -7,6 +7,19 @@ import type { Page } from "../pages";
  * identified product — exactly what ZVPot governs. So this page compares the
  * two FAMILIES on the axes a buyer actually chooses between, and sends them to
  * the model pages for figures, which are generated from the transcription.
+ *
+ * WHAT IT DOES CARRY IS MASS, because that is the axis the two families really
+ * differ on and the one a terrace is engineered against: 300–410 kg dry and
+ * 1.500–2.210 kg filled for the three offered hot tubs, 1.050–1.430 kg dry and
+ * 5.750–8.490 kg filled for the three offered swim spas. All six figures are
+ * the supplier's own; none is interpolated. (Three swim spas in the price list
+ * state no mass at all — none of those three is offered, so this table has no
+ * gap to fill and no reason to invent one.)
+ *
+ * AND IT DOES NOT SELL THE FAMILY ON A COUNTER-CURRENT JET. The SWIM 450's
+ * sheet lists none, so "plavanje na mestu" is a per-model property here, not a
+ * family promise — swimSpaFamilyHasSwimJets() returns false and this page has
+ * to agree with it.
  */
 export const COMPARE: Page = {
   key: "/compare",
@@ -22,10 +35,11 @@ export const COMPARE: Page = {
       kind: "facts",
       h: "Masažni bazen proti swim spa bazenu",
       rows: [
-        ["Dolžina", "Masažni bazen 195–230 cm · swim spa 450–580 cm"],
-        ["Namen", "Masažni bazen: sedenje, masaža, sprostitev · Swim spa: plavanje na mestu in sprostitev"],
-        ["Prostor", "Masažni bazen gre na teraso · Swim spa praviloma zahteva vrt in pripravljeno podlago"],
-        ["Teža", "Masažni bazen prazen okoli 300–410 kg · Swim spa bistveno več, glejte stran modela"],
+        ["Mere školjke", "Masažni bazen 195–230 cm v kvadrat · swim spa 450–580 cm v dolžino"],
+        ["Namen", "Masažni bazen: sedenje, masaža, sprostitev · Swim spa: daljša školjka za plavanje in sprostitev"],
+        ["Prostor", "Masažni bazen gre na teraso · Swim spa praviloma zahteva vrt in betonsko ploščo"],
+        ["Teža prazen", "Masažni bazen 300–410 kg · Swim spa 1.050–1.430 kg"],
+        ["Teža napolnjen", "Masažni bazen 1.500–2.210 kg · Swim spa 5.750–8.490 kg"],
         ["Dostava", "Oboje z ekipo in opremo za prenos · Pri swim spa je dostop pogosto odločilen"],
       ],
     },
@@ -35,9 +49,14 @@ export const COMPARE: Page = {
       p: [
         "Pri masažnih bazenih je odločitev najprej prostorska in šele nato o številu sedežev. " +
           "Najmanjši model se umesti tja, kamor večji ne gre; največji ponudi več prostora za " +
-          "iztegnjene noge in več šob. Vse tri mere in specifikacije so na straneh modelov.",
+          "iztegnjene noge in več šob. Večja školjka pa ne pomeni več ljudi: BAZEN 210 sprejme " +
+          "šest oseb z enim ležalnikom, BAZEN 230 pet oseb z dvema. Mere in specifikacije vseh " +
+          "treh modelov so na njihovih straneh.",
         "Pri swim spa bazenih je merilo dolžina — od nje je odvisen občutek plavanja. Daljša " +
           "školjka pomeni tudi večjo maso, večjo količino vode in več zahtev do podlage.",
+        "Protitočne šobe, ki ustvarijo tok za plavanje na mestu, niso enake pri vseh treh " +
+          "modelih — koliko jih ima posamezen model, piše v njegovi specifikaciji. Preverite " +
+          "jo, preden se odločite za plavanje na mestu.",
       ],
     },
     {

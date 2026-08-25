@@ -9,9 +9,28 @@ import type { Page } from "../pages";
  * identifiable controller does not satisfy the article it exists to satisfy.
  *
  * Processing purposes describe what this site actually does today: it takes
- * enquiries by phone and email and serves pages. There is no analytics, no
- * advertising pixel and no third-country transfer, and the notice says so
- * rather than reciting the generic paragraphs for things that are not here.
+ * enquiries by phone and email and serves pages. There is no analytics and no
+ * advertising pixel — re-verified against the codebase, see pages/piskotki.ts
+ * — so the notice says so rather than reciting the generic paragraphs for
+ * things that are not here. There is also no contact form: the storefront's
+ * only <form> is the product page's buy row, which is a GET and carries no
+ * personal data.
+ *
+ * ⚠️ THE ONE CLAIM THAT WAS TOO STRONG WAS "NO THIRD-COUNTRY TRANSFER". The
+ * site runs on Cloudflare Workers and the photographs come from Supabase
+ * through the /media proxy; both are processors that may be reached outside
+ * the EEA, and neither has a data-processing agreement recorded in this repo.
+ * So the notice now states the safeguard (Article 46 — standard contractual
+ * clauses or an adequacy decision) instead of denying that any transfer
+ * happens. Confirm the DPAs and the actual processor list with the owner and
+ * then name them.
+ *
+ * FOUR ARTICLE 13 ITEMS WERE MISSING and are statutory rather than
+ * commercial, so they were added: whether providing the data is obligatory
+ * and what follows if it is not given (13(2)(e)), the absence of automated
+ * decision-making and profiling (13(2)(f)), the transfer safeguard above
+ * (13(1)(f)), and the supervisory authority named with its address on the web
+ * (13(2)(d)).
  */
 export const PRIVACY: Page = {
   key: "/privacy",
@@ -58,8 +77,10 @@ export const PRIVACY: Page = {
       p: [
         "Povpraševanja, iz katerih ne nastane naročilo, hranimo, dokler so za odgovor še " +
           "smiselna, nato jih izbrišemo. Podatke o sklenjenih poslih hranimo, dokler trajajo " +
-          "obveznosti iz pogodbe in garancije. Račune hranimo toliko časa, kolikor zahtevajo " +
-          "davčni predpisi.",
+          "obveznosti iz pogodbe, jamstva za skladnost blaga in garancije. Račune hranimo " +
+          "toliko časa, kolikor zahtevajo davčni predpisi — praviloma deset let.",
+        "Podatke nam daste prostovoljno in vam jih ni treba dati. Brez njih pa ne moremo " +
+          "odgovoriti na povpraševanje, pripraviti ponudbe ali izvesti dostave in montaže.",
       ],
     },
     {
@@ -70,22 +91,34 @@ export const PRIVACY: Page = {
           "računovodskemu servisu za račune, ponudniku financiranja, če se zanj odločite, in " +
           "ponudniku gostovanja spletne strani. Vsak od njih obdeluje podatke po naših navodilih " +
           "in zgolj za navedeni namen.",
-        "Osebnih podatkov ne prodajamo in jih ne uporabljamo za oglaševanje.",
+        "Kadar kakšen od teh ponudnikov podatke obdeluje zunaj Evropskega gospodarskega " +
+          "prostora, to poteka le na podlagi jamstev, ki jih zahteva splošna uredba o varstvu " +
+          "podatkov — na primer standardnih pogodbenih določil ali sklepa o ustreznosti.",
+        "Osebnih podatkov ne prodajamo, ne uporabljamo za oglaševanje in na njihovi podlagi ne " +
+          "izvajamo profiliranja ali avtomatiziranega sprejemanja odločitev.",
       ],
     },
     {
       kind: "prose",
       h: "Pravice, ki jih imate",
       p: [
-        "Do dostopa do svojih podatkov, do popravka netočnih, do izbrisa, do omejitve obdelave, " +
-          "do prenosljivosti in do ugovora zoper obdelavo. Kadar obdelava temelji na privolitvi, " +
-          "jo lahko kadar koli prekličete, ne da bi to vplivalo na zakonitost obdelave pred " +
-          "preklicem.",
+        "Imate pravico do dostopa do svojih podatkov, do popravka netočnih, do izbrisa, do " +
+          "omejitve obdelave, do prenosljivosti in do ugovora zoper obdelavo. Kadar obdelava " +
+          "temelji na privolitvi, jo lahko kadar koli prekličete, ne da bi to vplivalo na " +
+          "zakonitost obdelave pred preklicem.",
         "Zahtevo naslovite na kontakt spodaj; odgovorimo v roku, ki ga določa splošna uredba o " +
-          "varstvu podatkov. Če menite, da so vaše pravice kršene, se lahko pritožite pri " +
-          "Informacijskem pooblaščencu Republike Slovenije.",
+          "varstvu podatkov, torej praviloma v enem mesecu. Če menite, da so vaše pravice " +
+          "kršene, se lahko pritožite pri nadzornem organu — to je Informacijski pooblaščenec " +
+          "Republike Slovenije, www.ip-rs.si.",
       ],
     },
     { kind: "contact", h: "Kam se obrnete" },
+    {
+      kind: "cta",
+      h: "Piškotkov ni",
+      p: "Ta stran ne nalaga piškotkov in ne meri obiska. Kaj to pomeni in kaj se vseeno zabeleži.",
+      label: "Piškotki",
+      href: "/piskotki",
+    },
   ],
 };

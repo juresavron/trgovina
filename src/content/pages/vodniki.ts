@@ -20,10 +20,11 @@ export const GUIDES: Page = {
       kind: "prose",
       h: "Masažni bazen na terasi: kaj preveriti pred nakupom",
       p: [
-        "Prvo vprašanje ni model, ampak podlaga. Poln masažni bazen z ljudmi presega dve toni, " +
-          "swim spa bazen pa je lahko večkratnik tega. Betonska plošča to nosi brez razmisleka; " +
-          "lesena terasa in balkon pa ne nujno, in to je stvar konstrukcije, ne občutka.",
-        "Drugo je pot do lokacije. Merite najožje mesto na poti — vrata, prehod med hišo in " +
+        "Prvo vprašanje ni model, ampak podlaga. Napolnjen masažni bazen tehta od 1.500 do " +
+          "2.210 kilogramov, z ljudmi v njem pa še nekaj sto več; napolnjen swim spa od 5.750 " +
+          "do 8.490 kilogramov. Betonska plošča to nosi brez razmisleka, lesena terasa in " +
+          "balkon pa ne nujno — in to je stvar konstrukcije, ne občutka.",
+        "Drugo je pot do lokacije. Izmerite najožje mesto na poti — vrata, prehod med hišo in " +
           "ograjo, ovinek na stopnišču. Bazen se prenaša postrani, a širina školjke je fizična " +
           "meja, ki se je ne da obiti.",
         "Tretje je elektrika. Bazen potrebuje svoj odklopnik in zaščitno stikalo; koliko " +
@@ -37,14 +38,15 @@ export const GUIDES: Page = {
       kind: "prose",
       h: "Koliko stane masažni bazen: nakup in obratovanje",
       p: [
-        "Nakupna cena je na straneh modelov in vključuje dostavo, priklop in zagon. Kar cena " +
-          "modela ne vključuje, je priprava podlage in elektroinštalacija na vaši strani.",
+        "Nakupna cena modela je na strani vsakega modela; ogled lokacije, zagon in predaja so " +
+          "vključeni, dostavo pa obračunamo po ponudbi, ker je odvisna od lokacije in dostopa. " +
+          "Cena modela ne vključuje priprave podlage in elektroinštalacije na vaši strani.",
         "Pri obratovanju sta glavni postavki ogrevanje in filtracija. Obe sta odvisni od stvari, " +
           "ki jih ne moremo napovedati namesto vas: kako pogosto bazen uporabljate, na kateri " +
           "temperaturi ga držite, kako dobro je pokrit in kakšna je vaša cena elektrike. Zato " +
           "nikjer ne navajamo mesečnega zneska — vsaka taka številka bi bila ugibanje.",
-        "Kar zanesljivo drži: dobro pokrit bazen porabi bistveno manj kot slabo pokrit, in " +
-          "termopokrov je zato prvi in ne zadnji dodatek.",
+        "Kar zanesljivo drži: dobro pokrit bazen porabi bistveno manj kot slabo pokrit, zato je " +
+          "termo pokrov prvi in ne zadnji dodatek.",
       ],
     },
     {
@@ -53,10 +55,10 @@ export const GUIDES: Page = {
       p: [
         "Bazen pozimi dela in se uporablja — to je zanj najboljši letni čas. Voda ostane topla, " +
           "izolacija školjke in pokrov pa opravita večino dela.",
-        "Praznjenje čez zimo je pogosta napaka. Prazen bazen v mrazu je bolj ogrožen kot poln in " +
-          "delujoč, ker v ceveh in črpalkah ostane voda. Če bazena res ne boste uporabljali, " +
-          "mora biti pripravljen za zimo pravilno — povejte nam in vam razložimo postopek za " +
-          "vaš model.",
+        "Praznjenje čez zimo je pogosta napaka. Prazen bazen v mrazu je bolj ogrožen kot poln " +
+          "in delujoč, ker v ceveh in črpalkah ostane voda. Če bazena res ne boste " +
+          "uporabljali, mora biti za zimo pravilno pripravljen — povejte nam, pa vam razložimo " +
+          "postopek za vaš model.",
       ],
     },
     {

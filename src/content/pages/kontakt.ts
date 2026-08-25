@@ -27,9 +27,20 @@ export const CONTACT: Page = {
       items: [
         ["Odgovor", "Na klic in e-pošto odgovorimo v enem delovnem dnevu."],
         ["Ogled lokacije", "Brezplačen. Preverimo dostop, podlago in električni priklop."],
-        ["Ponudba", "Model, dostava, priklop in zagon — vse v eni številki, brez naknadnih postavk."],
+        [
+          "Ponudba",
+          "Model in konfiguracija, dostava, priklop in zagon — vse v eni številki z DDV. " +
+            "Kar v ponudbi piše, je tudi cena posla.",
+        ],
       ],
     },
     { kind: "imprint" },
+    {
+      kind: "cta",
+      h: "Morda je odgovor že tu",
+      p: "Postavitev, poraba, vzdrževanje, dostava in garancija — na enem mestu.",
+      label: "Pogosta vprašanja",
+      href: "/pogosta-vprasanja",
+    },
   ],
 };

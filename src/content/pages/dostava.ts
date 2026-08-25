@@ -6,6 +6,13 @@ import type { Page } from "../pages";
  * paragraph a person planning a delivery day actually needs. Nothing is
  * promised here that the storefront does not already promise — no price, no
  * fixed lead time, because neither is stated anywhere else on the site.
+ *
+ * THE MASSES ARE THE SUPPLIER'S, not a round number that sounded right. The
+ * three offered hot tubs are 300/370/410 kg dry and 1.500/1.870/2.210 kg
+ * filled (catalog/pola.ts); the three offered swim spas are 1.050/1.260/1.430
+ * kg dry and 5.750/7.360/8.490 kg filled (catalog/swimspa.ts). This page is
+ * where a customer decides whether their terrace can take it, so the range is
+ * printed rather than the flagship's single figure.
  */
 export const DELIVERY: Page = {
   key: "/delivery",
@@ -13,9 +20,12 @@ export const DELIVERY: Page = {
   lead:
     "Bazen pripeljemo, prenesemo na mesto, priklopimo in zaženemo. " +
     "Vaša naloga je pripraviti podlago in električni priklop — pri obojem svetujemo vnaprej.",
+  // 148 characters. The five steps are the page's content, not its
+  // description: naming two of them plus the promise says what the visitor
+  // gets without being cut off mid-list in the result.
   metaDescription:
-    "Dostava in montaža masažnega bazena po vsej Sloveniji: ogled lokacije, priprava priklopa, " +
-    "prenos na teraso, zagon filtracije in ogrevanja ter predaja z navodili za vzdrževanje.",
+    "Dostava in montaža masažnega bazena po vsej Sloveniji: brezplačen ogled lokacije, " +
+    "prenos na teraso, priklop in zagon ter predaja z navodili za vzdrževanje.",
   blocks: [
     {
       kind: "steps",
@@ -29,12 +39,13 @@ export const DELIVERY: Page = {
         ],
         [
           "Priprava priklopa",
-          "Dobite pisna navodila za svojega elektrikarja — presek vodnika, odklopnik in zaščitno " +
-            "stikalo za konkreten model. Če elektrikarja nimate, izvedbo prevzame naš partner.",
+          "Dobite pisna navodila za svojega električarja — presek vodnika, odklopnik in " +
+            "zaščitno stikalo za konkreten model. Če električarja nimate, izvedbo prevzame " +
+            "naš partner.",
         ],
         [
           "Dostava na teraso",
-          "Pride ekipa z opremo za prenos. Bazen zna iti tudi čez ograjo ali po stopnicah, " +
+          "Pride ekipa z opremo za prenos. Bazen gre lahko tudi čez ograjo ali po stopnicah, " +
             "če drugače ne gre — kako natanko, se dogovorimo že ob ogledu.",
         ],
         [
@@ -53,10 +64,11 @@ export const DELIVERY: Page = {
       kind: "prose",
       h: "Kaj pripravite vi",
       p: [
-        "Podlago, ki nosi težo polnega bazena. Masažni bazen prazen tehta okoli štiristo " +
-          "kilogramov, poln z ljudmi pa preko dveh ton; swim spa bazeni so bistveno težji. " +
-          "Betonska plošča, tlakovci na pripravljenem nasutju ali ustrezno dimenzionirana terasa " +
-          "so v redu — kaj od tega velja za vašo lokacijo, povemo ob ogledu.",
+        "Podlago, ki nosi težo polnega bazena. Masažni bazen prazen tehta od 300 do 410 " +
+          "kilogramov, napolnjen od 1.500 do 2.210 kilogramov, z ljudmi v njem pa še nekaj sto " +
+          "več; swim spa bazen je napolnjen težak od 5.750 do 8.490 kilogramov. Betonska " +
+          "plošča, tlakovci na pripravljenem nasutju ali ustrezno dimenzionirana terasa so v " +
+          "redu — kaj od tega velja za vašo lokacijo, povemo ob ogledu.",
         "Električni priklop po navodilih, ki jih dobite v drugem koraku, in dostop do vode za " +
           "prvo polnjenje. Nič drugega.",
       ],
@@ -72,10 +84,11 @@ export const DELIVERY: Page = {
         [
           "Kaj pa, če do terase ni poti za voziček?",
           "Zato pridemo na ogled. Ekipa ima opremo za prenos čez ograje in po stopnicah; kadar " +
-            "tudi to ne zadošča, se dogovorimo za dvigalo. To se ugotovi ob ogledu, ne na dan dostave.",
+            "tudi to ne zadošča, se vnaprej dogovorimo za dvig z avtodvigalom. To se ugotovi " +
+            "ob ogledu, ne na dan dostave.",
         ],
         [
-          "Ali morava biti doma?",
+          "Ali moram biti ob dostavi doma?",
           "Da. Ob predaji pokažemo vzdrževanje in skupaj preverimo, da vse dela.",
         ],
         [

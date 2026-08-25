@@ -196,6 +196,114 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
       }
       return out;
     });
+    // ---- contrast ------------------------------------------------------
+    // WCAG 2.1 AA is a legal floor here (EU 2019/882 has applied to
+    // e-commerce since June 2025): 4.5:1 for body text, 3:1 for large text
+    // (>=24px, or >=18.66px bold). So this is a gate, not a preference.
+    //
+    // TWO PASSES, AND THE SECOND ONE IS WHY. The cheap pass composites
+    // background-color up the ancestor chain. It is fast and it is WRONG
+    // wherever the ground is not an ancestor's fill — a positioned scrim
+    // sibling, a gradient, a photograph. It reported the guide-card titles at
+    // 1.14:1, i.e. invisible; measured in pixels they are 5.83:1, because a
+    // .st-gd-scrim sibling paints between the card and the text. A gate that
+    // cries wolf is a gate people learn to skip.
+    //
+    // So the cheap pass only TRIAGES. Anything it suspects is re-measured the
+    // way scripts/verify-hero-contrast.mjs does it: make the text
+    // transparent, screenshot the element, and take the brightest pixel that
+    // remains — which is the actual ground, whatever painted it. The
+    // brightest rather than the average, because a thin light stroke fails on
+    // the one bright pixel it crosses and an average would pass a heading
+    // lying across a window.
+    const suspects = await page.evaluate(() => {
+      const lin = (c) => { const x = c / 255; return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+      const parse = (str) => {
+        const m = /rgba?\(([^)]+)\)/.exec(str);
+        if (!m) return null;
+        const p = m[1].split(/[ ,\/]+/).filter(Boolean).map(Number);
+        return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
+      };
+      const over = (f, b) => ({
+        r: f.r * f.a + b.r * (1 - f.a), g: f.g * f.a + b.g * (1 - f.a),
+        b: f.b * f.a + b.b * (1 - f.a), a: 1,
+      });
+      const out = [];
+      let n = 0;
+      for (const el of document.querySelectorAll("p,h1,h2,h3,h4,h5,h6,a,li,dt,dd,span,summary,blockquote,figcaption,label,button")) {
+        const own = [...el.childNodes].some((x) => x.nodeType === 3 && x.textContent.trim());
+        if (!own) continue;
+        const b = el.getBoundingClientRect();
+        if (b.width < 2 || b.height < 2) continue;
+        const cs = getComputedStyle(el);
+        if (cs.visibility === "hidden" || cs.display === "none" || Number(cs.opacity) === 0) continue;
+        const fg = parse(cs.color);
+        if (!fg || fg.a < 0.99) continue;
+        const px = parseFloat(cs.fontSize);
+        const large = px >= 24 || (Number(cs.fontWeight) >= 700 && px >= 18.66);
+        const floor = large ? 3 : 4.5;
+
+        // TRIAGE. Composite background-color up the ancestors. Where that is
+        // the whole story the answer is exact and cheap. Where it is not — a
+        // positioned sibling scrim, a gradient, a photograph — it is only a
+        // reason to look properly, which is what `verify` marks.
+        let ground = null, verify = false;
+        for (let a = el; a; a = a.parentElement) {
+          const s2 = getComputedStyle(a);
+          if (s2.backgroundImage && s2.backgroundImage !== "none") { verify = true; break; }
+          const c = parse(s2.backgroundColor);
+          if (c && c.a > 0) { ground = ground ? over(ground, c) : c; if (ground.a >= 0.999) break; }
+        }
+        if (!verify) {
+          // An absolutely positioned sibling or an <img> covering this box is
+          // a ground the ancestor walk cannot see. This is the case that
+          // reported the guide titles at 1.14:1 when they measure 5.83:1.
+          for (const ov of document.querySelectorAll("img,[class*='scrim'],[class*='veil'],[class*='wash']")) {
+            if (ov === el || ov.contains(el)) continue;
+            const ob = ov.getBoundingClientRect();
+            if (ob.left <= b.left + 1 && ob.right >= b.right - 1 && ob.top <= b.top + 1 && ob.bottom >= b.bottom - 1) { verify = true; break; }
+          }
+        }
+        const fgLum = 0.2126 * lin(fg.r) + 0.7152 * lin(fg.g) + 0.0722 * lin(fg.b);
+        if (!verify) {
+          if (!ground || ground.a < 0.999) ground = { r: 255, g: 255, b: 255, a: 1 };
+          const gl = 0.2126 * lin(ground.r) + 0.7152 * lin(ground.g) + 0.0722 * lin(ground.b);
+          const ratio = (Math.max(fgLum, gl) + 0.05) / (Math.min(fgLum, gl) + 0.05);
+          if (ratio >= floor) continue;      // clean, and provably so
+          verify = true;                      // suspected — confirm in pixels
+        }
+        const tag = "st-audit-" + n++;
+        el.setAttribute("data-audit", tag);
+        out.push({ tag, label: el.tagName + (el.className ? "." + String(el.className).split(" ")[0] : ""), fgLum, floor, px: Math.round(px) });
+      }
+      return out;
+    });
+    // Confirm every suspect the way scripts/verify-hero-contrast.mjs does:
+    // make the text transparent, screenshot the element, take the brightest
+    // pixel that remains (the darkest, for dark text). That reads the ACTUAL
+    // ground, whatever painted it — scrim, gradient or photograph.
+    if (suspects.length) {
+      await page.addStyleTag({ content: "[data-audit]{color:transparent !important}" });
+      const lin = (c) => { const x = c / 255; return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+      for (const sus of suspects) {
+        let shot;
+        try { shot = await page.locator("[data-audit=\"" + sus.tag + "\"]").first().screenshot({ timeout: 4000 }); }
+        catch { continue; }
+        const { data, info } = await sharp(shot).raw().toBuffer({ resolveWithObject: true });
+        let hi = -1, lo = 2;
+        for (let i = 0; i < data.length; i += info.channels) {
+          const L = 0.2126 * lin(data[i]) + 0.7152 * lin(data[i + 1]) + 0.0722 * lin(data[i + 2]);
+          if (L > hi) hi = L;
+          if (L < lo) lo = L;
+        }
+        const against = sus.fgLum > 0.5 ? hi : lo;
+        const ratio = (Math.max(sus.fgLum, against) + 0.05) / (Math.min(sus.fgLum, against) + 0.05);
+        if (ratio < sus.floor)
+          add("ERROR", route, "contrast", label + ": " + sus.label + " " + ratio.toFixed(2) +
+            ":1 (needs " + sus.floor + ") at " + sus.px + "px");
+      }
+    }
+
     if (r.overflow > 0) add("ERROR", route, "h-overflow", label + ": page scrolls " + r.overflow + "px horizontally");
     for (const s of r.noAlt) add("ERROR", route, "img-alt", label + ": <img> with no alt attribute: " + s);
     for (const s of new Set(r.brokenImgs)) add("ERROR", route, "img-broken", label + ": did not load: " + s);
@@ -214,6 +322,7 @@ if (process.argv.includes("--json")) {
 } else {
   const errs = findings.filter((f) => f.level === "ERROR");
   const warns = findings.filter((f) => f.level === "WARN");
+  const infos = findings.filter((f) => f.level === "INFO");
   const group = (list) => {
     const by = new Map();
     for (const f of list) {
@@ -232,5 +341,7 @@ if (process.argv.includes("--json")) {
   group(errs);
   console.log("\n=== WARNINGS (" + warns.length + ") ===");
   group(warns);
+  console.log("\n=== NOTES (" + infos.length + ") ===");
+  group(infos);
 }
 process.exit(findings.some((f) => f.level === "ERROR") ? 1 : 0);
