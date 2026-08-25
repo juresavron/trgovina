@@ -52,7 +52,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import type { PdpContent } from "../../content/types";
+import type { PdpContent, PdpPhoto } from "../../content/types";
 import { productArt } from "./product-art";
 import { productImg } from "./media";
 import { helpIcon, returnIcon, shieldIcon, truckIcon } from "./icons";
@@ -191,6 +191,19 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-shot-art .st-art {
     inline-size: 100%;
     block-size: 100%;
+  }
+  /* Same as the cards: a photograph shot on white gets a white panel, or its
+   * own ground prints as a rectangle inside the frame. */
+  :root[data-theme="studio"] .st-also-frame:has(.st-pdp-shot-img),
+  :root[data-theme="studio"] .st-pdp-frame:has(.st-pdp-photo) {
+    background: var(--surface);
+  }
+  :root[data-theme="studio"] .st-pdp-shot-img {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
   }
   :root[data-theme="studio"] .st-pdp-shot-floor {
     position: absolute;
@@ -1326,7 +1339,14 @@ function usesPills(options: readonly string[]): boolean {
  * views rather than the same picture three times. A photograph replaces this
  * at one call site.
  */
-function shot(ctx: RenderCtx, variant = 0): string {
+function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto): string {
+  if (photo) {
+    return (
+      '<span class="st-pdp-shot">' +
+      productImg(photo, "st-pdp-shot-img", "(max-width: 809px) 92vw, 400px", photo.alt) +
+      "</span>"
+    );
+  }
   const art = productArt(ctx.shop.key, variant);
   return (
     '<span class="st-pdp-shot" aria-hidden="true">' +
@@ -1383,7 +1403,7 @@ function alsoLike(ctx: RenderCtx): string {
         (m, i) =>
           '<li class="st-also-cell"><a class="st-also-card" href="' +
           esc(base + m.slug + ctx.q) + '">' +
-          '<span class="st-also-frame">' + shot(ctx, i) + "</span>" +
+          '<span class="st-also-frame">' + shot(ctx, i, m.photos?.[0]) + "</span>" +
           '<span class="st-also-name">' + esc(m.title) + "</span>" +
           '<span class="st-also-price">' + esc(m.price) + "</span>" +
           "</a></li>",

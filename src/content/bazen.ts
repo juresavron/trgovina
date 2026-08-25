@@ -30,40 +30,42 @@ import { PRICE_UNSET } from "../catalog/pricing";
  * about copy shared BETWEEN shops. These are variants of one product line
  * within one shop, which is what a catalogue is.
  */
-const models: ProductCard[] = OFFERED_MODELS.map((m) => ({
-  name: m.name,
-  desc: "Akrilna školjka " + footprint(m) + ", " + m.jets + " masažnih šob, " + seating(m) + ".",
-  meta: metaLine(m),
-  price: modelPrice(m),
-  art: "pool" as const,
-  slug: m.slug,
-  ...(m.tier ? { badge: m.tier } : {}),
-}));
 
 /**
- * Alt text for the photographs, in file order.
+ * Alt text for the photographs, by model slug and in file order.
  *
  * Written from what is actually visible in each frame and no further. "Šobe v
  * hrbtnem naslonu" is describable; the number of them is not, at this
  * resolution, and a count invented for alt text is a specification claim made
- * in the one place nobody proofreads.
+ * in the one place nobody proofreads. The cabinet is never called wooden: the
+ * price list says PS panel, and it only looks like wood.
  *
  * These are product photographs, so the alt is content rather than decoration
  * — a screen reader needs it, and image search is a real channel for goods at
  * this price.
  */
-const VELIKI_ALT: readonly string[] = [
-  "Masažni bazen od zgoraj — dva ležalnika, trije sedeži in razporeditev masažnih šob.",
-  "Notranjost akrilne školjke z masažnimi šobami v hrbtnem naslonu.",
-  "Nožni del školjke z večjimi masažnimi šobami.",
-  "Bazen z vklopljeno modro LED osvetlitvijo školjke.",
-  "Bazen s turkizno osvetljeno školjko in svetlobnim trakom v oblogi.",
-  "Bazen z zeleno osvetljeno školjko in svetlobnim trakom v oblogi.",
-  "Bližnji posnetek dveh masažnih šob v školjki.",
-  "Sedežni del školjke z masažnimi šobami.",
-  "Bazen s strani — temna obloga s svetlobnim trakom.",
-  "Masažni bazen s tričetrtinskega pogleda — bela školjka in temna obloga.",
-];
+const PHOTO_ALT: Readonly<Record<string, readonly string[]>> = {
+  "veliki-230": [
+    "Masažni bazen od zgoraj — dva ležalnika, trije sedeži in razporeditev masažnih šob.",
+    "Notranjost akrilne školjke z masažnimi šobami v hrbtnem naslonu.",
+    "Nožni del školjke z večjimi masažnimi šobami.",
+    "Bazen z vklopljeno modro LED osvetlitvijo školjke.",
+    "Bazen s turkizno osvetljeno školjko in svetlobnim trakom v oblogi.",
+    "Bazen z zeleno osvetljeno školjko in svetlobnim trakom v oblogi.",
+    "Bližnji posnetek dveh masažnih šob v školjki.",
+    "Sedežni del školjke z masažnimi šobami.",
+    "Bazen s strani — temna obloga s svetlobnim trakom.",
+    "Masažni bazen s tričetrtinskega pogleda — bela školjka in temna obloga.",
+  ],
+  "mali-195": [
+    "Masažni bazen od zgoraj — razporeditev sedežev, ležalnikov in masažnih šob v marmorirani školjki.",
+    "Bazen s tričetrtinskega pogleda — marmorirana školjka in temna obloga.",
+    "Notranjost školjke z vzglavnikom in masažnimi šobami.",
+    "Kotni sedež z masažnimi šobami.",
+    "Sedežni del školjke z vzglavnikoma in masažnimi šobami.",
+    "Bazen s strani — obloga in marmorirana školjka.",
+  ],
+};
 
 /** The photographs a model has, paired with their alt text. */
 function photosFor(m: PolaModel): PdpPhoto[] {
@@ -76,9 +78,20 @@ function photosFor(m: PolaModel): PdpPhoto[] {
     // A photograph with no alt would fail the structural audit, and a generic
     // one is worse than none for search. Falling back to the model name plus
     // its position is at least true.
-    alt: VELIKI_ALT[i] ?? m.name + " — fotografija " + (i + 1) + ".",
+    alt: PHOTO_ALT[m.slug]?.[i] ?? m.name + " — fotografija " + (i + 1) + ".",
   }));
 }
+
+const models: ProductCard[] = OFFERED_MODELS.map((m) => ({
+  name: m.name,
+  desc: "Akrilna školjka " + footprint(m) + ", " + m.jets + " masažnih šob, " + seating(m) + ".",
+  meta: metaLine(m),
+  price: modelPrice(m),
+  art: "pool" as const,
+  slug: m.slug,
+  ...(photosFor(m)[0] ? { photo: photosFor(m)[0] } : {}),
+  ...(m.tier ? { badge: m.tier } : {}),
+}));
 
 /** The flagship: the larger shell in its more wanted layout, two loungers. */
 const flagship = OFFERED_MODELS.find((m) => m.code === "ZR801")!;

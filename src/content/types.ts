@@ -30,6 +30,13 @@ export interface ProductCard {
    * shops that sell a single model, where every card is the flagship.
    */
   slug?: string;
+  /**
+   * The model's lead photograph, where it has one. A card with a real picture
+   * and a card with a drawing sit side by side quite happily — each is telling
+   * the truth about its own model — and a drawing shown where a photograph
+   * exists is simply the worse of the two.
+   */
+  photo?: PdpPhoto;
 }
 
 export interface UtilCard {
