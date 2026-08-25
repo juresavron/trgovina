@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { handleRequest } from "../worker";
 import { SHOPS } from "../tenants";
+import { MEDIA_WIDTHS } from "../themes/studio/media-widths";
 
 /**
  * Structural audit of every rendered page.
@@ -67,6 +68,35 @@ function audit(html: string): string[] {
       problems.push("img without width/height: " + a.slice(0, 70));
     }
     if (!/\balt=/.test(a)) problems.push("img without alt: " + a.slice(0, 70));
+
+    // `sizes` without `srcset` is inert — the browser ignores it entirely and
+    // downloads the single `src` at whatever size that file happens to be.
+    // Every decorative image in the theme carried one for weeks and looked
+    // like responsive imagery while shipping 1600px masters into 437px cards.
+    // It reads as done, which is why it needs a gate rather than a comment.
+    if (/\bsizes=/.test(a) && !/\bsrcset=/.test(a)) {
+      problems.push("img with sizes but no srcset: " + a.slice(0, 70));
+    }
+
+    // Every candidate must be a file the build actually wrote, at the width
+    // its descriptor claims. A `w` that does not match the file makes every
+    // selection the browser computes after it wrong, and nothing warns.
+    for (const c of ((a.match(/srcset="([^"]*)"/) || [])[1] || "")
+      .split(",")
+      .map((x) => x.trim())
+      .filter(Boolean)) {
+      const [url, desc] = c.split(/\s+/);
+      const rungs = MEDIA_WIDTHS[(url || "").replace("/img/", "")];
+      const master = Object.keys(MEDIA_WIDTHS).find((k) =>
+        MEDIA_WIDTHS[k]!.some((r) => "/img/" + r[0] === url),
+      );
+      const rung = master && MEDIA_WIDTHS[master]!.find((r) => "/img/" + r[0] === url);
+      if (!rung) problems.push("srcset names a file the build did not write: " + url);
+      else if (desc !== rung[1] + "w") {
+        problems.push("srcset width " + desc + " but " + url + " is " + rung[1] + "px");
+      }
+      void rungs;
+    }
   }
 
   if (!/<main\b/.test(body)) problems.push("no <main> landmark");

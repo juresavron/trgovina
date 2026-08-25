@@ -19,6 +19,7 @@ import {
   renderStudioHeader,
   renderStudioPdp,
   renderStudioSection,
+  renderStudioClosing,
   STUDIO_JS,
 } from "../themes/studio";
 
@@ -190,7 +191,9 @@ export function renderHome(shop: ShopConfig, content: ShopContent, theme: ThemeK
     })
     .join("");
   return studio
-    ? renderStudioHeader(ctx) + "<main>" + body + "</main>" + renderStudioFooter(ctx)
+    ? renderStudioHeader(ctx) +
+        "<main>" + body + renderStudioClosing(ctx) + "</main>" +
+        renderStudioFooter(ctx)
     : renderHeader(ctx) + "<main>" + body + "</main>" + renderFooter(ctx);
 }
 

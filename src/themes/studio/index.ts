@@ -20,6 +20,11 @@ import {
 import { STUDIO_PDP_CSS, renderStudioPdp } from "./pdp";
 import { STUDIO_JS } from "./behaviour";
 import { STUDIO_FONT_FACE_CSS } from "./fonts";
+import {
+  STUDIO_CLOSING_CSS,
+  renderStudioSocial,
+  renderStudioMembership,
+} from "./closing";
 
 /**
  * The studio theme's public surface — one import for the render pipeline.
@@ -40,9 +45,24 @@ export const STUDIO_CSS =
   STUDIO_STATEMENT_CSS +
   STUDIO_EDITORIAL_CSS +
   STUDIO_PDP_CSS +
+  STUDIO_CLOSING_CSS +
   STUDIO_EFFECTS_CSS;
 
 export { renderStudioHeader, renderStudioFooter, renderStudioPdp, STUDIO_JS };
+
+/**
+ * The two bands that always close the page, in the source's own order: the
+ * social strip, then the membership banner, then the footer.
+ *
+ * They are appended AFTER the composition rather than keyed into it, because
+ * the composition varies per shop (the anti-doorway control in ShopConfig) and
+ * these two do not — every shop ends the same way. Keying them to a section
+ * would have put them wherever that key happened to land, which for one shop
+ * was three sections from the top.
+ */
+export function renderStudioClosing(ctx: RenderCtx): string {
+  return renderStudioSocial(ctx) + renderStudioMembership(ctx);
+}
 
 /**
  * Studio's own section renderers, keyed by the kernel's section vocabulary.

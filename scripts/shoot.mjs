@@ -78,9 +78,30 @@ for (const vp of VIEWPORTS) {
     });
     await page.waitForLoadState("networkidle");
 
-    // Fail loudly rather than shipping a screenshot full of broken boxes.
+    // Fail loudly rather than shipping a screenshot full of broken boxes —
+    // but only for images a viewer could actually see.
+    //
+    // The first version flagged every image that had not decoded, which caught
+    // the horizontally clipped ones: the tiles queued off the right edge of the
+    // social marquee, the testimonial slide waiting one click away, the whole
+    // aria-hidden clone track. Those are `loading="lazy"` doing precisely its
+    // job, and the report sent two separate investigations after non-bugs. An
+    // alarm that cries wolf about correct behaviour gets ignored, and then it
+    // is not an alarm.
+    //
+    // In view means: laid out (a zero box is the reduced-motion clone, which
+    // paints nothing), and horizontally within the page. Vertical position is
+    // not a filter — the capture has already scrolled the full page, so
+    // anything still undecoded below the fold is genuinely wrong.
     const broken = await page.$$eval("img", (els) =>
-      els.filter((e) => !e.complete || e.naturalWidth === 0).map((e) => e.getAttribute("src")),
+      els
+        .filter((e) => {
+          if (e.complete && e.naturalWidth > 0) return false;
+          const r = e.getBoundingClientRect();
+          if (r.width === 0 || r.height === 0) return false;
+          return r.right > 0 && r.left < document.documentElement.clientWidth;
+        })
+        .map((e) => e.getAttribute("src")),
     );
     if (broken.length) console.error("  BROKEN IMAGES: " + broken.join(", "));
     const file = path.join(OUT, p.name + "-" + vp.name + ".png");
