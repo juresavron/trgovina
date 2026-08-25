@@ -101,6 +101,7 @@ function pdpFor(m: PolaModel): PdpContent {
       label: x.label,
       price: addonPrice(x),
       priceCents: addonPriceCents(x),
+      group: x.group,
       ...(x.qty ? { qty: x.qty } : {}),
     })),
     // Every figure on this page is a provisional conversion of the supplier's

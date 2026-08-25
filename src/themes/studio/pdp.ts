@@ -53,6 +53,9 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import type { PdpContent } from "../../content/types";
+import { productArt } from "./product-art";
+import { ADDON_GROUP_ORDER } from "../../catalog/pola";
+import { formatEur } from "../../catalog/pricing";
 
 export const STUDIO_PDP_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ---- */
@@ -106,6 +109,24 @@ export const STUDIO_PDP_CSS = `
     align-items: start;
   }
 
+  /* The gallery sticks while the buy column scrolls past it.
+   *
+   * The buy column is now much the taller of the two — nine models' worth of
+   * configurator, fourteen priced add-ons, a total and the delivery box —
+   * so the gallery ran out around a fifth of the way down and left roughly
+   * 1300px of empty page beside the decision the visitor is actually making.
+   * Sticky keeps the product in view for that whole scroll, which is the one
+   * thing a product page owes the person reading it.
+   *
+   * Only while the grid HAS two columns: stacked, this would pin the picture
+   * over the copy. The offset clears the fixed chrome band. */
+  @media (min-width: 1001px) {
+    :root[data-theme="studio"] .st-pdp-gallery {
+      position: sticky;
+      top: calc(var(--chrome-h) + clamp(16px, 1.6vw, 32px));
+    }
+  }
+
   /* ---- gallery (§4.7's panel, at page scale) -------------------------- */
   :root[data-theme="studio"] .st-pdp-frame {
     position: relative;
@@ -142,6 +163,19 @@ export const STUDIO_PDP_CSS = `
       color-mix(in srgb, var(--ink) 9%, transparent),
       color-mix(in srgb, var(--ink) 3%, transparent)
     );
+  }
+  /* The shop's drawing. Inset like the mass it replaces so the two occupy the
+   * same optical box, and drawn in a softened ink so it reads as an
+   * illustration on a light panel rather than as flat black line art. */
+  :root[data-theme="studio"] .st-pdp-shot-art {
+    position: absolute;
+    inset: 12% 13% 17%;
+    display: block;
+    color: color-mix(in srgb, var(--ink) 62%, transparent);
+  }
+  :root[data-theme="studio"] .st-pdp-shot-art .st-art {
+    inline-size: 100%;
+    block-size: 100%;
   }
   :root[data-theme="studio"] .st-pdp-shot-floor {
     position: absolute;
@@ -510,10 +544,39 @@ export const STUDIO_PDP_CSS = `
     font-variant-numeric: tabular-nums;
     color: var(--ink);
   }
-  :root[data-theme="studio"] .st-pdp-ao-total {
+  /* Group heading. The label rung again, but muted and without the hairline
+   * the section legend carries — it divides, it does not announce. aria-hidden
+   * because it is a visual grouping of controls that already name themselves;
+   * a screen reader meeting "Osvetlitev" as a list item between checkboxes
+   * learns nothing it cannot get from "LED osvetlitev roba". */
+  :root[data-theme="studio"] .st-pdp-ao-head {
+    padding-block: clamp(16px, 1.4vw, 26px) clamp(6px, 0.5vw, 10px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-head:first-child { padding-top: clamp(8px, 0.7vw, 14px); }
+  :root[data-theme="studio"] .st-pdp-ao-line {
     display: flex; align-items: baseline; justify-content: space-between;
     gap: var(--gap-sm);
     margin-top: clamp(12px, 1.1vw, 22px);
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-pdp-ao-total {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: var(--gap-sm);
+    margin-top: clamp(8px, 0.7vw, 12px);
+    padding-top: clamp(8px, 0.7vw, 12px);
+    border-top: 1px solid var(--line-strong);
     font-family: var(--f-body);
     font-size: var(--t-body);
     letter-spacing: var(--ls-body);
@@ -988,11 +1051,24 @@ function usesPills(options: readonly string[]): boolean {
   return options.every((o) => len(o) <= PILL_MAX_CHARS);
 }
 
-/** Photo-ready slot — bordered mass + contact shadow, never an image request. */
-function shot(): string {
+/**
+ * Photo-ready slot — the shop's product drawing, or a bordered mass where
+ * there is none. Never an image request.
+ *
+ * commerce.ts and hero.ts were given the drawings; this file was not, so the
+ * page where somebody decides to spend three thousand euro showed four empty
+ * grey boxes — the big frame and all three thumbnails. It is the one page on
+ * the site whose entire job is to show the product.
+ *
+ * `variant` cycles the presentations so the thumbnail strip reads as three
+ * views rather than the same picture three times. A photograph replaces this
+ * at one call site.
+ */
+function shot(ctx: RenderCtx, variant = 0): string {
+  const art = productArt(ctx.shop.key, variant);
   return (
     '<span class="st-pdp-shot" aria-hidden="true">' +
-    '<span class="st-pdp-shot-mass"></span>' +
+    (art ? '<span class="st-pdp-shot-art">' + art + "</span>" : '<span class="st-pdp-shot-mass"></span>') +
     '<span class="st-pdp-shot-floor"></span>' +
     "</span>"
   );
@@ -1071,15 +1147,25 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   // correct — the shell's price is right and every option's price is beside
   // it — which is the same contract the counters and the rail keep.
   const priced = (d.addons ?? []).filter((x) => x.priceCents > 0);
-  const addons =
-    (d.addons ?? []).length === 0
-      ? ""
-      : '<fieldset class="st-pdp-ao" data-st-addons>' +
-        '<legend class="st-pdp-ao-legend">Dodatna oprema</legend>' +
-        '<ul class="st-pdp-ao-list">' +
-        (d.addons ?? [])
-          .map((x, i) => {
-            const id = "st-ao-" + String(i + 1);
+  const all = d.addons ?? [];
+
+  // Grouped, in ADDON_GROUP_ORDER, with anything ungrouped kept first so a
+  // shop that never set a group still renders every option it has.
+  const order = [
+    ...new Set([undefined as string | undefined, ...ADDON_GROUP_ORDER, ...all.map((x) => x.group)]),
+  ];
+  const rowNo = { n: 0 };
+  const groups = order
+    .map((g) => {
+      const rows = all.filter((x) => x.group === g);
+      if (rows.length === 0) return "";
+      const head = g ? '<li class="st-pdp-ao-head" aria-hidden="true">' + esc(g) + "</li>" : "";
+      return (
+        head +
+        rows
+          .map((x) => {
+            rowNo.n += 1;
+            const id = "st-ao-" + String(rowNo.n);
             return (
               '<li><label class="st-pdp-ao-lab" for="' + id + '">' +
               '<input class="st-pdp-ao-in" type="checkbox" id="' + id + '"' +
@@ -1093,11 +1179,27 @@ export function renderStudioPdp(ctx: RenderCtx): string {
               "</label></li>"
             );
           })
-          .join("") +
-        "</ul>" +
+          .join("")
+      );
+    })
+    .join("");
+
+  // The summary. An earlier version printed one line — "Skupaj z izbrano
+  // opremo" — directly under a list whose default state is nothing selected,
+  // so it repeated the price at the top of the column verbatim and read as a
+  // rendering fault rather than as a sum. The extras line is what makes the
+  // arithmetic legible: it says 0 € until something is ticked, which explains
+  // why the two figures match.
+  const addons =
+    all.length === 0
+      ? ""
+      : '<fieldset class="st-pdp-ao" data-st-addons>' +
+        '<legend class="st-pdp-ao-legend">Dodatna oprema</legend>' +
+        '<ul class="st-pdp-ao-list">' + groups + "</ul>" +
         (priced.length > 0 && d.priceCents > 0
-          ? '<p class="st-pdp-ao-total">' +
-            "<span>Skupaj z izbrano opremo</span>" +
+          ? '<p class="st-pdp-ao-line"><span>Izbrana oprema</span>' +
+            '<span data-st-extras>' + esc(formatEur(0)) + "</span></p>" +
+            '<p class="st-pdp-ao-total"><span>Skupaj</span>' +
             '<span class="st-pdp-ao-sum" data-st-total data-st-base="' +
             String(d.priceCents) + '">' + esc(d.price) + "</span></p>"
           : "") +
@@ -1126,16 +1228,16 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<div class="st-pdp-in">' +
 
     '<div class="st-pdp-grid">' +
-    // --- gallery: one large framed placeholder + a detail strip ---
-    "<div>" +
-    '<figure class="st-pdp-frame">' + shot() +
+    // --- gallery: one large frame + a detail strip ---
+    '<div class="st-pdp-gallery">' +
+    '<figure class="st-pdp-frame">' + shot(ctx) +
     '<figcaption class="st-pdp-cap">Vizualizacija — fotografije v pripravi</figcaption>' +
     "</figure>" +
     // Decorative: three empty frames carry no information a reader needs.
     '<div class="st-pdp-thumbs" aria-hidden="true">' +
-    '<span class="st-pdp-thumb">' + shot() + "</span>" +
-    '<span class="st-pdp-thumb">' + shot() + "</span>" +
-    '<span class="st-pdp-thumb">' + shot() + "</span>" +
+    '<span class="st-pdp-thumb">' + shot(ctx, 0) + "</span>" +
+    '<span class="st-pdp-thumb">' + shot(ctx, 1) + "</span>" +
+    '<span class="st-pdp-thumb">' + shot(ctx, 2) + "</span>" +
     "</div></div>" +
 
     // --- buy column ---

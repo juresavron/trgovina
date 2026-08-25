@@ -59,6 +59,8 @@ export interface PdpAddon {
   priceCents: number;
   /** Quantity, where the supplier states one ("16 kosov"). */
   qty?: string;
+  /** Heading this option sits under. Ungrouped options render first. */
+  group?: string;
 }
 
 export interface PdpContent {
