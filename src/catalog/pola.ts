@@ -40,6 +40,8 @@ export interface Addon {
   fobUsd: number;
   /** Quantity, where the supplier states one that differs between models. */
   qty?: string;
+  /** Which heading the option sits under on the page. */
+  group: string;
 }
 
 export interface PolaModel {
@@ -102,8 +104,52 @@ const L = {
   pillowLed: "LED osvetlitev vzglavnika",
 } as const;
 
+/**
+ * Which heading each option belongs under.
+ *
+ * Fourteen options in one flat column is a list nobody reads: every row is the
+ * same shape, the same length and the same weight, so the eye has nothing to
+ * navigate by and the expensive choices sit level with the cup holders. Four
+ * headings turn it into something you can scan for the decision you came to
+ * make.
+ *
+ * Derived from the key rather than written on all 104 entries, so a group can
+ * never disagree with itself between models.
+ */
+const G: Record<keyof typeof L, string> = {
+  cover: "Pokrov in dostop",
+  lifter: "Pokrov in dostop",
+  step: "Pokrov in dostop",
+  blower: "Masaža in zvok",
+  blowerAroma: "Masaža in zvok",
+  audio: "Masaža in zvok",
+  rimLed: "Osvetlitev",
+  jetLed: "Osvetlitev",
+  skirtLed: "Osvetlitev",
+  fountain: "Osvetlitev",
+  cupHolder: "Osvetlitev",
+  waterfall: "Osvetlitev",
+  pillowLed: "Osvetlitev",
+  insulation: "Zaščita in izolacija",
+  bag: "Zaščita in izolacija",
+};
+
+/**
+ * The order the headings appear in: what the tub needs to be usable outdoors
+ * first, then what it does, then the lights, then what protects it. Not the
+ * supplier's order, which is whatever fitted on their page.
+ */
+export const ADDON_GROUP_ORDER: readonly string[] = [
+  "Pokrov in dostop",
+  "Masaža in zvok",
+  "Osvetlitev",
+  "Zaščita in izolacija",
+];
+
 const a = (key: keyof typeof L, fobUsd: number, qty?: string): Addon =>
-  qty ? { key, label: L[key], fobUsd, qty } : { key, label: L[key], fobUsd };
+  qty
+    ? { key, label: L[key], fobUsd, qty, group: G[key] }
+    : { key, label: L[key], fobUsd, group: G[key] };
 
 /**
  * Ordered largest shell first, then by jet count — the order a buyer choosing

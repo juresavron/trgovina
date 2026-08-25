@@ -169,6 +169,7 @@ function eur(cents){
 function addons(root){
   var boxes = [].slice.call(root.querySelectorAll("[data-st-addon]"));
   var totals = [].slice.call(document.querySelectorAll("[data-st-total]"));
+  var extras = [].slice.call(document.querySelectorAll("[data-st-extras]"));
   if (!boxes.length || !totals.length) return;
 
   function sync(){
@@ -183,6 +184,9 @@ function addons(root){
       if (!isFinite(base)) return;
       t.textContent = eur(base + extra);
     });
+    /* The line that explains why the total matches the price above it when
+       nothing is ticked. */
+    extras.forEach(function(e){ e.textContent = eur(extra); });
   }
 
   boxes.forEach(function(b){ b.addEventListener("change", sync); });

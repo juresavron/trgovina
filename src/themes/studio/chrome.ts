@@ -281,6 +281,15 @@ export const STUDIO_CHROME_CSS = `
      * puts part of the target outside the scroll port, where it is not
      * clickable. */
     min-inline-size: var(--st-tap);
+    /* And never SMALLER than the word. Setting a min-inline-size silently
+     * replaces flex's own automatic minimum — the one that normally stops a
+     * flex item shrinking past its own content — so with the 44px floor set,
+     * every link became free to squash to exactly 44px. At 390px all five
+     * did: "Dostava in montaža" was drawn in a 68px box and ran straight
+     * through its neighbours, on every page of the site. The nav is already a
+     * scroll port (overflow-x: auto); it simply had nothing to scroll,
+     * because the items had shrunk to fit. */
+    flex: 0 0 auto;
     justify-content: center;
     block-size: var(--st-tap);
     margin-block: -10px;
