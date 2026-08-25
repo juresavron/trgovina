@@ -71,17 +71,31 @@ jobs:
           # silently falls back to another theme.
           grep -q 'data-theme="studio"' /tmp/home.html
 
-          # Fonts: the verified Google faces, from ONE origin. Clash Display and
-          # Satoshi were dropped because their Slovenian coverage could not be
-          # proven; if either name reappears in a shipped page, so has the bug.
-          grep -q "family=Chivo" /tmp/home.html
-          grep -q "Plus+Jakarta+Sans" /tmp/home.html
+          # Fonts are SELF-HOSTED. These two greps used to assert the Google
+          # Fonts query string ("family=Chivo"), and kept asserting it after
+          # the faces were vendored into public/fonts — so the check was
+          # testing for the exact thing the change removed. It went unnoticed
+          # because the local mirror of these assertions never had them.
+          #
+          # What matters now is the preload of the real file, and that no
+          # third-party font origin has crept back in: a stray @import or a
+          # copied <link> would reintroduce the render-blocking cross-origin
+          # request the vendoring existed to remove, and the page would still
+          # look correct.
+          grep -q "/fonts/chivo-500-latin.woff2" /tmp/home.html
+          grep -q "@font-face" /tmp/home.html
+          for origin in "fonts.googleapis.com" "fonts.gstatic.com" "fontshare"; do
+            if grep -qF "$origin" /tmp/home.html; then
+              echo "FAIL: third-party font origin '$origin' is back in the shipped page"; exit 1
+            fi
+          done
           # NOT `! grep …`: POSIX says set -e is ignored for a pipeline
           # beginning with `!`, so that form reports success no matter what and
           # the assertion becomes decoration. Test explicitly and exit.
-          if grep -qF "fontshare" /tmp/home.html; then
-            echo "FAIL: a Fontshare origin is back in the shipped page"; exit 1
-          fi
+          #
+          # Clash Display and Satoshi were dropped because their Slovenian
+          # coverage could not be proven; if either name reappears, so has the
+          # bug that put čšž at risk.
           for dead in "Clash Display" "Satoshi"; do
             if grep -qF "$dead" /tmp/home.html; then
               echo "FAIL: unverified face '$dead' is in the shipped page"; exit 1
