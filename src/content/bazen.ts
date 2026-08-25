@@ -663,6 +663,11 @@ export const bazenContent: ShopContent = {
   ],
   categories,
   collections,
+  // Distinct from the home page's on purpose: the hub's job is "both
+  // families, all six models", where home leads with the keyword.
+  hubMetaDescription:
+    "Masažni bazeni od 195 do 230 cm in swim spa bazeni od 450 do 580 cm. " +
+    "Mere, specifikacije in cene, z dostavo, priklopom in zagonom po Sloveniji.",
   pdp: pdpFor(flagship),
   // Both families' pages. The router matches any slug in here, so the swim
   // spa cards link at real pages rather than at a 404.

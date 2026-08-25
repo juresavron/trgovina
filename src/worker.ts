@@ -234,7 +234,10 @@ export function handleRequest(request: Request): Response {
       theme,
       path,
       title: "Trgovina — " + shop.keyword.primary + " | " + shop.name,
-      description: content.metaDescription,
+      // NOT content.metaDescription: that is the home page's, and two
+      // indexable pages sharing one description give a search engine nothing
+      // to tell them apart. Falls back only if a shop has not written one.
+      description: content.hubMetaDescription ?? content.metaDescription,
       noindex: dev,
       q,
       bodyHtml: renderShopHub(shop, content, q, theme),
@@ -320,7 +323,10 @@ export function handleRequest(request: Request): Response {
     theme,
     path,
     title: "Stran ne obstaja | " + shop.name,
-    description: content.metaDescription,
+    // A 404 describing the shop's offer was how three unrouted slugs ended up
+    // sharing the home page's description. It is noindex either way, but a
+    // page that says what it is costs nothing.
+    description: "Zahtevana stran ne obstaja. Oglejte si ponudbo ali nas pokličite.",
     noindex: true,
     q,
     bodyHtml: renderPlaceholder(shop, content, "Te strani ni.", q, theme),
