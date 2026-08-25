@@ -1,5 +1,5 @@
 import type { ShopConfig } from "../tenants/types";
-import type { PdpContent, ShopContent } from "../content/types";
+import type { Collection, PdpContent, ShopContent } from "../content/types";
 import { THEME_CATALOG, type ThemeKey } from "../themes/catalog";
 import { MAX_SECTIONS_PER_PAGE } from "../themes/shared/sections";
 import { SHOPS } from "../tenants";
@@ -14,11 +14,13 @@ import {
 } from "./sections";
 
 import {
+  renderStudioCollection,
   renderStudioExtras,
   renderStudioFooter,
   renderStudioHeader,
   renderStudioPdp,
   renderStudioSection,
+  renderStudioShopHub,
   renderStudioClosing,
   STUDIO_JS,
 } from "../themes/studio";
@@ -226,6 +228,43 @@ export function renderPdp(
     return renderStudioHeader(ctx) + "<main>" + renderStudioPdp(ctx) + "</main>" + renderStudioFooter(ctx);
   }
   return renderHeader(ctx) + "<main>" + renderPdpBody(ctx) + "</main>" + renderFooter(ctx);
+}
+
+/**
+ * A collection page — one product family at its own URL.
+ *
+ * Studio-only for now: the kernel has no collection component and there is
+ * one theme. A theme without one falls back to the placeholder rather than
+ * rendering a hole.
+ */
+export function renderCollection(
+  shop: ShopConfig,
+  content: ShopContent,
+  q: string,
+  theme: ThemeKey,
+  collection: Collection,
+): string {
+  const ctx = buildCtx(shop, content, q);
+  return (
+    renderStudioHeader(ctx) +
+    "<main>" + renderStudioCollection(ctx, collection) + "</main>" +
+    renderStudioFooter(ctx)
+  );
+}
+
+/** The shop hub — every family on one page. */
+export function renderShopHub(
+  shop: ShopConfig,
+  content: ShopContent,
+  q: string,
+  theme: ThemeKey,
+): string {
+  const ctx = buildCtx(shop, content, q);
+  return (
+    renderStudioHeader(ctx) +
+    "<main>" + renderStudioShopHub(ctx) + "</main>" +
+    renderStudioFooter(ctx)
+  );
 }
 
 export function renderPlaceholder(

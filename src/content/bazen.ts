@@ -1,4 +1,11 @@
-import type { Category, PdpContent, PdpPhoto, ProductCard, ShopContent } from "./types";
+import type {
+  Category,
+  Collection,
+  PdpContent,
+  PdpPhoto,
+  ProductCard,
+  ShopContent,
+} from "./types";
 import { OWN_MEDIA } from "../themes/studio/own-media";
 import type { SwimSpaModel } from "../catalog/swimspa";
 import {
@@ -206,7 +213,7 @@ const categories: Category[] = [
       sizeSpan(OFFERED_MODELS.map((m) => m.mm[0])) +
       " · za 5 ali 6 oseb",
     price: familyRange(OFFERED_MODELS.map((m) => modelPrice(m))),
-    href: "#izbor",
+    href: "/masazni-bazeni",
     // The family the shop has photographed. A real picture beside a drawing is
     // not a mismatch here — each card is telling the truth about its own
     // family, and the drawing is the honest state of the other one.
@@ -228,7 +235,7 @@ const categories: Category[] = [
       sizeSpan(OFFERED_SWIMSPAS.map((m) => m.mm[0])) +
       (swimSpaFamilyHasSwimJets() ? " · s protitočno šobo" : " · za plavanje in sprostitev"),
     price: familyRange(OFFERED_SWIMSPAS.map((m) => swimModelPrice(m))),
-    href: "#swim-spa",
+    href: "/swim-spa",
     // No photography exists for this family yet, so it wears the drawing —
     // which is drawn to the right PROPORTION on purpose, because the length
     // is the entire difference between the two cards.
@@ -496,8 +503,49 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
   };
 }
 
+/**
+ * The two listing pages.
+ *
+ * Each family's models live here rather than on the home page. The home page
+ * is the keyword landing page and a route in; these are where a visitor
+ * actually chooses, so they get the full grid, their own H1 and their own
+ * meta description — "masažni bazen" and "swim spa" are different queries
+ * with different intent and one URL cannot rank honestly for both.
+ */
+const collections: Collection[] = [
+  {
+    path: "/masazni-bazeni",
+    navLabel: "Masažni bazeni",
+    h1: "Masažni bazeni",
+    intro:
+      "Akrilni masažni bazeni od 195 do 230 cm, za pet ali šest oseb. " +
+      "Vsak model ima ogrevanje, filtracijo in izoliran pokrov. Na teraso ga " +
+      "pripeljemo, priklopimo in zaženemo.",
+    metaDescription:
+      "Masažni bazeni za 5 ali 6 oseb, od 195 do 230 cm. Akrilna školjka, " +
+      "35–50 šob, ogrevanje in filtracija. Dostava, priklop in zagon po vsej Sloveniji.",
+    products: models,
+  },
+  {
+    path: "/swim-spa",
+    navLabel: "Swim spa",
+    h1: "Swim spa bazeni",
+    intro:
+      "Bazeni od 390 do 580 cm, v katerih se plava na mestu. Daljša školjka " +
+      "pomeni pravo plavanje, ne le močnejšega toka — in ob njem sedežni del " +
+      "za sprostitev po treningu.",
+    metaDescription:
+      "Swim spa bazeni od 390 do 580 cm za plavanje na mestu in sprostitev. " +
+      "Akrilna školjka, ogrevanje in filtracija, dostava in zagon po Sloveniji.",
+    products: swimSpas,
+  },
+];
+
 export const bazenContent: ShopContent = {
-  nav: ["Bazeni", "Primerjava", "Vodniki", "Dostava in montaža", "Kontakt"],
+  // HOME is the wordmark, so the five slots are SHOP, ABOUT, BLOG, DELIVERY,
+  // CONTACT. It was five pages about hot tubs with no route to the swim spas
+  // at all.
+  nav: ["Trgovina", "O nas", "Vodniki", "Dostava in montaža", "Kontakt"],
   artKey: "pool",
   kicker: "Masažni bazen · Slovenija",
   h1: "Masažni bazen za pet ali šest oseb.",
@@ -522,12 +570,29 @@ export const bazenContent: ShopContent = {
     ["3 kW", "grelec, Balboa krmilnik"],
     ["410 kg", "prazen — dostava z ekipo"],
   ],
+  // THE HOME PAGE SHOWS A SELECTION, NOT THE CATALOGUE.
+  //
+  // It used to print every hot tub, and then every swim spa under it — eight
+  // cards, two headings, before a visitor had been told the shop sells two
+  // different things. Worse, once the full grids moved to their own pages
+  // this list would have been the hot tubs ALONE, so the landing page of a
+  // two-family shop would have shown one family.
+  //
+  // So: the ends of each ladder. The smallest and largest hot tub, the
+  // shortest and longest swim spa — which is the pair of questions a visitor
+  // actually arrives with ("how small can it be", "how big does it get"), and
+  // it puts both families above the fold of the grid. The full lists are one
+  // click away on /masazni-bazeni and /swim-spa, where the category cards and
+  // the nav both point.
   products: [
-    ...models,
+    models[0]!,
+    models[models.length - 1]!,
+    swimSpas[0]!,
+    swimSpas[swimSpas.length - 1]!,
     {
       util: true,
       h: "Bo terasa zdržala?",
-      p: "Napolnjen bazen tehta do 2.210 kg. Pred dostavo brezplačno preverimo nosilnost, dostop in elektriko.",
+      p: "Napolnjen bazen tehta do 2.210 kg, swim spa še precej več. Pred dostavo brezplačno preverimo nosilnost, dostop in elektriko.",
       cta: "Naročite ogled →",
     },
   ],
@@ -560,7 +625,7 @@ export const bazenContent: ShopContent = {
     ["Pozimi", "Masažni bazen pozimi: stroški in nasveti."],
   ],
   categories,
-  swimSpas,
+  collections,
   pdp: pdpFor(flagship),
   // Both families' pages. The router matches any slug in here, so the swim
   // spa cards link at real pages rather than at a 404.

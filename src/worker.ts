@@ -22,7 +22,9 @@ import {
   renderDocument,
   renderHome,
   renderPdp,
+  renderCollection,
   renderPlaceholder,
+  renderShopHub,
 } from "./render/page";
 import { handleAdmin, handleMedia } from "./admin/routes";
 import type { Env } from "./admin/supabase";
@@ -135,6 +137,11 @@ export function handleRequest(request: Request): Response {
     // discoverable by crawl.
     const urls = [
       "/",
+      // The shop hub and every collection. These are the pages built to rank —
+      // "masažni bazen" and "swim spa" are different queries — so leaving them
+      // out of the sitemap would hide the two most important URLs after home.
+      ...((content.collections ?? []).length > 0 ? [shop!.routeSlugs["/products"]] : []),
+      ...(content.collections ?? []).map((c) => c.path),
       ...(content.pdps ?? [content.pdp]).map((d) => shop!.routeSlugs["/product"] + "/" + d.slug),
     ];
     const body =
@@ -213,6 +220,45 @@ export function handleRequest(request: Request): Response {
       });
       return htmlResponse(doc, 200, baseHeaders);
     }
+  }
+
+  // The shop hub — every family on one page. A real page, indexable, so
+  // "Trgovina" in the nav answers "what do you sell?" rather than redirecting
+  // to whichever family happens to be first.
+  if (path === shop.routeSlugs["/products"] && (content.collections ?? []).length > 0) {
+    const doc = renderDocument({
+      shop,
+      content,
+      theme,
+      path,
+      title: "Trgovina — " + shop.keyword.primary + " | " + shop.name,
+      description: content.metaDescription,
+      noindex: dev,
+      q,
+      bodyHtml: renderShopHub(shop, content, q, theme),
+      jsonLd: [organizationJsonLd(shop)],
+    });
+    return htmlResponse(doc, 200, baseHeaders);
+  }
+
+  // Collection pages — one product family each, at its own URL. These are the
+  // pages that rank: "masažni bazen" and "swim spa" are different queries with
+  // different intent, and one URL cannot honestly serve both.
+  for (const collection of content.collections ?? []) {
+    if (path !== collection.path) continue;
+    const doc = renderDocument({
+      shop,
+      content,
+      theme,
+      path,
+      title: collection.h1 + " | " + shop.name,
+      description: collection.metaDescription,
+      noindex: dev,
+      q,
+      bodyHtml: renderCollection(shop, content, q, theme, collection),
+      jsonLd: [organizationJsonLd(shop)],
+    });
+    return htmlResponse(doc, 200, baseHeaders);
   }
 
   // Known top-level routes render a styled placeholder (noindex until real).

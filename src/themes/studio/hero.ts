@@ -220,16 +220,6 @@ export const STUDIO_HERO_CSS = `
    * dropping page copy to match a layout is a bad trade on a site whose whole
    * strategy is the search result. It is held to a narrow measure so the block
    * stays the source's proportion rather than becoming a text column. */
-  :root[data-theme="studio"] .st-hero-sub {
-    margin: 0;
-    max-inline-size: 38ch;
-    font-family: var(--f-body);
-    font-size: var(--t-body);
-    font-weight: var(--w-body);
-    letter-spacing: var(--ls-body);
-    line-height: var(--lh-body);
-    color: var(--on-invert);
-  }
   :root[data-theme="studio"] .st-hero-cta {
     display: inline-flex;
     align-items: center;
@@ -274,7 +264,6 @@ export const STUDIO_HERO_CSS = `
   /* Below 900px the wordmark rides higher so the foot block keeps its own
    * air. */
   @media (max-width: 900px) {
-    :root[data-theme="studio"] .st-hero-sub { max-inline-size: 34ch; }
     :root[data-theme="studio"] .st-hero-mark { inset-block-start: clamp(92px, 15vh, 150px); }
     :root[data-theme="studio"] .st-hero-foot h1 { font-size: var(--t-h3); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
   }
@@ -831,7 +820,16 @@ export function renderStudioHero(ctx: RenderCtx): string {
     '<div class="st-hero-foot">' +
     '<span class="st-hero-pill">' + esc(c.kicker) + "</span>" +
     "<h1>" + esc(c.h1) + "</h1>" +
-    '<p class="st-hero-sub">' + esc(c.sub) + "</p>" +
+    // NO SUB PARAGRAPH. The hero was pill, heading, four lines of prose and a
+    // button; it is now pill, heading, button. Removed on the owner's
+    // instruction, and the copy had gone stale under it anyway — it opened
+    // "Trije modeli" while the shop had grown to three hot tubs AND five swim
+    // spas, so the first sentence on the site undercounted the catalogue by
+    // more than half.
+    //
+    // The sentence itself is untouched in content and still runs in the story
+    // block further down, where it has room to be read rather than skimmed
+    // past on the way to the button.
     '<a class="st-hero-cta" href="#izbor">' + esc(c.cta) + "</a>" +
     "</div>" +
     // Bottom-right, out of the reading path but on the same frame as the

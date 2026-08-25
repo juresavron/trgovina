@@ -67,7 +67,7 @@ export const bazen: ShopConfig = {
 
   routeSlugs: {
     "/": "/",
-    "/products": "/bazeni",
+    "/products": "/trgovina",
     "/product": "/bazen",
     "/compare": "/primerjava",
     "/guide": "/vodnik",

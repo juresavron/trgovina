@@ -22,6 +22,33 @@
 export type ArtKey = "pool" | "swimspa";
 
 /**
+ * A LISTING PAGE — one product family, at its own URL.
+ *
+ * The shop sells two things that are not variants of each other: 1.95-2.30 m
+ * hot tubs and 3.90-5.80 m swim spas. A single page cannot be the landing
+ * page for both without being a worse landing page for each, and a home page
+ * that simply prints every model is a catalogue dump rather than a route into
+ * one.
+ *
+ * So each family gets a page it owns: its own H1, its own intro, its own
+ * meta description, its own grid. The home page keeps the keyword and sends
+ * people here; these pages do the selling. That is also the shape search
+ * wants — "masažni bazen" and "swim spa" are different queries with different
+ * intent, and one URL cannot rank honestly for both.
+ */
+export interface Collection {
+  /** Route path under the shop, e.g. "/bazeni". Its own URL, not an anchor. */
+  path: string;
+  h1: string;
+  /** One paragraph under the H1 — what this family is and who it is for. */
+  intro: string;
+  metaDescription: string;
+  /** Short label for the nav and breadcrumbs. */
+  navLabel: string;
+  products: ProductCard[];
+}
+
+/**
  * A PRODUCT FAMILY, as the rail under the hero shows it.
  *
  * Not a model. The distinction is the whole reason this type exists: a card
@@ -181,12 +208,11 @@ export interface ShopContent {
   products: (ProductCard | UtilCard)[];
 
   /**
-   * The second product family's cards, where the shop sells one. Rendered as
-   * its own grid under its own anchor, because the category rail sends a
-   * visitor to one family or the other and a single mixed grid would undo
-   * that distinction.
+   * The shop's listing pages, one per product family. Each is a real URL with
+   * its own H1 and grid — see Collection. The home page links here rather
+   * than printing every model itself.
    */
-  swimSpas?: ProductCard[];
+  collections?: Collection[];
   moat: {
     h2: string;
     steps: [string, string][];

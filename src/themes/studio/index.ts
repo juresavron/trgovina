@@ -13,7 +13,8 @@ import {
   STUDIO_COMMERCE_CSS,
   renderStudioProducts,
   renderStudioRail,
-  renderStudioSwimSpas,
+  renderStudioCollection,
+  renderStudioShopHub,
 } from "./commerce";
 import { STUDIO_STATEMENT_CSS, renderStudioStatement, renderStudioStats } from "./statement";
 import {
@@ -88,6 +89,8 @@ const STUDIO_SECTIONS: Partial<Record<SectionKey, (ctx: RenderCtx) => string>> =
   trust: renderStudioImpact,
 };
 
+export { renderStudioCollection, renderStudioShopHub };
+
 export function renderStudioSection(key: SectionKey, ctx: RenderCtx): string | null {
   const fn = STUDIO_SECTIONS[key];
   return fn ? fn(ctx) : null;
@@ -111,10 +114,6 @@ export function renderStudioSection(key: SectionKey, ctx: RenderCtx): string | n
  */
 export function renderStudioExtras(afterKey: SectionKey, ctx: RenderCtx): string {
   if (afterKey === "marquee") return renderStudioRail(ctx);
-  // The second family sits directly under the first grid, so the category
-  // rail's two cards land on two neighbouring sections rather than on one
-  // page and one hole.
-  if (afterKey === "products") return renderStudioSwimSpas(ctx);
   if (afterKey === "moat") return renderStudioWordmarkBand(ctx);
   return "";
 }
