@@ -1,5 +1,5 @@
 import type { ShopConfig } from "../tenants/types";
-import type { ShopContent, ArtKey, ProductCard, UtilCard } from "../content/types";
+import type { ShopContent, ArtKey, ProductCard, UtilCard, PdpContent } from "../content/types";
 import type { SectionKey } from "../themes/shared/sections";
 
 /** HTML-escape everything interpolated from content. */
@@ -12,6 +12,17 @@ export function esc(s: string): string {
 export interface RenderCtx {
   shop: ShopConfig;
   content: ShopContent;
+  /**
+   * The product page being rendered, and the one the home page's cards and
+   * hero point at.
+   *
+   * A shop used to have exactly one product page, so every renderer read
+   * `content.pdp` directly. bazen now carries nine models, and nine cards all
+   * linking to one page is not a catalogue — it is a page that looks broken.
+   * Renderers read this instead; the router sets it from the URL, and it
+   * defaults to `content.pdp` (the flagship) everywhere else.
+   */
+  pdp: PdpContent;
   /** Query suffix carrying dev overrides ('' in production). */
   q: string;
   phoneHref: string;
@@ -181,8 +192,8 @@ function scene(art: ArtKey, cap?: string): string {
   );
 }
 
-function pdpHref(ctx: RenderCtx): string {
-  return ctx.shop.routeSlugs["/product"] + "/" + ctx.content.pdp.slug + ctx.q;
+function pdpHref(ctx: RenderCtx, slug?: string): string {
+  return ctx.shop.routeSlugs["/product"] + "/" + (slug ?? ctx.pdp.slug) + ctx.q;
 }
 
 /* ---- Section renderers — one per SectionKey ---- */
@@ -236,7 +247,7 @@ function products(ctx: RenderCtx): string {
           );
         }
         return (
-          '<a class="card" href="' + href + '">' +
+          '<a class="card" href="' + pdpHref(ctx, p.slug) + '">' +
           (p.badge ? '<span class="badge">' + esc(p.badge) + "</span>" : "") +
           scene(p.art) +
           '<span class="body"><h3 class="display">' + esc(p.name) + "</h3>" +
@@ -343,7 +354,7 @@ export function renderSection(key: SectionKey, ctx: RenderCtx): string {
 
 /* ---- PDP ---- */
 export function renderPdpBody(ctx: RenderCtx): string {
-  const d = ctx.content.pdp;
+  const d = ctx.pdp;
   return (
     '<section class="act"><div class="wrap"><div class="pdp-grid">' +
     '<div class="gallery">' + scene(ctx.content.artKey, "vizualizacija") +

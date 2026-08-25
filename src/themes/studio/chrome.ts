@@ -1,26 +1,40 @@
 /**
- * STUDIO — chrome bar and footer (docs/STUDIO-BASELINE.md §4.1 and §4.12).
+ * STUDIO — chrome bar and footer (docs/STUDIO-BASELINE.md §4.1 / §4.12, and
+ * the DOM transcription in docs/STUDIO-SECTIONS.md §0 / §11).
  *
- *   §4.1  Black 90px bar: wordmark left at the 54px gutter, 5-item nav
- *         centred, two Ø46px circular icon buttons on a #2A2A2A disc right.
- *   §4.12 Black footer: giant ~150px wordmark at a LIGHTER weight than the
- *         bar's, newsletter with an underlined input, brand blurb + circular
- *         contact rows, three link columns, hairline, legal line.
+ *   §0/§4.1   The header is a FIXED full-width bar at z-index 8. Inside it,
+ *             one container capped at 1440px: logo left, a five-item nav with
+ *             a 50px gap, two Ø36px icon discs right. The bar is
+ *             PADDING-DRIVEN — 16px above and below a single 24px label line
+ *             — which is where --chrome-h comes from.
+ *   §11/§4.12 Dark footer: a giant wordmark at a LIGHTER weight than the
+ *             bar's, a newsletter block whose input is a bare bottom rule with
+ *             an arrow at its right end, a brand blurb with three circular
+ *             contact rows, three link columns, a hairline, the legal line.
  *
- * Scale: the px quoted from §4 above are the MEASURED pass, kept as provenance
- * only. Type does not interpolate any more — tokens.ts sets every role per
- * breakpoint tier (≥1200 / 810–1199 / ≤809), so a size is a token lookup, not
- * a clamp, and the measured numbers land on ramp rungs instead of reproducing
- * themselves: the bar's wordmark read ~28 and is h6 (24/19/22), the nav read
- * 15 and is label (14), the footer's link columns read 19 and are label too.
- * Only the non-type dimensions — discs, gutters, gaps, padding — still clamp,
- * and one display outlier does (see .st-foot-mark).
+ * Provenance: where the measured (screenshot) pass and the transcribed pass
+ * disagree, the TRANSCRIPTION wins — that is the rule docs/STUDIO-BASELINE.md
+ * §0 sets, and it is why the icon discs are 36px rather than the measured 46,
+ * why they sit on a white alpha rather than a #2A2A2A disc, why the nav gap is
+ * exactly 50px rather than a clamp, and why the footer's link columns are
+ * spaced 24px rather than the measured ~66px. Each of those is flagged where
+ * it is set.
+ *
+ * Type does not interpolate: tokens.ts sets every role per breakpoint tier
+ * (≥1200 / 810–1199 / ≤809), so a size is a token lookup, never a clamp, and
+ * the measured numbers land on ramp rungs instead of reproducing themselves —
+ * the bar's wordmark read ~28 and is h6 (24/19/22), the nav read 15 and is
+ * label (14), the footer's link columns read 19 and are label too. One display
+ * outlier still clamps (see .st-foot-mark) because it runs past the ramp.
  *
  * Token discipline: colors, radii, gutters, chrome height and every type value
- * — face, size, weight, tracking, leading — are var(--…) from tokens.ts only;
- * this module declares no variable of its own. Every selector is scoped to
- * :root[data-theme="studio"] because the sheet is shared with the other three
- * themes.
+ * — face, size, weight, tracking, leading — are var(--…) from tokens.ts. This
+ * module declares exactly ONE variable of its own, --st-tap, and it is not a
+ * source value: the source ships 36px discs and bare 24px nav lines, i.e. tap
+ * targets under the 44px floor this project holds itself to. --st-tap is that
+ * floor, declared once because both chromes hang off it. Every selector is
+ * scoped to :root[data-theme="studio"] because the sheet is shared with the
+ * other three themes.
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
@@ -55,9 +69,20 @@ function icon(k: IconKey): string {
 }
 
 export const STUDIO_CHROME_CSS = `
-  /* No :root token block here. --studio-gutter, --studio-gutter, --chrome-h,
-   * --on-invert-16, --w-display and --w-body all live in tokens.ts; a second copy at
-   * equal specificity meant sheet order, not the spec, decided the value. */
+  /* THE ONE LOCAL VARIABLE. --studio-gutter, --chrome-h, --chrome-line,
+   * --chrome-pad-y, --chrome-nav-gap, --on-invert-* and every type value live
+   * in tokens.ts; a second copy at equal specificity meant sheet order, not the
+   * spec, decided the value.
+   *
+   * --st-tap is not one of those: it is OURS. The source's discs are 36px and
+   * its nav items are the bare 24px line, so every control in both chromes
+   * ships under the 44px pointer target this project holds itself to. Rather
+   * than inflate the source's geometry — which would grow the bar past
+   * --chrome-h and break the hero's viewport math — the visual size stays and
+   * the TARGET is grown around it (see .st-chrome-btn::before and the
+   * block-size/margin-block pairs below). One number, nine users, so it is
+   * declared once. */
+  :root[data-theme="studio"] { --st-tap: 44px; }
 
   /* Visually hidden until focused — used by the skip link and the newsletter
    * field's label. clip-path over the old clip-rect hack: it survives
@@ -75,12 +100,11 @@ export const STUDIO_CHROME_CSS = `
    * structural difference between the port and the source — the hero is meant
    * to run full-bleed underneath it.
    *
-   * The scrim is ours, not the source's. A transparent bar is only legible
-   * over art direction that guarantees a dark top edge; the source gets that
-   * from its own photography, but these shops take customer-supplied product
-   * photos and cannot. A short top-down gradient costs nothing, is invisible
-   * over a dark hero, and keeps the nav readable over a light one. It is the
-   * difference between replicating the design and shipping its fragility. */
+   * The opaque ground is ours, not the source's. A transparent bar is only
+   * legible over art direction that guarantees a dark top edge; the source gets
+   * that from its own photography, but these shops take customer-supplied
+   * product photos and cannot. It is the difference between replicating the
+   * design and shipping its fragility. */
   :root[data-theme="studio"] .st-chrome {
     position: fixed;
     top: 0;
@@ -95,31 +119,58 @@ export const STUDIO_CHROME_CSS = `
    * hero up behind a transparent bar, which is what the source does over its
    * photographic hero — but our first section is the offer triptych with a
    * light left panel, and white nav type on that is 2.5:1. The bar stays
-   * solid and the content starts below it. */
+   * solid and the content starts below it.
+   *
+   * This reservation is ONLY correct while the bar is exactly --chrome-h tall,
+   * which is also what hero.ts subtracts from the viewport and what pdp.ts
+   * offsets its sticky bar by. The single-row bar below is pinned to it; the
+   * two-row phone bar is not, and re-states this at that breakpoint. */
   :root[data-theme="studio"] main { padding-top: var(--chrome-h); }
 
   :root[data-theme="studio"] .st-chrome-bar {
     /* --studio-container is the CONTENT measure and box-sizing is border-box,
      * so the cap is widened by the two gutters — the content between them is
      * then exactly --studio-container. */
-    max-width: calc(var(--studio-container) + var(--studio-gutter) + var(--studio-gutter));
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
-    padding-inline: var(--studio-gutter) var(--studio-gutter);
-    min-height: var(--chrome-h);
+    padding-inline: var(--studio-gutter);
+    /* The source's header box, verbatim: 16px block padding around a single
+     * 24px label line (8px at the small tier). The row is an EXPLICIT
+     * --chrome-line track rather than an auto one, which is what holds the two
+     * together: the wordmark's h6 line box is 32px and the icon disc is 36px,
+     * so an auto row would be sized by them and the bar would come out at 68px
+     * — which is, in fact, how tall the source's own header really renders.
+     * We cannot afford that here. --chrome-h is a published number: hero.ts
+     * takes it out of 100svh and main reserves it above. So the track is fixed
+     * at the label line, the two oversized children are centred and bleed into
+     * the padding, and the bar measures exactly --chrome-h. The cost is 10px
+     * of clearance around the disc instead of 16px, which is invisible; the
+     * alternative was a bar whose height no other module could predict. */
+    padding-block: var(--chrome-pad-y);
     display: grid;
     /* 1fr | auto | 1fr keeps the nav optically centred on the VIEWPORT even
-     * when the wordmark and the icon cluster differ in width. */
+     * when the wordmark and the icon cluster differ in width. Both 1fr tracks
+     * floor at their content, so the auto (nav) track is the one that gives
+     * when a long shop name meets a long menu — see .st-chrome-nav. */
     grid-template-columns: 1fr auto 1fr;
+    grid-template-rows: var(--chrome-line);
     align-items: center;
-    gap: clamp(12px, 2vw, 32px);
+    column-gap: var(--gap-lg);
   }
 
   /* The logotype takes h6 (24/19/22) — the display ramp's smallest rung and the
-   * nearest to the measured ~28px; h5 (32) would out-scale a 56px bar. Its
-   * 1.33em leading draws a 32px line box, which --chrome-h absorbs as a
-   * min-height, so taking the ramp's leading does not grow the bar. */
+   * nearest to the measured ~28px; h5 (32) would out-scale a 56px bar.
+   *
+   * It is a link, so it is also a target: --st-tap tall, pulled back by half
+   * the difference ((24 − 44) ÷ 2 = −10px) so the 44px box grows symmetrically
+   * around the 24px line without changing what the line contributes to layout.
+   * The same pair appears on every other link in this bar. */
   :root[data-theme="studio"] .st-chrome-mark {
     justify-self: start;
+    display: inline-flex;
+    align-items: center;
+    block-size: var(--st-tap);
+    margin-block: -10px;
     font-family: var(--f-display);
     font-weight: var(--w-display);
     font-size: var(--t-h6);
@@ -130,6 +181,35 @@ export const STUDIO_CHROME_CSS = `
     /* ONE white word: studio drops the accent split the other themes use. */
     color: var(--on-invert);
     white-space: nowrap;
+  }
+  /* THE ONE FOCUS RING FOR TEXT LINKS ON DARK, stated once for both chromes.
+   *
+   * 2px --on-invert is 18.3:1 on this ground; the base sheet's --acc ring is a
+   * per-shop hue that has only ever been verified against the white page, and
+   * a ring nobody can see is the same as no ring.
+   *
+   * INSET (−2px) rather than offset, for one reason that applies to all four:
+   * the bar's nav is a scroll container, and an outline drawn outside a box
+   * that exactly fills its scroll port is clipped on both edges. The others
+   * join it so the whole theme's text links focus identically. Each of these
+   * boxes is --st-tap tall around a 20–24px line, so an inset ring still sits
+   * clear of the letterforms. */
+  :root[data-theme="studio"] .st-chrome-mark:focus-visible,
+  :root[data-theme="studio"] .st-chrome-nav a:focus-visible,
+  :root[data-theme="studio"] .st-chrome-tel:focus-visible,
+  :root[data-theme="studio"] .st-foot-col a:focus-visible {
+    outline: 2px solid var(--on-invert);
+    outline-offset: -2px;
+    border-radius: var(--r-ctrl);
+  }
+  /* And the one for circular icon controls: same ink, drawn OUTSIDE, because a
+   * ring inset into a 36–44px disc lands on the glyph. --r-pill so the base
+   * sheet's square 4px ring cannot square off a circle mid-focus. */
+  :root[data-theme="studio"] .st-chrome-btn:focus-visible,
+  :root[data-theme="studio"] .st-news-go:focus-visible {
+    outline: 2px solid var(--on-invert);
+    outline-offset: 3px;
+    border-radius: var(--r-pill);
   }
 
   /* The halves are separate spans around a real space, so the accessible name
@@ -151,19 +231,59 @@ export const STUDIO_CHROME_CSS = `
    * belt-and-braces — it keeps the gap fixed if either rung ever tracks. */
   :root[data-theme="studio"] .st-mark-gap {
     display: inline-block;
+    /* The bar's mark is a flex container (it has to be, to hold a 44px target
+     * around a line box whose height changes per tier), which makes this gap a
+     * flex item and therefore shrinkable. It must not shrink: it IS the word
+     * space, and a squeezed one puts the two words back together. Inert in the
+     * footer, where the mark is a paragraph. */
+    flex: none;
     inline-size: 0.3em;
     font-size: inherit;
     letter-spacing: 0;
     overflow: hidden;
   }
 
+  /* Nav gap is the source's 50px exactly (--chrome-nav-gap), not a clamp.
+   *
+   * It is also the bar's shock absorber. The nav is the only element here that
+   * can lose width without losing meaning, so it is a scroll container at every
+   * width: min-inline-size:0 lets the auto grid track shrink past max-content,
+   * and the overflow is a swipeable/arrow-scrollable rail rather than a menu
+   * that runs off the page. At ≥1200 with our longest menu it never triggers;
+   * between 900 and 1200 an unusually long shop name can, and that is the
+   * point — the page must never scroll sideways.
+   *
+   * The padding/margin pair is the same device as the links: it opens 10px of
+   * room inside the SCROLL PORT so the 44px link boxes are not clipped by the
+   * overflow, while the nav still contributes only the 24px line to the row. */
   :root[data-theme="studio"] .st-chrome-nav {
     justify-self: center;
     display: flex;
     align-items: center;
-    gap: clamp(16px, 2.8vw, 56px);
+    gap: var(--chrome-nav-gap);
+    min-inline-size: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: none;
+    padding-block: 10px;
+    margin-block: -10px;
   }
+  :root[data-theme="studio"] .st-chrome-nav::-webkit-scrollbar { display: none; }
   :root[data-theme="studio"] .st-chrome-nav a {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    /* A target is two dimensions. The height comes from --st-tap with the line
+     * pulled back out of layout; the width usually comes free from the label,
+     * but the short ones (MIZE, KADI) draw ~41px, so the box floors at --st-tap
+     * and centres the word in it. Floor rather than padding: padding would have
+     * to be cancelled by a negative margin to keep the 50px gap true, and that
+     * puts part of the target outside the scroll port, where it is not
+     * clickable. */
+    min-inline-size: var(--st-tap);
+    justify-content: center;
+    block-size: var(--st-tap);
+    margin-block: -10px;
     /* Label role — 14px DM Sans, uppercase, tracked 0.06em. Its 1.71em leading
      * is exactly the 24px --chrome-line that --chrome-h is derived from, so the
      * nav is the thing that makes the bar's height come out right. */
@@ -178,63 +298,106 @@ export const STUDIO_CHROME_CSS = `
     /* Full on-invert, not the muted rung: 14px tracked caps on #151515 needs
      * every point of contrast it can get. */
     color: var(--on-invert);
-    padding-block: 4px;
-    border-bottom: 1px solid transparent;
-    transition: border-color 0.2s ease;
   }
-  :root[data-theme="studio"] .st-chrome-nav a:hover { border-bottom-color: var(--on-invert); }
+  /* THE UNDERLINE. The source draws it as a real child element —
+   * div [Underline], position:absolute; bottom:0; left:0; height:1px; white —
+   * that its runtime animates from width:0 to width:100%. It is not a
+   * text-decoration, and the border-bottom that used to stand in here missed
+   * the whole gesture: a border can only appear, it cannot grow.
+   *
+   * Reproduced as a pseudo-element on the label span, which is that child with
+   * no extra DOM, and grown with scaleX rather than width. Identical for a
+   * 1px bar, but width animates on the layout thread every frame while a
+   * transform stays on the compositor — and the source's own resting state is
+   * an inline transform:scale(0), so this is its technique, not a substitute
+   * for it. transform-origin:left is what makes it grow left-to-right instead
+   * of opening from the middle.
+   *
+   * It rides on the SPAN, not the link: the link is 44px tall for the tap
+   * target, so bottom:0 there would hang the rule 10px below the word. */
+  :root[data-theme="studio"] .st-chrome-nav a > span {
+    position: relative;
+    display: block;
+  }
+  :root[data-theme="studio"] .st-chrome-nav a > span::after {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    inset-block-end: 0;
+    block-size: var(--bw-line);
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.35s cubic-bezier(0.22, 0.61, 0.36, 1);
+  }
+  :root[data-theme="studio"] .st-chrome-nav a:hover > span::after,
+  :root[data-theme="studio"] .st-chrome-nav a:focus-visible > span::after {
+    transform: scaleX(1);
+  }
 
   :root[data-theme="studio"] .st-chrome-actions {
     justify-self: end;
     display: flex;
     align-items: center;
-    gap: clamp(8px, 0.8vw, 14px);
+    /* 10px — the source's dominant micro gap, and its value here. */
+    gap: var(--gap-sm);
   }
-  /* Ø46px disc. Round because it is an icon control, not a CTA — sharp
-   * corners are reserved for buttons that carry a word (§3). */
+  /* Ø36px disc, 1px #ffffff1f hairline on a #ffffff14 fill — the transcribed
+   * values, which retire the measured pass's Ø46px disc on solid #2A2A2A.
+   * Round because it is an icon control, not a CTA: sharp corners are reserved
+   * for buttons that carry a word (§3). --r-pill is the source's own 99px.
+   *
+   * The hairline is DECORATION, not the control's boundary: what identifies
+   * this control is the white glyph at 18.3:1, so WCAG 1.4.11 is met by the
+   * icon and the 1.2:1 ring is free to be as quiet as the source draws it. */
   :root[data-theme="studio"] .st-chrome-btn {
     position: relative;
     display: inline-flex; align-items: center; justify-content: center;
-    inline-size: clamp(36px, 2.3vw, 46px);
-    block-size: clamp(36px, 2.3vw, 46px);
-    border-radius: var(--r-circle);
-    border: 0;
+    inline-size: 36px;
+    block-size: 36px;
+    border-radius: var(--r-pill);
+    border: var(--bw-line) solid var(--on-invert-24);
     background: var(--on-invert-16);
     color: var(--on-invert);
     text-decoration: none;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+  /* The 36px disc is the source's; a 36px TARGET is not good enough. The hit
+   * area is grown to --st-tap with a transparent overlay so the disc keeps its
+   * drawn size — inset:-4px is (44 − 36) ÷ 2. It is a ::before, so it paints
+   * beneath the count badge that follows it in the box tree, and both belong to
+   * the same link either way. */
+  :root[data-theme="studio"] .st-chrome-btn::before {
+    content: "";
+    position: absolute;
+    inset: -4px;
   }
   :root[data-theme="studio"] .st-chrome-btn:hover {
-    background: color-mix(in srgb, var(--on-invert) 22%, var(--ink-invert));
+    background: var(--on-invert-40);
+    border-color: var(--on-invert-40);
   }
   /* The glyphs come from icons.ts and carry no chrome-local class, so the
    * sizing hangs off the element, not a class name. */
   :root[data-theme="studio"] .st-chrome-btn svg {
-    inline-size: clamp(17px, 1.05vw, 21px);
-    block-size: clamp(17px, 1.05vw, 21px);
-  }
-  /* The base sheet's focus ring forces border-radius:4px, which would square
-   * off a circular control mid-focus. Restore the pill here. */
-  :root[data-theme="studio"] .st-chrome-btn:focus-visible {
-    outline: 2px solid var(--on-invert);
-    outline-offset: 3px;
-    border-radius: var(--r-circle);
+    inline-size: 18px;
+    block-size: 18px;
   }
 
-  /* Count badge: small white disc, black numeral (measured). */
+  /* Count badge: small white disc, black numeral (measured).
+   *
+   * Badges are the label role and the ramp has nothing below it, so the disc is
+   * sized to the rung rather than the rung shrunk to the disc: 14px on
+   * --lh-label-tight draws a 20px line box, so the disc is 20px and the numeral
+   * sits in it exactly. Inventing a smaller size is the one thing this pass
+   * exists to undo. */
   :root[data-theme="studio"] .st-chrome-badge {
-    position: absolute; top: -3px; right: -3px;
-    min-inline-size: 18px; block-size: 18px;
+    position: absolute; top: -4px; right: -4px;
+    min-inline-size: 20px; block-size: 20px;
     padding-inline: 5px;
     display: inline-flex; align-items: center; justify-content: center;
-    border-radius: var(--r-circle);
+    border-radius: var(--r-pill);
     background: var(--bg);
     color: var(--ink);
-    /* Badges are the label role, and the ramp has nothing below it — 14px is
-     * larger than the measured 10.5px, and the tight leading's 20px line box
-     * overruns the 18px disc by a pixel top and bottom, which a single centred
-     * numeral hides. Inventing a smaller size is the exact thing this pass
-     * exists to undo, so the disc absorbs the rung instead. */
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -243,11 +406,19 @@ export const STUDIO_CHROME_CSS = `
     font-variant-numeric: tabular-nums;
   }
 
-  /* The phone number, shown below 720px ALONGSIDE the basket — not instead of
-   * the icon cluster: only the magnifier steps aside there. */
+  /* The phone number. OURS, not the source's, and it lives only on the two-row
+   * phone bar: at ≥1200 the wordmark, a five-item menu and the icon cluster
+   * already leave ~40px of slack inside the container, and a 150px number is
+   * the thing that would push the menu into its scroll rail on every desktop.
+   * Below 900px the bar has a second row to spend and a tap-to-call number is
+   * worth more than a menu item. The footer states it at every width. */
   :root[data-theme="studio"] .st-chrome-tel {
     display: none;
-    align-items: center; gap: 8px;
+    align-items: center;
+    /* 8px — the source's icon-to-label gap inside a nav item. */
+    gap: var(--chrome-item-gap);
+    block-size: var(--st-tap);
+    margin-block: -10px;
     /* A meta row in the bar, so the same label rung as the nav — both draw the
      * 24px line the bar is built on, and the number stays distinct from the
      * nav by weight of position, not by an off-ramp size. */
@@ -268,7 +439,10 @@ export const STUDIO_CHROME_CSS = `
    * on :focus-visible below because the base sheet's focus ring imposes its
    * own. Its ring is --acc rather than the primary ink — a black ring around a
    * white plate ON THE BLACK BAR is invisible, and the plate landing on the
-   * page cannot be the only focus cue. */
+   * page cannot be the only focus cue.
+   *
+   * 12px of padding on a 20px line is a 44px plate, so the first control on
+   * every page is already at the target floor without help. */
   :root[data-theme="studio"] .st-skip {
     position: absolute; left: -9999px; top: 0; z-index: 50;
     background: var(--bg); color: var(--ink);
@@ -288,28 +462,35 @@ export const STUDIO_CHROME_CSS = `
   /* Focus target after the bar — never a visible box, never a focus ring. */
   :root[data-theme="studio"] .st-anchor { display: block; outline: none; }
 
-  /* ---- §4.12 footer ---- */
+  /* ---- §4.12 / §11 footer ----
+   * Every text colour on this band is --on-invert (18.3:1) or --on-invert-mute
+   * (#a4a4a4, 7.33:1). The white alphas below appear ONLY as rules and discs.
+   * That split is the whole reason the palette has two vocabularies: a white
+   * alpha reads as "quiet grey" to a designer and as 2.9:1 to a reader. */
   :root[data-theme="studio"] .st-foot {
     background: var(--ink-invert);
     color: var(--on-invert);
     overflow: clip;
-    /* ~150px rhythm on dark bands (§3), collapsed hard on a phone. */
-    padding-block: clamp(48px, 7.5vw, 150px) clamp(28px, 2.6vw, 52px);
+    /* Source: 140px 40px 30px, retiered at 810 and at 1200. The inline halves
+     * are --studio-gutter, so only the block values are stated here. */
+    padding-block: 140px 30px;
   }
   :root[data-theme="studio"] .st-foot-in {
     /* Same content-measure arithmetic as the bar: the gutter sits OUTSIDE the
-     * 1900px measure, so the giant wordmark starts at the measured x=54. */
-    max-width: calc(var(--studio-container) + var(--studio-gutter) + var(--studio-gutter));
+     * 1440px measure, so the giant wordmark starts where the bar's does. */
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
-    padding-inline: var(--studio-gutter) var(--studio-gutter);
+    padding-inline: var(--studio-gutter);
   }
 
+  /* Source: the footer's container is one column with an 80px gap between its
+   * three blocks (top / bottom / copyright), 40px on a phone. */
   :root[data-theme="studio"] .st-foot-top {
     display: grid;
     grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
     align-items: end;
     gap: clamp(32px, 4vw, 80px);
-    margin-bottom: clamp(48px, 6vw, 120px);
+    margin-bottom: var(--gap-3xl);
   }
   /* THE ONE SANCTIONED OUTLIER in this module. At ~150px it runs well past the
    * ramp's tallest rung (h1, 92px), so it keeps its clamp() and its 0.88
@@ -331,6 +512,13 @@ export const STUDIO_CHROME_CSS = `
     max-width: 100%; overflow-wrap: anywhere; hyphens: none;
   }
 
+  /* Source: the newsletter column is capped at 350px and sits at the right
+   * edge of the top row, not stretched across half the footer. */
+  :root[data-theme="studio"] .st-news {
+    justify-self: end;
+    inline-size: 100%;
+    max-inline-size: 350px;
+  }
   /* The footer's one block heading. h3 is the nominal rung for a sub-section
    * heading, but 48px next to a 150px wordmark reads as a second section
    * opening rather than a label over a single input row; h5 (32/26/24) is the
@@ -342,16 +530,26 @@ export const STUDIO_CHROME_CSS = `
     letter-spacing: var(--ls-h5);
     line-height: var(--lh-h5);
     color: var(--on-invert);
-    margin-bottom: clamp(14px, 1.2vw, 24px);
+    margin-bottom: var(--gap-xs);
   }
+  /* A bare bottom rule, no box — the source's input has no border at all until
+   * focus, when it grows one on the bottom edge only.
+   *
+   * The rule is --on-invert-mute (7.33:1), NOT a white alpha. This line is the
+   * only thing that says "there is a field here", which makes it the control's
+   * boundary, which WCAG 1.4.11 holds to 3:1 — and the alphas top out at 2.9:1.
+   * They stay where they belong: the hairline under the columns and the discs
+   * around the contact icons, neither of which carries that job. */
   :root[data-theme="studio"] .st-news-row {
     display: flex; align-items: center; gap: 12px;
-    border-bottom: 1px solid color-mix(in srgb, var(--on-invert) 34%, transparent);
-    padding-bottom: clamp(10px, 0.8vw, 16px);
+    border-bottom: var(--bw-line) solid var(--on-invert-mute);
   }
   :root[data-theme="studio"] .st-news-in {
     flex: 1 1 auto; min-width: 0;
-    background: transparent; border: 0; padding: 0;
+    background: transparent; border: 0;
+    /* Source: 12px 0. With the 1.625em body line that is a 50px field, so the
+     * input clears the 44px floor on its own. */
+    padding: 12px 0;
     /* What a reader types is prose, so body. The face and weight are stated
      * rather than inherited: a form control takes neither from the page. */
     font-family: var(--f-body);
@@ -363,9 +561,17 @@ export const STUDIO_CHROME_CSS = `
   }
   :root[data-theme="studio"] .st-news-in::placeholder { color: var(--on-invert-mute); }
   /* The row is not wired yet (see renderStudioFooter), so both controls ship
-   * disabled. They must still LOOK like the measured device — an underlined
-   * field with an arrow chip — while reading as unavailable rather than
-   * broken, so the dimming is slight and the note carries the reason. */
+   * disabled. They must still LOOK like the source's device — an underlined
+   * field with an arrow chip — while reading as unavailable rather than broken.
+   *
+   * Contrast does not get a holiday for being disabled. WCAG exempts inactive
+   * components, but a greyed-out control nobody can read is still a control
+   * nobody can read, so the text and the glyph stay on --on-invert-mute
+   * (7.33:1) and only the RING drops to a decorative alpha. The state is
+   * carried by that ring and by the glyph stepping down from --on-invert, not
+   * by an opacity that would take the copy below the floor with it — which is
+   * why opacity is pinned to 1 and the fill colour set explicitly (Safari
+   * greys disabled text by itself otherwise). */
   :root[data-theme="studio"] .st-news-in:disabled {
     color: var(--on-invert-mute);
     -webkit-text-fill-color: var(--on-invert-mute);
@@ -375,13 +581,17 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-news-in:focus-visible {
     outline: 2px solid var(--on-invert); outline-offset: 6px; border-radius: var(--r-ctrl);
   }
-  /* Round arrow — a chip, not a CTA button (§3). */
+  /* Round arrow — a chip, not a CTA (§3) — at the right end of the rule. 44px
+   * because it is a control, which is 2px larger than the measured chip and
+   * the cheapest 2px this module spends. */
   :root[data-theme="studio"] .st-news-go {
     flex: 0 0 auto;
     display: inline-flex; align-items: center; justify-content: center;
-    inline-size: clamp(34px, 2.1vw, 42px); block-size: clamp(34px, 2.1vw, 42px);
-    border-radius: var(--r-circle);
-    border: 1px solid color-mix(in srgb, var(--on-invert) 34%, transparent);
+    inline-size: var(--st-tap); block-size: var(--st-tap);
+    border-radius: var(--r-pill);
+    /* Its outline IS its boundary — no fill, no label — so 3:1 applies and the
+     * muted rung is the one that clears it. */
+    border: var(--bw-line) solid var(--on-invert-mute);
     background: transparent; color: var(--on-invert);
     cursor: pointer;
     transition: background-color 0.2s ease, color 0.2s ease;
@@ -392,14 +602,11 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-news-go:disabled {
     cursor: not-allowed;
     color: var(--on-invert-mute);
-    border-color: color-mix(in srgb, var(--on-invert) 20%, transparent);
-  }
-  :root[data-theme="studio"] .st-news-go:focus-visible {
-    outline: 2px solid var(--on-invert); outline-offset: 3px; border-radius: var(--r-circle);
+    border-color: var(--on-invert-24);
   }
   :root[data-theme="studio"] .st-news-go .st-ico { inline-size: 18px; block-size: 18px; }
   :root[data-theme="studio"] .st-news-note {
-    margin-top: 10px;
+    margin-top: var(--gap-sm);
     /* Body, not the label rung the ramp gives captions: this is two sentences
      * of running prose, and 0.06em tracking on a sentence is a chip's job, not
      * a paragraph's. The muted rung, not a smaller size, is what marks it as
@@ -417,7 +624,8 @@ export const STUDIO_CHROME_CSS = `
     grid-template-columns: minmax(0, 1.5fr) repeat(3, minmax(0, 1fr));
     gap: clamp(32px, 3.4vw, 68px);
   }
-  /* An ordinary paragraph — body, at the 42ch measure below. */
+  /* An ordinary paragraph — body, at the 42ch measure below. The 32px beneath
+   * it is the source's gap between the blurb and the contact list. */
   :root[data-theme="studio"] .st-foot-blurb {
     font-family: var(--f-body);
     font-size: var(--t-body);
@@ -426,16 +634,16 @@ export const STUDIO_CHROME_CSS = `
     line-height: var(--lh-body);
     color: var(--on-invert-mute);
     max-width: 42ch;
-    margin-bottom: clamp(22px, 2vw, 40px);
+    margin-bottom: 32px;
   }
   :root[data-theme="studio"] .st-contacts {
-    display: flex; flex-direction: column; gap: clamp(14px, 1.3vw, 26px);
+    display: flex; flex-direction: column; gap: var(--gap-md);
   }
   /* Contact rows are meta rows, so the label rung — mixed case, not uppercase:
    * an address and an e-mail are read, not scanned. Tight leading so a
-   * wrapping street line stays one block against its Ø44px disc. */
+   * wrapping street line stays one block against its disc. */
   :root[data-theme="studio"] .st-contact {
-    display: flex; align-items: center; gap: clamp(12px, 1vw, 18px);
+    display: flex; align-items: center; gap: 12px;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -444,13 +652,17 @@ export const STUDIO_CHROME_CSS = `
     color: var(--on-invert);
     text-decoration: none;
   }
-  /* Ø44px outlined disc (measured). Round: icon chip, not a button. */
+  /* Circular outlined disc. --st-tap, which is both §4.12's measured Ø44 and
+   * the target floor — the disc is the tallest thing in the row, so sizing it
+   * to the floor makes the whole row a compliant target with no overlay. The
+   * ring may be a white alpha here because it is NOT this control's boundary:
+   * the link is the row, and the row is a labelled line of text. */
   :root[data-theme="studio"] .st-contact-ico {
     flex: 0 0 auto;
     display: inline-flex; align-items: center; justify-content: center;
-    inline-size: clamp(34px, 2.2vw, 44px); block-size: clamp(34px, 2.2vw, 44px);
-    border-radius: var(--r-circle);
-    border: 1px solid color-mix(in srgb, var(--on-invert) 28%, transparent);
+    inline-size: var(--st-tap); block-size: var(--st-tap);
+    border-radius: var(--r-pill);
+    border: var(--bw-line) solid var(--on-invert-40);
     color: var(--on-invert);
     transition: background-color 0.2s ease, color 0.2s ease;
   }
@@ -464,7 +676,8 @@ export const STUDIO_CHROME_CSS = `
 
   /* Column heading: an eyebrow over a list, so the label rung uppercase. The
    * ramp carries ONE label tracking (0.06em); the old 0.12em was measured, and
-   * the wider setting is not somewhere the source goes. */
+   * the wider setting is not somewhere the source goes. 24px under it is the
+   * source's gap between a column's heading and its list. */
   :root[data-theme="studio"] .st-foot-col h2 {
     font-family: var(--f-label);
     font-size: var(--t-label);
@@ -473,18 +686,27 @@ export const STUDIO_CHROME_CSS = `
     line-height: var(--lh-label);
     text-transform: uppercase;
     color: var(--on-invert-mute);
-    margin-bottom: clamp(20px, 2vw, 40px);
+    margin-bottom: var(--gap-lg);
   }
+  /* 24px rows, 14px on a phone — transcribed. The measured pass read ~66px and
+   * this module reproduced it; at 66px the three columns ran a screen and a
+   * half tall and the footer stopped being a footer. Where the two passes
+   * disagree the stylesheet wins (STUDIO-BASELINE §0). */
   :root[data-theme="studio"] .st-foot-col ul {
     list-style: none; margin: 0; padding: 0;
     display: flex; flex-direction: column;
-    /* Measured ~66px row gap — the footer's airiness is the device. */
-    gap: clamp(14px, 3.3vw, 66px);
+    gap: var(--gap-lg);
   }
   /* The link columns are label too — same rung as the nav in the bar, which is
-   * what makes the two chromes read as one system. Tight leading: the row gap
-   * above supplies the air, so a link that wraps should stay one block. */
+   * what makes the two chromes read as one system. Tight leading, and the same
+   * 44px target device as the bar's links: a 20px line box grown to --st-tap
+   * and pulled back by (20 − 44) ÷ 2 = −12px, so the rows still sit 24px apart
+   * and two neighbouring targets stop 4px short of each other. */
   :root[data-theme="studio"] .st-foot-col a {
+    display: inline-flex;
+    align-items: center;
+    block-size: var(--st-tap);
+    margin-block: -12px;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -495,14 +717,14 @@ export const STUDIO_CHROME_CSS = `
     transition: color 0.2s ease;
   }
   :root[data-theme="studio"] .st-foot-col a:hover { color: var(--on-invert); }
-  :root[data-theme="studio"] .st-foot-col a:focus-visible {
-    outline: 2px solid var(--on-invert); outline-offset: 3px; border-radius: var(--r-ctrl);
-  }
 
+  /* The hairline over the legal line. #ffffff1f is the source's own
+   * rgba(255,255,255,.12) to the byte, and a divider is exactly what an alpha
+   * this quiet is for. */
   :root[data-theme="studio"] .st-foot-rule {
-    border: 0; height: 1px;
-    background: color-mix(in srgb, var(--on-invert) 16%, transparent);
-    margin: clamp(40px, 5vw, 100px) 0 clamp(18px, 1.6vw, 32px);
+    border: 0; height: var(--bw-line);
+    background: var(--on-invert-24);
+    margin-block: var(--gap-3xl) 30px;
   }
   /* Legal line: a meta row of company, VAT id and address, so the label rung.
    * Tight leading keeps it compact where it wraps to two lines on a phone. */
@@ -515,75 +737,156 @@ export const STUDIO_CHROME_CSS = `
     color: var(--on-invert-mute);
   }
 
-  /* ---- responsive ---- */
-  @media (max-width: 720px) {
-    /* §4.1 mobile: the nav drops to its own scrollable row under the
-     * wordmark, and the phone number joins the top row. The CART STAYS. The
-     * mobile nav has no cart route, so hiding the whole action cluster here
-     * left a phone with no path to the basket at all; only the magnifier —
-     * whose destination, the catalogue, is the nav's first item — gives way. */
+  /* ---- responsive ----
+   * The breakpoints are the source's own tiers where the source has an answer,
+   * and ours where it does not. 1200 and 810 are its tiers. 900 is hero.ts's
+   * (see below). 620 and 460 are ours, and each drops exactly one thing. */
+
+  /* ≥810–1199: the source's tablet tier. --studio-gutter and --chrome-pad-y
+   * have already retiered themselves in tokens.ts, so the bar narrows and its
+   * block padding halves for free; what does not scale is the 50px nav gap —
+   * five items at 50px plus a wordmark and the icons stop fitting around
+   * 1150px. 24px is the source's own next rung down and buys ~130px. */
+  @media (max-width: 1199px) {
+    :root[data-theme="studio"] .st-chrome-nav { gap: var(--gap-lg); }
+    /* The source's small header draws its icons at 34px. inset is (44 − 34) ÷ 2
+     * so the target stays at --st-tap. Note what that costs: --chrome-pad-y is
+     * 8px here, so the bar is 40px and a 44px target cannot fit inside it —
+     * 2px sit above the viewport and 2px reach into the top of the page, under
+     * the two discs at the right edge. A 40px target would sit flush, but the
+     * floor is the floor, and 2px of overlap at the top edge of a hero panel is
+     * the cheaper failure. The two-row bar below 900px has no such problem: its
+     * rows ARE --st-tap. */
+    :root[data-theme="studio"] .st-chrome-btn { inline-size: 34px; block-size: 34px; }
+    :root[data-theme="studio"] .st-chrome-btn::before { inset: -5px; }
+    :root[data-theme="studio"] .st-foot { padding-block: 100px 30px; }
+  }
+
+  /* ≤900: the bar goes to TWO ROWS.
+   *
+   * The source does not help here — below 1200 it swaps in a burger menu that
+   * its React runtime hydrates, and this Worker ships no JS for chrome (the LCP
+   * budget in docs/SEO.md §4 is why these shops can outrank the incumbents).
+   * A CSS-only burger is a checkbox toggling a panel; it works, but it hides
+   * five destinations behind an interaction on the screen where discovery
+   * matters most. So the nav becomes a full-bleed scroll rail under the
+   * wordmark instead: every destination stays visible and reachable, one swipe
+   * or arrow-key away, with no script.
+   *
+   * 900 rather than 810 because that is hero.ts's own breakpoint — below it the
+   * hero stops subtracting --chrome-h from the viewport (min-height:0). That
+   * matters: a two-row bar is NOT --chrome-h tall, so it is the one place where
+   * the published height stops being true, and putting the switch here means
+   * the only module that would notice has already stopped looking. main's
+   * reservation is restated below from the same numbers the grid uses, so the
+   * two cannot drift.
+   *
+   * Both rows are --st-tap tall, which is not decoration: it is what lets every
+   * control in them be a 44px target without overlays, and it stops the top
+   * row's targets from bleeding into the rail's. */
+  @media (max-width: 900px) {
     :root[data-theme="studio"] .st-chrome-bar {
       /* minmax(0, auto): with a long shop name the wordmark yields before the
        * row can push the page sideways. */
       grid-template-columns: minmax(0, auto) 1fr auto;
+      grid-template-rows: var(--st-tap) var(--st-tap);
+      padding-block: var(--chrome-pad-y) 0;
+      column-gap: var(--gap-sm);
       row-gap: 0;
-      padding-block: 12px 0;
     }
-    :root[data-theme="studio"] .st-chrome-search { display: none; }
-    /* Explicit placement: the nav spanning the row would otherwise push the
-     * phone link and the basket — both after it in source order — onto a
-     * third row. */
-    :root[data-theme="studio"] .st-chrome-mark {
-      grid-area: 1 / 1;
-      min-width: 0; overflow: hidden; text-overflow: ellipsis;
+    :root[data-theme="studio"] main {
+      padding-top: calc(var(--chrome-pad-y) + 2 * var(--st-tap));
     }
-    :root[data-theme="studio"] .st-chrome-actions {
-      grid-area: 1 / 3;
-      justify-self: end;
+    /* Explicit placement: the nav is second in the DOM — primary navigation
+     * belongs early for a screen reader, and at every width above this one the
+     * source order and the visual order agree — so without this it would take
+     * the second cell of row 1 and push the utilities onto a third row. The
+     * cost of keeping it there is that a keyboard reaches the rail before the
+     * two utilities drawn above it; five menu items ahead of two links is the
+     * cheaper of the two mismatches. */
+    /* The longest shop name on the network — PROSTOSTOJEČA KAD — is ~40px too
+     * wide for a 360px row once the number and the basket have taken theirs.
+     * The truncation has to sit on the WORDS, not on the mark: the mark is a
+     * flex container, and text-overflow does nothing on one (it applies to
+     * block containers, which the word spans are once flex blockifies them).
+     * Flex shrinks proportionally to base size, so the long word gives way and
+     * the short one — the product noun, the half that carries the meaning —
+     * survives whole: "PROSTOSTOJE… KAD". */
+    :root[data-theme="studio"] .st-chrome-mark { grid-area: 1 / 1; min-width: 0; }
+    :root[data-theme="studio"] .st-chrome-mark > span {
+      min-inline-size: 0; overflow: hidden; text-overflow: ellipsis;
     }
     :root[data-theme="studio"] .st-chrome-tel {
       grid-area: 1 / 2;
       display: inline-flex; justify-self: end;
     }
+    :root[data-theme="studio"] .st-chrome-actions {
+      grid-area: 1 / 3;
+      justify-self: end;
+    }
     :root[data-theme="studio"] .st-chrome-nav {
       grid-area: 2 / 1 / 3 / -1;
       justify-self: stretch;
       justify-content: flex-start;
-      gap: 22px;
-      /* Its own scroll container: the page must never scroll sideways. */
-      overflow-x: auto;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-      padding: 14px 0 12px;
-      margin-inline: calc(var(--studio-gutter) * -1) calc(var(--studio-gutter) * -1);
-      padding-inline: var(--studio-gutter) var(--studio-gutter);
+      gap: var(--gap-lg);
+      /* Full-bleed: the rail's first and last items should reach the screen
+       * edges when scrolled, while resting flush with the gutter. */
+      margin-inline: calc(var(--studio-gutter) * -1);
+      padding-inline: var(--studio-gutter);
     }
-    :root[data-theme="studio"] .st-chrome-nav::-webkit-scrollbar { display: none; }
 
-    :root[data-theme="studio"] .st-foot-top { grid-template-columns: minmax(0, 1fr); align-items: start; }
-    :root[data-theme="studio"] .st-foot-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+    /* Footer: one column on top, then the brand block full width with the three
+     * link columns as a 2×2 grid beneath it — the source's phone arrangement. */
+    :root[data-theme="studio"] .st-foot-top {
+      grid-template-columns: minmax(0, 1fr);
+      align-items: start;
+      gap: 25px;
+    }
+    :root[data-theme="studio"] .st-news { justify-self: start; max-inline-size: none; }
+    :root[data-theme="studio"] .st-foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     :root[data-theme="studio"] .st-foot-brand { grid-column: 1 / -1; }
   }
-  @media (max-width: 420px) {
-    /* Wordmark + number + basket stop fitting on one 320–360px row. The number
-     * keeps its tap target and its aria-label, and gives up only its digits —
-     * which the footer states in full a scroll away. */
-    :root[data-theme="studio"] .st-chrome-tel span { display: none; }
-    /* Two label-set link columns stop fitting; one column, tightened rows. */
-    :root[data-theme="studio"] .st-foot-cols { grid-template-columns: minmax(0, 1fr); }
+
+  /* ≤809: the source's phone tier. */
+  @media (max-width: 809px) {
+    :root[data-theme="studio"] .st-foot { padding-block: 70px 25px; }
+    :root[data-theme="studio"] .st-foot-top { margin-bottom: var(--gap-xl); }
     :root[data-theme="studio"] .st-foot-col ul { gap: 14px; }
+    :root[data-theme="studio"] .st-foot-rule { margin-block: var(--gap-xl) 25px; }
+  }
+
+  /* ≤620: the magnifier steps aside. It is the one action with a duplicate —
+   * its destination, the catalogue, is also the rail's first item. THE CART
+   * STAYS at every width: the rail has no cart route, so dropping the cluster
+   * wholesale once left a phone with no path to the basket at all. */
+  @media (max-width: 620px) {
+    :root[data-theme="studio"] .st-chrome-search { display: none; }
+  }
+
+  /* ≤460: wordmark + number + basket stop fitting on one 360px row. The number
+   * keeps its aria-label and gives up only its digits — which the footer states
+   * in full a scroll away. It also has to keep its target, and a target is two
+   * dimensions: the row already makes it --st-tap tall, so with the digits gone
+   * the width has to be stated or a 16px glyph would be the whole hit area. */
+  @media (max-width: 460px) {
+    :root[data-theme="studio"] .st-chrome-tel span { display: none; }
+    :root[data-theme="studio"] .st-chrome-tel {
+      min-inline-size: var(--st-tap);
+      justify-content: center;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
     /* Nothing here animates position, so the readable static state is simply
-     * the resting one: no transitions, no residual transform. */
+     * the resting one: no transitions, no residual transform. The underline
+     * still appears on hover — it just appears at once instead of growing,
+     * which is the end state, not the absence of the affordance. */
     :root[data-theme="studio"] .st-chrome-btn,
-    :root[data-theme="studio"] .st-chrome-nav a,
+    :root[data-theme="studio"] .st-chrome-nav a > span::after,
     :root[data-theme="studio"] .st-news-go,
     :root[data-theme="studio"] .st-contact-ico,
     :root[data-theme="studio"] .st-foot-col a {
       transition: none;
-      transform: none;
     }
   }
 `;
@@ -611,9 +914,14 @@ function markHtml(ctx: RenderCtx): string {
  * §4.1 — chrome bar.
  *
  * Nav is mapped onto routeSlugs in the same order renderHeader() uses, so a
- * shop that renames a slug renames it in both chromes at once. The returned
- * string carries the skip link's target immediately after </header>, which
- * keeps the link functional without page.ts having to put an id on <main>.
+ * shop that renames a slug renames it in both chromes at once. Each label is
+ * wrapped in a span because the source's nav item is two children — the label
+ * and an [Underline] element it animates to full width — and the underline
+ * needs a box of the label's width to grow across (see the CSS).
+ *
+ * The returned string carries the skip link's target immediately after
+ * </header>, which keeps the link functional without page.ts having to put an
+ * id on <main>.
  */
 export function renderStudioHeader(ctx: RenderCtx): string {
   const s = ctx.shop;
@@ -642,10 +950,17 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     links
       .map(
         ([k, label]) =>
-          '<a href="' + esc(s.routeSlugs[k] + ctx.q) + '">' + esc(label) + "</a>",
+          '<a href="' + esc(s.routeSlugs[k] + ctx.q) + '"><span>' +
+          esc(label) + "</span></a>",
       )
       .join("") +
     "</nav>" +
+    // Before the icon cluster in the DOM because that is its order in the row
+    // it appears in — the two-row bar at ≤900px, which is the only place it is
+    // shown at all.
+    '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
+    esc(ctx.phoneDisplay) + '">' + icon("phone") +
+    "<span>" + esc(ctx.phoneDisplay) + "</span></a>" +
     '<div class="st-chrome-actions">' +
     // Magnifier goes to the catalogue: a real destination, not a dead control.
     // It is the one action that drops on a phone — the catalogue is also the
@@ -659,9 +974,6 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     '<span class="st-chrome-badge" data-st-cart-count="' + cartCount + '" aria-hidden="true">' +
     cartCount + "</span></a>" +
     "</div>" +
-    '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
-    esc(ctx.phoneDisplay) + '">' + icon("phone") +
-    "<span>" + esc(ctx.phoneDisplay) + "</span></a>" +
     "</div></header>" +
     '<span class="st-anchor" id="st-vsebina" tabindex="-1"></span>'
   );
@@ -673,9 +985,16 @@ export function renderStudioHeader(ctx: RenderCtx): string {
  * The newsletter row is not wired — there is no form, no action and no handler
  * behind it — so it ships DISABLED rather than merely inert. A live-looking
  * field and arrow that silently swallow an address is the worse failure: a
- * reader who types and presses the arrow learns nothing. Both controls are
- * disabled and both point at the note (aria-describedby), which states when
- * the subscription opens and what to do until then.
+ * reader who types and presses the arrow learns nothing.
+ *
+ * Being disabled has an accessibility cost that has to be paid rather than
+ * ignored: a disabled control is out of the tab order, so a screen-reader user
+ * arrowing through the page can meet the field without ever hearing its
+ * aria-describedby note. Both controls keep the note — it is announced in
+ * browse mode and by any AT that reads descriptions on inactive controls — but
+ * the reason is ALSO folded into the arrow's accessible NAME, which is
+ * announced wherever the control is announced at all. The visible note says
+ * the same thing in the same words, so nothing is hidden from sight either.
  */
 export function renderStudioFooter(ctx: RenderCtx): string {
   const s = ctx.shop;
@@ -704,14 +1023,15 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     '<footer class="st-foot"><div class="st-foot-in">' +
     '<div class="st-foot-top">' +
     '<p class="st-foot-mark">' + markHtml(ctx) + "</p>" +
-    "<div>" +
+    '<div class="st-news">' +
     '<h2 class="st-news-h">E-novice</h2>' +
     '<div class="st-news-row">' +
     '<label class="st-vh" for="st-news">Vaš e-poštni naslov</label>' +
     '<input class="st-news-in" id="st-news" type="email" autocomplete="email" ' +
     'placeholder="Vaš e-poštni naslov" disabled aria-describedby="st-news-note">' +
     '<button class="st-news-go" type="button" disabled ' +
-    'aria-describedby="st-news-note" aria-label="Prijavite se na e-novice">' +
+    'aria-describedby="st-news-note" ' +
+    'aria-label="Prijava na e-novice — na voljo ob zagonu trgovine">' +
     icon("arrow") + "</button>" +
     "</div>" +
     '<p class="st-news-note" id="st-news-note">Prijava na e-novice bo na voljo ob ' +

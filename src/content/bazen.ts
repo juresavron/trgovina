@@ -1,46 +1,131 @@
-import type { ShopContent } from "./types";
+import type { PdpContent, ProductCard, ShopContent } from "./types";
+import type { PolaModel } from "../catalog/pola";
+import {
+  POLA_MODELS,
+  footprint,
+  metaLine,
+  modelPrice,
+  modelPriceCents,
+  seating,
+} from "../catalog/pola";
+import { PRICE_UNSET } from "../catalog/pricing";
+
+/**
+ * The offer, built from the supplier catalogue rather than typed out.
+ *
+ * Nine models differing only in shell size, seating layout and jet count is
+ * exactly the case where hand-written cards drift: one gets repriced, another
+ * keeps last season's jet count, and the comparison table stops agreeing with
+ * the product pages. The specification comes from src/catalog/pola.ts and the
+ * price from the landed-cost calculation, so a card cannot disagree with
+ * either.
+ *
+ * This does not breach the anti-doorway rule in docs/SEO.md §6 — that rule is
+ * about copy shared BETWEEN shops. These are variants of one product line
+ * within one shop, which is what a catalogue is.
+ */
+const models: ProductCard[] = POLA_MODELS.map((m) => ({
+  name: m.name,
+  desc: "Akrilna školjka " + footprint(m) + ", " + m.jets + " masažnih šob, " + seating(m) + ".",
+  meta: metaLine(m),
+  price: modelPrice(m),
+  art: "pool" as const,
+  slug: m.slug,
+  ...(m.jets === 55 ? { badge: "Največ šob" } : {}),
+  ...(m.mm[0] === 1950 ? { badge: "Najmanjši tloris" } : {}),
+}));
+
+/** The flagship: the larger shell in its more wanted layout, two loungers. */
+const flagship = POLA_MODELS.find((m) => m.code === "ZR801")!;
+
+/**
+ * One product page per model.
+ *
+ * The parts that differ between models are derived from the specification;
+ * the parts that are the shop's promise rather than the product's — how it
+ * gets there, what the connection needs, what the service costs — are the
+ * same sentences on all nine, because they are the same offer.
+ */
+function pdpFor(m: PolaModel): PdpContent {
+  return {
+    slug: m.slug,
+    eyebrow: m.lounges === 2 ? "Dva ležalnika" : m.lounges === 1 ? "Ležalnik in pet sedežev" : "Šest sedežev",
+    title: m.name,
+    sub:
+      "Akrilni masažni bazen " +
+      footprint(m) +
+      " za " +
+      seating(m) +
+      ": " +
+      m.jets +
+      " nastavljivih šob, ogrevanje in filtracija.",
+    price: modelPrice(m),
+    priceCents: modelPriceCents(m),
+    // Option names without figures: the supplier prices these in USD FOB too,
+    // so a euro price for a cover lifter needs the same landed-cost pass the
+    // shells need. An option listed without a price is honest; one listed with
+    // a guessed price is not.
+    cfg: [
+      ["Termo pokrov", ["Osnovni", "S škarjastim dvigalom"], 0],
+      ["Priklop", ["Moj električar (navodila)", "Naš partner — po ponudbi"], 0],
+      ["Servis", ["Osnovni", "Letni pregled — po ponudbi"], 0],
+    ],
+    freight: [
+      ["Dostava z ekipo in opremo za prenos", "po ponudbi", false],
+      ["Zagon, umeritev in predaja", "vključeno", true],
+      ["Ogled lokacije pred dostavo", "vključeno", true],
+    ],
+    note: "Cenik logistike: razred pallet_xl · cona SI. Ogled uskladimo pred potrditvijo termina.",
+    // Straight from the supplier's sheet. Nothing here is rounded to suit the
+    // layout — the weights in particular are what the terrace has to carry.
+    spec: [
+      ["Kapaciteta", seating(m)],
+      ["Šobe", String(m.jets)],
+      ["Črpalke", m.jetPumps[0] + " × " + m.jetPumps[1] + " KM + obtočna 0,35 KM"],
+      ["Krmilnik", "Balboa BP200 G2+ · " + m.topside + " · grelec 3 kW"],
+      ["Filter", m.filterSf + " sf"],
+      ["Školjka", "ameriški akril, 7 barv · izolacija 2 cm"],
+      ["Mere", footprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
+      ["Teža", m.dryKg + " kg prazen · " + m.filledKg + " kg poln"],
+      ["Priklop", "220 V / 380 V"],
+      ["Garancija", "2–5 let, odvisno od sklopa"],
+    ],
+    bar: [m.name, seating(m) + " · " + m.jets + " šob", modelPrice(m), "V košarico"],
+  };
+}
 
 export const bazenContent: ShopContent = {
   nav: ["Bazeni", "Primerjava", "Vodniki", "Dostava in montaža", "Kontakt"],
   artKey: "pool",
   kicker: "Masažni bazen · Slovenija",
-  h1: "Masažni bazen za pet oseb.",
-  sub: "Akrilna školjka, več kot štirideset šob, ogrevanje in filtracija. Na teraso ga pripeljemo, priklopimo in zaženemo — vi pripravite kopalke. 2.990 € z DDV.",
+  h1: "Masažni bazen za pet ali šest oseb.",
+  // No price in the hero copy while COST_INPUTS is unset. Naming a figure
+  // here and a dash on the cards would be worse than naming neither, and a
+  // price in an h1's sub is the one a customer remembers.
+  sub: "Devet modelov od 195 do 230 cm, od dvaintridesetih do petinpetdesetih šob, akrilna školjka in ogrevanje. Na teraso ga pripeljemo, priklopimo in zaženemo — vi pripravite kopalke.",
   cta: "Izberite svoj bazen",
   metaDescription:
-    "Masažni bazen za 5 oseb z ogrevanjem in 40+ šobami. Ogled lokacije, dostava na teraso in zagon po vsej Sloveniji. 2.990 € z DDV.",
+    "Masažni bazeni za 5 ali 6 oseb, 32–55 šob, akrilna školjka in ogrevanje. Ogled lokacije, dostava na teraso in zagon po vsej Sloveniji.",
   trust: [
     "Dostava in zagon po vsej Sloveniji",
     "Ogled lokacije pred dostavo",
     "Servisna mreža in rezervni deli",
     "Do 36 mesečnih obrokov",
   ],
+  // Every figure here is the supplier's own — the previous set led with a
+  // temperature the price list does not state.
   stats: [
-    ["5 oseb", "udobno, brez gneče"],
-    ["40+", "masažnih šob"],
-    ["38 °C", "tudi sredi zime"],
-    ["4,40 m³", "dostava z ekipo"],
+    ["9 modelov", "od 195 do 230 cm"],
+    ["do 55", "masažnih šob"],
+    ["3 kW", "grelec, Balboa krmilnik"],
+    ["410 kg", "prazen — dostava z ekipo"],
   ],
   products: [
-    {
-      name: "BAZEN RELAX 5",
-      desc: "Akrilni masažni bazen za 5 oseb z ogrevanjem in LED-osvetlitvijo.",
-      meta: "5 oseb · 40+ šob · ogrevanje",
-      price: "2.990 €",
-      art: "pool",
-      badge: "Najbolje prodajan",
-    },
-    {
-      name: "PAKET TERASA",
-      desc: "RELAX 5 s termo pokrovom, stopnico in podlogo za teraso.",
-      meta: "komplet za zunanjo postavitev",
-      price: "3.390 €",
-      art: "pool",
-    },
+    ...models,
     {
       util: true,
       h: "Bo terasa zdržala?",
-      p: "Pred dostavo brezplačno preverimo nosilnost, dostop in elektriko.",
+      p: "Napolnjen bazen tehta do 2.210 kg. Pred dostavo brezplačno preverimo nosilnost, dostop in elektriko.",
       cta: "Naročite ogled →",
     },
   ],
@@ -72,36 +157,8 @@ export const bazenContent: ShopContent = {
     ["Cene 2026", "Koliko stane masažni bazen? Nakup in obratovanje."],
     ["Pozimi", "Masažni bazen pozimi: stroški in nasveti."],
   ],
-  pdp: {
-    slug: "relax-5",
-    eyebrow: "Najbolje prodajan",
-    title: "BAZEN RELAX 5",
-    sub: "Akrilni masažni bazen za pet oseb: 40+ šob, ogrevanje do 38 °C, LED-osvetlitev in filtracija.",
-    price: "2.990 €",
-    priceCents: 299000,
-    cfg: [
-      ["Paket", ["RELAX 5 — 2.990 €", "PAKET TERASA — 3.390 €"], 0],
-      ["Priklop", ["Moj električar (navodila)", "Naš partner — po ponudbi"], 0],
-      ["Servis", ["Osnovni", "Letni pregled — 129 €/leto"], 0],
-    ],
-    freight: [
-      ["Dostava z ekipo in opremo za prenos", "149 €", false],
-      ["Zagon, umeritev in predaja", "vključeno", true],
-      ["Ogled lokacije pred dostavo", "vključeno", true],
-    ],
-    note: "Cenik logistike: razred pallet_xl · cona SI. Ogled uskladimo pred potrditvijo termina.",
-    spec: [
-      ["Kapaciteta", "5 oseb"],
-      ["Šobe", "42, nastavljive"],
-      ["Ogrevanje", "do 38 °C"],
-      ["Priklop", "230 V / 16 A"],
-      ["Mere", "200 × 200 × 90 cm"],
-      ["Volumen dostave", "4,40 m³"],
-      ["Dobavni rok", "21 dni"],
-      ["Garancija", "3 leta, školjka 5 let"],
-    ],
-    bar: ["BAZEN RELAX 5", "5 oseb · ogrevanje · LED", "2.990 €", "V košarico"],
-  },
+  pdp: pdpFor(flagship),
+  pdps: POLA_MODELS.map(pdpFor),
   footNote:
     "Specialist za masažne bazene v Sloveniji. Razstavni bazen v Ljubljani — pridite ga pogledat v živo.",
 };

@@ -889,12 +889,12 @@ function compareAt(d: PdpContent): string | null {
 /**
  * The PDP body — gallery left, buy column right, spec beneath, sticky buy bar.
  *
- * Consumes exactly what renderPdpBody() consumes (ctx.content.pdp: eyebrow,
+ * Consumes exactly what renderPdpBody() consumes (ctx.pdp: eyebrow,
  * title, sub, price, cfg, freight, note, spec, bar), so the two renderers are
  * interchangeable per theme with no content-layer change.
  */
 export function renderStudioPdp(ctx: RenderCtx): string {
-  const d = ctx.content.pdp;
+  const d = ctx.pdp;
   const was = compareAt(d);
 
   const cfg = d.cfg

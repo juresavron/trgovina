@@ -2,14 +2,47 @@
  * STUDIO — commerce acts (docs/STUDIO-BASELINE.md §4.4 and §4.7).
  *
  *   §4.7 Best sellers / product grid — left-aligned heading at the gutter,
- *        three cards per row. Card = 1px frame + padding ~48px; the product
- *        sits on a #F2F2F2 panel occupying ~620 of the ~800px card height;
- *        name at the h5 card-title rung, price at h6, with the struck
- *        compare-at in body and the "z DDV" suffix in label.
- *        HOVER TURNS THE FRAME BLACK — the theme's signature card state.
- *   §4.4 Category rail — centred heading, ~470×500 cards that PEEK at both
+ *        three cards per row, built as a HAIRLINE-RULED TABLE. The source's
+ *        grid is `gap:0` with `padding:1px`, and every card carries
+ *        `box-shadow:0 0 0 1px #dfdfdf`. Two neighbours' rings land on the
+ *        same seam, so the "grid lines" are not drawn by anything — they ARE
+ *        the overlap. Card padding 32px; a tall --bg-alt panel holds the
+ *        product; name, then a price row (price · struck compare-at · VAT)
+ *        beneath. HOVER TURNS THE FRAME BLACK — the signature card state.
+ *   §4.4 Category rail — centred heading, 372×500 cards that PEEK past the
  *        viewport edges (the peek is what separates a rail from a grid),
- *        name (h6, the compact-card rung) + meta line (label), price in muted.
+ *        name (h6, the compact-card rung) + meta line (label), price in
+ *        muted, and two 64px circular controls centred below.
+ *
+ * WHY THE GRID IS FLEX AND NOT GRID. The source ships exactly six products, so
+ * `repeat(3, minmax(0,1fr))` always fills two whole rows and the ruled table is
+ * always a rectangle. Our shops ship three cells (two products plus one
+ * comparison tile) and that count is CONTENT, not layout — any count that is
+ * not a multiple of three leaves the table with a notch cut out of its last
+ * row, which reads as a rendering fault rather than as a short catalogue. A
+ * wrapping flex row with `flex: 1 1 33.3%` seals it for free: the trailing
+ * line's cards grow to share the full width, at every count and every
+ * breakpoint, with no per-count arithmetic in the renderer and no inline style
+ * carrying a number the stylesheet cannot see. What it costs: a short trailing
+ * row is made of cards wider than the ones above them. That is the trade, and
+ * it is the right way round — an oversized cell still reads as a table, a
+ * missing cell reads as a bug.
+ *
+ * Cell count, at the ≥810px tiers (the source keeps three columns at tablet):
+ *   1 → one full-width cell.
+ *   2 → two half-width cells with one rule between them.
+ *   3 → the source's row exactly: three equal cells. THIS IS TODAY'S SHOPS —
+ *       two products and the comparison tile make a complete 3-up row, which
+ *       is why the grid needs no special case for the catalogue we ship.
+ *   4 → 2×2, via a `:has()` quantity query. It is the one count where the
+ *       plain flex result (three, then a lone full-width fourth) looks worse
+ *       than a smaller complete rectangle. Without `:has()` the fallback is
+ *       that 3 + 1 — still sealed, just less pleasant.
+ *   5 → 3 + 2, the pair sharing the second row at half width each.
+ *   6 → the source's own 3×2.
+ *   7, 8, 9, … → three per row; the trailing 1 or 2 share that row.
+ * At ≤809px every count is a single column, which is the source's own phone
+ * layout (its grid becomes `display:flex; flex-flow:column` there).
  *
  * TYPE COMES FROM THE RAMP IN tokens.ts, NEVER FROM A CLAMP. An earlier pass
  * eyeballed sizes off a 2000px screenshot and expressed each as a clamp whose
@@ -25,21 +58,33 @@
  * name + a meta/price line — so `desc`/`meta` surface in the rail rather than
  * being bolted onto a grid card the baseline never gave a spec line to.
  *
- * No dead controls (§5.2): this Worker ships no JS, so the rail's two measured
- * arrow buttons become real anchor links to focusable card targets — prev to
- * the first card, next to the last — driven by CSS scroll-snap. Nothing here
- * renders a control that cannot act. The glyph is the STADIUM of §4.14
- * (icons.ts, path data verbatim from the source SVGs), never a circle and
- * never a numeral: the source ships exactly two arrows, not one per card.
+ * No dead controls (§5.2): the rail's two controls are real anchors to
+ * focusable card targets — prev to the first card, next to the last — so they
+ * still act with the behaviour layer switched off, and behaviour.ts upgrades
+ * them to step by one card. The source ships exactly two of them, not one per
+ * card, and they sit centred BELOW the rail.
+ *
+ * THE CONTROL IS A 64px CIRCLE, and the baseline contradicts itself about it:
+ * §4.4 calls the pair "stadium arrows (not circles)" from a screenshot, while
+ * the Controls catalogue transcribes the real thing — "circular nav / carousel
+ * button: 64px square, 99px radius, 2px #151515 ring, no fill", which is what
+ * --ctrl-circle-size and --bw-ctrl exist for. The catalogue wins: it is read
+ * off the source's own declarations, and a control this size is also the only
+ * reading that clears WCAG 2.5.8 without padding a 36px glyph out to a hit area
+ * larger than the thing you can see. What it costs is one line of CSS below:
+ * icons.ts draws the arrow INSIDE its stadium, and a stadium nested in a ring
+ * is two boundaries for one control, so the ring-framed variant hides the
+ * glyph's own outline and keeps only the arrow.
  *
  * Token discipline (docs/THEMES.md): colors, radii, faces, gutter and rhythm
  * are var(--…) from tokens.ts, which is the single declaration site. Only the
- * three ratios/lengths this act measures and tokens.ts does not carry are
+ * four ratios/lengths this act measures and tokens.ts does not carry are
  * declared below. Every selector is scoped :root[data-theme="studio"] —
  * zarja/lednik/salon share this sheet.
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { productArt } from "./product-art";
 import { arrowIcon } from "./icons";
 import type { ProductCard, UtilCard } from "../../content/types";
 
@@ -49,21 +94,32 @@ export const STUDIO_COMMERCE_CSS = `
    * them: tokens.ts declares those, and a second declaration here at equal
    * specificity would let sheet order decide the storefront's gutter. */
   :root[data-theme="studio"] {
-    /* §4.7: measured ~48px card padding — the card's whole "gallery" feel. */
-    --studio-card-pad: clamp(16px, 2.4vw, 48px);
-    /* §4.4: measured 470px rail card. The vw term is what produces the peek:
-     * whole cards never tile the viewport exactly, so a fraction of the next
-     * one is always visible past the right gutter. */
-    --studio-rail-card: clamp(228px, 23.5vw, 470px);
+    /* §4.7 card padding. The "~48px" in the baseline is a screenshot reading;
+     * the source's own DOM sets --ddm5pd:32px on the card and 25px on its
+     * tablet variant. Both sit on this curve at their own tier width (2.2vw is
+     * 32px at 1455 and 25px at 1136), so one clamp reproduces the pair. */
+    --studio-card-pad: clamp(20px, 2.2vw, 32px);
+    /* §4.4 rail card. 372px, not the baseline's "~470": 470 is a screenshot
+     * measure, and the source's DOM gives .framer-19gsl8j-container and the
+     * card anchor inside it both a literal 372px. The correction is what makes
+     * the peek work at all — at 470 a four-card rail still fits inside a
+     * desktop scrollport and nothing is ever cut. The vw term keeps the pitch
+     * proportional so the cut lands mid-card rather than on a seam. */
+    --studio-rail-card: clamp(240px, 26vw, 372px);
+    /* §4.4: the rail's track gap is 34px in the source, not the 24px card gap
+     * tokens.ts carries — and the grid, now ruled, has no gap at all, so this
+     * is the only gap left in the act. 372 + 34 = the source's 406px pitch,
+     * which is what puts ~4.5 cards across its 1920px rail. */
+    --studio-rail-gap: 34px;
     /* §4.7: the product panel is ~620px tall inside a ~474px-wide content box
      * → 0.765. Expressed as a ratio (not a length) so the panel keeps its
      * proportion at every column width; with name + price + padding beneath,
      * it lands at ~78% of the card's height as measured. */
     --studio-panel-ar: 3 / 4;
     /* §4.4: the rail card's image area is the top ~55% — a shorter panel than
-     * the grid's, which is what makes a rail card read as 470×500, not 470×800.
-     * 3/2, not 4/3: inside a ~446px content box a 4/3 panel is 335px tall and
-     * eats ~64% of the card, while 3/2 lands at 297px ≈ the measured 55%. */
+     * the grid's, which is what makes a rail card read as 372×500, not 372×800.
+     * 3/2, not 4/3: inside a ~324px content box a 4/3 panel eats ~64% of the
+     * card, while 3/2 lands at ≈ the measured 55%. */
     --studio-rail-panel-ar: 3 / 2;
   }
 
@@ -81,6 +137,22 @@ export const STUDIO_COMMERCE_CSS = `
    * A real photograph drops into .st-shot with zero restructuring. */
   :root[data-theme="studio"] .st-shot {
     position: absolute; inset: 0; z-index: 1;
+  }
+  /* The drawing sits in the panel with the same optical margin the mass had,
+   * so a shop with art and a shop without still compose identically. Ink is
+   * deliberately strong — the previous 12% is what made this slot invisible —
+   * but stays below body ink so it reads as illustration, not as content. */
+  :root[data-theme="studio"] .st-shot-art {
+    position: absolute;
+    inset: 10% 12% 16%;
+    display: grid;
+    place-items: center;
+    color: color-mix(in srgb, var(--ink) 62%, transparent);
+  }
+  :root[data-theme="studio"] .st-shot-art .st-art {
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
   }
   :root[data-theme="studio"] .st-shot-mass {
     position: absolute;
@@ -117,7 +189,7 @@ export const STUDIO_COMMERCE_CSS = `
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
-    /* --ink-body, not --ink-mute: 9.7:1 on #ffffff at 14px tracked caps. */
+    /* --ink-body, not --ink-mute: 16.1:1 on #ffffff at 14px tracked caps. */
     color: var(--ink-body);
   }
   /* Section heading → h2, the ramp's section rung (60/50/38). The measured
@@ -154,34 +226,81 @@ export const STUDIO_COMMERCE_CSS = `
   :root[data-theme="studio"] .st-shop-head {
     margin-bottom: clamp(28px, 3.4vw, 68px);
   }
+  /* THE RULED TABLE. gap: 0 and padding: 1px on the container, a 1px ring
+   * on every card: two neighbours' rings land on the same seam, the later one
+   * paints over the earlier, and what survives is a single 1px rule. Nothing
+   * draws the lines between cells — the lines ARE the overlap, which is why
+   * the block reads as one ruled table and not as six separated cards. The
+   * ordinary gap this used to have is three characters of CSS and loses
+   * exactly that — separated cards are a different design, not a looser one.
+   *
+   * The container's 1px padding is the other half of it: without it the
+   * outermost ring paints 1px OUTSIDE the container, so the table's outer edge
+   * would sit a pixel past the section gutter on all four sides.
+   *
+   * Flex rather than grid — the header carries the count-by-count reasoning.
+   * 33.3%, not 33.3333%: three of them are 99.9% of the line, so no sub-pixel
+   * rounding can ever push the third card onto a second line, and flex-grow
+   * hands the leftover 0.1% straight back. Wrapped lines stretch their items
+   * to equal height by default, which is what the source buys with
+   * grid-auto-rows: minmax(0,1fr) — the rules have to line up across a row. */
   :root[data-theme="studio"] .st-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--studio-card-gap);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    padding: var(--bw-line);
   }
 
   :root[data-theme="studio"] .st-card {
     display: flex; flex-direction: column;
+    flex: 1 1 33.3%;
     min-width: 0;
+    /* Positioned so the hover state below can raise the whole card. */
+    position: relative;
     padding: var(--studio-card-pad);
     background: var(--surface);
-    border: 1px solid var(--line);
-    border-radius: var(--r-card);
+    /* A RING, not a border. A border sits inside the box, so two cards meeting
+     * would draw 1px each and the seam would be 2px; a ring sits outside, so
+     * neighbours share one. This is the source's own box-shadow:0 0 0 1px.
+     *
+     * The colour goes through a local --st-ring rather than being restated in
+     * every state, so each rule that changes this frame — hover/focus, and the
+     * dark util tile with its own hover — changes ONE value instead of
+     * repeating the whole shadow. A shorthand written out four times is how a
+     * ring and its hover twin drift apart. Custom properties do not transition,
+     * but box-shadow does, and box-shadow is what is animating. */
+    --st-ring: var(--line);
+    box-shadow: 0 0 0 var(--bw-line) var(--st-ring);
+    /* Square, and not as a preference: an 8px radius rounds off every cell
+     * corner and the continuous rules break into dashes at each junction.
+     * --r-card survives on the panel INSIDE the card, which is where the
+     * source keeps its 8px. It also means no :focus-visible override is
+     * needed: the base sheet's border-radius:4px for focus rings loses to this
+     * on specificity, so the focus outline is square like the cell. */
+    border-radius: 0;
     text-decoration: none;
     color: var(--ink);
     /* THE signature: only the frame changes. No lift, no shadow, no scale —
      * the baseline's hover is a hairline going black and nothing else. */
-    transition: border-color 0.2s ease;
+    transition: box-shadow 0.2s ease;
   }
-  :root[data-theme="studio"] .st-card:hover { border-color: var(--line-strong); }
-  /* Keyboard parity: the same frame, plus the page's accent ring. The base
-   * sheet forces border-radius:4px on :focus-visible — restore the card's. */
+  /* Keyboard parity is not a separate design: focus takes the same blackened
+   * frame as hover, and the page's accent outline comes from the base sheet.
+   *
+   * z-index is load-bearing here, not polish. Rings overlap and the later
+   * sibling paints last, so without it a hovered card's right and bottom edges
+   * stay light grey underneath its neighbours' rings — the "frame goes black"
+   * state would draw two and a half sides. Raising the hovered card lifts its
+   * whole box, ring included, over every sibling. */
+  :root[data-theme="studio"] .st-card:hover,
   :root[data-theme="studio"] .st-card:focus-visible {
-    border-color: var(--line-strong);
-    border-radius: var(--r-card);
+    --st-ring: var(--line-strong);
+    z-index: 1;
   }
 
-  /* The panel the product sits on (#F2F2F2 → --bg-alt), radius 12px. */
+  /* The panel the product sits on — the theme's one panel grey, --bg-alt, at
+   * --r-media. This is the 8px the source keeps and the card gives up: inside
+   * a square cell a rounded panel is a shape, not a broken rule. */
   :root[data-theme="studio"] .st-card-panel {
     position: relative;
     display: block;
@@ -192,24 +311,42 @@ export const STUDIO_COMMERCE_CSS = `
     isolation: isolate;
   }
   /* Legibility scrim under the badge. Invisible on the flat placeholder, and
-   * already in place for the day a photograph fills the panel. */
+   * already in place for the day a photograph fills the panel. It follows the
+   * badge to the top-RIGHT corner. */
   :root[data-theme="studio"] .st-card-panel::after {
     content: "";
-    position: absolute; inset: 0 auto auto 0; z-index: 2;
+    position: absolute; inset: 0 0 auto auto; z-index: 2;
     width: 70%; height: 38%;
     background: radial-gradient(
-      100% 100% at 0% 0%,
+      100% 100% at 100% 0%,
       color-mix(in srgb, var(--bg) 55%, transparent),
       transparent 70%
     );
   }
-  /* Badge: SHARP chip, top-left (§9 — chips that carry a word are buttons'
-   * cousins here; the round radius is reserved for the rail's arrows). */
+  /* BADGE PLACEMENT is the source's: position:absolute; top:0; right:0 on the
+   * card — top RIGHT, which is where a buyer's eye lands after the price, not
+   * top left where it competes with the product's own silhouette. Two
+   * deliberate differences from the source:
+   *
+   *   1. It is inset INTO the panel rather than hung off the card's outer
+   *      corner. The source's chip is a Frameship stock pill that only exists
+   *      during hover, so it can float over the card's white padding; ours is
+   *      on the page at rest, and a chip sitting on the padding at rest reads
+   *      as a sticker nobody removed.
+   *   2. It stays visible. The source ships it at opacity:0 and reveals it on
+   *      hover, which puts the one word a buyer scans for behind a pointer —
+   *      and behind nothing at all on a touch screen. A merchandising flag that
+   *      only appears on hover is a flag that does not exist on a phone.
+   *
+   * Solid ink ground rather than the source's 1px #dfdfdf light pill, because
+   * this chip sits ON the panel grey where that hairline is 1.17:1 and the chip
+   * would have no edge at all; #ffffff on #151515 is 18.3:1. --r-tag (50px) and
+   * the 6px/20px padding are the baseline's own tag geometry. */
   :root[data-theme="studio"] .st-badge {
     position: absolute; z-index: 3;
-    top: clamp(10px, 1vw, 20px); left: clamp(10px, 1vw, 20px);
-    padding: clamp(5px, 0.45vw, 9px) clamp(9px, 0.8vw, 16px);
-    border-radius: var(--r-pill);
+    top: var(--gap-sm); right: var(--gap-sm);
+    padding: 6px 20px;
+    border-radius: var(--r-tag);
     background: var(--ink-invert);
     color: var(--on-invert);
     /* A badge is a chip: the label role, tight leading, in the label face. */
@@ -243,57 +380,80 @@ export const STUDIO_COMMERCE_CSS = `
   }
   :root[data-theme="studio"] .st-price-row {
     display: flex; align-items: baseline; flex-wrap: wrap;
-    gap: clamp(6px, 0.6vw, 12px);
+    /* The source's price row is gap:10px — the theme's dominant micro gap,
+     * which tokens.ts carries as --gap-sm. A clamp here was inventing a value
+     * the source states outright. */
+    gap: var(--gap-sm);
     font-family: var(--f-body);
     font-variant-numeric: tabular-nums;
   }
-  /* The price is the card's primary numeric element, so it takes h6 — the
-   * ramp's price rung — in the DISPLAY face, overriding the row's --f-body.
-   * The two spans beside it stay in body/label, which is what keeps the row a
-   * hierarchy rather than three numbers of equal voice. */
+  /* PRICE TYPOGRAPHY, corrected against the source's own DOM. An earlier pass
+   * set the price in the DISPLAY face at h6 (24px Chivo) on the reasoning that
+   * it is the card's loudest number. The source does the opposite: its price is
+   * Satoshi 20 w500 #151515 — the PROSE face at the lead rung. That is not a
+   * detail, it is why the source's card reads as a spec line rather than a
+   * price tag: the only display type anywhere on the card is its NAME, and the
+   * price defers to it. --f-body / --t-lead / --w-body-med / --ink. */
   :root[data-theme="studio"] .st-price {
-    font-family: var(--f-display);
-    font-size: var(--t-h6);
-    font-weight: var(--w-display);
-    letter-spacing: var(--ls-h6);
-    line-height: var(--lh-h6);
+    font-family: var(--f-body);
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-lead);
     color: var(--ink);
   }
-  /* Struck compare-at → body, the smaller of the two rungs the ramp allows a
-   * secondary price. #767676 on #ffffff = 4.5:1 — it passes on the card's
-   * white surface, which is why the price row is NOT on the panel. */
+  /* Struck compare-at → the LABEL face at the label rung, again straight from
+   * the DOM (DM Sans 14 w500 #2e2e2e, text-decoration:line-through), not the
+   * body face this used to use. The source's literal #2e2e2e has no on-light
+   * token in this theme — --ink-invert-2 holds exactly that value but is named
+   * for dark grounds and would read here as a mistake — so it takes --ink-body
+   * #212121: one rung darker, 16.1:1 on the card's white surface against
+   * 13.6:1 for the source's own, so the substitution can only help.
+   *
+   * A struck price is DARK in this theme, not muted. That is deliberate in the
+   * source and worth keeping: the saving is the argument, and greying it out is
+   * how most storefronts quietly hide the number that makes the case. */
   :root[data-theme="studio"] .st-was {
-    font-size: var(--t-body);
-    font-weight: var(--w-body);
-    letter-spacing: var(--ls-body);
-    line-height: var(--lh-body);
-    color: var(--ink-mute);
-    text-decoration-line: line-through;
-    text-decoration-thickness: 1px;
-  }
-  /* "z DDV" is a qualifier on the price, not a price — the label rung, in the
-   * label face, tight-led so it sits on the row without opening it up. Not
-   * uppercased: the abbreviation is already capitalised in the copy. */
-  :root[data-theme="studio"] .st-vat {
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     color: var(--ink-body);
+    text-decoration-line: line-through;
+    text-decoration-thickness: 1px;
+  }
+  /* "z DDV" is OURS, not the source's — Slovenian retail quotes gross prices
+   * and the qualifier belongs on the card. Same label rung as the struck price,
+   * but the muted ink (--ink-mute, 5.17:1 on white), which is what keeps the
+   * row three distinct voices instead of two identical small ones beside a
+   * large one. Not uppercased: the abbreviation is already capitalised. */
+  :root[data-theme="studio"] .st-vat {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    color: var(--ink-mute);
   }
 
-  /* The util card: same frame, inverted ground. Its hover twin of "frame goes
-   * black" is "frame goes white" — the strongest hairline available on #0D0D0D. */
+  /* The util tile: same ring, inverted ground. Its ring is --ink-invert rather
+   * than --line so the table's rule meets the dark cell flush instead of
+   * outlining it in grey, and its hover twin of "frame goes black" is "frame
+   * goes white" — the strongest hairline available on #151515. It needs the
+   * same z-index lift as the product card, and for the same reason. */
   :root[data-theme="studio"] .st-util {
     justify-content: space-between;
     gap: clamp(16px, 2vw, 40px);
     background: var(--ink-invert);
-    border-color: var(--ink-invert);
+    --st-ring: var(--ink-invert);
     color: var(--on-invert);
   }
+  /* The z-index lift comes from .st-card:hover above — this tile carries both
+   * classes — so only the ink changes here. It has to come after that rule in
+   * the sheet, which it does. */
   :root[data-theme="studio"] .st-util:hover,
-  :root[data-theme="studio"] .st-util:focus-visible { border-color: var(--on-invert); }
+  :root[data-theme="studio"] .st-util:focus-visible { --st-ring: var(--on-invert); }
   /* The util tile fills one grid slot, so its heading is a LARGE card's title
    * → h5, the same rung as .st-card-name. The measured pass had it a rung
    * louder (42px) than the product name; the tile keeps that emphasis through
@@ -359,13 +519,33 @@ export const STUDIO_COMMERCE_CSS = `
     max-width: 24ch;
     margin-inline: auto;
   }
+  /* The offer's price span, under the heading it describes. Body rung and the
+   * muted ink: it is orientation before the cards, not one of their prices. */
+  :root[data-theme="studio"] .st-rail-range {
+    margin-top: 12px;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-mute);
+  }
 
-  /* THE RAIL. Cards peek at both edges because the scroller is full-bleed and
-   * only its PADDING holds the gutter, and because the snap lands a card in
-   * the CENTRE of the scrollport: whatever sits left and right of the centred
-   * card is then cut by each viewport edge. Snapping to "start" against a
-   * scroll-padding inset did the opposite — it pinned the first card flush to
-   * the gutter with nothing peeking, i.e. a grid that happened to scroll.
+  /* THE RAIL, and what the source's "peek at both edges" actually is.
+   *
+   * It is not a scroll position — it is a LOOP. The source's six category
+   * cards are cloned four times into 24 <li>s on a 1920px track that is
+   * centred inside an overflow:hidden section, so whichever cards happen to
+   * lie under the two edges are cut, permanently, at rest. WE DO NOT CLONE.
+   * Four copies of every product put four copies of every product name and
+   * price into the document, which is the one kind of duplication a network of
+   * single-keyword shops cannot afford (docs/SEO.md) — and a loop has no first
+   * card, so the rail would have no reachable start for a keyboard.
+   *
+   * So this is a single-pass scroller and the peek comes from the PITCH
+   * instead: 372 + 34 = 406px, the source's own, which no viewport width
+   * divides evenly. At rest the leading card sits at the gutter and the track
+   * is cut by the trailing edge; from the first step onwards centre snapping
+   * cuts it at both. The cost is the resting frame — one edge peeks there,
+   * not two — and that is the whole price of not duplicating the catalogue.
    *
    * "proximity", not "mandatory": mandatory re-snaps on every settle, which
    * fights a zoomed-in or large-text reader trying to rest between cards
@@ -383,12 +563,25 @@ export const STUDIO_COMMERCE_CSS = `
     scrollbar-width: none;
   }
   :root[data-theme="studio"] .st-rail::-webkit-scrollbar { display: none; }
+  /* WHEN THERE IS NOTHING TO PEEK AT. Today's shops carry two products, and
+   * two 372px cards do not come close to filling a desktop scrollport — there
+   * is no overflow, so there is no peek and nothing to scroll. The honest
+   * degradation is to stop pretending to be a rail: width: max-content plus
+   * auto inline margins centres a short track under the centred heading, and
+   * the moment the track outgrows the scrollport those auto margins resolve to
+   * 0 and it scrolls from the gutter exactly as before. (At the phone tier two
+   * cards already overflow, so the peek is live there today.)
+   *
+   * justify-content: center would have centred it too — and would have made
+   * the START of an overflowing track unreachable, which is the classic
+   * centred-scroller bug. Auto margins do not have it. */
   :root[data-theme="studio"] .st-rail-track {
     display: flex;
-    gap: var(--studio-card-gap);
+    gap: var(--studio-rail-gap);
     list-style: none;
-    margin: 0; padding: 0;
+    padding: 0;
     width: max-content;
+    margin: 0 auto;
   }
   :root[data-theme="studio"] .st-rail-item {
     flex: 0 0 var(--studio-rail-card);
@@ -413,18 +606,23 @@ export const STUDIO_COMMERCE_CSS = `
     height: 100%;
     padding: clamp(12px, 1.2vw, 24px);
     background: var(--surface);
-    border: 1px solid var(--line);
+    /* A real border here, not the grid's ring: the rail card is a SEPARATED
+     * card with 8px corners (the source draws it with border:1px solid #dfdfdf
+     * and border-radius:8px), and nothing of it has to tile against a
+     * neighbour. The two constructions are meant to differ — that contrast is
+     * how a rail reads as a rail beside a ruled table. */
+    border: var(--bw-line) solid var(--line);
     border-radius: var(--r-card);
     text-decoration: none;
     color: var(--ink);
     transition: border-color 0.2s ease;
   }
-  :root[data-theme="studio"] .st-rail-card:hover { border-color: var(--line-strong); }
-  :root[data-theme="studio"] .st-rail-card:focus-visible {
-    border-color: var(--line-strong);
-    border-radius: var(--r-card);
-  }
-  /* Image area = the top ~55% of a 470×500 card (§4.4). */
+  /* One rule for both states, and no border-radius restatement: .st-rail-card
+   * already sets --r-card at a higher specificity than the base sheet's
+   * focus-ring radius, so the ring follows the card's own corner. */
+  :root[data-theme="studio"] .st-rail-card:hover,
+  :root[data-theme="studio"] .st-rail-card:focus-visible { border-color: var(--line-strong); }
+  /* Image area = the top ~55% of a 372×500 card (§4.4). */
   :root[data-theme="studio"] .st-rail-panel {
     position: relative;
     display: block;
@@ -453,7 +651,7 @@ export const STUDIO_COMMERCE_CSS = `
   }
   /* Meta row → label, the ramp's rung for meta lines, in the label face. Tight
    * leading because the rail card is the theme's shortest body box. Colour is
-   * --ink-body (7.8:1 on white) rather than --ink-mute, because this line is
+   * --ink-body (16.1:1 on white) rather than --ink-mute, because this line is
    * dense spec text, not a struck secondary price. */
   :root[data-theme="studio"] .st-rail-meta {
     font-family: var(--f-label);
@@ -483,42 +681,74 @@ export const STUDIO_COMMERCE_CSS = `
    * actually move the rail with no JS. */
   :root[data-theme="studio"] .st-rail-nav {
     display: flex; justify-content: center; align-items: center;
-    gap: clamp(8px, 0.8vw, 14px);
+    /* The source's default "these belong together" gap. */
+    gap: var(--gap-sm);
     margin-top: clamp(20px, 2.4vw, 48px);
     padding-inline: var(--studio-gutter);
   }
-  /* THE BOUNDARY IS THE GLYPH. §4.14's stadium — 35×23, rx 11.5, 1px stroke —
-   * is drawn by the SVG itself in currentColor, so the control paints no box
-   * of its own; a second border would read as a circle around a stadium.
+  /* THE 64px CIRCLE. --ctrl-circle-size and --bw-ctrl are declared in tokens.ts
+   * for exactly this control — "64px square, 99px radius, 2px #151515 ring, no
+   * fill" — and until now nothing consumed them, which is how this act ended up
+   * shipping a 36px glyph in a bare 44px hit box a third of the intended size.
    *
-   * Rest ink is --ink-mute (#767676 on white = 4.54:1), not --line (#e4e4e4 =
-   * 1.27:1): this outline IS the control's visual boundary, so WCAG 1.4.11's
-   * 3:1 for non-text UI applies to it. --line-strong stays the hover ink.
+   * The ring IS the control's boundary, so WCAG 1.4.11's 3:1 applies to it:
+   * --line-strong is 18.3:1 on white, far past the floor, and it is the
+   * source's own ink for this ring. Hover fills the circle rather than moving
+   * it — the same discipline as the cards, where state is a change of frame and
+   * never a lift.
    *
-   * The 36×35 glyph is padded out to a ≥44px target (WCAG 2.5.8) — the SVG
-   * carries the geometry, the padding carries the hit area. */
+   * 64px is its own ≥44px target (WCAG 2.5.8); no padding is doing that job. */
   :root[data-theme="studio"] .st-rail-go {
     display: inline-flex; align-items: center; justify-content: center;
-    min-inline-size: 44px;
-    min-block-size: 44px;
-    padding: 4px;
-    color: var(--ink-mute);
+    inline-size: var(--ctrl-circle-size);
+    block-size: var(--ctrl-circle-size);
+    /* currentColor, so the ring and the arrow are ONE value. At rest that is
+     * --ink: a #151515 ring around a #151515 arrow on the page ground, which
+     * is the source's "2px ring, no fill" exactly. On hover the ground fills
+     * and the same one value flips to white, giving the ring-inside-a-dark-
+     * shape that the theme already uses as its inset hairline. Two
+     * declarations instead of five, and they cannot disagree. */
+    border: var(--bw-ctrl) solid currentColor;
+    border-radius: var(--r-circle);
+    color: var(--ink);
     text-decoration: none;
-    transition: color 0.2s ease;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
-  :root[data-theme="studio"] .st-rail-go:hover { color: var(--line-strong); }
+  :root[data-theme="studio"] .st-rail-go:hover {
+    background: var(--ink-invert);
+    color: var(--on-invert);
+  }
   :root[data-theme="studio"] .st-rail-go:focus-visible {
     outline: 2px solid var(--acc);
     outline-offset: 3px;
-    /* Round (§9): arrows are pills, never sharp like the word-carrying CTAs. */
+    /* Round (§9): arrows are circles, never sharp like the word-carrying CTAs.
+     * The base sheet's 4px would draw a rounded square around a circle. */
     border-radius: var(--r-circle);
   }
-  :root[data-theme="studio"] .st-rail-go .st-arrow-svg { display: block; }
+  /* The glyph fills the ring rather than sitting at its shipped 36px, which
+   * inside a 64px control would leave a 12px arrow adrift in a lot of white.
+   * 100% of the 60px content box scales the arrow itself to ~21px — the usual
+   * glyph-to-button ratio for an icon control this size — and the viewBox
+   * keeps it centred on both axes without any nudging. */
+  :root[data-theme="studio"] .st-rail-go .st-arrow-svg {
+    display: block;
+    inline-size: 100%;
+    block-size: auto;
+  }
+  /* icons.ts draws §4.14's arrow inside its stadium outline, which is correct
+   * wherever the glyph is the whole control. Inside this ring it would be a
+   * second boundary for one control — a rounded rectangle floating in a circle.
+   * The stadium is the SVG's only STROKED path and the arrow its only filled
+   * one, so hiding path[stroke] keeps icons.ts the single home of the
+   * geometry instead of copying a bare arrow into this file. */
+  :root[data-theme="studio"] .st-rail-go .st-arrow-svg path[stroke] { display: none; }
 
   /* A control that cannot do anything must not look like it can, and must not
-   * take focus. aria-disabled rather than the disabled attribute because these
-   * are anchors, and an anchor that stops being focusable mid-scroll would
-   * move the user's focus somewhere unrelated. */
+   * take a click. aria-disabled rather than the disabled attribute because
+   * these are anchors, and an anchor that stops being focusable mid-scroll
+   * would move the user's focus somewhere unrelated. A disabled control is
+   * exempt from 1.4.11, which is why the 0.3 opacity on the ring is allowed to
+   * fall under 3:1 — and it is the only place in this act that does. */
   :root[data-theme="studio"] .st-rail-go[aria-disabled="true"] {
     opacity: 0.3;
     pointer-events: none;
@@ -532,6 +762,11 @@ export const STUDIO_COMMERCE_CSS = `
     gap: 8px;
     padding-inline: clamp(4px, 0.8vw, 12px);
   }
+  /* A dot is an interactive control, so its resting fill is its own boundary
+   * and 1.4.11's 3:1 applies: --line is 1.33:1 on white and was failing it.
+   * --line-ctrl (#949494) is the token that exists for precisely this — the
+   * quiet control rung at 3.03:1 — and it keeps the pagination reading as
+   * quieter than the arrows beside it. */
   :root[data-theme="studio"] .st-dot {
     appearance: none;
     border: 0;
@@ -541,7 +776,7 @@ export const STUDIO_COMMERCE_CSS = `
     inline-size: 24px;
     block-size: 24px;
     background: radial-gradient(circle at 50% 50%,
-      var(--line) 0 4px, transparent 4px);
+      var(--line-ctrl) 0 4px, transparent 4px);
     border-radius: var(--r-circle);
     cursor: pointer;
     transition: background 0.25s ease;
@@ -562,17 +797,30 @@ export const STUDIO_COMMERCE_CSS = `
     :root[data-theme="studio"] .st-dot { transition: none; }
   }
 
-  /* ---- responsive ---------------------------------------------------- */
-  @media (max-width: 1000px) {
-    /* Three 48px-padded cards stop being cards at this width. */
-    :root[data-theme="studio"] .st-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  }
-  @media (max-width: 640px) {
-    :root[data-theme="studio"] .st-grid { grid-template-columns: minmax(0, 1fr); }
-    /* At 390px: gutter 18px each side leaves 354px; a 228px card plus the gap
-     * guarantees the next one is cut by the right edge — the peek survives. */
-    :root[data-theme="studio"] .st-card { padding: clamp(14px, 4vw, 22px); }
+  /* ---- responsive ----------------------------------------------------
+   * The tiers are the theme's own 1199/809, not the 1000/640 this module used
+   * to invent — a module inventing its own breakpoints is how a storefront ends
+   * up changing shape twice on the way down.
+   *
+   * The source keeps THREE columns at the tablet tier (its DOM transcription is
+   * explicit: "no override — still 3 columns") and drops to a single column at
+   * the phone tier. So the intermediate 2-up this had is gone. What pays for it
+   * is the card padding: 2.2vw puts ~20px inside an ~253px tablet cell, which
+   * is the source's own compensation (its tablet card variant is 25px), and it
+   * leaves ~210px of content — tight, and the shape the source ships. */
+  @media (max-width: 809px) {
+    :root[data-theme="studio"] .st-card { flex-basis: 100%; }
     :root[data-theme="studio"] .st-sec-h { max-width: none; }
+  }
+  /* Four cells is the one count where the plain flex result (three, then a lone
+   * full-width fourth) looks worse than a smaller complete rectangle, so a
+   * quantity query turns it into 2×2. Scoped to ≥810 so it can never fight the
+   * phone tier's single column, and a browser without :has() simply keeps the
+   * 3 + 1 — which is still a sealed table, just a less pleasant one. */
+  @media (min-width: 810px) {
+    :root[data-theme="studio"] .st-grid:has(> .st-card:nth-child(4):last-child) > .st-card {
+      flex-basis: 50%;
+    }
   }
 
   /* ---- motion --------------------------------------------------------- */
@@ -595,18 +843,30 @@ export const STUDIO_COMMERCE_CSS = `
   }
 `;
 
-/** Photo-ready slot — bordered mass + contact shadow, never an image request. */
-function shot(): string {
+/**
+ * Photo-ready slot. Carries the shop's product DRAWING, not an image request.
+ *
+ * It used to be a bordered rectangle at 12% ink with a soft shadow — which
+ * screenshotting revealed for what it was: an empty grey box, repeated eight
+ * times down the page wherever the product should be. A drawing of the actual
+ * goods reads as an illustration (so it cannot be mistaken for the photograph
+ * it stands in for) while still telling a visitor what is on the page.
+ *
+ * A shop with no drawing keeps the neutral mass rather than borrowing another
+ * shop's product. A real photograph drops into .st-shot with no restructuring.
+ */
+function shot(ctx: RenderCtx, variant = 0): string {
+  const art = productArt(ctx.shop.key, variant);
   return (
     '<span class="st-shot" aria-hidden="true">' +
-    '<span class="st-shot-mass"></span>' +
+    (art ? '<span class="st-shot-art">' + art + "</span>" : '<span class="st-shot-mass"></span>') +
     '<span class="st-shot-floor"></span>' +
     "</span>"
   );
 }
 
-function pdpHref(ctx: RenderCtx): string {
-  return ctx.shop.routeSlugs["/product"] + "/" + ctx.content.pdp.slug + ctx.q;
+function pdpHref(ctx: RenderCtx, slug?: string): string {
+  return ctx.shop.routeSlugs["/product"] + "/" + (slug ?? ctx.pdp.slug) + ctx.q;
 }
 
 /**
@@ -677,9 +937,11 @@ function capFirst(s: string, locale: string): string {
  * comparison tile in the middle of its product list keeps it here too.
  */
 export function renderStudioProducts(ctx: RenderCtx): string {
+  // A shop with one model links every card at the flagship; a shop with a
+  // catalogue links each card at its own page.
   const href = pdpHref(ctx);
   const cards = ctx.content.products
-    .map((p: ProductCard | UtilCard) => {
+    .map((p: ProductCard | UtilCard, i: number) => {
       if ("util" in p) {
         return (
           '<a class="st-card st-util" href="' + esc(href) + '">' +
@@ -691,10 +953,10 @@ export function renderStudioProducts(ctx: RenderCtx): string {
       }
       const was = compareAt(p);
       return (
-        '<a class="st-card" href="' + esc(href) + '">' +
+        '<a class="st-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-card-panel">' +
         (p.badge ? '<span class="st-badge">' + esc(p.badge) + "</span>" : "") +
-        shot() +
+        shot(ctx, i) +
         "</span>" +
         '<span class="st-card-body">' +
         '<h3 class="st-card-name">' + esc(p.name) + "</h3>" +
@@ -723,7 +985,12 @@ export function renderStudioProducts(ctx: RenderCtx): string {
     // sentence: four shops on this baseline must not share a visible line.
     '<h2 class="st-sec-h">' + esc(ctx.content.cta) + "</h2>" +
     "</div>" +
-    '<div class="st-grid">' + cards + "</div>" +
+    // The grid element is what carries the ruled table's 1px padding, so an
+    // EMPTY one is not an empty box — it is a 2px grey hairline sitting under
+    // the heading with nothing in it. The section itself still renders: the
+    // hero's CTA links to #izbor and that anchor must not disappear because a
+    // shop's catalogue is momentarily empty.
+    (cards === "" ? "" : '<div class="st-grid">' + cards + "</div>") +
     "</div></section>"
   );
 }
@@ -751,8 +1018,15 @@ export function renderStudioRail(ctx: RenderCtx): string {
   const href = pdpHref(ctx);
   const title = capFirst(ctx.shop.keyword.plural, ctx.shop.locale.intl);
 
-  // §4.4's price slot is a RANGE across the offer, not one card's price; it is
-  // the same span on every card because it describes the rail, not the item.
+  // §4.4 prints a range in this slot, and for the source theme's rail — whose
+  // cards are CATEGORIES — that is correct: "Seating, 1.490 € – 1.990 €"
+  // describes a group. These cards are not categories. Each one names a
+  // specific model and lists its own wattage, capacity and volume, so a span
+  // across the whole offer printed under SAVNA DUO states a price that model
+  // does not have. Slovenia transposes Directive 98/6/EC on price indication
+  // in ZVPot: the selling price shown for an identified product has to be that
+  // product's. So the card carries its own price, and the range moves to the
+  // section head, where it does describe what it is next to.
   const range = priceRange(items);
 
   const cards = items
@@ -760,12 +1034,12 @@ export function renderStudioRail(ctx: RenderCtx): string {
       const id = "st-rail-" + String(i + 1);
       return (
         '<li class="st-rail-item" data-st-item id="' + esc(id) + '" tabindex="-1">' +
-        '<a class="st-rail-card" href="' + esc(href) + '">' +
-        '<span class="st-rail-panel">' + shot() + "</span>" +
+        '<a class="st-rail-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
+        '<span class="st-rail-panel">' + shot(ctx, i) + "</span>" +
         '<span class="st-rail-body">' +
         '<span class="st-rail-name">' + esc(p.name) + "</span>" +
         '<span class="st-rail-meta">' + esc(p.meta) + "</span>" +
-        '<span class="st-rail-price">' + esc(range ?? p.price) + "</span>" +
+        '<span class="st-rail-price">' + esc(p.price) + "</span>" +
         "</span></a></li>"
       );
     })
@@ -796,6 +1070,7 @@ export function renderStudioRail(ctx: RenderCtx): string {
     '<div class="st-rail-head">' +
     '<p class="st-eyebrow">Ponudba</p>' +
     '<h2 class="st-sec-h" id="st-rail-h">' + esc(title) + "</h2>" +
+    (range ? '<p class="st-rail-range">' + esc(range) + "</p>" : "") +
     "</div>" +
     '<div class="st-rail" data-st-scroll><ul class="st-rail-track">' + cards + "</ul></div>" +
     (nav ? '<nav class="st-rail-nav" aria-label="Pomik po ponudbi">' + nav + "</nav>" : "") +

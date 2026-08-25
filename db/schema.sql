@@ -16,6 +16,10 @@
 --   * an orders table. "Orders live in Stripe" works for a €69 parcel; a €6k
 --     pallet needs a freight booking, a delivery slot, an installation date,
 --     a withdrawal window and an event ledger.
+--
+-- APPLIED. This is live on the project as migration `trgovina_initial_schema`.
+-- It is no longer a design document: changing a statement here changes nothing
+-- in the database, and a new migration is now the only way to alter it.
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
@@ -297,6 +301,11 @@ create index page_events_shop_time_idx on public.page_events (shop_id, created_a
 create or replace function public.next_order_number(p_shop_id text)
 returns text
 language plpgsql
+-- Empty search_path, so an unqualified name can never resolve into a schema
+-- a caller controls. Every reference below is schema-qualified, which is what
+-- makes this safe; adding an unqualified one will fail loudly rather than
+-- silently resolve somewhere else.
+set search_path = ''
 as $$
 declare
   v_seq integer;
@@ -318,6 +327,7 @@ $$;
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
+set search_path = ''
 as $$
 begin
   new.updated_at = now();

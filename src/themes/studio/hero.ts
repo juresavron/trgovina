@@ -1,9 +1,24 @@
 /**
  * STUDIO — opening acts (docs/STUDIO-BASELINE.md §4.2, §4.5, §4.6).
  *
- *   §4.2 Hero triptych  — photo · black offer panel · photo with name + price
+ *   §4.2 Hero triptych  — product panel · black offer panel · photo with name + price
  *   §4.5 Wordmark band  — the shop name enormous in white, OCCLUDED by the product
  *   §4.6 Marquee        — dot-separated USP ticker, seamless CSS loop
+ *
+ * WHAT IS A PHOTOGRAPH HERE AND WHAT IS NOT. media.ts splits its imagery by
+ * what a slot CLAIMS, and the triptych straddles that line, so the split is
+ * drawn here explicitly:
+ *
+ *   right panel  — a real SCENE. It is atmosphere; it claims nothing about the
+ *                  product, exactly as lifestyle photography does anywhere. It
+ *                  carries a "simbolična fotografija" plate for the one reason
+ *                  the guide cards do not need one: the scrim below it prints a
+ *                  product NAME and PRICE, and a photograph under a price reads
+ *                  as the photograph OF that price unless we say otherwise.
+ *   left panel   — stays the drawn placeholder. The source bundle's cutouts are
+ *                  sofas and dining chairs; these shops sell saunas, plunge tubs
+ *                  and billiard tables, so a cutout in a product slot would not
+ *                  be atmosphere, it would be the wrong product.
  *
  * All three are full-bleed: they render OUTSIDE `.wrap`, so the page gutter
  * never applies and the panels meet the viewport edges. The gutter is
@@ -31,6 +46,8 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { discWatermark } from "./icons";
+import { SCENES, decorativeImg, pick } from "./media";
+import { productArt } from "./product-art";
 
 export const STUDIO_HERO_CSS = `
   /* ---- The only values this module declares ----------------------------
@@ -44,11 +61,10 @@ export const STUDIO_HERO_CSS = `
      * 48:56 ratio is edited in one place and never drifts. */
     --studio-gap-stack: clamp(20px, 2.4vw, 48px);
     --studio-gap-cta: clamp(24px, 2.8vw, 56px);
-    /* The photo placeholder draws itself in these, so one set of markup works
-     * on a light or a dark ground. Defaults are the light case; the hero's
-     * panels override them, because the hero is dark. */
+    /* The drawn placeholder inks itself in this, so one set of markup works on
+     * a light or a dark ground. The default is the light case — the hero's
+     * left panel and the §4.5 band object both stand on --bg-alt. */
     --photo-ink: var(--ink);
-    --photo-cap-ink: var(--ink-body);
   }
 
   /* ---- §4.2 Hero triptych ----
@@ -81,11 +97,22 @@ export const STUDIO_HERO_CSS = `
    * triptych, which in the source sits mid-page beneath the SOLID dark bar.
    * Copying the wrong section's ground is how the whole band went black. */
   :root[data-theme="studio"] .st-hero-photo-a { background: var(--bg-alt); }
-  :root[data-theme="studio"] .st-hero-photo-b {
-    background: var(--tile-mid);
-    --photo-ink: var(--on-invert);
-    --photo-cap-ink: var(--on-invert);
-    color: var(--on-invert);
+  /* --tile-mid is the ground BEHIND the photograph, not instead of it: it is
+   * the rung a cropped product bleeds over (§2), so a slow or failed image
+   * decode shows the panel it was always meant to sit on rather than a white
+   * hole punched in the triptych. */
+  :root[data-theme="studio"] .st-hero-photo-b { background: var(--tile-mid); }
+  /* The scene fills the column. Absolutely positioned, so it contributes no
+   * layout of its own and the width/height attributes decorativeImg emits
+   * carry only the intrinsic ratio — the panel's height is the grid's, and CLS
+   * stays at zero however slowly the file arrives. */
+  :root[data-theme="studio"] .st-hero-img {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
   }
 
   /* §4.14 watermark — the ARROW-STADIUM outline, scaled enormous and set a few
@@ -96,7 +123,16 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-hero-wm {
     position: absolute; z-index: 0;
     left: 50%; top: 50%; transform: translate(-50%, -50%);
-    width: 128%; height: 58%;
+    /* SQUARE, so the mark is a CIRCLE. discWatermark() draws concentric
+     * ellipses with preserveAspectRatio="none", which means the box decides
+     * the shape — and the box used to be 128% × 58%, i.e. a lens squashed to
+     * less than half its height. The reference frames show one large disc per
+     * panel, so the box is now square and the aspect ratio does the work.
+     * 122% of a panel that is a third of the viewport overruns the panel's
+     * height on very wide screens; that is what .st-hero-panel's overflow:clip
+     * is for, and a clipped disc is the reference's own crop. */
+    width: 122%;
+    aspect-ratio: 1 / 1;
     pointer-events: none;
   }
   :root[data-theme="studio"] .st-hero-wm .st-watermark {
@@ -214,6 +250,20 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-photo {
     position: absolute; inset: 0; z-index: 1;
   }
+  /* Ink strong enough to actually read. The mass this replaces was 12% and
+   * vanished into the panel; the drawing sits below body ink so it still says
+   * "illustration", not "photograph". */
+  :root[data-theme="studio"] .st-photo-art {
+    position: absolute;
+    inset: 12% 10% 18%;
+    display: grid;
+    place-items: center;
+    color: color-mix(in srgb, var(--photo-ink) 58%, transparent);
+  }
+  :root[data-theme="studio"] .st-photo-art .st-art {
+    inline-size: 100%;
+    block-size: 100%;
+  }
   :root[data-theme="studio"] .st-photo-mass {
     position: absolute;
     left: 17%; right: 17%; top: 28%; bottom: 17%;
@@ -232,12 +282,23 @@ export const STUDIO_HERO_CSS = `
     border-radius: var(--r-pill);
     background: radial-gradient(50% 50% at 50% 50%, color-mix(in srgb, var(--photo-ink) 20%, transparent), transparent 72%);
   }
-  /* Draws in --photo-cap-ink so the disclosure follows its panel's ground:
-   * --ink-body where the panel is light, --on-invert-mute (7.33:1) on the
-   * hero's dark panels. A fixed ink would have failed on one of the two. */
+  /* The disclosure plate. It used to be bare type inked by a variable, which
+   * worked while it sat on a flat panel grey; it now sits on a PHOTOGRAPH
+   * whose tones we do not control, and no ink clears 4.5:1 against "whatever
+   * pixel is under it". So the plate is opaque --ink-invert with --on-invert
+   * on it (18.3:1) and the photo never enters the calculation. The theme's
+   * glass badge would have matched the source's chrome, but it is an 8% white
+   * fill — a white alpha, i.e. dividers only, never a ground for text.
+   *
+   * ROUND, because it is a chip and not a button (§3), and capped so a wrapped
+   * two-line plate stays inside its panel instead of running past the gutter. */
   :root[data-theme="studio"] .st-photo-cap {
     position: absolute; z-index: 2;
     top: var(--studio-gutter); left: var(--studio-gutter);
+    max-width: calc(100% - 2 * var(--studio-gutter));
+    padding: clamp(6px, 0.5vw, 10px) clamp(12px, 1.1vw, 20px);
+    border-radius: var(--r-pill);
+    background: var(--ink-invert);
     /* A caption — the label role, whole row, uppercase. */
     font-family: var(--f-label);
     font-size: var(--t-label);
@@ -245,22 +306,31 @@ export const STUDIO_HERO_CSS = `
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
-    color: var(--photo-cap-ink);
+    color: var(--on-invert);
   }
-  /* Both photo panels carry the "photography pending" disclosure, but exactly
-   * ONE is ever visible: panel A's above 900px, panel B's below it — where
-   * panel A is display:none and the disclosure would otherwise vanish with it. */
-  :root[data-theme="studio"] .st-hero-photo-b .st-photo-cap { display: none; }
 
-  /* Right column overlay: product name + price on a legibility scrim. */
+  /* Right column overlay: product name + price on a legibility scrim.
+   *
+   * The stops were raised (92→94% at the foot, 62→72% at the fold) when the
+   * panel stopped being a flat grey and became a photograph. The floor has to
+   * hold for the WORST pixel the scene can put under the type, i.e. pure
+   * white, so it is computed there rather than sampled off the four files we
+   * happen to ship — a fifth scene must not be able to break the page:
+   *
+   *   --on-invert on 94% #151515 over #fff → 15.7:1   (the price row)
+   *   --on-invert on 72% #151515 over #fff →  7.3:1   (the name, at the fold)
+   *   --on-invert-mute on 94% over #fff    →  6.3:1   (the struck compare-at)
+   *
+   * Every one of those is a floor, not an estimate: over any real scene the
+   * ratios only go up. */
   :root[data-theme="studio"] .st-hero-scrim {
     position: absolute; inset: auto 0 0 0; z-index: 2;
     display: flex; flex-direction: column; gap: clamp(6px, 0.6vw, 12px);
     padding: clamp(56px, 7vw, 140px) var(--studio-gutter) var(--studio-gutter);
     background: linear-gradient(
       to top,
-      color-mix(in srgb, var(--ink-invert) 92%, transparent) 0%,
-      color-mix(in srgb, var(--ink-invert) 62%, transparent) 42%,
+      color-mix(in srgb, var(--ink-invert) 94%, transparent) 0%,
+      color-mix(in srgb, var(--ink-invert) 72%, transparent) 46%,
       transparent 100%
     );
   }
@@ -321,7 +391,18 @@ export const STUDIO_HERO_CSS = `
    * which occludes its middle letters. isolation:isolate gives the band its
    * own stacking context so the order is local and cannot be reshuffled by
    * whatever the page puts above or below it. Nothing here is faded —
-   * occlusion is geometry, not opacity. */
+   * occlusion is geometry, not opacity.
+   *
+   * WHAT THE PLACEHOLDER CAN AND CANNOT DO. The layering is exactly the
+   * source's: the letters pass behind an opaque object. What the source has
+   * and we do not is a CUTOUT — a sofa with no frame, whose silhouette is the
+   * occluding edge. Ours is a rectangular photo slot, so the letters disappear
+   * behind a rectangle rather than behind a shape. That is a property of the
+   * art, not of the layering, and it resolves the day a shop's own cutout
+   * lands in .st-band-object: no rule below changes. Substituting the source
+   * bundle's furniture cutouts would fix the silhouette by putting a dining
+   * chair in front of a sauna shop's name, which is the trade this theme
+   * refuses everywhere else (see media.ts). */
   :root[data-theme="studio"] .st-band {
     position: relative;
     isolation: isolate;
@@ -363,15 +444,35 @@ export const STUDIO_HERO_CSS = `
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* The product that occludes the wordmark. Opaque on purpose. */
+  /* The product that occludes the wordmark. Opaque on purpose: the device is
+   * geometry, so nothing here is faded to fake depth.
+   *
+   * IT IS ANCHORED TO THE WORD, not to the band. That is the whole fix in this
+   * rule. It used to hang a fixed distance off the band's floor and rely on
+   * arithmetic — band height minus padding minus the foot minus the wordmark's
+   * margin — to land across the letters. The arithmetic held on desktop and
+   * broke on a phone, where the foot cluster grows to three rows (chip, a
+   * wrapped product name, a full-width CTA) and its top edge climbed ABOVE the
+   * object's bottom edge. The foot paints at z-index 3, so what shipped was
+   * white chip type sitting on the light-grey object at about 1.1:1.
+   *
+   * As a child of .st-band-word the containing block IS the wordmark's box, so
+   * bottom:0 puts the object's floor exactly on the word's and it cannot reach
+   * into the margin below, let alone into the foot — at any breakpoint, for any
+   * length of shop name or product title. The word's own z-index:1 makes it a
+   * stacking context, and a positioned child at z-index 2 paints above its
+   * parent's inline text: the letters pass behind the object. That is the
+   * occlusion, and it is now structural rather than arithmetic. */
   :root[data-theme="studio"] .st-band-object {
+    /* No display:block needed for the <span> — absolute positioning blockifies
+     * it, and a dead declaration in a sheet this size is still a dead one. */
     position: absolute; z-index: 2;
     left: 50%; transform: translateX(-50%);
-    bottom: clamp(90px, 13vw, 220px);
+    bottom: 0;
     width: clamp(200px, 40vw, 760px);
     aspect-ratio: 4 / 3;
     border-radius: var(--r-media);
-    background: linear-gradient(168deg, var(--bg-alt), var(--bg-alt));
+    background: var(--bg-alt);
   }
   /* Inside the band object the mass is the product itself, not a subject on a
    * backdrop, so it sits tighter to the frame than in a hero panel. */
@@ -460,12 +561,31 @@ export const STUDIO_HERO_CSS = `
     display: flex; align-items: center;
     gap: clamp(12px, 1.2vw, 24px);
     padding-inline: var(--studio-gutter) 0;
+    /* The pause checkbox is position:absolute (effects.ts hides it visually
+     * while keeping it focusable). Without a positioned ancestor it resolves
+     * against whatever ancestor happens to be positioned — the initial
+     * containing block on this page — so focusing it by keyboard scrolled the
+     * document to a control that is nowhere near the band it operates. */
+    position: relative;
+  }
+  /* effects.ts owns how the pause control LOOKS; this is the band's layout
+   * claim on it, and the only reason it is stated here is that a 14px label
+   * with 5px of padding is a 30px target. WCAG 2.5.8 would pass that, but the
+   * project's floor is 44px and every other control in the theme meets it
+   * (commerce.ts pads its 36×35 arrow glyph out the same way). Scoped through
+   * .st-mq so it outranks effects.ts by specificity rather than by sheet
+   * order — the whole reason tokens.ts is a single declaration site. */
+  :root[data-theme="studio"] .st-mq .st-mq-toggle {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 44px;
   }
   :root[data-theme="studio"] .st-mq-viewport {
     flex: 1 1 auto; min-width: 0;
     overflow: hidden;
   }
-  :root[data-theme="studio"] .st-mq-group { display: flex; align-items: center; }
+  :root[data-theme="studio"] .st-mq-group,
+  :root[data-theme="studio"] .st-mq-set { display: flex; align-items: center; }
   /* A marquee CAN be the module's decorative outlier — one run at poster scale
    * would sit above the ramp the way the band wordmark does. This one does not:
    * it is a row of uppercase USP claims at reading size, i.e. ordinary UI text
@@ -499,16 +619,17 @@ export const STUDIO_HERO_CSS = `
       padding: clamp(56px, 12vw, 96px) clamp(20px, 6vw, 44px);
     }
     /* The surviving photo is the one carrying the product name and price;
-     * the other is dropped outright rather than squeezing three panels. */
+     * the other is dropped outright rather than squeezing three panels. It is
+     * also the panel holding the disclosure plate, so the disclosure survives
+     * the collapse without a second copy riding a hidden panel. */
     :root[data-theme="studio"] .st-hero-photo-b { order: 2; min-height: 58svh; }
     :root[data-theme="studio"] .st-hero-photo-a { display: none; }
-    /* …so the placeholder disclosure moves with it: panel B's caption is the
-     * one that shows here (see .st-hero-photo-b .st-photo-cap above). */
-    :root[data-theme="studio"] .st-hero-photo-b .st-photo-cap { display: block; }
 
     :root[data-theme="studio"] .st-band { min-height: clamp(380px, 72vh, 620px); }
     :root[data-theme="studio"] .st-band-callout { display: none; }
-    :root[data-theme="studio"] .st-band-object { bottom: clamp(120px, 34vw, 240px); }
+    /* No phone override for .st-band-object any more. It used to need one
+     * because it hung off the band's floor and the floor moved; anchored to the
+     * wordmark it tracks the wordmark, which is where it is supposed to be. */
   }
   @media (max-width: 560px) {
     :root[data-theme="studio"] .st-hero-photo-b { min-height: 48svh; }
@@ -517,13 +638,35 @@ export const STUDIO_HERO_CSS = `
   }
 
   /* ---- Motion ----
-   * effects.ts owns the reduced-motion reset for the ticker itself (track
-   * animation off, clone hidden, items wrapped). Two consequences are this
-   * module's to handle: the wrapped set needs the gutter on its trailing edge,
-   * and the pause control now toggles an animation that no longer runs — a
-   * control that does nothing, so it goes. */
+   * effects.ts owns the reduced-motion reset for the ticker itself: the track
+   * stops, drops to width:100% and turns on flex-wrap, and the clone half is
+   * hidden. Four consequences are this module's to handle.
+   *
+   * 1. flex-wrap on the TRACK wraps the track's own children, and the track's
+   *    children are two group boxes — each of which is itself a nowrap flex
+   *    row holding every claim. So the wrap had nothing to wrap: the surviving
+   *    group overflowed the band and .st-mq's overflow:hidden cut the claims
+   *    past the fold clean off, with no scroll and no ticker to bring them
+   *    back. Reduced motion was losing content. The wrap has to run all the
+   *    way down to the row that actually holds the items.
+   * 2. The duplicate sets exist only to make the running loop wider than the
+   *    widest viewport (see marqueeRepeats). Standing still they would print
+   *    the same four claims three times over, so they go.
+   * 3. Each set ends with a separator because the loop needs one between its
+   *    last claim and the first of the next pass. Standing still that is a dot
+   *    hanging off the end of the list.
+   * 4. The pause control now toggles an animation that no longer runs — a
+   *    control that does nothing, so it goes. */
   @media (prefers-reduced-motion: reduce) {
     :root[data-theme="studio"] .st-mq-viewport { padding-inline-end: var(--studio-gutter); }
+    :root[data-theme="studio"] .st-mq-group,
+    :root[data-theme="studio"] .st-mq-set {
+      flex-wrap: wrap;
+      min-width: 0;
+      row-gap: var(--gap-sm);
+    }
+    :root[data-theme="studio"] .st-mq-set--dup { display: none; }
+    :root[data-theme="studio"] .st-mq-set .st-mq-sep:last-child { display: none; }
     :root[data-theme="studio"] .st-mq-pause,
     :root[data-theme="studio"] .st-mq-toggle { display: none; }
     :root[data-theme="studio"] .st-btn-light { transition: none; }
@@ -531,22 +674,46 @@ export const STUDIO_HERO_CSS = `
 `;
 
 /**
- * Photo-ready slot — bordered mass + contact shadow, no image request.
- * `cap` renders the "photography pending" note; omitted where an overlay
- * already occupies the panel.
+ * The drawn product slot — bordered mass standing on a contact shadow, no
+ * image request. This is what a PRODUCT slot gets until the shop's own
+ * photography exists; see the header for why a furniture cutout is not an
+ * acceptable stand-in for a sauna.
  */
-function photoSlot(cap?: string): string {
+function photoSlot(ctx: RenderCtx): string {
+  // The shop's product drawing, for the same reason commerce.ts carries one:
+  // this panel was a bordered rectangle at low opacity, which screenshotting
+  // showed to be an empty grey box sitting where the product should be. A
+  // shop with no drawing keeps the neutral mass rather than borrowing another
+  // shop's goods.
+  const art = productArt(ctx.shop.key);
   return (
     '<div class="st-photo" aria-hidden="true">' +
-    '<span class="st-photo-mass"></span>' +
+    (art ? '<span class="st-photo-art">' + art + "</span>" : '<span class="st-photo-mass"></span>') +
     '<span class="st-photo-floor"></span>' +
-    "</div>" +
-    (cap ? '<span class="st-photo-cap">' + esc(cap) + "</span>" : "")
+    "</div>"
   );
 }
 
+/**
+ * The one image on this page that is already in the viewport when the document
+ * arrives, and therefore the page's LCP candidate.
+ *
+ * decorativeImg marks every picture `loading="lazy"`, which is right for the
+ * cards it was written for and wrong here: a lazy image is not fetched until
+ * layout has run and proved it visible, so the hero photo starts late by
+ * exactly that wait. media.ts is not ours to branch — one image helper, one
+ * contract — so the hint is rewritten at the single call site that needs it.
+ *
+ * The replace is exact and non-fatal: if media.ts ever stops emitting that
+ * attribute the markup passes through unchanged and we are back to the
+ * default, never to a broken tag.
+ */
+function eager(img: string): string {
+  return img.replace(' loading="lazy"', ' loading="eager" fetchpriority="high"');
+}
+
 function pdpHref(ctx: RenderCtx): string {
-  return ctx.shop.routeSlugs["/product"] + "/" + ctx.content.pdp.slug + ctx.q;
+  return ctx.shop.routeSlugs["/product"] + "/" + ctx.pdp.slug + ctx.q;
 }
 
 /**
@@ -578,12 +745,12 @@ function compareAt(d: RenderCtx["content"]["pdp"]): string | null {
  */
 export function renderStudioHero(ctx: RenderCtx): string {
   const c = ctx.content;
-  const was = compareAt(c.pdp);
+  const was = compareAt(ctx.pdp);
   return (
     '<section class="st-hero">' +
     '<div class="st-hero-panel st-hero-photo-a">' +
     watermark() +
-    photoSlot("fotografija v pripravi") +
+    photoSlot(ctx) +
     "</div>" +
     '<div class="st-hero-panel st-hero-offer">' +
     watermark() +
@@ -593,14 +760,32 @@ export function renderStudioHero(ctx: RenderCtx): string {
     '<p class="st-hero-sub">' + esc(c.sub) + "</p>" +
     '<a class="st-btn-light st-hero-cta" href="#izbor">' + esc(c.cta) + "</a>" +
     "</div></div>" +
-    // The caption rides BOTH photo panels; CSS shows exactly one, so the
-    // disclosure survives panel A being dropped below 900px.
+    // The photographic panel. `sizes` describes the column, not the file: a
+    // third of the viewport once the triptych is laid out, the whole of it
+    // once the ≤900px rule collapses the grid — so the browser picks against
+    // the box it will actually paint into.
+    //
+    // Seeded by shop key, so a shop's hero is the same picture on every render
+    // (a storefront that reshuffles its photography on reload looks broken)
+    // and two shops on this theme do not open on the same scene.
     '<div class="st-hero-panel st-hero-photo-b">' +
-    photoSlot("fotografija v pripravi") +
+    eager(
+      decorativeImg(
+        pick(SCENES, ctx.shop.key),
+        "st-hero-img",
+        "(max-width: 900px) 100vw, 34vw",
+      ),
+    ) +
+    // Not "fotografija v pripravi" any more: there IS a photograph now, and
+    // the honest claim about it is that it is not this product. "Simbolična
+    // fotografija" is the Slovenian retail formula for exactly that, and it
+    // sits on the panel that prints the price rather than the one that does
+    // not.
+    '<span class="st-photo-cap">simbolična fotografija</span>' +
     '<div class="st-hero-scrim">' +
-    '<span class="st-hero-name">' + esc(c.pdp.title) + "</span>" +
+    '<span class="st-hero-name">' + esc(ctx.pdp.title) + "</span>" +
     '<span class="st-hero-prices">' +
-    '<span class="st-hero-price">' + esc(c.pdp.price) + "</span>" +
+    '<span class="st-hero-price">' + esc(ctx.pdp.price) + "</span>" +
     // The <s> alone is silent in most screen readers; the hidden prefix is
     // what makes "prejšnja cena 3.499 €" the announced relationship.
     (was
@@ -618,15 +803,22 @@ export function renderStudioHero(ctx: RenderCtx): string {
  * hero owns the page's only h1.
  */
 export function renderStudioWordmarkBand(ctx: RenderCtx): string {
-  const d = ctx.content.pdp;
+  const d = ctx.pdp;
   // The callout label is content, not chrome — the shop's first trust claim.
   // noUncheckedIndexedAccess: a shop may ship an empty trust list.
   const note = ctx.content.trust[0];
   return (
     '<section class="st-band" aria-label="' + esc(ctx.shop.name) + " — " + esc(d.title) + '">' +
     '<div class="st-band-photo" aria-hidden="true"></div>' +
-    '<p class="st-band-word">' + esc(ctx.shop.name) + "</p>" +
-    '<div class="st-band-object" aria-hidden="true"><span class="st-photo-mass"></span></div>' +
+    // The object lives INSIDE the wordmark so it is positioned against the
+    // letters rather than against the band's floor — see .st-band-object for
+    // what that fixes. A <span>, not a <div>: a div inside a <p> does not
+    // parse as a child, the parser closes the paragraph and the containing
+    // block silently becomes the band again. Empty and aria-hidden, so the
+    // paragraph still announces nothing but the shop name.
+    '<p class="st-band-word">' + esc(ctx.shop.name) +
+    '<span class="st-band-object" aria-hidden="true">' +
+    '<span class="st-photo-mass"></span></span></p>' +
     (note
       ? '<p class="st-band-callout">' +
         '<span class="st-band-dot" aria-hidden="true"></span>' +
@@ -642,9 +834,70 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
 }
 
 /**
- * §4.6 — USP ticker. One track holding the item set twice; the clone is
- * aria-hidden so a screen reader hears each claim once, and the −50% translate
- * loops without a visible seam.
+ * How wide ONE half of the ticker track has to be, in CSS pixels, before the
+ * loop can be called seamless.
+ *
+ * The loop works by translating a doubled track exactly −50%, which lands the
+ * clone where the original began. That is the seam everyone checks, and it was
+ * fine. The seam nobody checks is the OTHER one: at −50% the viewport shows
+ * the track from one half-width to one half-width plus the viewport. If a half
+ * is narrower than the viewport, the end of the track arrives before the
+ * cycle does and the band runs empty for the difference. With four claims the
+ * half measured about 1.6k, so every desktop wider than roughly 1800px was
+ * watching the ticker drain and jump — a seam, just not at the join.
+ *
+ * 2600 covers a 2560px display with its gutter, its pause control and room to
+ * spare, and the estimate below is deliberately pessimistic on top of that.
+ */
+const MQ_HALF_MIN = 2600;
+
+/**
+ * How many times the claim set repeats inside one half of the track.
+ *
+ * The width is ESTIMATED, because the server cannot measure text: 7px per
+ * character and 40px per separator are both floors, not averages — uppercase
+ * DM Sans at 14px with 0.06em tracking runs nearer 10px a character, and the
+ * separator's padding only reaches its 18px minimum at the narrowest tier. An
+ * estimate that reads low over-repeats, which costs a few hundred bytes of
+ * markup; an estimate that reads high under-repeats, which is the empty band
+ * again. Only one of those two failures is visible.
+ *
+ * The cap is a stop against pathological content (a shop shipping one
+ * two-word claim would otherwise ask for thirty passes), not a tuning knob.
+ */
+function marqueeRepeats(items: readonly string[]): number {
+  const est = items.reduce((w, t) => w + t.length * 7 + 40, 0);
+  if (est <= 0) return 1;
+  return Math.min(12, Math.max(1, Math.ceil(MQ_HALF_MIN / est)));
+}
+
+/**
+ * One pass of the claim set. Every pass after the first is scaffolding for the
+ * loop's width, so it is aria-hidden and tagged --dup for the reduced-motion
+ * rule that drops it — a screen reader hears each claim exactly once no matter
+ * how many times the band paints it.
+ */
+function marqueeSet(items: readonly string[], dup: boolean): string {
+  return (
+    '<span class="st-mq-set' +
+    (dup ? ' st-mq-set--dup" aria-hidden="true"' : '"') +
+    ">" +
+    items
+      .map(
+        (t) =>
+          '<span class="st-mq-item">' + esc(t) + "</span>" +
+          '<span class="st-mq-sep" aria-hidden="true">·</span>',
+      )
+      .join("") +
+    "</span>"
+  );
+}
+
+/**
+ * §4.6 — USP ticker. One track holding two identical halves; translating −50%
+ * lands the second where the first began, so the join is invisible, and each
+ * half is padded out with repeats until it is wider than any viewport that can
+ * see it, so the tail is invisible too. The clone half is aria-hidden.
  *
  * WCAG 2.2.2 (Pause, Stop, Hide, Level A): the scroll starts on its own, runs
  * far past five seconds and sits beside other content, so it needs a real stop
@@ -654,27 +907,32 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
  * siblings, in that order, because the selector is `+` then `~`. Zero
  * JavaScript, operable by keyboard and touch, unlike a :hover pause.
  *
- * The label is empty on purpose: its text is `content:` in effects.ts so one
- * control can read "Ustavi"/"Zaženi" per state, which leaves nothing for a
- * screen reader to announce — hence the aria-label.
+ * NAMING THE CONTROL. The label is empty on purpose — its text is `content:`
+ * in effects.ts so one control can read "Ustavi"/"Zaženi" per state — which
+ * leaves nothing for a screen reader to announce. The aria-label used to sit
+ * on the <label>, where naming the checkbox from it depends on the accessible
+ * name computation walking out of the label's own attributes; it is on the
+ * INPUT now, where it is the control's name outright and no UA has to be
+ * trusted to derive it. The name still contains both visible words, so WCAG
+ * 2.5.3 (Label in Name) holds in either state.
  */
 export function renderStudioMarquee(ctx: RenderCtx): string {
-  const group = ctx.content.trust
-    .map(
-      (t) =>
-        '<span class="st-mq-item">' + esc(t) + "</span>" +
-        '<span class="st-mq-sep" aria-hidden="true">·</span>',
-    )
-    .join("");
+  const items = ctx.content.trust;
+  // A shop may ship an empty trust list; an empty ticker is a 1px rule across
+  // the page with a pause button beside it, which is worse than no band.
+  if (!items.length) return "";
+  const passes = marqueeRepeats(items);
+  let half = marqueeSet(items, false);
+  for (let i = 1; i < passes; i++) half += marqueeSet(items, true);
   return (
     '<section class="st-mq" aria-label="Prednosti">' +
-    '<input class="st-mq-pause" id="st-mq-pause" type="checkbox">' +
-    '<label class="st-mq-toggle" for="st-mq-pause" ' +
-    'aria-label="Ustavi ali zaženi drsenje"></label>' +
+    '<input class="st-mq-pause" id="st-mq-pause" type="checkbox" ' +
+    'aria-label="Ustavi ali zaženi drsenje">' +
+    '<label class="st-mq-toggle" for="st-mq-pause"></label>' +
     '<div class="st-mq-viewport">' +
     '<div class="st-mq-track">' +
-    '<span class="st-mq-group">' + group + "</span>" +
-    '<span class="st-mq-group st-mq-clone" aria-hidden="true">' + group + "</span>" +
+    '<span class="st-mq-group">' + half + "</span>" +
+    '<span class="st-mq-group st-mq-clone" aria-hidden="true">' + half + "</span>" +
     "</div></div></section>"
   );
 }

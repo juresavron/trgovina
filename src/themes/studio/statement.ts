@@ -2,28 +2,52 @@
  * STUDIO — statement/story and the inline-icon statement + stats
  * (docs/STUDIO-BASELINE.md §4.3 and §4.8).
  *
- *   §4.3 Statement + story — left-aligned 3-line statement at the page gutter,
- *        90px gap, a small tracked "NAŠA ZGODBA →" label link, then a
- *        two-column band: the standfirst copy left (max-width 600), photo right
- *        carrying a right-aligned uppercase label above it.
+ *   §4.3 Statement + story — left-aligned statement at the page gutter, then a
+ *        small tracked "NAŠA ZGODBA →" label link, then a two-column band:
+ *        the standfirst copy left, photograph right carrying an uppercase
+ *        label above it.
  *   §4.8 Inline-icon statement + stats — the theme's SIGNATURE device: a
- *        centred outlined pill, a centred pull-quote paragraph with circular
- *        OUTLINED Ø62px icon glyphs set INLINE in the text flow and vertically
+ *        centred outlined pill, a centred statement paragraph with circular
+ *        OUTLINED icon glyphs set INLINE in the text flow and vertically
  *        centred on the line, then the stat row (display numerals with the
- *        trailing +/% as a real <sup>, a label caption, max-width 280, centred).
+ *        trailing +/% as a real <sup>, a caption under each).
+ *
+ * PROVENANCE. §4 of the baseline is the screenshot-derived catalogue and is
+ * being reconciled device by device against the source's saved page (the
+ * method is baseline §0). These two devices are now reconciled, and the
+ * numbers below are read off the source's own section CSS rather than off a
+ * picture. What that changed, and what it cost:
+ *
+ *   content width   1560 / 1900 → --studio-container. The source's Story
+ *                   container is 1440 and every other studio band already
+ *                   uses the token; this section was the one that sat wider
+ *                   than its neighbours, so its "left-aligned at the gutter"
+ *                   statement did not line up with the hero or the grid above
+ *                   and below it. That misalignment was the whole cost.
+ *   statement cap   ~1350 → 1015 (the source's [Title Content] max-width).
+ *   gaps            the eyeballed clamps → the source's 48 / 64 / 32 / 100 /
+ *                   24 / 12, with the source's own phone overrides. The
+ *                   biggest error was pill→statement: 68px measured, 32 real.
+ *   glyph ring      a 1px ~#b8b8b8 hairline at clamp(26,3.1vw,62) → the
+ *                   source's Ø64px ring, 2px solid #151515. The ring is now
+ *                   an em ratio off the statement (64/48), so it tracks the
+ *                   ramp instead of a viewport clamp, and the invented
+ *                   --studio-ring colour rung is gone.
+ *   glyph placement four glyphs, none leading, one trailing — the source's
+ *                   run/ring/run/ring shape. The paragraph no longer opens on
+ *                   a disc.
+ *   pill            the invented ring colour → the source's 1px --line at
+ *                   --r-tag, i.e. baseline §3's "pill tag" exactly.
+ *   story pictures  the drawn placeholder → two real ROOMS interiors,
+ *                   including the source's second, smaller figure at the foot
+ *                   of the left column.
  *
  * Type roles (docs/STUDIO-BASELINE.md §1). Every size, weight, tracking and
- * leading below comes from the transcribed ramp in tokens.ts, which already
- * resolves per breakpoint (≥1200 / 810–1199 / ≤809) — nothing here is a px or
- * a clamp. The statement is h2 (display face, the section's dominant type), the
- * story copy lead, the claim lead-xl (the ramp's prose pull-quote rung), the
- * stat values h2 numerals, and every chip, link, figure label and caption the
- * label role. The earlier pass measured this section at a 2000px viewport and
- * wrote each px as clamp(min, measured/20 vw, measured); those figures were
- * eyeballed and are gone. Only the measured max-WIDTHS keep that treatment —
- * min(100%, max(floor, k vw)) holds the 1350/600/1750/280 proportions at any
- * width above a phone, and the floor stops a 390px viewport from collapsing a
- * column to a word.
+ * leading comes from the transcribed ramp in tokens.ts, which already resolves
+ * per breakpoint (≥1200 / 810–1199 / ≤809) — nothing here is a px or a clamp.
+ * The statement is h2, the story copy lead, the claim lead-xl (the ramp's
+ * prose pull-quote rung), the stat values h2 numerals, and every chip, link,
+ * figure label and caption the label role.
  *
  * Accent budget (§5.4): the shop hue is spent in exactly three places on the
  * whole storefront. This module owns ONE of them — the second half of the
@@ -31,19 +55,22 @@
  * included; they follow chrome.ts and use --ink / --on-invert.
  *
  * Token discipline (docs/THEMES.md): colors, radii and faces are var(--…)
- * only; the four values the baseline measures that tokens.ts does not carry
- * are declared below as documented --studio-* variables. Every selector is
- * scoped :root[data-theme="studio"] — zarja/lednik/salon share this sheet.
+ * only. Every selector is scoped :root[data-theme="studio"] — zarja/lednik/
+ * salon share this sheet.
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { ROOMS, decorativeImg, pick } from "./media";
 import { statValue } from "./stat";
 
 /* ---- inline glyphs (§4.8) --------------------------------------------
  * 24px grid, stroke-only, currentColor — the circle is drawn by the host
  * span's border, so the SVG carries the line-art alone and the ring stays a
- * perfect pill at every clamp step. Four wellness glyphs: cabin (savna),
- * droplet (voda/kad), thermometer (temperatura), waves (bazen). */
+ * perfect circle at every tier. stroke-width 1.5 on a 24 grid rendered at 50%
+ * of the ring lands the art on the ring's own 2px weight, which is what makes
+ * the glyph read as one drawn object rather than as art inside a frame.
+ * Four wellness glyphs: cabin (savna), droplet (voda/kad), thermometer
+ * (temperatura), waves (bazen). */
 type GlyphKey = "cabin" | "drop" | "temp" | "waves";
 
 const GLYPH_PATHS: Record<GlyphKey, string> = {
@@ -64,7 +91,7 @@ const GLYPH_PATHS: Record<GlyphKey, string> = {
 function glyph(k: GlyphKey): string {
   return (
     '<span class="st-claim-ico" aria-hidden="true">' +
-    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" ' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" ' +
     'stroke-linecap="round" stroke-linejoin="round" focusable="false">' +
     GLYPH_PATHS[k] +
     "</svg></span>"
@@ -77,16 +104,6 @@ export const STUDIO_STATEMENT_CSS = `
     /* Consumes the theme's gutter rather than restating it. The fallback is
      * only for the case where this module is used outside the theme sheet. */
     --studio-statement-gutter: var(--studio-gutter, 40px);
-    /* §4.8: the Ø62px inline glyph. One variable because the ring, the SVG
-     * inside it and the inline margins all derive from this diameter. This is
-     * a drawn disc, not type — it carries no glyph of its own — so it keeps a
-     * clamp rather than taking a rung off the ramp. */
-    --studio-glyph: clamp(26px, 3.1vw, 62px);
-    /* §4.8/§4.3: the drawn hairline of an OUTLINED control on a white ground.
-     * --line disappears at 1px against the claim's lead-xl line; --line-strong
-     * is the hover frame and reads as a filled edge. This is the rung between:
-     * ~#b8b8b8 over white, the outline measured on the pill and the glyphs. */
-    --studio-ring: color-mix(in srgb, var(--ink) 28%, transparent);
   }
 
   /* ================= §4.3 Statement + story ================= */
@@ -97,18 +114,24 @@ export const STUDIO_STATEMENT_CSS = `
      * scroll sideways (§6). */
     overflow: clip;
   }
-  /* 1560px is the baseline's text-led content width (§3). */
+  /* --studio-container is the house content measure and every other studio
+   * band caps on it; box-sizing is border-box, so the gutter lives inside the
+   * cap exactly as it does in commerce.ts and editorial.ts. Same number, same
+   * pattern ⇒ this section's gutter-left statement lines up with the section
+   * above and below it. */
   :root[data-theme="studio"] .st-statement-in {
-    max-width: 1560px;
+    max-width: var(--studio-container);
     margin-inline: auto;
     padding-inline: var(--studio-statement-gutter);
   }
 
   /* The section's dominant type and a real <h2>, set in the display face, so
-   * it takes the h2 rung whole (§1, §4.3). max-width ~1350 at 2000px. */
+   * it takes the h2 rung whole (§1, §4.3). 1015px is the source's own
+   * [Title Content] cap — at the h2 rung it is what breaks the statement into
+   * three lines instead of two long ones. */
   :root[data-theme="studio"] .st-statement-h {
     margin: 0;
-    max-width: min(100%, max(28rem, 67.5vw));
+    max-width: 1015px;
     font-family: var(--f-display);
     font-weight: var(--w-display);
     font-size: var(--t-h2);
@@ -120,14 +143,21 @@ export const STUDIO_STATEMENT_CSS = `
     hyphens: none;
   }
 
-  /* Measured 90px gap, statement → link. The link is a tracked uppercase
-   * button label, so it is the label role; one line of it, hence the ramp's
-   * tight label leading rather than the 1.71em reading rung. */
+  /* Statement → link is the source's 48px (25px on phone; see the ≤809 block).
+   * The link is a tracked uppercase button label, so it is the label role; one
+   * line of it, hence the ramp's tight label leading rather than the 1.71em
+   * reading rung.
+   *
+   * min-block-size is OURS, not the source's: the source ships a 20px-tall
+   * text link and the EAA floor for a touch target is 44px. Centring the label
+   * in a 44px box would drop the hover underline 12px below the words, so the
+   * rule moved onto the inner span — the box grows, the underline does not. */
   :root[data-theme="studio"] .st-statement-link {
     display: inline-flex;
     align-items: center;
-    gap: clamp(8px, 0.7vw, 14px);
-    margin-top: clamp(28px, 4.5vw, 90px);
+    gap: var(--gap-xs);
+    min-block-size: 44px;
+    margin-top: 48px;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -136,13 +166,17 @@ export const STUDIO_STATEMENT_CSS = `
     text-transform: uppercase;
     text-decoration: none;
     color: var(--ink);
-    /* Underline lives on the text, drawn on hover/focus — the resting state in
-     * the baseline is a bare tracked label. */
+  }
+  /* Underline lives on the text, drawn on hover/focus — the resting state in
+   * the source is a bare tracked label. */
+  :root[data-theme="studio"] .st-statement-txt {
     border-bottom: 1px solid transparent;
     padding-bottom: 4px;
     transition: border-color 0.2s ease;
   }
-  :root[data-theme="studio"] .st-statement-link:hover { border-bottom-color: var(--ink); }
+  :root[data-theme="studio"] .st-statement-link:hover .st-statement-txt {
+    border-bottom-color: var(--ink);
+  }
   :root[data-theme="studio"] .st-statement-link:focus-visible {
     outline: 2px solid var(--ink);
     outline-offset: 4px;
@@ -155,21 +189,40 @@ export const STUDIO_STATEMENT_CSS = `
     transform: translateX(4px);
   }
 
-  /* Two-column band: body copy left, photo right. 1.05fr : 1fr keeps the
-   * 600px measure on the left at 2000px without starving the frame. */
+  /* Two-column band: copy + small picture left, tall photo right. The source
+   * runs two EQUAL columns and lets the copy's own 464px cap open the gutter
+   * between them, which is why the copy sits well left of the photo rather
+   * than filling its half. --studio-col-gap replaces the source's literal 0
+   * for one reason: the source's left column is 720px wide and ours is not,
+   * so at the narrow end of the tablet tier a 0 gap puts the copy's last word
+   * against the frame. 64px above is the source's container gap.
+   *
+   * The columns STRETCH rather than starting at the top: the left column's
+   * job is to run the length of the right photo, with the standfirst at its
+   * head and the small picture at its foot. That is the source's own
+   * arrangement (its left column is bottom-aligned under a 215px gap) and it
+   * is what stops a ~680px photograph from leaving half a column of white. */
   :root[data-theme="studio"] .st-story {
     display: grid;
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
-    align-items: start;
-    gap: clamp(32px, 4.4vw, 88px);
-    margin-top: clamp(40px, 5.5vw, 110px);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--studio-col-gap);
+    margin-top: var(--gap-2xl);
+  }
+  :root[data-theme="studio"] .st-story-lead {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: var(--gap-2xl);
   }
   /* The band's standfirst — it carries the shop's own sub line, not running
-   * body copy — so it takes the lead rung (§1, §4.3). max-width 600 at 2000px.
-   * --ink-body on white is 9.0:1. */
+   * body copy — so it takes the lead rung (§1, §4.3). 464px is the source's
+   * copy cap. --ink-body on white is 9.0:1. (The source sets this paragraph
+   * in #2e2e2e; that token is --ink-invert-2, whose job is dark-on-dark
+   * separation, and the two are indistinguishable on white — so this keeps
+   * the light-ground body ink instead of borrowing a dark-band rung.) */
   :root[data-theme="studio"] .st-story-copy {
     margin: 0;
-    max-width: min(100%, max(20rem, 30vw));
+    max-width: 464px;
     font-family: var(--f-body);
     font-size: var(--t-lead);
     font-weight: var(--w-body-med);
@@ -179,70 +232,65 @@ export const STUDIO_STATEMENT_CSS = `
   }
 
   :root[data-theme="studio"] .st-story-fig { margin: 0; }
-  /* The label sits ABOVE the frame and is right-aligned — the measured detail
-   * that keeps this band from reading as a plain text/image split. A figure
-   * caption, so: label role, uppercase, tight leading for its single line. */
+  /* The label sits ABOVE the frame — the detail that keeps this band from
+   * reading as a plain text/image split — at the source's 24px remove. A
+   * figure caption, so: label role, uppercase, tight leading for its one line,
+   * --ink (the source's #151515), not the muted rung.
+   *
+   * DEVIATION: the source CENTRES this label over the image ([Inner Content]
+   * is align-items:center over a 91%-wide frame). It is right-aligned here
+   * because our band is copy|photo rather than the source's two equal picture
+   * columns, and a right-aligned label pins the band's far edge against the
+   * gutter-left statement above it. Cost: one axis of the source's symmetry.
+   * Reverting is one declaration. */
   :root[data-theme="studio"] .st-story-label {
     display: block;
     text-align: right;
-    margin-bottom: clamp(12px, 1.1vw, 22px);
+    margin-bottom: var(--gap-lg);
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
-    color: var(--ink-body);
+    color: var(--ink);
   }
-  /* Photo-ready slot at the band's measured 4:3. Flatter and more neutral than
-   * zarja's lit scenes: studio's grounds are white/grey, not gradient-lit. The
-   * scrim a real photo will need is already painted, so the image drops in
-   * with zero restructuring (§5.1). */
+  /* 826/850 is the source figure's own ratio — very slightly taller than
+   * square, and the reason the band has weight on the right instead of the
+   * flat 4:3 the measured pass drew. The frame reserves its own height, so a
+   * photo that has not decoded yet still costs zero CLS. No border: the
+   * source's images carry none, and a hairline around a photograph reads as a
+   * frame the theme does not have. --bg-alt shows only if the file 404s. */
   :root[data-theme="studio"] .st-story-frame {
     position: relative;
-    isolation: isolate;
     overflow: hidden;
-    aspect-ratio: 4 / 3;
-    border: 1px solid var(--line);
+    aspect-ratio: 826 / 850;
     border-radius: var(--r-media);
     background: var(--bg-alt);
   }
-  :root[data-theme="studio"] .st-story-mass {
-    position: absolute;
-    inset: 14% 12%;
+  /* The band's second, smaller picture, at the foot of the left column.
+   * 464/518 is the source figure's ratio and 66% is its share of the column
+   * (the source gives it flex:2 of a 2:1 row). The percentage, not the raw
+   * 464px, is what keeps the two columns the same height at every width above
+   * a phone: a fixed cap makes the left column OVERSHOOT the photo once the
+   * container drops near 1200. */
+  :root[data-theme="studio"] .st-story-fig2 {
+    margin: 0;
+    inline-size: min(464px, 66%);
+  }
+  :root[data-theme="studio"] .st-story-frame2 {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 464 / 518;
     border-radius: var(--r-media);
-    border: 1px solid color-mix(in srgb, var(--ink) 10%, transparent);
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--ink) 8%, transparent),
-      color-mix(in srgb, var(--ink) 3%, transparent)
-    );
+    background: var(--bg-alt);
   }
-  :root[data-theme="studio"] .st-story-scrim {
+  :root[data-theme="studio"] .st-story-photo {
     position: absolute;
-    inset: auto 0 0 0;
-    height: 42%;
-    background: linear-gradient(
-      to top,
-      color-mix(in srgb, var(--ink) 18%, transparent),
-      transparent
-    );
-  }
-  /* Note sits at the TOP of the frame, on the flat ground rather than on the
-   * scrim: --ink-body is 8.4:1 on --bg-alt, and unaffected once a photo lands
-   * behind the scrim at the bottom. */
-  :root[data-theme="studio"] .st-story-note {
-    position: absolute;
-    z-index: 1;
-    top: clamp(12px, 1.4vw, 28px);
-    left: clamp(12px, 1.4vw, 28px);
-    font-family: var(--f-label);
-    font-size: var(--t-label);
-    font-weight: var(--w-label);
-    letter-spacing: var(--ls-label);
-    line-height: var(--lh-label-tight);
-    text-transform: uppercase;
-    color: var(--ink-body);
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
   }
 
   /* ================= §4.8 Inline-icon statement + stats ================= */
@@ -251,21 +299,23 @@ export const STUDIO_STATEMENT_CSS = `
     padding-block: var(--studio-rhythm);
     overflow: clip;
   }
-  /* 1900px full-bleed band width (§3) — the claim's measured 1750 needs more
-   * room than the 1560 text column. */
   :root[data-theme="studio"] .st-stats-in {
-    max-width: 1900px;
+    max-width: var(--studio-container);
     margin-inline: auto;
     padding-inline: var(--studio-statement-gutter);
     text-align: center;
   }
-  /* Pills are ROUND (§3) — the counterpoint to the sharp CTA buttons. A chip,
-   * so label role; tight leading keeps the pill's measured height. */
+  /* Baseline §3's "pill tag", exactly: 50px radius, 1px --line, 6px 20px.
+   * --line is a decorative hairline (1.33:1) and that is what it is doing —
+   * this chip is not interactive and carries no state, so the 3:1 boundary
+   * floor does not apply to it; the word inside is --ink at 15.9:1. The
+   * measured pass drew a darker invented ring here, which made a quiet
+   * eyebrow read as a control. */
   :root[data-theme="studio"] .st-stats-pill {
     display: inline-block;
-    border: 1px solid var(--studio-ring);
-    border-radius: var(--r-pill);
-    padding: clamp(8px, 0.6vw, 12px) clamp(16px, 1.4vw, 28px);
+    border: var(--bw-line) solid var(--line);
+    border-radius: var(--r-tag);
+    padding: 6px 20px;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -277,12 +327,21 @@ export const STUDIO_STATEMENT_CSS = `
 
   /* The signature paragraph: a big editorial statement, which is exactly what
    * lead-xl is for — the ramp's prose pull-quote rung (§1, §4.8). It is a <p>,
-   * not a heading, and lead-xl is a Satoshi rung, so the face moves with the
-   * role: the measured pass had it in the display face at a 450 weight the
-   * source's display ramp does not have. max-width ~1750 at 2000px. */
+   * not a heading, and lead-xl is a prose rung, so the face follows the role.
+   * 1296px is the source's own container for this section — the one measure it
+   * narrows below the page container, because a CENTRED paragraph needs a
+   * shorter line than a left-aligned column does. 32px is the source's
+   * badge → statement gap (the measured pass had 68). */
   :root[data-theme="studio"] .st-claim {
-    max-width: min(100%, max(20rem, 87.5vw));
-    margin: clamp(28px, 3.4vw, 68px) auto 0;
+    /* The Ø64px ring, expressed as the source's own ratio against the 48px
+     * statement it punctuates (64/48). An em, not a clamp: the ring then
+     * tracks the ramp through all three tiers instead of tracking the
+     * viewport, and it is declared HERE — on the element whose font-size it
+     * is relative to — so the unit resolves against lead-xl and not against
+     * the root's 16px. */
+    --studio-glyph: 1.333em;
+    max-width: 1296px;
+    margin: 32px auto 0;
     font-family: var(--f-body);
     font-weight: var(--w-body-med);
     font-size: var(--t-lead-xl);
@@ -298,10 +357,29 @@ export const STUDIO_STATEMENT_CSS = `
    * clears 4.5:1 on white at every hue the palette factory permits. */
   :root[data-theme="studio"] .st-claim-acc { color: var(--acc-text); }
 
-  /* Ø62px circular OUTLINED glyph, set INLINE in the text flow and vertically
-   * centred on the line. inline-flex + vertical-align:middle is what centres
-   * it on the x-height axis; line-height:0 stops the disc from inflating the
-   * claim's 1.3em line box into an uneven ladder. */
+  /* The circular OUTLINED glyph, set INLINE in the text flow and vertically
+   * centred on the line. 2px --ink is the source's ring — the same weight and
+   * ink as the theme's Ø64px circular nav button (§3), which is why the two
+   * read as one family.
+   *
+   * LINE RHYTHM, the thing this device gets wrong most easily. An inline-flex
+   * box is atomic, so line-height does not touch it: what it contributes to
+   * the line box is its MARGIN box, positioned by vertical-align. Centred on
+   * the x-height axis, a 1.333em ring hangs ~0.41em below the baseline while
+   * the strut only reaches 0.24em, so every line carrying a ring would grow
+   * ~0.16em taller than every line that does not — a visibly uneven ladder,
+   * worst on a phone where lead-xl is 24px and one ring lands per line. The
+   * negative block margin pulls the margin box back inside the strut, so the
+   * ladder stays even at all three tiers (the correction is in em, so it
+   * scales with the ramp) and the ring's drawn size is untouched. It then
+   * overhangs the next line by ~0.14em, which clears that line's cap height
+   * and its caron accents — č/š/ž reach ~0.75em and the ring stops at 0.4em.
+   *
+   * No inline margin on purpose: the sentence's own word spaces already give
+   * ~0.26em either side, i.e. 12.5px at the 48px rung against the source's
+   * 14px column gap. Adding a margin on top would double it. The spaces also
+   * keep a break opportunity on both sides of the ring, so a ring can start or
+   * end a line instead of welding itself to a word. */
   :root[data-theme="studio"] .st-claim-ico {
     display: inline-flex;
     align-items: center;
@@ -309,37 +387,36 @@ export const STUDIO_STATEMENT_CSS = `
     vertical-align: middle;
     inline-size: var(--studio-glyph);
     block-size: var(--studio-glyph);
-    margin-inline: clamp(4px, 0.5vw, 12px);
-    /* Optical: the disc's true centre sits slightly above the middle of a
-     * lowercase line, so nudge it down by a hair of its own size. */
+    margin-block: -0.17em;
+    /* Optical: the ring's true centre sits slightly above the middle of a
+     * lowercase line, so nudge it up by a hair of its own size. A transform,
+     * so it moves the paint and not the line box. */
     translate: 0 -0.06em;
-    border: 1px solid var(--studio-ring);
+    border: var(--bw-ctrl) solid var(--ink);
     border-radius: var(--r-circle);
-    line-height: 0;
-    color: var(--ink-body);
+    color: var(--ink);
   }
   :root[data-theme="studio"] .st-claim-ico svg {
-    inline-size: 54%;
-    block-size: 54%;
+    inline-size: 50%;
+    block-size: 50%;
   }
 
-  /* Stat row: 4-up desktop, 2-up mobile. */
+  /* Stat row. The source shows three columns spread across the band; ours
+   * shows four because every shop's content ships four figures and dropping
+   * one to match a screenshot would drop a fact the shop is making. 100px is
+   * the source's statement → counters gap. Four columns only on the desktop
+   * tier — see the ≤1199 block for why. */
   :root[data-theme="studio"] .st-stat-row {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: clamp(32px, 3.4vw, 68px) clamp(20px, 2.4vw, 48px);
-    margin-top: clamp(40px, 5.5vw, 110px);
+    gap: var(--gap-2xl) var(--gap-lg);
+    margin-top: 100px;
   }
-  :root[data-theme="studio"] .st-stat {
-    max-width: min(100%, max(11rem, 14vw));
-    margin-inline: auto;
-    text-align: center;
-  }
-  /* Stat values are display-face numerals. h1 belongs to the hero alone, so
-   * the largest rung open to a repeated figure is h2 — the ramp has no rung
-   * between h1 and h2, and a four-up stat row is not the page's dominant
-   * statement (§1, §4.8). The measured pass's −0.02em tracking was an artifact:
-   * the display ramp tracks h2 at 0em. */
+  :root[data-theme="studio"] .st-stat { text-align: center; }
+  /* Stat values are display-face numerals at the h2 rung — the source sets its
+   * counters in h2 (its digit roller is 68px tall, which is h2's 60px at
+   * 1.13em) and h1 belongs to the hero alone. The measured pass's −0.02em
+   * tracking was an artifact: the display ramp tracks h2 at 0em. */
   :root[data-theme="studio"] .st-stat-v {
     display: block;
     font-family: var(--f-display);
@@ -354,9 +431,13 @@ export const STUDIO_STATEMENT_CSS = `
     text-wrap: balance;
   }
   /* The trailing +/% is a REAL superscript (§4.8), positioned rather than left
-   * to vertical-align:super, which would stretch the h2 line box. The ramp has
-   * no superscript rung, so the size stays a RATIO of the parent — 0.44em is
-   * whatever h2 resolves to at the current tier, not an invented step. */
+   * to vertical-align:super, which would stretch the h2 line box. (The source
+   * gets the same picture a different way: its suffix is a sibling paragraph
+   * in a flex row aligned to the top of the counter. A <sup> is the semantic
+   * form of that and survives with no JS.) The ramp has no superscript rung,
+   * so the size stays a RATIO of the parent — 0.44em is whatever h2 resolves
+   * to at the current tier, not an invented step, and the offset is in the
+   * same em so the two stay locked together across all three tiers. */
   :root[data-theme="studio"] .st-stat-v sup {
     font-size: 0.44em;
     font-weight: var(--w-display);
@@ -366,17 +447,28 @@ export const STUDIO_STATEMENT_CSS = `
     top: -0.92em;
     letter-spacing: var(--ls-h2);
   }
-  /* The muted stat caption — a caption, so the label role, two lines wide at
-   * max-width 280 (§4.8). Set in the label face and left in sentence case: the
-   * ramp's uppercase treatment is opt-in, and shouting four two-line captions
-   * under the numerals would out-weigh them. Tight label leading for the same
+  /* The muted stat caption, at the source's 12px remove — a caption, so the
+   * label role. Set in the label face and left in sentence case: the ramp's
+   * uppercase treatment is opt-in, and shouting four two-line captions under
+   * the numerals would out-weigh them. Tight label leading for the same
    * reason. --ink-mute is the lightest rung that clears 4.5:1 on both grounds
    * it appears on (5.17:1 here on white) — it clears, and only just, which is
    * why the caption sits at the label rung's 14px on every tier and never
-   * shrinks below it. */
+   * shrinks below it. (The source sets this caption at the body rung; the
+   * label rung keeps it a caption rather than a second paragraph, and 14 vs
+   * 16px is the whole difference.)
+   *
+   * 225px is the source's counter-column cap, and it is applied HERE rather
+   * than to the whole column: its job is to hold the caption to two lines.
+   * Our values are not the source's three short counters — "≈ 0,25 €" and
+   * "1700 mm" are 4.4em wide at the h2 rung, which is wider than 225px — so
+   * capping the column would break a value across two lines and orphan its
+   * unit. The numeral gets the whole column; the caption gets the measure. */
   :root[data-theme="studio"] .st-stat-c {
     display: block;
-    margin-top: clamp(8px, 0.8vw, 16px);
+    max-width: 225px;
+    margin-inline: auto;
+    margin-top: 12px;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -385,29 +477,55 @@ export const STUDIO_STATEMENT_CSS = `
     color: var(--ink-mute);
   }
 
-  /* ---- Below 860px: one column of story, two columns of stats ---- */
-  @media (max-width: 860px) {
-    :root[data-theme="studio"] .st-story {
-      grid-template-columns: minmax(0, 1fr);
-    }
-    /* The copy leads on a phone; the frame follows it. */
-    :root[data-theme="studio"] .st-story-copy { max-width: 100%; }
-    :root[data-theme="studio"] .st-story-label { text-align: left; }
+  /* ---- Tablet tier and down (≤1199px) -----------------------------------
+   * The stat row halves. Four columns of an 810px viewport are ~160px wide
+   * and the h2 numerals only drop 60→50 there, so a value with a unit
+   * ("≈ 0,25 €") no longer fits on one line. Two columns is the widest the
+   * row can be below the desktop tier without breaking a figure in half. */
+  @media (max-width: 1199px) {
     :root[data-theme="studio"] .st-stat-row {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
   }
-  /* Under ~430px four glyphs inside one paragraph out-weigh the sentence they
-   * punctuate; keep the first (the device still reads) and drop the rest. */
-  @media (max-width: 430px) {
-    :root[data-theme="studio"] .st-claim-ico ~ .st-claim-ico { display: none; }
+
+  /* ---- Phone tier (≤809px) ----------------------------------------------
+   * The ramp's own bottom breakpoint, so the layout turns on exactly the tier
+   * where lead-xl drops 44→24 and h2 drops 50→38 — the module's breakpoints
+   * are the ramp's, never a third one invented nearby. The gaps below are the
+   * source's own phone overrides. */
+  @media (max-width: 809px) {
+    :root[data-theme="studio"] .st-statement-link { margin-top: 25px; }
+    :root[data-theme="studio"] .st-story {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    /* The copy leads on a phone; the frame follows it. (The source inverts
+     * this — its picture column is ordered first below 810px. On a shop the
+     * sentence that explains the offer outranks the atmosphere shot.) */
+    :root[data-theme="studio"] .st-story-copy { max-width: 100%; }
+    :root[data-theme="studio"] .st-story-label { text-align: left; }
+    /* The second picture stays on a phone, and NOT because it is needed here
+     * — with one column there is no second column to balance. It stays
+     * because display:none does not save the download. A lazy <img> with no
+     * layout box never intersects anything, and every engine resolves that by
+     * loading it immediately: hiding this figure fetched its 90 KB eagerly,
+     * before first paint, on the one tier that can least afford it. Visible
+     * and below the fold, the same file is genuinely deferred until the
+     * reader scrolls to it. So it keeps its 66% width — small enough to read
+     * as an inset detail rather than a second hero. */
+    :root[data-theme="studio"] .st-story-lead { gap: var(--gap-xl); }
+    :root[data-theme="studio"] .st-claim { margin-top: 20px; }
+    /* The ring halves with the ramp (1.333em of 24px ≈ 32px), so a 2px edge
+     * would read twice as heavy as the 64px ring does on a desktop. Dropping
+     * to the hairline weight holds the ring's ~32:1 proportion. */
+    :root[data-theme="studio"] .st-claim-ico { border-width: var(--bw-line); }
+    :root[data-theme="studio"] .st-stat-row { margin-top: var(--gap-xl); }
   }
 
   /* ---- Motion ---- */
   @media (prefers-reduced-motion: reduce) {
     /* Reset to the resting state, never a frozen mid-transform: the arrow
      * returns to its baseline offset and the underline simply appears. */
-    :root[data-theme="studio"] .st-statement-link,
+    :root[data-theme="studio"] .st-statement-txt,
     :root[data-theme="studio"] .st-statement-arrow { transition: none; }
     :root[data-theme="studio"] .st-statement-link:hover .st-statement-arrow {
       transform: none;
@@ -418,9 +536,30 @@ export const STUDIO_STATEMENT_CSS = `
 /**
  * §4.3 — statement + story.
  *
- * The statement is the moat h2 (the shop's own three-line claim), so this is a
- * real <h2>: the hero owns the page's only <h1>. The link points at the About
+ * The statement is the moat h2 (the shop's own claim), so this is a real
+ * <h2>: the hero owns the page's only <h1>. The link points at the About
  * route through routeSlugs, which is the shop's localized Slovenian segment.
+ *
+ * Both pictures are atmosphere beside a brand story, which claims nothing
+ * about the product — the line media.ts draws, and the one the launch gate
+ * enforces. Both come from ROOMS, because both frames are portrait-ish and a
+ * ROOMS interior is ~4:3: cropping it to 826/850 keeps the room. The obvious
+ * alternative, SCENES, is 1.92:1, and cropping THAT to a near-square frame
+ * throws away half the width and leaves a wall with the furniture jammed
+ * along the bottom edge — tried, and visibly worse.
+ *
+ * Offsets 3 and 1, and neither is unique on the page: ROOMS holds four files
+ * against a storefront with far more atmosphere slots than that (the social
+ * strip alone re-shows six), so page-wide uniqueness is not reachable and
+ * chasing it here would only trade a good crop for a bad one. What the two
+ * offsets do guarantee is that this band's own two pictures always differ.
+ *
+ * The small picture is the source's own second figure, and it is here because
+ * without it the left column runs out of content halfway down a ~680px
+ * photograph. Its caption pair is NOT reproduced: there is no content field
+ * for those two lines, and inventing shop copy to fill a layout is the one
+ * thing a theme must not do. So it is a bare figure — the composition, not
+ * the words.
  */
 export function renderStudioStatement(ctx: RenderCtx): string {
   const c = ctx.content;
@@ -429,70 +568,84 @@ export function renderStudioStatement(ctx: RenderCtx): string {
     '<section class="st-statement"><div class="st-statement-in">' +
     '<h2 class="st-statement-h">' + esc(c.moat.h2) + "</h2>" +
     '<a class="st-statement-link" href="' + esc(about) + '">' +
-    "<span>Naša zgodba</span>" +
+    '<span class="st-statement-txt">Naša zgodba</span>' +
     '<span class="st-statement-arrow" aria-hidden="true">→</span>' +
     "</a>" +
     '<div class="st-story">' +
+    '<div class="st-story-lead">' +
     '<p class="st-story-copy">' + esc(c.sub) + "</p>" +
+    '<figure class="st-story-fig2"><div class="st-story-frame2">' +
+    decorativeImg(
+      pick(ROOMS, ctx.shop.key, 1),
+      "st-story-photo",
+      "(max-width: 809px) 57vw, (max-width: 1439px) 31vw, 440px",
+    ) +
+    "</div></figure></div>" +
     '<figure class="st-story-fig">' +
-    // figcaption first: the baseline puts this label ABOVE the frame.
+    // figcaption first: the source puts this label ABOVE the frame.
     '<figcaption class="st-story-label">' + esc(ctx.shop.keyword.category) + "</figcaption>" +
     '<div class="st-story-frame">' +
-    '<span class="st-story-mass" aria-hidden="true"></span>' +
-    '<span class="st-story-scrim" aria-hidden="true"></span>' +
-    '<span class="st-story-note">Fotografija v pripravi</span>' +
+    decorativeImg(
+      pick(ROOMS, ctx.shop.key, 3),
+      "st-story-photo",
+      "(max-width: 809px) 92vw, (max-width: 1439px) 47vw, 660px",
+    ) +
     "</div></figure></div></div></section>"
   );
 }
 
 /**
- * Split a sentence at the word boundary nearest its middle, so a glyph can be
- * planted INSIDE the sentence rather than only at its seams — the inline
- * placement is the whole point of §4.8. Returns ["", ""]-safe halves: a
- * single-word (or empty) claim half yields no split and simply renders one
- * fewer glyph.
+ * Split a sentence into up to `n` balanced runs of whole words, so the glyphs
+ * can be planted INSIDE the sentence rather than only at its seams — the
+ * inline placement is the whole point of §4.8. A sentence with fewer words
+ * than `n` simply yields fewer runs, and therefore fewer glyphs.
  */
-function splitAtMiddle(s: string): [string, string] {
-  const t = s.trim();
-  const mid = t.length / 2;
-  let cut = -1;
-  for (let i = 0; i < t.length; i++) {
-    if (t[i] !== " ") continue;
-    if (cut < 0 || Math.abs(i - mid) < Math.abs(cut - mid)) cut = i;
+function splitRuns(s: string, n: number): string[] {
+  const words = s.trim().split(/\s+/).filter(Boolean);
+  if (!words.length) return [];
+  const runs = Math.min(n, words.length);
+  const out: string[] = [];
+  for (let i = 0; i < runs; i++) {
+    const from = Math.round((i * words.length) / runs);
+    const to = Math.round(((i + 1) * words.length) / runs);
+    out.push(words.slice(from, to).join(" "));
   }
-  if (cut < 0) return [t, ""];
-  return [t.slice(0, cut), t.slice(cut + 1)];
+  return out;
 }
 
+/** The three rings that punctuate the claim's first part; the fourth closes it. */
+const CLAIM_RINGS: readonly GlyphKey[] = ["cabin", "drop", "temp"];
 
 /**
  * §4.8 — inline-icon statement + stats. The theme's signature device.
  *
- * The claim's two content parts become one sentence: part one carries two
- * glyphs (one mid-sentence, from splitAtMiddle), part two is set in --acc-text
- * and closed by a fourth glyph. The glyphs are aria-hidden punctuation, so a
- * screen reader hears the sentence exactly as written.
+ * The claim's two content parts become one sentence in the source's own shape:
+ * FOUR text runs alternating with FOUR rings, no ring leading the paragraph
+ * and one closing it. Part one is cut into three balanced runs so two rings
+ * land mid-sentence; part two is set in --acc-text and the fourth ring closes
+ * the line. The rings are aria-hidden punctuation, so a screen reader hears
+ * the sentence exactly as written — read it without them and it is still the
+ * shop's sentence, unbroken.
  *
  * The section has no heading — the pill is a label, not a rank in the document
  * outline — so it is labelled instead.
  */
 export function renderStudioStats(ctx: RenderCtx): string {
   const claim = ctx.content.moat.claim;
-  const [head, tail] = splitAtMiddle(claim[0]);
-  const opener =
-    glyph("cabin") +
-    " " +
-    esc(head) +
-    (tail ? " " + glyph("drop") + " " + esc(tail) : "");
+  const parts: string[] = [];
+  const runs = splitRuns(claim[0], CLAIM_RINGS.length);
+  for (let i = 0; i < runs.length; i++) {
+    const run = runs[i];
+    if (run) parts.push(esc(run));
+    const ring = CLAIM_RINGS[i];
+    if (ring) parts.push(glyph(ring));
+  }
+  parts.push('<span class="st-claim-acc">' + esc(claim[1]) + "</span>");
+  parts.push(glyph("waves"));
   return (
     '<section class="st-stats" aria-label="Zakaj pri nas"><div class="st-stats-in">' +
     '<span class="st-stats-pill">Zakaj pri nas</span>' +
-    '<p class="st-claim">' +
-    opener +
-    " " + glyph("temp") + " " +
-    '<span class="st-claim-acc">' + esc(claim[1]) + "</span>" +
-    " " + glyph("waves") +
-    "</p>" +
+    '<p class="st-claim">' + parts.join(" ") + "</p>" +
     '<div class="st-stat-row">' +
     ctx.content.stats
       .map(

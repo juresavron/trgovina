@@ -25,6 +25,11 @@ export interface ProductCard {
   price: string;
   art: ArtKey;
   badge?: string;
+  /**
+   * The card's own product page, under the shop's "/product" route. Absent on
+   * shops that sell a single model, where every card is the flagship.
+   */
+  slug?: string;
 }
 
 export interface UtilCard {
@@ -68,6 +73,12 @@ export interface ShopContent {
   };
   reviews: { q: string; who: string; model: string }[];
   guides: [string, string][];
+  /** The flagship: the model the home page leads with. */
   pdp: PdpContent;
+  /**
+   * Every product page this shop serves, the flagship included. A shop with
+   * one model may omit it; the router then serves `pdp` alone.
+   */
+  pdps?: PdpContent[];
   footNote: string;
 }
