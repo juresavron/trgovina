@@ -16,6 +16,7 @@
  */
 
 import { OFFERED_MODELS, polaBySlug } from "../catalog/pola";
+import { aliasTarget, encodeBucketKey } from "../media-aliases";
 import { SHOPS } from "../tenants";
 import {
   type Env,
@@ -114,16 +115,31 @@ export async function handleMedia(request: Request, env: Env): Promise<Response>
   }
   if (!env.SUPABASE_URL) return new Response("Not found", { status: 404 });
 
-  const path = new URL(request.url).pathname.slice("/media/".length);
+  const path = decodeURIComponent(new URL(request.url).pathname.slice("/media/".length));
+
+  // An ALIAS resolves a clean site path to a bucket key that could never be a
+  // URL — see src/media-aliases.ts. It is a fixed allowlist, so it is a
+  // stricter gate than the pattern below rather than a hole in it: the key
+  // comes from a table in the source, never from the request.
+  const alias = aliasTarget(path);
+
   // No traversal, no absolute upstreams: only the bucket, only these shapes.
-  if (!/^[a-z0-9][a-z0-9/_-]*\.(webp|jpg|jpeg|png|avif)$/i.test(path) || path.includes("..")) {
+  // Skipped for an alias, whose target is not request-derived at all.
+  if (
+    !alias &&
+    (!/^[a-z0-9][a-z0-9/_-]*\.(webp|jpg|jpeg|png|avif)$/i.test(path) || path.includes(".."))
+  ) {
     return new Response("Not found", { status: 404 });
   }
 
-  const forever = isContentAddressed(path);
+  const key = alias ?? path;
+  // Aliased files are human-named by definition, so they never get the
+  // immutable year — replacing one in the bucket has to be able to land.
+  const forever = !alias && isContentAddressed(path);
   const ttl = forever ? 31536000 : 300;
 
-  const upstream = env.SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + path;
+  const upstream =
+    env.SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + encodeBucketKey(key);
   const res = await fetch(upstream, { cf: { cacheEverything: true, cacheTtl: ttl } } as RequestInit);
   if (!res.ok) return new Response("Not found", { status: 404 });
 
