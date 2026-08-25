@@ -112,6 +112,20 @@ export function renderDocument(o: PageOptions): string {
     '<meta property="og:description" content="' + esc(o.description) + '">' +
     '<meta property="og:url" content="' + esc(canonical) + '">' +
     '<meta property="og:locale" content="' + esc(s.locale.ogLocale) + '">' +
+    // ICONS. There were none at all, so every tab, bookmark and shared link
+    // showed the browser's blank-page glyph — on a storefront asking for
+    // EUR 2,400-8,400. The SVG is what modern browsers use and the only one
+    // that follows the tab strip between light and dark; the 32px PNG covers
+    // the engines that still ignore an SVG icon; the touch icon is the one
+    // iOS puts on a home screen. All three are generated from one drawing by
+    // scripts/build-brand.mjs, so the tab icon cannot drift from the logo.
+    '<link rel="icon" href="/favicon.svg" type="image/svg+xml">' +
+    '<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">' +
+    '<link rel="apple-touch-icon" href="/apple-touch-icon.png">' +
+    // theme-color paints the browser UI around the page on mobile. It was
+    // #faf7f2, a cream that matches nothing this theme renders — the chrome
+    // bar is --ink-invert and the page is white — so the phone drew a third
+    // colour above a black header. It now matches the bar it sits against.
     '<meta name="theme-color" content="' + esc(s.design.themeColor) + '">' +
     fontLinks(o.theme) +
     "<style>" + BASE_CSS + "</style>" +
