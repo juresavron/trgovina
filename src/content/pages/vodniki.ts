@@ -29,7 +29,7 @@ export const GUIDES: Page = {
           "meja, ki se je ne da obiti.",
         "Tretje je elektrika. Bazen potrebuje svoj odklopnik in zaščitno stikalo; koliko " +
           "natanko, je odvisno od grelca in števila črpalk v modelu. Za vsak model damo pisna " +
-          "navodila, ki jih vaš elektrikar preprosto izvede.",
+          "navodila, ki jih vaš električar preprosto izvede.",
         "Šele četrto je model — koliko oseb, koliko šob, kakšna ležalna pozicija. Ta izbira je " +
           "prijetna in jo lahko naredite v miru; prve tri pa določijo, kaj je sploh mogoče.",
       ],

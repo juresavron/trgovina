@@ -22,9 +22,9 @@ export const FINANCING: Page = {
       h: "Kako poteka",
       items: [
         [
-          "Izberete model",
-          "V pisni ponudbi dobite končno ceno z DDV — model in konfiguracijo, dostavo, priklop " +
-            "in zagon. Ta znesek je podlaga za izračun obrokov.",
+          "Izberete model in dobite ponudbo",
+          "V pisni ponudbi je končna cena z DDV — model in konfiguracija, dostava, priklop in " +
+            "zagon. Ta znesek je podlaga za izračun obrokov.",
         ],
         [
           "Pripravimo izračun",

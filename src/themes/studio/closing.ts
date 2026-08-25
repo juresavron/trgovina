@@ -81,14 +81,22 @@ export const STUDIO_CLOSING_CSS = `
      * rgb(21,21,21) to rgb(20,20,20). Its only real effect was to put the
      * band on a colour that no token names.
      *
-     * The height floor was sized to hold that photograph — a full-bleed scene
-     * needs height to read as a picture. With no picture it framed 295px of
-     * copy in a 620px band at 1440: 325px of empty dark, more than the copy
-     * itself. The band is now content plus one band's worth of air, and the
-     * floor only stops a short keyword from leaving it a stripe rather than a
-     * panel. Measured, it binds at 1440 (content+padding 482px against a
-     * 490px floor) and at 390 (373px against 380px), and loses to the content
-     * at 1024 (350px) and 320 (400px) — so it is a floor, not the height. */
+     * The old floor, clamp(420px, 44vw, 620px), was sized to hold that
+     * photograph — a full-bleed scene needs height to read as a picture. With
+     * no picture it framed 295px of copy inside a 620px band at 1440: 325px
+     * of empty dark, more than the copy it was framing. The band's height is
+     * now its content plus one band's worth of air (padding-block on .st-mem),
+     * and this is a floor in the literal sense — the number that stops a shop
+     * with a short keyword and a one-line paragraph from ending its page on a
+     * stripe.
+     *
+     * Measured against the rendered band, content+padding is 492px at 1440,
+     * 360px at 1024, 383px at 390 and 410px at 320, and the floor resolves to
+     * 490 / 380 / 380 / 380. So it binds at exactly one tier — the tablet, the
+     * one where the supporting line collapses to a single 539px row and the
+     * band would otherwise be its shortest — and loses everywhere else. A
+     * floor that binds at every tier is not a floor, it is the height, which
+     * is what the 620px was. */
     --studio-mem-min: clamp(380px, 34vw, 500px);
   }
 
@@ -546,10 +554,20 @@ export function renderStudioSocial(ctx: RenderCtx): string {
  *
  * The copy is network-wide, so it promises only what every shop on this
  * network actually has: a showroom route (routeSlugs["/showroom"] is required
- * on every ShopConfig) and a team to ask before spending €3–15k. Nothing here
- * offers a newsletter or an account, because no such thing is built — the
- * source's band signs you up to a membership, and rendering that button would
- * be the same dead control §5.2 rules out.
+ * on every ShopConfig) and a team to ask before spending €2,400–8,400, which
+ * is what this shop's catalogue actually spans (the €3–15k that used to stand
+ * here was a range from before the hot tubs and swim spas were priced).
+ * Nothing here offers a newsletter or an account, because no such thing is
+ * built — the source's band signs you up to a membership, and rendering that
+ * button would be the same dead control §5.2 rules out.
+ *
+ * The two sentences it renders are typed HERE rather than read from
+ * src/content, which is a deviation from the rule that copy is content and
+ * worth stating plainly: it is the one band on the home page whose words no
+ * shop can vary. That was deliberate while the network had six storefronts
+ * and this was the sentence they were allowed to share; with one shop left it
+ * is simply copy in the wrong file. Moving it is a ShopContent type change
+ * and so belongs to a content pass, not to this one.
  *
  * The keyword is interpolated in the ACCUSATIVE, which is the case "izbrati"
  * governs: "Pomagamo vam izbrati infrardečo savno" / "… biljardno mizo" /

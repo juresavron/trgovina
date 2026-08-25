@@ -727,8 +727,15 @@ export const STUDIO_CHROME_CSS = `
     max-width: 42ch;
     margin-bottom: 32px;
   }
+  /* align-items:flex-start, so each row is as wide as its own line rather than
+   * as wide as the brand column. A stretched row made the e-mail link a 404px
+   * target at 1440 (measured): two thirds of it was empty band that lit the
+   * icon disc on hover and carried a focus ring the width of the column,
+   * neither of which points at anything. Each row still clears the 44px floor
+   * on its height and is ~230px wide, so nothing shrinks below a target. */
   :root[data-theme="studio"] .st-contacts {
-    display: flex; flex-direction: column; gap: var(--gap-md);
+    display: flex; flex-direction: column; align-items: flex-start;
+    gap: var(--gap-md);
   }
   /* Contact rows are meta rows, so the label rung — mixed case, not uppercase:
    * an address and an e-mail are read, not scanned. Tight leading so a
@@ -764,6 +771,29 @@ export const STUDIO_CHROME_CSS = `
     outline: 2px solid var(--on-invert); outline-offset: 4px; border-radius: var(--r-ctrl);
   }
   :root[data-theme="studio"] .st-contact-ico .st-ico { inline-size: 18px; block-size: 18px; }
+  /* The label half of a contact row. An e-mail address is one unbreakable
+   * token, so in the narrowest column this theme ships — the brand track at
+   * 1200px — a longer address than this shop's would push the row past its
+   * track. min-inline-size:0 lets it shrink and overflow-wrap lets it break;
+   * without both, the overflow is silent (the band clips it) and the row
+   * simply loses its end. */
+  :root[data-theme="studio"] .st-contact > span:last-child {
+    min-inline-size: 0; overflow-wrap: anywhere;
+  }
+  /* An unset company fact, marked rather than left to look like content.
+   * page.ts's .st-page-todo does this job on the legal pages and cannot be
+   * reused: its ink is --ink-soft, which is invisible on this band.
+   *
+   * The mark is QUIETER than the fact it stands in for, not louder. It began
+   * as page.ts's uppercase, which works there — a lowercase-body value column
+   * makes uppercase read as an annotation — and failed here: this band is
+   * label-cased throughout, so five uppercase marks (two contact rows, three
+   * imprint fields) shouted over every real word in the footer. The words
+   * carry the meaning; --on-invert-mute (7.33:1) keeps them legible while
+   * stepping the two white contact rows down to secondary. */
+  :root[data-theme="studio"] .st-foot-todo {
+    color: var(--on-invert-mute);
+  }
 
   /* Column heading: an eyebrow over a list, so the label rung uppercase. The
    * ramp carries ONE label tracking (0.06em); the old 0.12em was measured, and
@@ -796,8 +826,21 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-foot-col a {
     display: inline-flex;
     align-items: center;
-    block-size: var(--st-tap);
+    /* MIN, not a fixed height. At 320px "Dostava in montaža" already wraps to
+     * two lines (measured), which is 40px inside a 44px box — one line of
+     * headroom left. A third line, from a 200% text zoom or a longer label in
+     * another shop, would have overflowed a fixed box and landed on the row
+     * below; a minimum grows instead and pushes its neighbours down. */
+    min-block-size: var(--st-tap);
     margin-block: -12px;
+    /* 6px of side padding, pulled straight back out. The shared focus ring is
+     * INSET 2px (see the rule with the bar's links), and this box is exactly
+     * as wide as its label — so the ring was landing on the last glyph of
+     * every link. The padding gives it 6px to sit in, the negative margin
+     * keeps the labels flush with the column heading above them, and the tap
+     * target grows 12px wider on the way past. */
+    padding-inline: 6px;
+    margin-inline: -6px;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -851,6 +894,16 @@ export const STUDIO_CHROME_CSS = `
     :root[data-theme="studio"] .st-chrome-btn { inline-size: 34px; block-size: 34px; }
     :root[data-theme="studio"] .st-chrome-btn::before { inset: -5px; }
     :root[data-theme="studio"] .st-foot { padding-block: 100px 30px; }
+    /* The brand block takes its own row and the four columns share the width.
+     * Inline, the five tracks put 146px under each column at 1024 — measured
+     * against a 147px "Odstop od pogodbe" — so every second label wrapped and
+     * the e-mail row (229px) ran past a 219px brand track into the clip. Full
+     * width gives the brand its 42ch measure back and 210px to each column,
+     * which is more than the longest label in any of them. */
+    :root[data-theme="studio"] .st-foot-cols {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    :root[data-theme="studio"] .st-foot-brand { grid-column: 1 / -1; }
   }
 
   /* ≤900: the bar goes to TWO ROWS.
@@ -1154,10 +1207,18 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     "</ul></div>";
 
   /* html, not text: the value may be a fact() mark rather than a string, and
-   * every caller below escapes its own value. */
-  const contact = (k: IconKey, href: string | null, html: string): string => {
+   * every caller below escapes its own value.
+   *
+   * The field NAME is carried in a visually-hidden span, because sighted
+   * readers get it from the disc and nobody else got it at all: the icons are
+   * aria-hidden, so an address on its own line announced as a bare string, and
+   * an unset one announced as "podatek še ni vpisan" with no clue which datum
+   * is missing. It reads "E-pošta: info@…" in the tree and stays three icon
+   * rows on the screen. */
+  const contact = (k: IconKey, href: string | null, name: string, html: string): string => {
     const inner =
-      '<span class="st-contact-ico">' + icon(k) + "</span><span>" + html + "</span>";
+      '<span class="st-contact-ico">' + icon(k) + "</span>" +
+      '<span><span class="st-vh">' + esc(name) + ": </span>" + html + "</span>";
     return href
       ? '<a class="st-contact" href="' + esc(href) + '">' + inner + "</a>"
       : '<span class="st-contact">' + inner + "</span>";
@@ -1200,15 +1261,15 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     '<div class="st-foot-brand">' +
     '<p class="st-foot-blurb">' + esc(c.footNote) + "</p>" +
     '<div class="st-contacts">' +
-    contact("mail", "mailto:" + s.contact.email, esc(s.contact.email)) +
+    contact("mail", "mailto:" + s.contact.email, "E-pošta", esc(s.contact.email)) +
     // A tel: link is what the rest of the site gives this number (the bar, the
     // pdp, the contact page), and it is what the footer gives it the moment
     // there is a number. While it is the placeholder, the ROW STAYS and the
     // LINK GOES: a tap on a phone opens the dialer, and a footer that offers
     // to dial +386 00 000 000 from every page is a broken affordance rather
     // than an unfinished one.
-    contact("phone", phoneSet ? ctx.phoneHref : null, phoneHtml) +
-    contact("pin", null, addressHtml) +
+    contact("phone", phoneSet ? ctx.phoneHref : null, "Telefon", phoneHtml) +
+    contact("pin", null, "Naslov", addressHtml) +
     "</div></div>" +
     col("st-foot-c1", "Ponudba", [
       ...families,

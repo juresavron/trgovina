@@ -122,7 +122,7 @@ export const TERMS: Page = {
           "izbrana rešitev nemogoča ali nesorazmerna. Če tega ne izvedemo v razumnem roku in " +
           "brez znatnih nevšečnosti za vas ali če neskladnost kljub temu ostane, lahko " +
           "zahtevate sorazmerno znižanje kupnine ali odstopite od pogodbe in zahtevate vračilo " +
-          "plačila; od pogodbe ne morete odstopiti le, če je neskladnost neznatna. Stroškov " +
+          "plačila; odstop je izključen samo, kadar je neskladnost neznatna. Stroškov " +
           "vzpostavitve skladnosti ne nosite vi.",
         "Garancijski rok in obseg sta navedena v garancijskem listu, ki ga prejmete ob " +
           "predaji; za modele, ki jih prodajamo, znaša garancija od dveh do petih let, odvisno " +
@@ -145,8 +145,8 @@ export const TERMS: Page = {
       h: "Reševanje sporov",
       p: [
         "Reklamacijo najprej naslovite na nas — večina zadev se reši v enem klicu. Če se ne " +
-          "dogovorimo, je za spor pristojno stvarno pristojno sodišče; kot potrošnik lahko " +
-          "tožbo vložite tudi pri sodišču v kraju svojega stalnega prebivališča.",
+          "dogovorimo, o sporu odloča sodišče, določeno z zakonom; kot potrošnik lahko tožbo " +
+          "vložite tudi pri sodišču v kraju svojega stalnega prebivališča.",
         "Skladno z zakonom, ki ureja izvensodno reševanje potrošniških sporov, izjavljamo, da " +
           "nobenega izvajalca izvensodnega reševanja potrošniških sporov ne priznavamo kot " +
           "pristojnega. Kot potrošnik lahko kršitev kljub temu prijavite Tržnemu inšpektoratu " +

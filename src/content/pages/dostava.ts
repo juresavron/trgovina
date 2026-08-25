@@ -20,12 +20,12 @@ export const DELIVERY: Page = {
   lead:
     "Bazen pripeljemo, prenesemo na mesto, priklopimo in zaženemo. " +
     "Vaša naloga je pripraviti podlago in električni priklop — pri obojem svetujemo vnaprej.",
-  // 148 characters. The five steps are the page's content, not its
-  // description: naming two of them plus the promise says what the visitor
-  // gets without being cut off mid-list in the result.
+  // The five steps are the page's content, not its description: this named
+  // all five and ran to 176 characters, which is cut off mid-list in the
+  // result. Naming the promise and two of the steps fits and reads better.
   metaDescription:
     "Dostava in montaža masažnega bazena po vsej Sloveniji: brezplačen ogled lokacije, " +
-    "prenos na teraso, priklop in zagon ter predaja z navodili za vzdrževanje.",
+    "prenos na teraso, priklop in zagon ter predaja z navodili.",
   blocks: [
     {
       kind: "steps",
@@ -64,11 +64,11 @@ export const DELIVERY: Page = {
       kind: "prose",
       h: "Kaj pripravite vi",
       p: [
-        "Podlago, ki nosi težo polnega bazena. Masažni bazen prazen tehta od 300 do 410 " +
-          "kilogramov, napolnjen od 1.500 do 2.210 kilogramov, z ljudmi v njem pa še nekaj sto " +
-          "več; swim spa bazen je napolnjen težak od 5.750 do 8.490 kilogramov. Betonska " +
-          "plošča, tlakovci na pripravljenem nasutju ali ustrezno dimenzionirana terasa so v " +
-          "redu — kaj od tega velja za vašo lokacijo, povemo ob ogledu.",
+        "Podlago, ki nosi težo napolnjenega bazena in ljudi v njem. Masažni bazen prazen tehta " +
+          "od 300 do 410 kilogramov, napolnjen od 1.500 do 2.210 kilogramov; napolnjen swim " +
+          "spa bazen od 5.750 do 8.490 kilogramov. Betonska plošča, tlakovci na pripravljenem " +
+          "nasutju ali ustrezno dimenzionirana terasa so v redu — kaj od tega velja za vašo " +
+          "lokacijo, povemo ob ogledu.",
         "Električni priklop po navodilih, ki jih dobite v drugem koraku, in dostop do vode za " +
           "prvo polnjenje. Nič drugega.",
       ],

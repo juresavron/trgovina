@@ -39,7 +39,7 @@ import type { Page } from "../pages";
 export const COOKIES: Page = {
   key: "/cookies",
   h1: "Piškotki",
-  lead: "Ta spletna stran ne uporablja piškotkov in ne uporablja spletne analitike.",
+  lead: "Ta spletna stran ne uporablja piškotkov in ne meri obiska.",
   metaDescription:
     "Politika piškotkov: ta spletna stran ne nalaga piškotkov, ne uporablja analitike in " +
     "ne pošilja podatkov tretjim ponudnikom.",
@@ -52,9 +52,8 @@ export const COOKIES: Page = {
         "Ob obisku te strani se v vaš brskalnik ne shrani noben piškotek. Ne merimo obiska, " +
           "ne uporabljamo oglaševalskih sledilnikov in ne vgrajujemo vsebin, ki bi vas " +
           "spremljale na drugih straneh.",
-        "Pisave, slog in slike se naložijo z našega naslova, ne s tujih strežnikov. Zato ob " +
-          "obisku ne nastane zahtevek proti tretjemu ponudniku, ki bi lahko zabeležil vaš " +
-          "naslov IP.",
+        "Pisave, slog in slike se naložijo z našega strežnika, ne s tujih. Zato ob obisku ne " +
+          "nastane nobena zahteva do tretjega ponudnika, ki bi lahko zabeležil vaš naslov IP.",
         "Ker piškotkov ni, tudi soglasja ni treba dajati in ni česa preklicati. Če bomo kdaj " +
           "uvedli merjenje obiska, bomo pred tem zaprosili za privolitev in to stran ustrezno " +
           "spremenili.",
@@ -65,8 +64,9 @@ export const COOKIES: Page = {
       h: "Kaj se vseeno zabeleži",
       p: [
         "Kot pri vsaki spletni strani strežnik ob dostavi strani obdela tehnične podatke " +
-          "zahtevka, med njimi naslov IP. To je nujno za delovanje in varnost storitve in ni " +
-          "piškotek; teh zapisov ne uporabljamo za profiliranje.",
+          "zahteve, med njimi naslov IP. To je nujno za delovanje in varnost storitve in ni " +
+          "piškotek; teh zapisov ne uporabljamo za profiliranje in jih ne povezujemo z vašim " +
+          "povpraševanjem.",
       ],
     },
     { kind: "contact", h: "Vprašanja o zasebnosti" },

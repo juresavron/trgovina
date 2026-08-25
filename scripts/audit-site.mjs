@@ -237,6 +237,15 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
         if (b.width < 2 || b.height < 2) continue;
         const cs = getComputedStyle(el);
         if (cs.visibility === "hidden" || cs.display === "none" || Number(cs.opacity) === 0) continue;
+        // SCREEN-READER-ONLY TEXT IS NOT A CONTRAST FAILURE. The sr-only
+        // pattern here is position:absolute + 1x1 + clip-path:inset(50%)
+        // (.st-vh, .st-pdp-vh and friends), which carries words like "cena "
+        // and "prejšnja cena " into the accessibility tree without painting
+        // them. Its box still measures a few px, so a size filter does not
+        // catch it, and screenshotting it samples whatever pixels happen to
+        // lie under it — which is how it reported an exact 1.00:1.
+        if (cs.clipPath && cs.clipPath !== "none") continue;
+        if (cs.clip && cs.clip !== "auto") continue;
         const fg = parse(cs.color);
         if (!fg || fg.a < 0.99) continue;
         const px = parseFloat(cs.fontSize);
@@ -265,6 +274,23 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
           }
         }
         const fgLum = 0.2126 * lin(fg.r) + 0.7152 * lin(fg.g) + 0.0722 * lin(fg.b);
+
+        // AN OPAQUE BACKGROUND ON THE ELEMENT ITSELF SETTLES IT EXACTLY, and
+        // must short-circuit the pixel pass rather than feed it. A rounded
+        // white button on a dark band is the case that taught this: sampling
+        // the darkest pixel inside its bounding box picks up the dark section
+        // showing through the CORNERS outside the border-radius, which is not
+        // the ground the text sits on. It reported the hero CTA at 1.06:1
+        // when its real figure is dark ink on white, ~18:1.
+        const ownBg = parse(cs.backgroundColor);
+        if (ownBg && ownBg.a >= 0.999) {
+          const bl = 0.2126 * lin(ownBg.r) + 0.7152 * lin(ownBg.g) + 0.0722 * lin(ownBg.b);
+          const ratio = (Math.max(fgLum, bl) + 0.05) / (Math.min(fgLum, bl) + 0.05);
+          if (ratio < floor)
+            out.push({ tag: null, label: el.tagName + (el.className ? "." + String(el.className).split(" ")[0] : ""), exact: ratio, floor, px: Math.round(px) });
+          continue;
+        }
+
         if (!verify) {
           if (!ground || ground.a < 0.999) ground = { r: 255, g: 255, b: 255, a: 1 };
           const gl = 0.2126 * lin(ground.r) + 0.7152 * lin(ground.g) + 0.0722 * lin(ground.b);
@@ -278,29 +304,66 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
       }
       return out;
     });
-    // Confirm every suspect the way scripts/verify-hero-contrast.mjs does:
-    // make the text transparent, screenshot the element, take the brightest
-    // pixel that remains (the darkest, for dark text). That reads the ACTUAL
-    // ground, whatever painted it — scrim, gradient or photograph.
+    // CONFIRM IN PIXELS, SAMPLING ONLY WHERE THE GLYPHS ARE.
+    //
+    // Two screenshots of the same element: one as it renders, one with the
+    // text made transparent. Pixels that DIFFER between them are exactly the
+    // pixels the glyphs cover, including their anti-aliased edges. The ground
+    // is then read from the transparent shot at those positions only.
+    //
+    // Sampling the whole box instead is what produced three rounds of false
+    // alarms, and each was the same mistake wearing a different hat: a
+    // rounded white button reported 1.06:1 because its bounding box includes
+    // the dark section showing through OUTSIDE the border-radius, and a pill
+    // chip reported 3.00:1 for the same reason. The ground a letter sits on
+    // is not the extreme pixel anywhere near it; it is the pixel under the
+    // letter.
+    //
+    // Within that set the worst case still governs: light text is measured
+    // against the brightest ground pixel it covers, dark text against the
+    // darkest. A thin stroke fails on the one bright pixel it crosses, and an
+    // average would happily pass a heading lying across a window.
     if (suspects.length) {
-      await page.addStyleTag({ content: "[data-audit]{color:transparent !important}" });
       const lin = (c) => { const x = c / 255; return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+      const shots = new Map();
       for (const sus of suspects) {
-        let shot;
-        try { shot = await page.locator("[data-audit=\"" + sus.tag + "\"]").first().screenshot({ timeout: 4000 }); }
-        catch { continue; }
-        const { data, info } = await sharp(shot).raw().toBuffer({ resolveWithObject: true });
-        let hi = -1, lo = 2;
-        for (let i = 0; i < data.length; i += info.channels) {
-          const L = 0.2126 * lin(data[i]) + 0.7152 * lin(data[i + 1]) + 0.0722 * lin(data[i + 2]);
-          if (L > hi) hi = L;
-          if (L < lo) lo = L;
+        if (sus.tag === null) continue;
+        try { shots.set(sus.tag, await page.locator("[data-audit=\"" + sus.tag + "\"]").first().screenshot({ timeout: 4000 })); }
+        catch { /* element vanished or is unscreenshotable; skipped below */ }
+      }
+      await page.addStyleTag({ content: "[data-audit]{color:transparent !important}" });
+      for (const sus of suspects) {
+        if (sus.tag === null) {
+          add("ERROR", route, "contrast", label + ": " + sus.label + " " + sus.exact.toFixed(2) +
+            ":1 (needs " + sus.floor + ") at " + sus.px + "px");
+          continue;
         }
-        const against = sus.fgLum > 0.5 ? hi : lo;
+        const inked = shots.get(sus.tag);
+        if (!inked) continue;
+        let bare;
+        try { bare = await page.locator("[data-audit=\"" + sus.tag + "\"]").first().screenshot({ timeout: 4000 }); }
+        catch { continue; }
+        const A = await sharp(inked).raw().toBuffer({ resolveWithObject: true });
+        const B = await sharp(bare).raw().toBuffer({ resolveWithObject: true });
+        if (A.info.width !== B.info.width || A.info.height !== B.info.height) continue;
+        const ch = A.info.channels;
+        let against = sus.fgLum > 0.5 ? -1 : 2, glyphPixels = 0;
+        for (let i = 0; i < A.data.length; i += ch) {
+          // A glyph pixel: the two shots disagree here by more than noise.
+          const d = Math.abs(A.data[i] - B.data[i]) + Math.abs(A.data[i + 1] - B.data[i + 1]) + Math.abs(A.data[i + 2] - B.data[i + 2]);
+          if (d < 24) continue;
+          glyphPixels++;
+          const L = 0.2126 * lin(B.data[i]) + 0.7152 * lin(B.data[i + 1]) + 0.0722 * lin(B.data[i + 2]);
+          if (sus.fgLum > 0.5) { if (L > against) against = L; }
+          else if (L < against) against = L;
+        }
+        // Too few glyph pixels to be sure what we measured — say nothing
+        // rather than guess. An element behind an overlay lands here.
+        if (glyphPixels < 12) continue;
         const ratio = (Math.max(sus.fgLum, against) + 0.05) / (Math.min(sus.fgLum, against) + 0.05);
         if (ratio < sus.floor)
           add("ERROR", route, "contrast", label + ": " + sus.label + " " + ratio.toFixed(2) +
-            ":1 (needs " + sus.floor + ") at " + sus.px + "px");
+            ":1 (needs " + sus.floor + ") at " + sus.px + "px, " + glyphPixels + "px sampled");
       }
     }
 

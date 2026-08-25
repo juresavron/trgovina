@@ -91,12 +91,21 @@ export const STUDIO_PDP_CSS = `
      * gallery column (~693px at 1440: 10 × 60 + 9 × 10 gap = 690). The 56px
      * floor keeps five per row inside 390's 340px content box. */
     --studio-pdp-thumb: clamp(56px, 4.2vw, 60px);
-    /* §4.13: the sidebar's square 22px checkbox. */
+    /* §4.13's square 22px checkbox, kept for the configurator and the add-on
+     * rows (the sidebar that shared it is gone — see the file header). */
     --studio-pdp-box: clamp(16px, 1.1vw, 22px);
-    /* The buy bar sits at the bottom of the viewport for the whole page, so an
-     * in-page anchor scrolled flush to the bottom edge landed UNDERNEATH it.
-     * The bar is the chrome band's height (--chrome-h), plus its own block
-     * padding — reserve that much at the end of every scroll. */
+  }
+  /* The buy bar sits at the bottom of the viewport for the whole page, so an
+   * in-page anchor scrolled flush to the bottom edge landed UNDERNEATH it.
+   * The bar is the chrome band's height (--chrome-h), plus its own block
+   * padding — reserve that much at the end of every scroll.
+   *
+   * Gated on the bar EXISTING. It used to sit on :root unconditionally, which
+   * is a PDP module reaching every page in the theme: the home page, the
+   * collections and the fourteen editorial pages all reserved ~122px at the
+   * end of every anchor jump for a bar none of them render. :has() is already
+   * how this sheet asks whether a frame carries a caption. */
+  :root[data-theme="studio"]:has(.st-pdp-bar) {
     scroll-padding-bottom: calc(var(--chrome-h) + clamp(18px, 1.6vw, 32px));
   }
 
@@ -288,7 +297,11 @@ export const STUDIO_PDP_CSS = `
    * aspect-ratio, exactly as the stage's frames do. contain, same argument
    * as the big picture: cropping a cutout to fill 60px is how it stops
    * reading as the product. */
-  :root[data-theme="studio"] .st-pdp-thumb img {
+  /* Selected by CLASS, not as a descendant: the renderer already puts
+   * .st-pdp-thumb-img on it (productImg takes a class argument), and a class
+   * that matches no rule is markup that looks live and is not — ten of them
+   * per page. */
+  :root[data-theme="studio"] .st-pdp-thumb-img {
     display: block;
     inline-size: 100%;
     block-size: 100%;
@@ -310,14 +323,14 @@ export const STUDIO_PDP_CSS = `
    * item after the first rather than a character in the markup, because a
    * typed "/" is read out loud on every crumb.
    *
-   * Label rung, sentence case — the eyebrow directly beneath is the same rung
-   * in CAPS, and two uppercase lines stacked would read as one confused
-   * heading. Separation here is by case and colour, which is what the ramp
-   * gives this file everywhere else. */
+   * Label rung, sentence case. The tier eyebrow in the column below is that
+   * same rung in CAPS, and a trail set in caps too would read as a second
+   * eyebrow rather than as navigation. Separation is by case and colour,
+   * which is what the ramp gives this file everywhere else. */
   :root[data-theme="studio"] .st-pdp-crumbs ol {
-    /* The same step the title takes off the eyebrow, so the three lines above
-     * the headline sit on one rhythm. */
-    list-style: none; margin: 0 0 clamp(10px, 1vw, 20px); padding: 0;
+    /* It sits above the whole grid, so the step under it is the one that
+     * separates two devices rather than two lines of one. */
+    list-style: none; margin: 0 0 clamp(16px, 1.6vw, 30px); padding: 0;
     display: flex; flex-wrap: wrap; align-items: center;
     gap: 2px clamp(6px, 0.6vw, 12px);
     font-family: var(--f-label);
@@ -374,11 +387,13 @@ export const STUDIO_PDP_CSS = `
     text-transform: uppercase;
     color: var(--ink-body);
   }
-  /* h2, not h1 — and the choice is about how this page is composed. The title
-   * is the PDP's dominant heading, but it sits in a ~45% decision column beside
-   * a gallery that is the largest object on the page; it never spans a band.
-   * h1 (92/64/44) is the rung the full-bleed shop hero below takes, and keeping
-   * the two apart preserves the step this file always described. The
+  /* The h2 RUNG on the page's one h1 ELEMENT — heading level and type rung are
+   * independent, and this file says so about the group labels too. The title
+   * is the PDP's dominant heading, but it sits in a ~45% decision column
+   * beside a gallery that is the largest object on the page; it never spans a
+   * band, and h1's 92/64/44 is sized for something that does. (This comment
+   * used to justify the step against "the full-bleed shop hero below" — that
+   * device was dead code and is gone; the argument stands on the column.) The
    * 600 / −0.022em / 1.15 this rule used to carry was the measured pass: §1's
    * display type is 500, tracked 0em, led 1.13em, and is never negative. */
   :root[data-theme="studio"] .st-pdp-title {
@@ -448,6 +463,20 @@ export const STUDIO_PDP_CSS = `
     font-weight: var(--w-label);
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
+    color: var(--ink-body);
+  }
+  /* The provisional disclosure under the price. Same rung and colour as "z
+   * DDV" beside the number, because it is the same kind of statement — a
+   * qualification of the figure, not a footnote about it. --ink-body (9.7:1)
+   * and not --ink-mute: a disclosure nobody reads is a disclosure that has
+   * not been made. */
+  :root[data-theme="studio"] .st-pdp-prov {
+    margin-top: clamp(6px, 0.5vw, 10px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label);
     color: var(--ink-body);
   }
 
@@ -762,6 +791,24 @@ export const STUDIO_PDP_CSS = `
     color: var(--ink);
   }
   :root[data-theme="studio"] .st-pdp-panel summary::-webkit-details-marker { display: none; }
+  /* The panel's label is an <h3> inside the summary, not loose text.
+   *
+   * "Tehnični podatki", "Opis izdelka", "Mere in teža", "Garancija" are the
+   * page's section headings by every measure except the document outline —
+   * they were the only h6-scale type on the page that a screen-reader user
+   * navigating by heading could not reach, and they carry the keywords a
+   * product page is actually read for. h3 rather than h2: they sit under the
+   * h2 group labels above them, and structure.test.ts fails a skipped level.
+   *
+   * It inherits everything, so summary keeps being the one place the panel's
+   * type is declared and the ::after chevron keeps its flex row. */
+  :root[data-theme="studio"] .st-pdp-panel-h {
+    margin: 0;
+    min-width: 0;
+    font: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+  }
   /* The chevron is drawn, not a marker glyph: a border-only square rotated
    * 45 degrees is one element and matches the hairline weight everywhere
    * else on the page. */
@@ -1251,7 +1298,9 @@ export const STUDIO_PDP_CSS = `
      * the reading area for a summary of what is already on screen. It goes
      * back into the flow, and the scroll reserve above goes with it. */
     :root[data-theme="studio"] .st-pdp-bar { position: static; }
-    :root[data-theme="studio"] { scroll-padding-bottom: 0; }
+    /* Same :has() gate as the declaration it undoes — without it this rule is
+     * a specificity step BELOW the one above and would never win. */
+    :root[data-theme="studio"]:has(.st-pdp-bar) { scroll-padding-bottom: 0; }
   }
 
   /* (§4.13's two secondary-page devices — the dark .st-shop-hero band and
@@ -1684,12 +1733,14 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     .join("");
   const panels =
     '<div class="st-pdp-panels">' +
-    '<details class="st-pdp-panel" open><summary>Tehnični podatki</summary>' +
+    '<details class="st-pdp-panel" open><summary>' +
+    '<h3 class="st-pdp-panel-h">Tehnični podatki</h3></summary>' +
     '<div class="st-pdp-panel-b"><dl class="st-pdp-spec-table">' + specRows + "</dl></div></details>" +
     (d.panels ?? [])
       .map(
         (x) =>
-          '<details class="st-pdp-panel"><summary>' + esc(x[0]) + "</summary>" +
+          '<details class="st-pdp-panel"><summary>' +
+          '<h3 class="st-pdp-panel-h">' + esc(x[0]) + "</h3></summary>" +
           '<div class="st-pdp-panel-b"><p>' + esc(x[1]) + "</p></div></details>",
       )
       .join("") +
@@ -1733,6 +1784,14 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<section class="st-pdp">' +
     '<div class="st-pdp-in">' +
 
+    // Above the grid, not inside the buy column. The grid puts the gallery
+    // first in the DOM so it can be column one on desktop, so a breadcrumb in
+    // the buy column lands ~600px down a phone — below the stage and both
+    // rows of thumbs — which is nowhere for a navigation aid. Here it is the
+    // first thing in <main> at every width, which is where a <nav> landmark
+    // is looked for and where every other storefront puts this trail.
+    crumbs(ctx) +
+
     '<div class="st-pdp-grid">' +
     // --- gallery: one stage plus a thumb strip (see gallery()). data-st-slider
     // arms behaviour.ts only when there is more than one photograph — with one
@@ -1744,7 +1803,6 @@ export function renderStudioPdp(ctx: RenderCtx): string {
 
     // --- buy column ---
     '<div class="st-pdp-buy">' +
-    crumbs(ctx) +
     '<p class="st-pdp-eyebrow">' + esc(d.eyebrow) + "</p>" +
     '<h1 class="st-pdp-title">' + esc(d.title) + "</h1>" +
     // Price directly under the title, as the source has it. It used to sit

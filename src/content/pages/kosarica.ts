@@ -23,7 +23,7 @@ import type { Page } from "../pages";
 export const CART: Page = {
   key: "/cart",
   h1: "Košarica",
-  lead: "Spletno naročanje še ni odprto. Naročila trenutno sprejmemo po telefonu ali e-pošti.",
+  lead: "Spletno naročanje še ni odprto. Naročila zaenkrat sprejemamo po telefonu in e-pošti.",
   metaDescription:
     "Spletno naročanje masažnih bazenov še ni odprto. Naročilo in ponudbo uredimo po telefonu " +
     "ali e-pošti, po ogledu lokacije.",

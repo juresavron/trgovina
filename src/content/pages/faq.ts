@@ -36,10 +36,10 @@ export const FAQ: Page = {
       items: [
         [
           "Kam lahko postavim masažni bazen?",
-          "Na podlago, ki nosi težo napolnjenega bazena z ljudmi — pri masažnih bazenih od " +
-            "1.500 do 2.210 kilogramov, pri swim spa bazenih od 5.750 do 8.490 kilogramov. " +
-            "Betonska plošča in ustrezno dimenzionirana terasa sta v redu. Ali to velja za " +
-            "vašo lokacijo, preverimo ob ogledu.",
+          "Na podlago, ki nosi težo napolnjenega bazena in ljudi v njem. Masažni bazen tehta " +
+            "napolnjen od 1.500 do 2.210 kilogramov, swim spa bazen od 5.750 do 8.490 " +
+            "kilogramov. Betonska plošča in ustrezno dimenzionirana terasa sta v redu; ali to " +
+            "velja za vašo lokacijo, preverimo ob ogledu.",
         ],
         [
           "Ali ga lahko postavim v zaprt prostor?",
