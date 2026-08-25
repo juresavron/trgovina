@@ -970,17 +970,21 @@ export const STUDIO_EDITORIAL_CSS = `
     :root[data-theme="studio"] .st-gd-row {
       grid-template-columns: minmax(0, 1fr);
     }
-    /* Stacked, the hero tile no longer has neighbours to out-scale, and a 4/5
-     * box on a phone is a wall — bring it back to the row's square. */
-    :root[data-theme="studio"] .st-imp-hero { aspect-ratio: 1 / 1; }
-    /* The wall the square leaves behind: between ~545 and 860px the stacked
-     * tiles are full-width squares — measured 810px EACH at 860px, 2430px of
-     * tiles under one heading. 520px caps a tile at roughly a landscape
-     * phone screen; below ~545px viewport the square is already smaller and
-     * the cap never engages, so a 390px phone keeps its true 1/1. The quiet
+    /* Stacked, no tile has neighbours to out-scale, and full-width squares
+     * are humane only until ~545px: measured at 860px they were 810px EACH —
+     * 2430px of tiles under one heading. So one explicit height for every
+     * stacked tile (the hero's 4/5 goes with it — this height beats
+     * aspect-ratio for all three): the container's own width, a true square,
+     * until that square would pass 520px — roughly a landscape phone screen
+     * — where it stops growing. An explicit height, NOT max-height:
+     * aspect-ratio TRANSFERS a capped block axis back through the ratio, so
+     * max-height shrank the tile's WIDTH off the container edge (measured
+     * 520px wide, left-aligned in a 650px column at 700px). The quiet
      * tile's grid rows and the stat scrim are tile-relative and follow the
      * capped box. */
-    :root[data-theme="studio"] .st-imp-tile { max-height: 520px; }
+    :root[data-theme="studio"] .st-imp-tile {
+      height: min(100vw - 2 * var(--studio-gutter), 520px);
+    }
     :root[data-theme="studio"] .st-imp-sub { max-width: 100%; }
     /* No .st-imp-claim reset here: the chips are inline-block, so a claim
      * wider than a very narrow viewport wraps internally on its own, and a
