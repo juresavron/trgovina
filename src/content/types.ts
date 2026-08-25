@@ -9,14 +9,43 @@
  * manual-action magnet and this network's whole strategy is SEO.
  */
 
-export type ArtKey =
-  | "saunaDuo"
-  | "saunaQuattro"
-  | "tub"
-  | "pool"
-  | "chair"
-  | "bathtub"
-  | "billiard";
+/**
+ * The drawings a card can ask for.
+ *
+ * Trimmed to what the one remaining shop sells when the network narrowed to
+ * masazni-bazen.si — the sauna, plunge tub, chair, bath and billiard keys went
+ * with their shops. "swimspa" is not a variant of "pool": a 5.8 m shell drawn
+ * as a 2 m square is the same error as a photograph of the wrong model, and
+ * the two sit side by side in the category rail where the difference is the
+ * only thing the row is trying to say.
+ */
+export type ArtKey = "pool" | "swimspa";
+
+/**
+ * A PRODUCT FAMILY, as the rail under the hero shows it.
+ *
+ * Not a model. The distinction is the whole reason this type exists: a card
+ * that names one model must carry that model's own price (ZVPot, transposing
+ * Directive 98/6/EC — the price shown against an identified product has to be
+ * that product's), whereas a card that names a family may legitimately carry a
+ * RANGE, because a range is what a family costs. The rail printed model cards
+ * for a while and had to hide the range in the section head to stay honest;
+ * with real categories the range belongs on the card again.
+ */
+export interface Category {
+  /** The family's name, plural. */
+  name: string;
+  /** Count and the dimension the family is actually chosen on. */
+  meta: string;
+  /** "2.420 € – 2.890 €", or a single price where the family has one model. */
+  price: string;
+  /** Where the card goes. An in-page anchor or a route. */
+  href: string;
+  /** The family's lead photograph, where the shop has one. */
+  photo?: PdpPhoto;
+  /** The drawing to use when it has none. */
+  art?: ArtKey;
+}
 
 export interface ProductCard {
   name: string;
@@ -142,7 +171,22 @@ export interface ShopContent {
   metaDescription: string;
   trust: string[];
   stats: [string, string][];
+  /**
+   * The product families, for the rail under the hero. Omitted by a shop that
+   * sells one family — the rail then falls back to model cards, which is what
+   * it did before there were two.
+   */
+  categories?: Category[];
+
   products: (ProductCard | UtilCard)[];
+
+  /**
+   * The second product family's cards, where the shop sells one. Rendered as
+   * its own grid under its own anchor, because the category rail sends a
+   * visitor to one family or the other and a single mixed grid would undo
+   * that distinction.
+   */
+  swimSpas?: ProductCard[];
   moat: {
     h2: string;
     steps: [string, string][];
