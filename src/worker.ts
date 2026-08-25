@@ -15,6 +15,7 @@
 import { SHOPS, resolveShop, isDevHost, type ShopConfig } from "./tenants";
 import type { InternalRouteKey } from "./tenants/types";
 import { CONTENT } from "./content";
+import { PAGES } from "./content/pages";
 import { THEME_CATALOG, type ThemeKey } from "./themes/catalog";
 import {
   organizationJsonLd,
@@ -23,6 +24,7 @@ import {
   renderHome,
   renderPdp,
   renderCollection,
+  renderContentPage,
   renderPlaceholder,
   renderShopHub,
 } from "./render/page";
@@ -259,6 +261,38 @@ export function handleRequest(request: Request): Response {
       jsonLd: [organizationJsonLd(shop)],
     });
     return htmlResponse(doc, 200, baseHeaders);
+  }
+
+  // Editorial and legal pages. Real content, matched by the shop's own route
+  // slugs, so the Slovenian URLs stay in tenants/bazen.ts.
+  //
+  // These used to be part of the placeholder loop below: fifteen routes, every
+  // nav destination bar the shop and every page the law requires, all serving
+  // one "Stran je v pripravi" card at 200 and noindex. Nothing was broken and
+  // nothing was findable.
+  for (const page of PAGES) {
+    if (path !== shop.routeSlugs[page.key as InternalRouteKey]) continue;
+    // Pre-live the whole site is noindex anyway; once live, the basket and
+    // the checkout stay out of the index because they are per-visitor
+    // surfaces rather than content.
+    const noindex = dev || !shop.live || page.noindex === true;
+    const doc = renderDocument({
+      shop,
+      content,
+      theme,
+      path,
+      title: page.h1 + " | " + shop.name,
+      description: page.metaDescription,
+      noindex,
+      q,
+      bodyHtml: renderContentPage(shop, content, q, theme, page),
+      jsonLd: [organizationJsonLd(shop)],
+    });
+    return htmlResponse(
+      doc,
+      200,
+      noindex ? { ...baseHeaders, "x-robots-tag": "noindex, nofollow" } : baseHeaders,
+    );
   }
 
   // Known top-level routes render a styled placeholder (noindex until real).

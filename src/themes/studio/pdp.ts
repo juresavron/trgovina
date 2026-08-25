@@ -1238,6 +1238,14 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-shop-hero-media {
     position: relative;
     aspect-ratio: 4 / 3;
+    /* A column: the caption takes the first row IN FLOW and the mass fills
+     * the rest. It was absolutely positioned over the top-left corner, which
+     * ran its second half across the grey mass at ~1.4:1 — the one line on
+     * this band whose job is a disclosure ("this is a visualization") was
+     * the one line nobody could read. */
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-sm);
     /* THE BLEED: the product hangs below the band's bottom edge. */
     margin-bottom: calc(-1 * clamp(20px, 3.4vw, 76px));
   }
@@ -1263,7 +1271,9 @@ export const STUDIO_PDP_CSS = `
     display: block;
     margin-inline: auto;
     inline-size: 62%;
-    block-size: 100%;
+    /* Fills whatever the caption row leaves (see .st-shop-hero-media). */
+    flex: 1 1 auto;
+    min-block-size: 0;
     border-radius: var(--r-media);
     border: 1px solid color-mix(in srgb, var(--on-invert) 22%, transparent);
     background: linear-gradient(
@@ -1272,9 +1282,9 @@ export const STUDIO_PDP_CSS = `
       color-mix(in srgb, var(--tile-mid) 48%, var(--ink-invert))
     );
   }
+  /* In flow (first row of the media column) — never over the mass, so it
+   * only ever sits on the band, where --on-invert-mute is 7.33:1. */
   :root[data-theme="studio"] .st-shop-hero-cap {
-    position: absolute; z-index: 2;
-    top: 0; left: 0;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);

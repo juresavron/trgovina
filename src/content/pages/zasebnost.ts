@@ -1,0 +1,91 @@
+import type { Page } from "../pages";
+
+/**
+ * The privacy notice. GDPR Articles 13-15 fix what has to be stated and what
+ * rights exist, so the substance here is statutory rather than invented — but
+ * the CONTROLLER is the company, and identifying the controller is Article
+ * 13(1)(a). That comes from ShopConfig and is unset today, which is exactly
+ * why legalPagesReady() blocks the launch: a privacy notice with no
+ * identifiable controller does not satisfy the article it exists to satisfy.
+ *
+ * Processing purposes describe what this site actually does today: it takes
+ * enquiries by phone and email and serves pages. There is no analytics, no
+ * advertising pixel and no third-country transfer, and the notice says so
+ * rather than reciting the generic paragraphs for things that are not here.
+ */
+export const PRIVACY: Page = {
+  key: "/privacy",
+  h1: "Zasebnost",
+  lead:
+    "Kdo obdeluje vaše osebne podatke, katere, zakaj in kakšne pravice imate. " +
+    "Brez analitike, brez oglaševalskih sledilnikov.",
+  metaDescription:
+    "Politika zasebnosti: upravljavec, nameni obdelave osebnih podatkov, pravne podlage, " +
+    "roki hrambe in pravice posameznika po GDPR.",
+  legal: true,
+  blocks: [
+    { kind: "imprint", h: "Upravljavec osebnih podatkov" },
+    {
+      kind: "facts",
+      h: "Kaj obdelujemo in zakaj",
+      rows: [
+        [
+          "Povpraševanje",
+          "Ime, telefon, e-naslov in podatki o lokaciji, ki nam jih sporočite. Namen: odgovor " +
+            "na vaše povpraševanje in priprava ponudbe. Pravna podlaga: izvedba ukrepov na " +
+            "vašo zahtevo pred sklenitvijo pogodbe.",
+        ],
+        [
+          "Naročilo in dostava",
+          "Podatki, potrebni za izvedbo pogodbe, dostavo in montažo. Pravna podlaga: izvajanje " +
+            "pogodbe.",
+        ],
+        [
+          "Računi",
+          "Podatki na izdanih računih. Pravna podlaga: izpolnitev zakonske obveznosti " +
+            "(davčni in računovodski predpisi).",
+        ],
+        [
+          "Servis in garancija",
+          "Podatki o modelu, datumu predaje in opravljenih posegih. Pravna podlaga: izvajanje " +
+            "pogodbe in zakonske obveznosti.",
+        ],
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Kako dolgo hranimo",
+      p: [
+        "Povpraševanja, iz katerih ne nastane naročilo, hranimo, dokler so za odgovor še " +
+          "smiselna, nato jih izbrišemo. Podatke o sklenjenih poslih hranimo, dokler trajajo " +
+          "obveznosti iz pogodbe in garancije. Račune hranimo toliko časa, kolikor zahtevajo " +
+          "davčni predpisi.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Komu jih posredujemo",
+      p: [
+        "Samo tistim, ki so potrebni za izvedbo posla: prevozniku in montažni ekipi za dostavo, " +
+          "računovodskemu servisu za račune, ponudniku financiranja, če se zanj odločite, in " +
+          "ponudniku gostovanja spletne strani. Vsak od njih obdeluje podatke po naših navodilih " +
+          "in zgolj za navedeni namen.",
+        "Osebnih podatkov ne prodajamo in jih ne uporabljamo za oglaševanje.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Pravice, ki jih imate",
+      p: [
+        "Do dostopa do svojih podatkov, do popravka netočnih, do izbrisa, do omejitve obdelave, " +
+          "do prenosljivosti in do ugovora zoper obdelavo. Kadar obdelava temelji na privolitvi, " +
+          "jo lahko kadar koli prekličete, ne da bi to vplivalo na zakonitost obdelave pred " +
+          "preklicem.",
+        "Zahtevo naslovite na kontakt spodaj; odgovorimo v roku, ki ga določa splošna uredba o " +
+          "varstvu podatkov. Če menite, da so vaše pravice kršene, se lahko pritožite pri " +
+          "Informacijskem pooblaščencu Republike Slovenije.",
+      ],
+    },
+    { kind: "contact", h: "Kam se obrnete" },
+  ],
+};

@@ -1,5 +1,7 @@
 import type { ShopConfig } from "../tenants/types";
 import type { Collection, PdpContent, ShopContent } from "../content/types";
+import type { Page } from "../content/pages";
+import { renderStudioPage } from "../themes/studio/page";
 import { THEME_CATALOG, type ThemeKey } from "../themes/catalog";
 import { MAX_SECTIONS_PER_PAGE } from "../themes/shared/sections";
 import { SHOPS } from "../tenants";
@@ -265,6 +267,24 @@ export function renderShopHub(
     "<main>" + renderStudioShopHub(ctx) + "</main>" +
     renderStudioFooter(ctx)
   );
+}
+
+/**
+ * An editorial or legal page.
+ *
+ * renderStudioPage emits its own <main>, unlike the collection and hub
+ * renderers above — the page owns its whole document body because it has no
+ * storefront devices to sit between.
+ */
+export function renderContentPage(
+  shop: ShopConfig,
+  content: ShopContent,
+  q: string,
+  theme: ThemeKey,
+  page: Page,
+): string {
+  const ctx = buildCtx(shop, content, q);
+  return renderStudioHeader(ctx) + renderStudioPage(ctx, page) + renderStudioFooter(ctx);
 }
 
 export function renderPlaceholder(
