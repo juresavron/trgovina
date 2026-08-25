@@ -4,7 +4,7 @@
  * WHY THERE IS JAVASCRIPT HERE AT ALL. Everything else in this theme is
  * zero-JS on purpose: LCP is the reason these shops can outrank the incumbents
  * (docs/SEO.md §4), and the source's own motion runtime is hundreds of
- * kilobytes that block first paint. Three behaviours genuinely cannot be done
+ * kilobytes that block first paint. These behaviours genuinely cannot be done
  * without script, and the owner asked for the source's behaviour exactly:
  *
  *   1. prev/next that STEP by one card. Anchors can only jump to a fixed
@@ -14,6 +14,8 @@
  *   4. the add-on total on a product page. Nine checkboxes cannot sum
  *      themselves in CSS, and a configurator that shows prices but never a
  *      total makes the customer do the arithmetic that decides the purchase.
+ *   5. aria-current on the chrome nav. The server renders ONE nav string for
+ *      every page, so only the browser can say which item is "here".
  *
  * The cost is kept honest: no framework, no build step, one inline module
  * under 4 KB. A module script is deferred by definition, so it never blocks
@@ -195,7 +197,23 @@ function addons(root){
   sync();
 }
 
+/* ---- where-you-are ------------------------------------------------------
+   aria-current="page" on the chrome nav item whose destination this page IS.
+   Set here rather than on the server because the server cannot: the chrome
+   renderer builds ONE nav string with no knowledge of the page it will sit
+   on. The stylesheet turns the attribute into a resting underline; without
+   script the marker is simply absent — an enhancement, never a destination.
+   Exact match on pathname (the anchor's own parsed property, so the dev
+   query never interferes): the worker 308s every path to lowercase-no-slash
+   canonical form, so string equality is the whole comparison. */
+function navCurrent(){
+  [].forEach.call(document.querySelectorAll(".st-chrome-nav a"), function(a){
+    if (a.pathname === location.pathname) a.setAttribute("aria-current", "page");
+  });
+}
+
 function init(){
+  navCurrent();
   [].forEach.call(document.querySelectorAll("[data-st-slider]"), slider);
   [].forEach.call(document.querySelectorAll("[data-st-count]"), counter);
   [].forEach.call(document.querySelectorAll("[data-st-addons]"), addons);
