@@ -114,18 +114,35 @@ export const STUDIO_CHROME_CSS = `
     background: var(--ink-invert);
     color: var(--on-invert);
   }
-  /* A fixed bar occupies no space in flow, so every page reserves it. It is
-   * opaque, so nothing may slide underneath: an earlier revision pulled the
-   * hero up behind a transparent bar, which is what the source does over its
-   * photographic hero — but our first section is the offer triptych with a
-   * light left panel, and white nav type on that is 2.5:1. The bar stays
-   * solid and the content starts below it.
+  /* A fixed bar occupies no space in flow, so every page reserves it.
+   *
+   * EXCEPT over a full-bleed hero, which is what the source does: the
+   * photograph runs under the nav and the section owns the whole viewport. A
+   * previous revision tried this and reverted it, correctly at the time — the
+   * first section was then the offer triptych, whose left panel is light, and
+   * white nav type on it measures 2.5:1. It is safe now because the section
+   * that opts in is a photograph under a veil that is darkest exactly where
+   * the bar sits.
+   *
+   * Opt-in, not automatic: <main data-bleed> says "the first thing in here
+   * paints its own dark ground behind the bar". Any page without it keeps the
+   * reservation. Where :has() is unsupported the bar simply stays solid and
+   * the hero starts below it — the page is plainer, never broken.
    *
    * This reservation is ONLY correct while the bar is exactly --chrome-h tall,
-   * which is also what hero.ts subtracts from the viewport and what pdp.ts
-   * offsets its sticky bar by. The single-row bar below is pinned to it; the
-   * two-row phone bar is not, and re-states this at that breakpoint. */
+   * which is what pdp.ts offsets its sticky bar by. The single-row bar below
+   * is pinned to it; the two-row phone bar is not, and re-states this at that
+   * breakpoint. */
   :root[data-theme="studio"] main { padding-top: var(--chrome-h); }
+  :root[data-theme="studio"] main[data-bleed] { padding-top: 0; }
+  :root[data-theme="studio"]:has(main[data-bleed]) .st-chrome { background: transparent; }
+  /* The QA switcher takes the top strip (see css.ts) and everything moves
+   * down by its height. These carry the studio prefix on purpose: the rules
+   * they override are studio's own and set the same properties, so an
+   * unprefixed version loses on source order and does nothing. */
+  :root[data-theme="studio"]:has(.devbar) .st-chrome { top: var(--devbar-h); }
+  :root[data-theme="studio"]:has(.devbar) main { padding-top: calc(var(--chrome-h) + var(--devbar-h)); }
+  :root[data-theme="studio"]:has(.devbar) main[data-bleed] { padding-top: var(--devbar-h); }
 
   :root[data-theme="studio"] .st-chrome-bar {
     /* --studio-container is the CONTENT measure and box-sizing is border-box,
