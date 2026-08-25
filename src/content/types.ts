@@ -218,7 +218,29 @@ export interface ShopContent {
     steps: [string, string][];
     claim: [string, string];
   };
-  reviews: { q: string; who: string; model: string }[];
+  /**
+   * Customer reviews.
+   *
+   * ⚠️ `placeholder` IS A LEGAL FLAG, NOT A DRAFTING NOTE. The storefront
+   * renders these under the heading "Preverjena mnenja strank" with a
+   * "Preverjen nakup" chip beside each one — claims that the review comes
+   * from a real, verified purchase.
+   *
+   * Making that claim about a review nobody wrote is not a copy error. The
+   * Unfair Commercial Practices Directive as amended by the Omnibus Directive
+   * (EU) 2019/2161, transposed in ZVPot-1, puts two things on the Annex I
+   * blacklist — practices banned outright, with no balancing test:
+   *
+   *   23b. stating that reviews are submitted by consumers who actually used
+   *        or bought the product, without taking reasonable steps to check;
+   *   23c. submitting, or having someone submit, false consumer reviews.
+   *
+   * So a review that is not a real one carries `placeholder: true`, the
+   * renderer must not dress it as verified, and the launch gate refuses to
+   * let a shop go live while any review is flagged. Delete the flag only
+   * when the quote, the person and the order behind it are all real.
+   */
+  reviews: { q: string; who: string; model: string; placeholder?: boolean }[];
   guides: [string, string][];
   /** The flagship: the model the home page leads with. */
   pdp: PdpContent;

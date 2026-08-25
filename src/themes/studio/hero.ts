@@ -46,7 +46,7 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { discWatermark } from "./icons";
-import { SHOP_HERO, OWN_PHOTOS, decorativeImg, pick } from "./media";
+import { SHOP_HERO, decorativeImg } from "./media";
 import { productArt } from "./product-art";
 
 export const STUDIO_HERO_CSS = `
@@ -532,54 +532,11 @@ export const STUDIO_HERO_CSS = `
     overflow-wrap: break-word;
     hyphens: none;
   }
-  /* The product that occludes the wordmark. Opaque on purpose: the device is
-   * geometry, so nothing here is faded to fake depth.
-   *
-   * IT IS ANCHORED TO THE WORD, not to the band. That is the whole fix in this
-   * rule. It used to hang a fixed distance off the band's floor and rely on
-   * arithmetic — band height minus padding minus the foot minus the wordmark's
-   * margin — to land across the letters. The arithmetic held on desktop and
-   * broke on a phone, where the foot cluster grows to three rows (chip, a
-   * wrapped product name, a full-width CTA) and its top edge climbed ABOVE the
-   * object's bottom edge. The foot paints at z-index 3, so what shipped was
-   * white chip type sitting on the light-grey object at about 1.1:1.
-   *
-   * As a child of .st-band-word the containing block IS the wordmark's box, so
-   * bottom:0 puts the object's floor exactly on the word's and it cannot reach
-   * into the margin below, let alone into the foot — at any breakpoint, for any
-   * length of shop name or product title. The word's own z-index:1 makes it a
-   * stacking context, and a positioned child at z-index 2 paints above its
-   * parent's inline text: the letters pass behind the object. That is the
-   * occlusion, and it is now structural rather than arithmetic. */
-  :root[data-theme="studio"] .st-band-object {
-    /* No display:block needed for the <span> — absolute positioning blockifies
-     * it, and a dead declaration in a sheet this size is still a dead one. */
-    position: absolute; z-index: 2;
-    left: 50%; transform: translateX(-50%);
-    bottom: 0;
-    width: clamp(200px, 40vw, 760px);
-    aspect-ratio: 4 / 3;
-    border-radius: var(--r-media);
-    background: var(--bg-alt);
-  }
-  /* Inside the band object the subject is the product itself, not a subject on
-   * a backdrop, so it sits tighter to the frame than in a hero panel. */
-  :root[data-theme="studio"] .st-band-object .st-photo-mass {
-    inset: 13% 11%;
-  }
-  /* The photograph, when there is one. Inset to the same frame the mass used,
-   * expressed as PADDING rather than as insets: an absolutely positioned <img>
-   * with auto sizes takes its intrinsic width and paints straight out of the
-   * box — the bug measured at 541px of overflow in the impact band. */
-  :root[data-theme="studio"] .st-band-obj-photo {
-    position: absolute;
-    inset: 0;
-    padding: 13% 11%;
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: contain;
-  }
-  /* Thin callout line + dot, running from the product out to a short label. */
+  /* The .st-band-object rules lived here: an absolutely positioned 4/3 panel
+   * centred on the wordmark, plus the mass and photo treatments inside it.
+   * All three went with the object itself — see renderStudioWordmarkBand for
+   * why a light rectangle cannot occlude a word on a dark band without
+   * reading as a hole punched through it. */
   :root[data-theme="studio"] .st-band-callout {
     position: absolute; z-index: 3;
     top: clamp(48px, 15vh, 168px);
@@ -712,7 +669,7 @@ export const STUDIO_HERO_CSS = `
 
     :root[data-theme="studio"] .st-band { min-height: clamp(380px, 72vh, 620px); }
     :root[data-theme="studio"] .st-band-callout { display: none; }
-    /* No phone override for .st-band-object any more. It used to need one
+    /* No phone override for the band's object: there is no object. It used to need one
      * because it hung off the band's floor and the floor moved; anchored to the
      * wordmark it tracks the wordmark, which is where it is supposed to be. */
   }
@@ -950,41 +907,35 @@ export function renderStudioHero(ctx: RenderCtx): string {
 }
 
 /**
- * What the wordmark band paints over its own letters.
+ * §4.5 — wordmark band: the shop name set enormous in white, and the model
+ * the page leads with named under it.
  *
- * The occlusion IS the device here — the shop name runs behind the object, so
- * the object has to be worth hiding letters for. It was an empty grey box:
- * .st-photo-mass, 449x320 measured, sitting across the middle of the name and
- * turning "MASAŽNI BAZEN" into "MASAŽ▯EN". A placeholder that covers the one
- * word the page is ranking for is worse than no device at all.
+ * NOTHING IS PAINTED OVER THE NAME ANY MORE, and that is the change worth
+ * explaining. The source's device is an object occluding the wordmark — the
+ * letters pass behind it — and it was transcribed faithfully. It failed here
+ * twice, for two different reasons, and the second one is the instructive
+ * one:
  *
- * The mass was written when the shop owned no photography, and the comment on
- * .st-tst-disc says as much: the frame is composition and is built now, the
- * picture inside it is inventory. The inventory has arrived, so the frame
- * gets a photograph and the empty box goes.
+ *   1. With no photography it painted an empty grey box, 449x320 measured,
+ *      across the middle of the name.
+ *   2. Given a photograph it painted a pale panel across the middle of the
+ *      name, which is worse: MASAŽNI BAZEN rendered as MASAŽ▯EN. That is the
+ *      exact phrase this site ranks for, cut in half, on a dark band whose
+ *      only content is that phrase. And because the picture came from a
+ *      shared pool by hash, it showed a SWIM SPA directly above a chip
+ *      reading VELIKI · BAZEN 230 — a photograph of one product beside
+ *      another product's name, which is the error the category cards were
+ *      already corrected for once.
  *
- * Falls back to the drawing, then to the mass — a shop with neither still
- * renders a valid band rather than a hole.
- */
-function bandObject(ctx: RenderCtx): string {
-  if (OWN_PHOTOS.length > 0) {
-    return decorativeImg(
-      pick(OWN_PHOTOS, ctx.shop.key, 5),
-      "st-band-obj-photo",
-      "(max-width: 860px) 92vw, 40vw",
-    );
-  }
-  const art = productArt(ctx.shop.key);
-  return art
-    ? '<span class="st-photo-art">' + art + "</span>"
-    : '<span class="st-photo-mass"></span>';
-}
-
-/**
- * §4.5 — wordmark band. The shop name is set enormous in white and the
- * product placeholder is painted OVER it; the occlusion is the device, so the
- * name is never dimmed to fake depth. The name is a <p>, not a heading: the
- * hero owns the page's only h1.
+ * The device needs a cutout with its own silhouette on a ground that
+ * contrasts with the band. What this shop owns is white-sweep studio shots,
+ * which arrive as a light rectangle — so on a dark band the object reads as
+ * a panel laid over the word rather than as a product standing in front of
+ * it. Occlusion by a rectangle is not depth; it is a hole.
+ *
+ * So the band is now what it is good at: type. The name is legible end to
+ * end, and the chip, model name and CTA below carry the offer. The name is a
+ * <p>, not a heading — the hero owns the page's only h1.
  */
 export function renderStudioWordmarkBand(ctx: RenderCtx): string {
   const d = ctx.pdp;
@@ -997,9 +948,7 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
     // parse as a child, the parser closes the paragraph and the containing
     // block silently becomes the band again. Empty and aria-hidden, so the
     // paragraph still announces nothing but the shop name.
-    '<p class="st-band-word">' + esc(ctx.shop.name) +
-    '<span class="st-band-object" aria-hidden="true">' + bandObject(ctx) +
-    "</span></p>" +
+    '<p class="st-band-word">' + esc(ctx.shop.name) + "</p>" +
     // NO CALLOUT. It was a dot, a leader line and the shop's first trust
     // claim — "Dostava in zagon po vsej Sloveniji" — pointing at the object.
     // The same device was removed from the hero on the owner's instruction

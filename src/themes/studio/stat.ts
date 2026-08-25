@@ -48,8 +48,16 @@ export function statValue(v: string): string {
     const stem = numeral[1] ?? "";
     const rest = numeral[2] ?? "";
     const target = countable(stem, rest);
+    // The stem pattern eats the space after the number into the stem, and the
+    // count-up wrapper has to hold digits ALONE — a counter that animates
+    // "410 kg" would have to parse the unit back out on every frame. Trimming
+    // it there silently deleted the separator: "410 kg" rendered as "410kg",
+    // which is not a typo the eye forgives on a spec figure. So the space is
+    // cut off the stem and put back OUTSIDE the wrapper, where it belongs.
+    const sep = stem.slice(stem.trimEnd().length);
     head = target
-      ? '<span data-st-count="' + target + '">' + esc(stem.trim()) + "</span>" + esc(rest)
+      ? '<span data-st-count="' + target + '">' + esc(stem.trim()) + "</span>" +
+        esc(sep) + esc(rest)
       : esc(stemSource);
   } else {
     head = esc(stemSource);
