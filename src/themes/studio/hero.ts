@@ -133,6 +133,51 @@ export const STUDIO_HERO_CSS = `
         color-mix(in srgb, var(--ink) 12%, transparent),
         color-mix(in srgb, var(--ink) 12%, transparent)
       );
+    /* The same veil, re-declared with PIXEL FLOORS under the foot band's
+     * stops. The stops above are percentages of the hero, the hero is the
+     * viewport, and the foot's stack is pixel-sized — so on a short viewport
+     * the text climbs, in pixels, into a fade that shrank with the viewport.
+     * Measured on a 844x390 landscape phone: the h1's top line sat 182px up,
+     * which is 47% of that hero, where the band holds ~49% ink — under the
+     * ~58% a white run needs over a worst-case white pixel. Portrait phones
+     * and desktops never hit this; landscape phones and half-height laptop
+     * windows do.
+     *
+     * max() keeps each stop at least far enough up in PIXELS to stay under
+     * the tallest foot stack (pill 30 + h1 at the widest tier 112 + two gaps
+     * + button 46 + bottom padding, ~290px, plus headroom). On any viewport
+     * 615px and taller every max() resolves to the same percentage as the
+     * declaration above, so the composition is untouched where it was
+     * measured; below that the band only ever gets DARKER, never thinner.
+     * Two declarations rather than one because a browser without max() in
+     * gradient stops drops the whole value — this way it drops the floors
+     * and keeps the measured veil, instead of dropping the veil.
+     *
+     * The bar band gets the same treatment for the same reason: the bar is
+     * 56px of fixed chrome, and 9% of a half-height laptop window is 40px,
+     * so the hold ended mid-bar and left the nav's lower pixels on the fade.
+     * 81px is exactly 9% of the 900px viewport the band was sampled on, so
+     * taller windows are untouched and shorter ones keep the sampled floor. */
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--ink) 72%, transparent) 0%,
+        color-mix(in srgb, var(--ink) 46%, transparent) max(9%, 81px),
+        transparent max(22%, 141px)
+      ),
+      linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--ink) 88%, transparent) 0%,
+        color-mix(in srgb, var(--ink) 82%, transparent) max(26%, 160px),
+        color-mix(in srgb, var(--ink) 62%, transparent) max(42%, 230px),
+        color-mix(in srgb, var(--ink) 28%, transparent) max(54%, 285px),
+        transparent max(64%, 330px)
+      ),
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--ink) 12%, transparent),
+        color-mix(in srgb, var(--ink) 12%, transparent)
+      );
   }
 
   /* The wordmark, fit to the container's width.
@@ -163,6 +208,23 @@ export const STUDIO_HERO_CSS = `
     max-inline-size: var(--studio-container);
     block-size: auto;
     display: block;
+    /* The wordmark's height is width-driven (the SVG keeps its aspect) while
+     * the foot block is pixel-sized from the bottom edge, so on a wide-and-
+     * short viewport the two met: at 844x390 the pill printed straight across
+     * the wordmark's letters, and at 1300x450 so did the heading's first
+     * line. This cap spends surplus height on the wordmark and takes scarce
+     * height away from it. 340px is the tallest foot stack plus the mark's
+     * own top offset plus breathing room, so the cap only binds where a
+     * collision was coming — under ~535px of height at full desktop width,
+     * landscape-phone heights below that — and resolves above the natural
+     * height everywhere else, changing nothing. When it does bind, the
+     * viewBox letterboxes inside the full-width viewport and the default
+     * preserveAspectRatio centres the drawing, so the mark renders smaller,
+     * centred, and never under the foot. The 44px floor keeps the device
+     * present rather than letting the subtraction collapse it to a sliver on
+     * the shortest landscapes. */
+    max-block-size: max(44px, calc(100vh - 340px));
+    max-block-size: max(44px, calc(100svh - 340px));
   }
   :root[data-theme="studio"] .st-hero-mark text {
     font-family: var(--f-display);
@@ -248,40 +310,73 @@ export const STUDIO_HERO_CSS = `
     outline-offset: 3px;
   }
 
-  :root[data-theme="studio"] .st-hero-cap {
-    position: absolute; z-index: 4;
-    inset-block-end: clamp(14px, 2vh, 24px);
-    inset-inline-end: var(--studio-gutter);
-    font-family: var(--f-label);
-    font-size: var(--t-label);
-    font-weight: var(--w-label);
-    letter-spacing: var(--ls-label);
-    line-height: var(--lh-label-tight);
-    text-transform: uppercase;
-    color: color-mix(in srgb, var(--on-invert) 72%, transparent);
-  }
+  /* .st-hero-cap is GONE. It dressed the bottom-right "simbolična
+   * fotografija" plate, and that markup left with the borrowed room (see the
+   * note at the end of renderStudioHero: the only photograph left is the
+   * shop's own, which is not symbolic of anything). The rule outlived its
+   * element and matched nothing on any page. scripts/verify-hero-contrast.mjs
+   * dropped its matching entry in the same change. */
 
   /* Below 900px the wordmark rides higher so the foot block keeps its own
-   * air. */
+   * air. This block used to re-assert the h1's size, tracking and leading
+   * here too — but it re-read the very same --t-h3/--ls-h3/--lh-h3 the base
+   * rule already reads, and those tokens switch per breakpoint tier on their
+   * own, so the override resolved to identical values at every width it
+   * covered. Removed as dead weight; the ramp tokens are the mechanism. */
   @media (max-width: 900px) {
     :root[data-theme="studio"] .st-hero-mark { inset-block-start: clamp(92px, 15vh, 150px); }
-    :root[data-theme="studio"] .st-hero-foot h1 { font-size: var(--t-h3); letter-spacing: var(--ls-h3); line-height: var(--lh-h3); }
+    /* Below 900px the bar doubles to two 44px rows (chrome.ts shares this
+     * exact tier), so the fixed chrome is 96px deep while 9% of a phone
+     * viewport is 55–76px — the band's hold ended mid-bar and the second
+     * row's links sat on the fade: measured at 375x667, ~35% ink under the
+     * glyph line, which a moderately bright photo top turns into ~2.9:1.
+     * The hold stretches to cover both rows with the same floor the desktop
+     * bar line gets; the fade floor moves with it so the ramp keeps its
+     * shape. On a 390x844 phone the fade still ends at 22% (185.7px against
+     * the 178px floor) — the cost is a visibly deeper cap only on shorter
+     * phones, which is the same trade the foot band already makes: the
+     * legibility is ours even where the photograph pays for it. The whole
+     * value is restated because gradients live in one background property —
+     * the foot bands and the wash are byte-identical to the base ones (and
+     * must stay that way; the base declaration is the reference). */
+    :root[data-theme="studio"] .st-hero-veil {
+      background:
+        linear-gradient(
+          180deg,
+          color-mix(in srgb, var(--ink) 72%, transparent) 0%,
+          color-mix(in srgb, var(--ink) 46%, transparent) max(9%, 132px),
+          transparent max(22%, 178px)
+        ),
+        linear-gradient(
+          0deg,
+          color-mix(in srgb, var(--ink) 88%, transparent) 0%,
+          color-mix(in srgb, var(--ink) 82%, transparent) max(26%, 160px),
+          color-mix(in srgb, var(--ink) 62%, transparent) max(42%, 230px),
+          color-mix(in srgb, var(--ink) 28%, transparent) max(54%, 285px),
+          transparent max(64%, 330px)
+        ),
+        linear-gradient(
+          180deg,
+          color-mix(in srgb, var(--ink) 12%, transparent),
+          color-mix(in srgb, var(--ink) 12%, transparent)
+        );
+    }
   }
   @media (prefers-reduced-motion: reduce) {
     :root[data-theme="studio"] .st-hero-cta { transition: none; }
   }
 
-  /* ---- The only values this module declares ----------------------------
+  /* ---- The only value this module declares -----------------------------
    * tokens.ts is the single declaration site: --studio-gutter, --tile-mid,
    * --bg-alt and --on-invert-mute live there and are consumed here as
    * var(--…) with no fallback — a fallback would silently resurrect the
-   * duplicate this file used to carry. What remains below is the one measure
-   * tokens.ts does not carry: the hero stack's two internal rhythms. */
+   * duplicate this file used to carry.
+   *
+   * --studio-gap-stack and --studio-gap-cta used to live here too — the
+   * §4.2 triptych's 48:56 internal rhythm. The triptych left this slot when
+   * the full-bleed hero landed and nothing consumes either variable any
+   * more (the hero foot carries its own gap); both removed as dead. */
   :root[data-theme="studio"] {
-    /* §4.2: pill→statement 48px, sub→button 56px. Kept as variables so the
-     * 48:56 ratio is edited in one place and never drifts. */
-    --studio-gap-stack: clamp(20px, 2.4vw, 48px);
-    --studio-gap-cta: clamp(24px, 2.8vw, 56px);
     /* The drawn placeholder inks itself in this, so one set of markup works on
      * a light or a dark ground. The default is the light case — the hero's
      * left panel and the §4.5 band object both stand on --bg-alt. */

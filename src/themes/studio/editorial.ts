@@ -84,9 +84,11 @@ export const STUDIO_EDITORIAL_CSS = `
    * token block — which is a bug to fix at the seam, not to paper over. */
   :root[data-theme="studio"] {
     /* §4.9 measured 14px tile radius / §4.11 measured 16px card radius. Both
-     * sit above --r-media (12px) and below --r-card (24px), so neither is a
-     * token rung; clamped so a 390px card is not proportionally rounder than
-     * the 2000px original. */
+     * sit between --r-media/--r-card (8px) and --r-lg (40px) with no token
+     * rung near them, so each stays a measured local token; clamped so a
+     * 390px card is not proportionally rounder than the 2000px original.
+     * (An earlier revision of this note cited 12px/24px rungs tokens.ts no
+     * longer carries.) */
     --studio-tile-r: clamp(10px, 0.7vw, 14px);
     --studio-guide-r: clamp(10px, 0.8vw, 16px);
 
@@ -137,9 +139,17 @@ export const STUDIO_EDITORIAL_CSS = `
   /* The standfirst under the head — the lead rung (20/16/18, Satoshi 500,
    * tracking --ls-body, leading --lh-lead). The tier floor is the ramp's own
    * phone value, which is what keeps this line off caption sizes; --ink-mute is
-   * tokens.ts's muted rung for TEXT rather than the decorative alpha. */
+   * tokens.ts's muted rung for TEXT rather than the decorative alpha.
+   *
+   * The line is three separate trust claims, so a break INSIDE a claim is a
+   * typesetting error the reader has to repair — the 34vw measure this had
+   * split "Ogled lokacije pred dostavo" across both lines at 1440. Each
+   * claim is now an unbreakable-while-it-fits chip (.st-imp-claim), balance
+   * picks the evenest of the splits that remain legal, and 46vw is sized so
+   * the widest two-line split of today's copy fits at every three-column
+   * tier. */
   :root[data-theme="studio"] .st-imp-sub {
-    max-width: min(100%, max(20rem, 34vw));
+    max-width: min(100%, max(20rem, 46vw));
     margin: clamp(12px, 1.2vw, 24px) auto 0;
     font-family: var(--f-body);
     font-size: var(--t-lead);
@@ -147,8 +157,15 @@ export const STUDIO_EDITORIAL_CSS = `
     letter-spacing: var(--ls-body);
     line-height: var(--lh-lead);
     color: var(--ink-mute);
-    text-wrap: pretty;
+    text-wrap: balance;
   }
+  /* One claim, one line: breaks belong at the separators only. inline-block,
+   * NOT white-space: nowrap — a chip that fits its line wraps as one unit
+   * either way, but when a claim alone is wider than a very narrow viewport
+   * an inline-block wraps INTERNALLY where nowrap would clip past the tile
+   * column. The joining dot is tied to the claim before it with a no-break
+   * space in the markup, so a wrapped line never opens with a stray dot. */
+  :root[data-theme="studio"] .st-imp-claim { display: inline-block; }
 
   /* The measured asymmetry. The centre column is 1.22fr against 1fr siblings
    * AND taller (4/5 against 1/1), so with align-items:center it bleeds past
@@ -168,7 +185,16 @@ export const STUDIO_EDITORIAL_CSS = `
     border-radius: var(--studio-tile-r);
     background: var(--bg-alt);
   }
-  :root[data-theme="studio"] .st-imp-quiet { background: var(--bg-alt); }
+  /* Was a duplicate background (var(--bg-alt) — .st-imp-tile already paints
+   * exactly that); the dead declaration is removed and the selector now does
+   * real work: two grid rows, picture then label, so the two can NEVER
+   * collide — the row boundary is the fix for the overlap measured at 1000px
+   * (see .st-imp-quiet .st-imp-photo). minmax(0, 1fr) so a long label shrinks
+   * the picture row rather than overflowing the tile. */
+  :root[data-theme="studio"] .st-imp-quiet {
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
   :root[data-theme="studio"] .st-imp-hero {
     aspect-ratio: 4 / 5;
     background: var(--tile-mid);
@@ -231,46 +257,64 @@ export const STUDIO_EDITORIAL_CSS = `
     inline-size: 100%;
     block-size: 100%;
     object-fit: cover;
+    /* The bucket is studio cutouts on a white sweep, and the side tiles sit
+     * on --bg-alt: unblended, each reads as a white card floating on grey
+     * (shot at 1440 — the quiet tile's picture was a visible white rectangle
+     * with edges of its own). Multiply seats the sweep INTO the ground
+     * (white times ground = ground) at a cost of ~6% on the picture's own
+     * tones; .st-imp-tile's isolation:isolate keeps the blend inside the
+     * tile, and the stat scrim above can only get MORE opaque under it. */
+    mix-blend-mode: multiply;
   }
-  /* The LABELLED tile is the exception, and it has to be.
+  /* The hero is the one PURE photograph — full-bleed over --tile-mid, a mid
+   * grey that multiply would smear across every highlight. It keeps its true
+   * tones; its cover crop shows no floating edge to seat anyway. */
+  :root[data-theme="studio"] .st-imp-hero .st-imp-photo {
+    mix-blend-mode: normal;
+  }
+  /* The LABELLED tile is the exception, and it has to be: full-bleed cover
+   * here would print "Ogled lokacije" straight across the middle of a hot
+   * tub, and the shop's photography is studio cutouts on white — cover would
+   * crop a centred product against its own empty background. So: contain,
+   * IN FLOW, sized by the tile's grid rows (see .st-imp-quiet).
    *
-   * .st-imp-label is pinned to the tile's bottom edge, and this photo fills
-   * the tile — so a full-bleed picture here prints "Ogled lokacije" straight
-   * across the middle of a hot tub. The grey mass this replaced never
-   * collided with it because it stopped 22% short of the bottom; the photo
-   * takes exactly that box back.
+   * In flow is the load-bearing part, and this is the third mechanism this
+   * frame has needed. Absolute inset with auto sizes let the REPLACED
+   * element take its INTRINSIC size — measured 541px past a 407px tile,
+   * because insets do not shrink a replaced element and the over-constrained
+   * axis drops right/bottom. The padding rewrite that fixed the overflow
+   * reserved the label's ground as a flat 30% — which the label's REAL
+   * height crossed at intermediate widths (measured at 1000px: label top
+   * 22.8px above the picture's bottom edge, the h3 over the photograph,
+   * because label text keeps its size while the tile shrinks). A grid row
+   * cannot be crossed: the picture gets exactly the space the label leaves,
+   * at every width and every wrap count, and an unloaded image changes
+   * nothing because fr/auto rows never consult it — CLS stays zero.
    *
-   * object-fit is contain rather than cover, because the shop's photography
-   * is studio cutouts on white: cover would crop a centred product against
-   * its own empty background and cut the tub in half to do it. */
-  /* The quiet tile insets its picture so the label below has clean ground.
-   *
-   * The insets used to be the whole rule, with auto sizes. That does not do
-   * what it reads as. An absolutely positioned REPLACED element with
-   * inline-size:auto takes its INTRINSIC width — the insets do not shrink it,
-   * and the over-constrained equation is resolved by dropping right/bottom.
-   * Measured, a 900x900 photograph painted at 900x900 inside a 407x407 tile:
-   * 541px past the right edge and 533px past the bottom, straight over the
-   * caption. It only looked fine while the images were lazy and offscreen,
-   * because an unloaded image has no intrinsic size and measures 0x0.
-   *
-   * So the inset becomes PADDING on a full-bleed image. box-sizing is
-   * border-box globally, and object-fit lays the pixels out inside the
-   * content box, so the picture fits the inset frame with one set of numbers
-   * and no way to overflow it. */
+   * The percentages are breathing room only now — none of them reserves
+   * label space any more. Resolved against the tile's WIDTH (grid area),
+   * like all percentage padding; base inline/block-size 100% carry over and
+   * resolve against the picture row. */
   :root[data-theme="studio"] .st-imp-quiet .st-imp-photo {
-    inset: 0;
-    padding: 10% 12% 30%;
-    inline-size: 100%;
-    block-size: 100%;
+    position: static;
+    grid-row: 1;
+    padding: 7% 12% 4%;
     object-fit: contain;
   }
 
-  /* Label bottom-LEFT on the quiet tile (§4.9). */
+  /* Label bottom-LEFT on the quiet tile (§4.9) — the second grid row rather
+   * than an absolute pin, so its real height is what sizes the picture row
+   * above it. The old inset becomes padding: the same 16-36px frame, the
+   * same rendered metrics. grid-row: 2 is explicit because the fallback tile
+   * (grey mass, no photo) has no in-flow first child — auto-placement would
+   * put the label in the 1fr row and float it to the TOP of the tile.
+   * position: relative only so z-index still lifts it over that absolutely
+   * positioned mass. */
   :root[data-theme="studio"] .st-imp-label {
-    position: absolute;
+    position: relative;
     z-index: 2;
-    inset: auto clamp(16px, 1.8vw, 36px) clamp(16px, 1.8vw, 36px) clamp(16px, 1.8vw, 36px);
+    grid-row: 2;
+    padding: 0 clamp(16px, 1.8vw, 36px) clamp(16px, 1.8vw, 36px);
   }
   /* The tile's title — a card title on a large card, so the h5 rung
    * (32/26/24), which is exactly the 32px the baseline measured here. Tracking
@@ -312,9 +356,15 @@ export const STUDIO_EDITORIAL_CSS = `
    *
    * The previous stops (92% / 60% at 44% / 0) resolved to ~0.50 where the
    * value's cap-height begins — it read fine over the drawn placeholder and
-   * would have failed the day the photo landed. These stops hold ≥0.73 across
-   * the whole text block at every tier and still spend their top quarter
-   * fading out, so the tile still reads as a photograph rather than a plate. */
+   * would have failed the day the photo landed. The 86%-at-44% revision that
+   * replaced them held ≥0.73 at the desktop text block but decayed to 0.63
+   * by the value's ascender line at 390px, where the panel is shorter and
+   * the text sits proportionally higher in the ramp: 5.4:1 composite over
+   * white — passing, but a third thinner than the floor the desktop tier
+   * was tuned to. Holding 86% down to the 50% line and starting the fade at
+   * 80% keeps every tier's text block at or above 0.71 alpha (7:1 over
+   * white, measured at the 390px ascender line) and still leaves the top
+   * fifth to fade, so the tile reads as a photograph rather than a plate. */
   :root[data-theme="studio"] .st-imp-stat {
     position: absolute;
     z-index: 2;
@@ -323,8 +373,8 @@ export const STUDIO_EDITORIAL_CSS = `
     background: linear-gradient(
       to top,
       color-mix(in srgb, var(--ink-invert) 96%, transparent) 0%,
-      color-mix(in srgb, var(--ink-invert) 86%, transparent) 44%,
-      color-mix(in srgb, var(--ink-invert) 46%, transparent) 74%,
+      color-mix(in srgb, var(--ink-invert) 86%, transparent) 50%,
+      color-mix(in srgb, var(--ink-invert) 46%, transparent) 80%,
       transparent 100%
     );
   }
@@ -923,7 +973,18 @@ export const STUDIO_EDITORIAL_CSS = `
     /* Stacked, the hero tile no longer has neighbours to out-scale, and a 4/5
      * box on a phone is a wall — bring it back to the row's square. */
     :root[data-theme="studio"] .st-imp-hero { aspect-ratio: 1 / 1; }
+    /* The wall the square leaves behind: between ~545 and 860px the stacked
+     * tiles are full-width squares — measured 810px EACH at 860px, 2430px of
+     * tiles under one heading. 520px caps a tile at roughly a landscape
+     * phone screen; below ~545px viewport the square is already smaller and
+     * the cap never engages, so a 390px phone keeps its true 1/1. The quiet
+     * tile's grid rows and the stat scrim are tile-relative and follow the
+     * capped box. */
+    :root[data-theme="studio"] .st-imp-tile { max-height: 520px; }
     :root[data-theme="studio"] .st-imp-sub { max-width: 100%; }
+    /* No .st-imp-claim reset here: the chips are inline-block, so a claim
+     * wider than a very narrow viewport wraps internally on its own, and a
+     * 390px phone gets one whole claim per centred line. */
     /* Portrait above the quote: a 120px square beside the lead-xl quote leaves
      * it about eleven characters per line at 390px. */
     :root[data-theme="studio"] .st-tst-fig {
@@ -1016,8 +1077,23 @@ export function renderStudioImpact(ctx: RenderCtx): string {
   const label = steps[0];
   const stat = ctx.content.stats[0];
   // Three short proof points read as one muted line under the head; more than
-  // three and the 21px sub starts competing with the tiles.
-  const sub = ctx.content.trust.slice(0, 3).join(" · ");
+  // three and the 21px sub starts competing with the tiles. Each claim is its
+  // own inline-block chip so the line breaks only at the gaps BETWEEN chips
+  // (CSS: .st-imp-claim), and the separator dot lives INSIDE the chip before
+  // it — an atomic inline's edges are wrap opportunities in their own right,
+  // so a dot placed between chips can open a wrapped line no matter what
+  // no-break space sits beside it (measured doing exactly that at 1000px).
+  // Claims are escaped individually; the joined string is emitted as markup.
+  const claims = ctx.content.trust.slice(0, 3);
+  const sub = claims
+    .map(
+      (t, i) =>
+        '<span class="st-imp-claim">' +
+        esc(t) +
+        (i < claims.length - 1 ? " ·" : "") +
+        "</span>",
+    )
+    .join(" ");
 
   const quiet =
     '<div class="st-imp-tile st-imp-quiet">' +
@@ -1030,16 +1106,33 @@ export function renderStudioImpact(ctx: RenderCtx): string {
 
   // The hero tile carries no label by design — the crop is the content, so it
   // is the one tile that genuinely needs a picture rather than tolerating one.
+  //
+  // Offset 31, not 2: the head above this row names the hot tub ("Zakaj kupci
+  // izberejo masažni bazen") and offset 2 resolved, for the bazen key, to a
+  // SWIM SPA — the other product family — in landscape, so the 4/5 portrait
+  // cover also threw away 45% of its width. 31 lands on the flagship tub's
+  // lit-cladding side view: the named product, square, with tone of its own.
+  // Collision check against every pick(OWN_PHOTOS) offset on the page — 5
+  // (hero band), 13 (quiet tile), 17+i (testimonial discs), 22 (stat tile,
+  // below), 23/25 (statement), 25-30 (social strip) — all distinct from 31,
+  // so no photograph repeats because of it.
   const hero =
     '<div class="st-imp-tile st-imp-hero">' +
-    tileShot(ctx, 2, "st-imp-photo", "(max-width: 860px) 92vw, 38vw") +
+    tileShot(ctx, 31, "st-imp-photo", "(max-width: 860px) 92vw, 38vw") +
     "</div>";
 
   // §4.9's third tile carried a borrowed room interior with the stat over it.
-  // It now carries one of the shop's own photographs, or none — offset 9 so
-  // it does not collide with the six the social strip takes. The stat still
+  // It now carries one of the shop's own photographs, or none. The stat still
   // reads either way: it sits on its own panel, not on the picture.
-  const roomPhoto = OWN_PHOTOS.length > 0 ? pick(OWN_PHOTOS, ctx.shop.key, 9) : undefined;
+  //
+  // Offset 22, not 9: the stat is the HOT TUB ladder ("3 modeli / od 195 do
+  // 230 cm") and offset 9 resolved to a swim spa. 22 lands on the flagship
+  // tub's top-down shell view — the one angle that shows what the number
+  // counts; its white sweep is exactly what the scrim below was computed
+  // against, and the multiply ground seats it. Distinct from every other
+  // pick offset on the page (5, 13, 17+i, 23, 25-30, 31 — the full list sits
+  // at the hero tile above).
+  const roomPhoto = OWN_PHOTOS.length > 0 ? pick(OWN_PHOTOS, ctx.shop.key, 22) : undefined;
   const room =
     '<div class="st-imp-tile">' +
     (roomPhoto
@@ -1056,7 +1149,7 @@ export function renderStudioImpact(ctx: RenderCtx): string {
     '<section class="st-imp"><div class="st-imp-in">' +
     '<div class="st-imp-head">' +
     '<h2 class="st-imp-h">Zakaj kupci izberejo ' + esc(ctx.shop.keyword.accusative) + "</h2>" +
-    (sub ? '<p class="st-imp-sub">' + esc(sub) + "</p>" : "") +
+    (sub ? '<p class="st-imp-sub">' + sub + "</p>" : "") +
     "</div>" +
     '<div class="st-imp-row">' + quiet + hero + room + "</div>" +
     "</div></section>"

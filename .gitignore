@@ -2,3 +2,6 @@ node_modules/
 dist/
 .env
 .wrangler/
+
+# Transient per-agent measurement harnesses; owners delete them on completion.
+scripts/.tmp-*.mjs

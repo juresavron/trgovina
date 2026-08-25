@@ -84,9 +84,10 @@ export const STUDIO_CHROME_CSS = `
    * declared once. */
   :root[data-theme="studio"] { --st-tap: 44px; }
 
-  /* Visually hidden until focused — used by the skip link and the newsletter
-   * field's label. clip-path over the old clip-rect hack: it survives
-   * transforms and does not leave a 1px scroll artefact. */
+  /* Visually hidden, permanently — the newsletter field's label wears it.
+   * (The skip link is NOT this: it hides by off-screen position so it can
+   * come back on focus — see .st-skip.) clip-path over the old clip-rect
+   * hack: it survives transforms and does not leave a 1px scroll artefact. */
   :root[data-theme="studio"] .st-vh {
     position: absolute; width: 1px; height: 1px; overflow: hidden;
     clip-path: inset(50%); white-space: nowrap;
@@ -135,11 +136,46 @@ export const STUDIO_CHROME_CSS = `
    * breakpoint. */
   :root[data-theme="studio"] main { padding-top: var(--chrome-h); }
   :root[data-theme="studio"] main[data-bleed] { padding-top: 0; }
-  :root[data-theme="studio"]:has(main[data-bleed]) .st-chrome { background: transparent; }
-  /* The QA switcher takes the top strip (see css.ts) and everything moves
-   * down by its height. These carry the studio prefix on purpose: the rules
-   * they override are studio's own and set the same properties, so an
-   * unprefixed version loses on source order and does nothing. */
+  /* THE SCROLLED STATE. The bar is fixed, so it outlives the hero: 600px down
+   * the home page a bare transparent bar floats over whatever band is there —
+   * first the dark intro, where its type lands ON the section's own type, and
+   * then the white panels, where white nav on a white ground is 1:1 and the
+   * wordmark is the half-vanished logo of the owner's screenshot.
+   *
+   * So transparency is EARNED, not granted: only a browser that can hand the
+   * ground back on scroll gets a transparent bar at all. The hand-back is a
+   * scroll-driven animation — no script, so it holds with JS off — and it
+   * animates background-color ONLY, so the bar never changes height and can
+   * shift nothing (CLS 0). Where animation-timeline is unsupported the bar
+   * keeps its solid ground over the hero too: plainer, never broken — the
+   * same trade the :has() note above already makes for that selector.
+   *
+   * 120px, a bare number for the same reason the -10px pulls are: mechanics,
+   * not a design value. The constraint it satisfies: the fade must COMPLETE
+   * while the bar is still inside the hero scrim's own guaranteed-dark band —
+   * hero.ts's top gradient runs out at 22% of a full-viewport hero, ~200px —
+   * because mid-fade the contrast floor is carried by veil and scrim
+   * TOGETHER. Fully solid by 120px of scroll, the bar (56px tall) never shows
+   * a half-veil over anything past ~176px of photograph, so the nav's
+   * measured ≥4.5:1 cannot dip even over a pale frame. Linear, because
+   * progress IS scroll position: nothing moves that the reader did not move,
+   * which is why this animation is exempt from the prefers-reduced-motion
+   * strip at the end of the sheet — freezing it would re-open the
+   * white-on-white failure it exists to close. */
+  @supports (animation-timeline: scroll()) {
+    :root[data-theme="studio"]:has(main[data-bleed]) .st-chrome {
+      animation: st-chrome-ground linear both;
+      animation-timeline: scroll();
+      animation-range: 0 120px;
+    }
+    @keyframes st-chrome-ground {
+      from { background-color: transparent; }
+      to { background-color: var(--ink-invert); }
+    }
+  }
+  /* (A comment about the QA switcher's top-strip offsets stood here; the
+   * switcher itself is gone — see "NO OVERRIDES, AND NO SWITCHER" in
+   * worker.ts — and the offset rules it described were removed with it.) */
 
   :root[data-theme="studio"] .st-chrome-bar {
     /* --studio-container is the CONTENT measure and box-sizing is border-box,
@@ -357,6 +393,14 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-chrome-nav a:focus-visible > span::after {
     transform: scaleX(1);
   }
+  /* WHERE YOU ARE: the page's own nav item rests with its underline already
+   * full — the same device the hover grows, not a second vocabulary. The
+   * attribute is set by behaviour.ts, the one place that knows the URL (the
+   * renderer builds ONE nav string for every page, so it cannot); no script,
+   * no marker, which loses an enhancement, never a destination. */
+  :root[data-theme="studio"] .st-chrome-nav a[aria-current="page"] > span::after {
+    transform: scaleX(1);
+  }
 
   :root[data-theme="studio"] .st-chrome-actions {
     justify-self: end;
@@ -428,6 +472,16 @@ export const STUDIO_CHROME_CSS = `
     line-height: var(--lh-label-tight);
     font-variant-numeric: tabular-nums;
   }
+  /* An empty basket wore its badge anyway, so every page opened with a white
+   * "0" riding the basket disc — the only numeral on the whole bar, reading
+   * as a stray notification that never clears (it is the "superscript 0" of
+   * the owner's screenshot). The honest zero STAYS in the DOM and in the
+   * link's accessible name — "Košarica — 0 izdelkov" — where a count is
+   * information; the disc alone waits until there is something to count.
+   * data-st-cart-count is already the machine-readable count (the numeral and
+   * the attribute are one value the integrator moves together), so the badge
+   * shows itself the moment the count leaves zero, with no extra hook. */
+  :root[data-theme="studio"] .st-chrome-badge[data-st-cart-count="0"] { display: none; }
 
   /* The phone number. OURS, not the source's, and it lives only on the two-row
    * phone bar: at ≥1200 the wordmark, a five-item menu and the icon cluster
@@ -957,8 +1011,12 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     ["/contact", c.nav[4]],
   ] as const;
 
-  // No cart session exists at SSR time, so the badge states the honest 0 and
-  // says so in the label. The integrator swaps the numeral, not the markup.
+  // No cart session exists at SSR time, so the count is the honest 0 and the
+  // link's label says so. The integrator swaps the NUMERAL — both places it
+  // appears, the attribute and the text, which are one value — never the
+  // markup. The attribute is also the badge's visibility switch: at "0" the
+  // stylesheet keeps the disc off the bar (see .st-chrome-badge), so an empty
+  // basket does not wear a permanent zero.
   const cartCount = 0;
 
   return (

@@ -37,11 +37,15 @@
  * is set open and light (500 at 92px), which is the single thing the measured
  * pass had backwards.
  *
- * NO INTERACTIVITY. This Worker ships no JS (docs/SEO.md §4, baseline §5.2),
- * so the configurator renders the selected option as state — a `data-on`
- * attribute the CSS styles as chosen — and never emits a radio, checkbox or
- * <select> that could not change anything. The one live control on the page
- * is the buy bar's CTA, which is a real link.
+ * INTERACTIVITY ONLY THROUGH THE data-st-* CONTRACT. This module writes no
+ * JavaScript; where a device is interactive (the photo gallery, the add-on
+ * total) it emits behaviour.ts's markup contract and that one shared script
+ * upgrades it. Everything still works if the script never runs: the gallery
+ * is a real scroll container whose thumbs are real anchors, and the add-on
+ * prices are all server-rendered. The CONFIGURATOR stays static on purpose —
+ * it renders the selected option as state (a `data-on` attribute the CSS
+ * styles as chosen) and never emits a radio, checkbox or <select> that could
+ * not change anything, because no script here can change the configuration.
  *
  * Token discipline (docs/THEMES.md): colors, radii, faces, gutters, rhythm and
  * chrome height are var(--…) from tokens.ts — this module re-declares none of
@@ -66,12 +70,12 @@ export const STUDIO_PDP_CSS = `
     /* Gallery → buy column gap. Sized off §4.7's 48px card padding plus the
      * card gap: the two columns must read as two panels, not one spread. */
     --studio-pdp-col-gap: clamp(26px, 3.4vw, 68px);
-    /* The gallery frame's ratio. §4.7's product panel is portrait 3/4, but
-     * that panel is ~474px wide; the PDP frame is ~1000px wide at 2000px, and
-     * 3/4 there is 1330px tall — past the fold before the price is reached.
-     * §4.4's landscape 4/3 panel is the baseline's other measured product
-     * ground, and it is the one that survives at this width. */
-    --studio-pdp-frame-ar: 4 / 3;
+    /* Thumbnail square in the gallery's strip. 60px is costed twice: it is
+     * over WCAG 2.5.8's 44px floor with room for the hairline, and TEN of
+     * them (the largest set any model ships) fit one row in the desktop
+     * gallery column (~693px at 1440: 10 × 60 + 9 × 10 gap = 690). The 56px
+     * floor keeps five per row inside 390's 340px content box. */
+    --studio-pdp-thumb: clamp(56px, 4.2vw, 60px);
     /* §4.13: the sidebar's square 22px checkbox. */
     --studio-pdp-box: clamp(16px, 1.1vw, 22px);
     /* The buy bar sits at the bottom of the viewport for the whole page, so an
@@ -114,29 +118,19 @@ export const STUDIO_PDP_CSS = `
 
   /* The gallery sticks while the buy column scrolls past it.
    *
-   * The buy column is now much the taller of the two — nine models' worth of
-   * configurator, fourteen priced add-ons, a total and the delivery box —
-   * so the gallery ran out around a fifth of the way down and left roughly
-   * 1300px of empty page beside the decision the visitor is actually making.
-   * Sticky keeps the product in view for that whole scroll, which is the one
-   * thing a product page owes the person reading it.
+   * The buy column is by far the taller of the two — the configurator,
+   * fourteen priced add-ons, a total and the delivery box — and the gallery
+   * is now one stage plus a thumb row (~770px at 1440), so it pins whole and
+   * keeps the product beside the decision for the entire scroll. This
+   * replaces the earlier two-branch rule (sticky gallery WITHOUT photos,
+   * sticky buy column WITH them): the with-photos branch pinned the taller
+   * column, and a sticky element taller than its sibling has no room to
+   * travel — it was a no-op, measured against the live page.
    *
    * Only while the grid HAS two columns: stacked, this would pin the picture
    * over the copy. The offset clears the fixed chrome band. */
   @media (min-width: 1001px) {
-    /* Sticky only while the gallery is the SHORT column. With the drawing
-     * fallback it is three frames against a buy column several times its
-     * height, and pinning it keeps the product in view for that whole scroll.
-     * With real photography it is ten frames and by far the taller of the two
-     * — sticky then pins a column that is already longer than the viewport,
-     * which does nothing except stop the page scrolling as expected. */
-    :root[data-theme="studio"] .st-pdp-gallery:not([data-photos]) {
-      position: sticky;
-      top: calc(var(--chrome-h) + clamp(16px, 1.6vw, 32px));
-    }
-    /* When the gallery is the long column, the buy column is the one worth
-     * keeping in view — it holds the price and the cart. */
-    :root[data-theme="studio"] .st-pdp-gallery[data-photos] + .st-pdp-buy {
+    :root[data-theme="studio"] .st-pdp-gallery {
       position: sticky;
       top: calc(var(--chrome-h) + clamp(16px, 1.6vw, 32px));
     }
@@ -146,16 +140,21 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-frame {
     position: relative;
     margin: 0;
-    aspect-ratio: var(--studio-pdp-frame-ar);
+    /* Square, not the 4/3 the first pass carried (--studio-pdp-frame-ar is
+     * retired — every frame this class paints lives in the gallery, where the
+     * 1/1 override always won): a product cut out on a plain ground sits in a
+     * square without a wasted band above and below it. */
+    aspect-ratio: 1 / 1;
     background: var(--bg-alt);
     border-radius: var(--r-media);
     overflow: hidden;
     isolation: isolate;
   }
-  /* Legibility scrim under the caption. Invisible against the flat
-   * placeholder, and already in place for the day a photograph fills the
-   * frame — the photo drops in with zero restructuring. */
-  :root[data-theme="studio"] .st-pdp-frame::after {
+  /* Legibility scrim under the caption — so ONLY where a caption exists (the
+   * drawing fallback). It used to sit on every frame, which put a white haze
+   * across the top-left corner of real photographs for a caption they do not
+   * carry. */
+  :root[data-theme="studio"] .st-pdp-frame:has(.st-pdp-cap)::after {
     content: "";
     position: absolute; inset: 0 auto auto 0; z-index: 2;
     width: 66%; height: 40%;
@@ -232,21 +231,53 @@ export const STUDIO_PDP_CSS = `
     text-transform: uppercase;
     color: var(--ink-body);
   }
-  /* The detail strip: three smaller frames, same ground, same ratio. Fixed
-   * fractions — never a scroller, so it cannot widen the page. */
+  /* The thumb strip: one link per photograph, under the stage. (The earlier
+   * three-frame "detail strip" rules that lived here were dead — the strip
+   * was never emitted; these are written for the strip the gallery actually
+   * renders.) WRAPS rather than scrolls: a nested scroller hides pictures,
+   * and every model's whole set (6–10) fits in one or two rows at every
+   * width, so nothing needs hiding. Flex, not a grid — a grid's last row
+   * would stretch its leftovers into differently-sized cells. */
   :root[data-theme="studio"] .st-pdp-thumbs {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: clamp(8px, 1vw, 20px);
-    margin-top: clamp(8px, 1vw, 20px);
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(8px, 0.8vw, 10px);
   }
+  /* A thumb is a CONTROL that happens to hold a picture, so it takes the
+   * control radius (--r-ctrl, §9's sharp rung) rather than the media one,
+   * and its boundary escalates like every control here: hairline at rest,
+   * ink on hover, ink DOUBLED (border + inset ring, --bw-ctrl's 2px total)
+   * when it is the photograph on show. The inset ring instead of a wider
+   * border: a border width change would shift the picture a pixel. */
   :root[data-theme="studio"] .st-pdp-thumb {
     position: relative;
     display: block;
-    aspect-ratio: var(--studio-pdp-frame-ar);
-    background: var(--bg-alt);
-    border-radius: var(--r-media);
+    inline-size: var(--studio-pdp-thumb);
+    aspect-ratio: 1 / 1;
+    border: 1px solid var(--line);
+    border-radius: var(--r-ctrl);
+    background: var(--surface);
     overflow: hidden;
+    transition: border-color 0.2s ease;
+  }
+  :root[data-theme="studio"] .st-pdp-thumb:hover { border-color: var(--line-strong); }
+  :root[data-theme="studio"] .st-pdp-thumb[aria-current] {
+    border-color: var(--line-strong);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+  }
+  :root[data-theme="studio"] .st-pdp-thumb:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 2px;
+  }
+  /* Static flow, 100% both ways — the frame reserves the box via its own
+   * aspect-ratio, exactly as the stage's frames do. contain, same argument
+   * as the big picture: cropping a cutout to fill 60px is how it stops
+   * reading as the product. */
+  :root[data-theme="studio"] .st-pdp-thumb img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
   }
 
   /* ---- buy column ------------------------------------------------------ */
@@ -468,23 +499,56 @@ export const STUDIO_PDP_CSS = `
     border-radius: var(--r-ctrl);
   }
 
-  /* ---- the gallery is a STACK ----------------------------------------- */
+  /* ---- the gallery: ONE stage, a strip of thumb links ------------------
+   *
+   * §4.7's anatomy — one large frame plus a strip of smaller frames beneath
+   * it — replacing the stack of every photograph at full size. The stack put
+   * ten square frames (≈3,500px at 390) between the visitor and the price on
+   * a phone, which is the wrong first answer for a decision page. The stage
+   * is a real scroll-snap container upgraded by behaviour.ts's slider
+   * contract (data-st-slider / -scroll / -item / -thumb); with no script it
+   * still swipes, and every thumb is an anchor to a slide that exists. */
   :root[data-theme="studio"] .st-pdp-gallery {
     display: flex;
     flex-direction: column;
-    gap: clamp(12px, 1.2vw, 24px);
+    gap: clamp(10px, 1vw, 16px);
   }
-  /* Square, like the source's, rather than the 4/3 a single frame wanted:
-   * stacked frames read as one column of equal tiles, and a square is the
-   * shape a product cut out on a plain ground sits in without a wasted band
-   * above and below it. */
+  :root[data-theme="studio"] .st-pdp-stage {
+    display: flex;
+    gap: var(--gap-sm);
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    /* The no-script path: a thumb is an anchor, and this is what keeps its
+     * jump from teleporting. behaviour.ts's own scrolls pick smooth/auto per
+     * the motion preference; the reduce block below aligns this one. */
+    scroll-behavior: smooth;
+    /* The thumb strip IS the pagination; a scrollbar under a photograph
+     * reads as a defect. Keyboard users get the same reach through the
+     * focusable stage (arrow keys) and the thumb links. */
+    scrollbar-width: none;
+  }
+  :root[data-theme="studio"] .st-pdp-stage::-webkit-scrollbar { display: none; }
+  /* The stage is a tabindex="0" region (its slides are content, not
+   * controls), so it must show a ring like every focusable thing here. */
+  :root[data-theme="studio"] .st-pdp-stage:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+    border-radius: var(--r-media);
+  }
+  :root[data-theme="studio"] .st-pdp-stage .st-pdp-frame {
+    flex: 0 0 100%;
+    scroll-snap-align: start;
+  }
+  /* The drawing fallback keeps the old stack (its three frames are direct
+   * children — no stage, nothing to page through), so the frame border must
+   * cover both parents. */
   :root[data-theme="studio"] .st-pdp-gallery .st-pdp-frame {
-    aspect-ratio: 1 / 1;
     border: var(--bw-line) solid var(--line);
   }
   /* object-fit: contain, not cover. These are studio shots of a product on a
    * plain ground, and cropping one to fill a square is how a tub loses a
-   * corner. The frame's own grey is the ground the shot was taken on. */
+   * corner. The frame's own ground is the ground the shot was taken on. */
   :root[data-theme="studio"] .st-pdp-photo {
     position: absolute;
     inset: 0;
@@ -937,27 +1001,10 @@ export const STUDIO_PDP_CSS = `
     color: var(--ink-mute);
   }
 
-  /* ---- spec: two-column hairline-ruled definition list ----------------- */
-  :root[data-theme="studio"] .st-pdp-spec {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
-    gap: var(--studio-pdp-col-gap);
-    margin-top: var(--studio-rhythm);
-  }
-  /* h3 — a sub-section heading, one rung under the page's h2 title, and it
-   * shares its row with the table it labels. The 68–72px / 600 / −0.025em this
-   * rule carried was the measured pass; §1 has no negative tracking anywhere,
-   * and h3's leading is 1.16em rather than the 1.05 that was eyeballed. */
-  :root[data-theme="studio"] .st-pdp-spec-h {
-    margin: clamp(10px, 1vw, 20px) 0 0;
-    font-family: var(--f-display);
-    font-weight: var(--w-display);
-    font-size: var(--t-h3);
-    letter-spacing: var(--ls-h3);
-    line-height: var(--lh-h3);
-    color: var(--ink);
-    max-width: 14ch;
-  }
+  /* ---- spec: hairline-ruled definition list ---------------------------- */
+  /* (.st-pdp-spec and .st-pdp-spec-h — the freestanding two-column spec band
+   * with its own h3 — were removed as dead: the table moved into the first
+   * collapsible panel and nothing emitted either class any more.) */
   :root[data-theme="studio"] .st-pdp-spec-table {
     margin: 0;
     border-top: 1px solid var(--line);
@@ -1093,12 +1140,11 @@ export const STUDIO_PDP_CSS = `
   /* ---- responsive ------------------------------------------------------ */
   @media (max-width: 1000px) {
     /* Gallery over buy column: below this width the frame and a 16px option
-     * list cannot share a row without both losing. */
-    :root[data-theme="studio"] .st-pdp-grid,
-    :root[data-theme="studio"] .st-pdp-spec {
+     * list cannot share a row without both losing. (The .st-pdp-spec lines
+     * that sat here went with the dead spec band above.) */
+    :root[data-theme="studio"] .st-pdp-grid {
       grid-template-columns: minmax(0, 1fr);
     }
-    :root[data-theme="studio"] .st-pdp-spec-h { max-width: none; }
   }
   @media (max-width: 560px) {
     /* 390px budget for the bar, re-costed on the ramp: 20px gutters leave
@@ -1114,9 +1160,8 @@ export const STUDIO_PDP_CSS = `
     :root[data-theme="studio"] .st-pdp-sum-cfg { display: none; }
     :root[data-theme="studio"] .st-pdp-bar-in { gap: 10px; }
     :root[data-theme="studio"] .st-pdp-cta { padding-inline: 14px; }
-    /* A 3-up detail strip at 350px gives 110px frames — still readable as
-     * frames, and it keeps the gallery one object instead of two. */
-    :root[data-theme="studio"] .st-pdp-thumbs { gap: 8px; }
+    /* (No thumb override any more: the strip's own clamp already bottoms out
+     * at the 8px this block used to restate.) */
   }
   @media (max-height: 480px) {
     /* A landscape phone, or a desktop window squashed to a strip: a bar that
@@ -1290,11 +1335,14 @@ export const STUDIO_PDP_CSS = `
      * its sticky position — that is layout, not motion. */
     :root[data-theme="studio"] .st-pdp-cta,
     :root[data-theme="studio"] .st-pdp-cfg-note a,
+    :root[data-theme="studio"] .st-pdp-thumb,
     :root[data-theme="studio"] .st-filters a.st-pdp-opt,
     :root[data-theme="studio"] .st-filters a.st-pdp-pill {
       transition: none;
       transform: none;
     }
+    /* An anchor jump must actually jump. */
+    :root[data-theme="studio"] .st-pdp-stage { scroll-behavior: auto; }
   }
 `;
 
@@ -1422,6 +1470,18 @@ function alsoLike(ctx: RenderCtx): string {
  * is not — and the caption that qualifies the drawing would then be sitting
  * under photographs it does not apply to.
  *
+ * With photographs it is behaviour.ts's slider anatomy: a scroll-snap STAGE
+ * (data-st-scroll) of full-width slides (data-st-item), under it a strip of
+ * thumb ANCHORS (data-st-thumb) — each a real link to its slide's id, so a
+ * visitor with no script still reaches every picture, the same contract the
+ * testimonial arrows keep. The script upgrades the click to a horizontal
+ * scroll and keeps aria-current on the thumb whose slide is showing; the
+ * server marks the first one so the no-script state is already true.
+ * tabindex="-1" on each slide is what lets the anchor move focus into a
+ * figure that is not itself interactive, and tabindex="0" on the stage keeps
+ * the scroller reachable for arrow-key scrolling (it is a labelled region,
+ * so the stop announces itself).
+ *
  * The first frame is eager and high priority: it is the largest element above
  * the fold on this page and the one LCP is measured against.
  */
@@ -1430,14 +1490,39 @@ function gallery(ctx: RenderCtx): string {
   if (photos.length > 0) {
     // The gallery column is ~700px at 1440 and full width once it stacks.
     const sizes = "(max-width: 1000px) 100vw, 46vw";
-    return photos
+    const stage =
+      '<div class="st-pdp-stage" data-st-scroll role="region" ' +
+      'aria-label="Fotografije izdelka" tabindex="0">' +
+      photos
+        .map(
+          (p, i) =>
+            '<figure class="st-pdp-frame" data-st-item id="st-pg-' +
+            String(i + 1) + '" tabindex="-1">' +
+            productImg(p, "st-pdp-photo", sizes, p.alt, i === 0) +
+            "</figure>",
+        )
+        .join("") +
+      "</div>";
+    // One photograph: a strip with a single thumb is a control that cannot
+    // choose anything, so it is not rendered at all.
+    if (photos.length < 2) return stage;
+    const thumbs = photos
       .map(
         (p, i) =>
-          '<figure class="st-pdp-frame">' +
-          productImg(p, "st-pdp-photo", sizes, p.alt, i === 0) +
-          "</figure>",
+          '<a class="st-pdp-thumb" href="#st-pg-' + String(i + 1) +
+          '" data-st-thumb' + (i === 0 ? ' aria-current="true"' : "") +
+          ' aria-label="Fotografija ' + String(i + 1) + " od " +
+          String(photos.length) + '">' +
+          // The link's aria-label is the accessible name; the picture inside
+          // repeats the slide it points at, so its alt is deliberately empty.
+          productImg(p, "st-pdp-thumb-img", "60px", "") +
+          "</a>",
       )
       .join("");
+    return (
+      stage +
+      '<nav class="st-pdp-thumbs" aria-label="Izbira fotografije">' + thumbs + "</nav>"
+    );
   }
   return (
     '<figure class="st-pdp-frame">' + shot(ctx, 0) +
@@ -1644,12 +1729,12 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<div class="st-pdp-in">' +
 
     '<div class="st-pdp-grid">' +
-    // --- gallery: a STACK of large frames, which is what the source does.
-    // A big frame over a strip of three small ones puts the product at
-    // thumbnail size three times; a stack shows it three times at a size
-    // worth looking at, and the buy column scrolls alongside.
+    // --- gallery: one stage plus a thumb strip (see gallery()). data-st-slider
+    // arms behaviour.ts only when there is more than one photograph — with one
+    // (or with the drawing fallback) there is nothing to page through, and the
+    // script's own guard would bail anyway.
     '<div class="st-pdp-gallery"' +
-    ((ctx.pdp.photos ?? []).length ? " data-photos" : "") + ">" +
+    ((ctx.pdp.photos ?? []).length > 1 ? " data-st-slider" : "") + ">" +
     gallery(ctx) + "</div>" +
 
     // --- buy column ---

@@ -260,13 +260,22 @@ export const STUDIO_STATEMENT_CSS = `
    * flat 4:3 the measured pass drew. The frame reserves its own height, so a
    * photo that has not decoded yet still costs zero CLS. No border: the
    * source's images carry none, and a hairline around a photograph reads as a
-   * frame the theme does not have. --bg-alt shows only if the file 404s. */
+   * frame the theme does not have.
+   *
+   * background is --bg, NOT --bg-alt, and that is load-bearing: the ::after
+   * ground below multiplies whatever is in the frame by the panel grey, so a
+   * white background, a not-yet-decoded frame and the photograph's own white
+   * sweep all resolve to the SAME --bg-alt tone — no seam, no flash at
+   * decode. A --bg-alt background under the multiply would print a step
+   * darker than the image's sweep and draw a visible box-in-a-box.
+   * isolation confines the blend to this frame's own stacking context. */
   :root[data-theme="studio"] .st-story-frame {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
     aspect-ratio: 826 / 850;
     border-radius: var(--r-media);
-    background: var(--bg-alt);
+    background: var(--bg);
   }
   /* The band's second, smaller picture, at the foot of the left column.
    * 464/518 is the source figure's ratio and 66% is its share of the column
@@ -278,19 +287,56 @@ export const STUDIO_STATEMENT_CSS = `
     margin: 0;
     inline-size: min(464px, 66%);
   }
+  /* Same --bg-under-multiply ground as the big frame, same reason. */
   :root[data-theme="studio"] .st-story-frame2 {
     position: relative;
+    isolation: isolate;
     overflow: hidden;
     aspect-ratio: 464 / 518;
     border-radius: var(--r-media);
-    background: var(--bg-alt);
+    background: var(--bg);
   }
+  /* Replaced elements ignore inset-shrinking, so the image is sized with
+   * explicit 100% axes rather than inset alone (the recently-fixed bug
+   * class). cover is the LARGE frame's fit: its picture is the band's
+   * atmosphere anchor and cover crops the studio sweep away to fill the
+   * 826/850 block edge to edge. */
   :root[data-theme="studio"] .st-story-photo {
     position: absolute;
     inset: 0;
     inline-size: 100%;
     block-size: 100%;
     object-fit: cover;
+  }
+  /* The SMALL frame fits the other way. Its job is an inset product detail,
+   * not a second atmosphere block, and its sources are landscape-ish studio
+   * cutouts: cover in a 464/518 portrait frame kept only the middle ~60% of
+   * the tub and filled the rest with sweep — the "empty white box" this
+   * section was screenshotted failing as. contain shows the whole cutout,
+   * and the multiply ground below turns its sweep into the panel it sits on,
+   * so the figure reads as the theme's own product plate (the commerce
+   * cards' cutout-on-panel language) at whatever aspect the file has. */
+  :root[data-theme="studio"] .st-story-frame2 .st-story-photo {
+    object-fit: contain;
+  }
+  /* THE GROUND. These photographs are supplier studio shots — cutouts on a
+   * white sweep — and a borderless white photograph on the white page is
+   * exactly how this section read as two empty boxes. The overlay multiplies
+   * the frame's contents by the theme's one panel grey: a white pixel lands
+   * on --bg-alt exactly, a dark pixel keeps ~94% of its value (imperceptible
+   * on the atmospheric shots), so every frame owns a quiet panel whatever
+   * file pick() lands on. A tint, not a border: commerce.ts already
+   * established that matching the ground to the photograph is what makes a
+   * cutout read as one object, and a hairline is a frame this theme does not
+   * draw. pointer-events: none so the overlay never eats a future link. */
+  :root[data-theme="studio"] .st-story-frame::after,
+  :root[data-theme="studio"] .st-story-frame2::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--bg-alt);
+    mix-blend-mode: multiply;
+    pointer-events: none;
   }
 
   /* ================= §4.8 Inline-icon statement + stats ================= */
@@ -540,19 +586,26 @@ export const STUDIO_STATEMENT_CSS = `
  * <h2>: the hero owns the page's only <h1>. The link points at the About
  * route through routeSlugs, which is the shop's localized Slovenian segment.
  *
- * Both pictures are atmosphere beside a brand story, which claims nothing
- * about the product — the line media.ts draws, and the one the launch gate
- * enforces. Both come from ROOMS, because both frames are portrait-ish and a
- * ROOMS interior is ~4:3: cropping it to 826/850 keeps the room. The obvious
- * alternative, SCENES, is 1.92:1, and cropping THAT to a near-square frame
- * throws away half the width and leaves a wall with the furniture jammed
- * along the bottom edge — tried, and visibly worse.
+ * Both pictures are decorative beside a brand story — they come from
+ * OWN_PHOTOS (the shop's own supplier photography), aria-hidden with empty
+ * alts, and the frames are simply omitted when a shop owns nothing: an empty
+ * frame is a hole, not a composition.
  *
- * Offsets 3 and 1, and neither is unique on the page: ROOMS holds four files
- * against a storefront with far more atmosphere slots than that (the social
- * strip alone re-shows six), so page-wide uniqueness is not reachable and
- * chasing it here would only trade a good crop for a bad one. What the two
- * offsets do guarantee is that this band's own two pictures always differ.
+ * WHICH pictures is not left to chance. Offsets 23 and 25 were chosen off
+ * the files' own alt records for the bazen key: 23 lands on the BAZEN 230
+ * side view with the grey wooden cladding and lit LED strips, 25 on the
+ * BAZEN 230 at dusk under blue-green LED light — the two shots in the well
+ * that carry their own tone. That matters because the rest of the well is
+ * white-sweep cutouts and white acrylic close-ups, and offsets 7/11 had put
+ * a white jets close-up in the LARGE frame: a white photograph on the white
+ * page, which is exactly the "two empty boxes" the section was screenshotted
+ * failing as. The CSS multiply ground (see .st-story-frame::after) insures
+ * against a white file, but the first defence is not to pick one.
+ *
+ * Collision avoidance: the other pick(OWN_PHOTOS, …) offsets on this page
+ * are 0–5 (social strip), 5 (hero), 9 (editorial room), 13 (editorial
+ * tiles) and 17–18 (testimonial discs). 23 and 25 collide with none of
+ * them, and with each other guarantee this band's two pictures differ.
  *
  * The small picture is the source's own second figure, and it is here because
  * without it the left column runs out of content halfway down a ~680px
@@ -574,14 +627,14 @@ export function renderStudioStatement(ctx: RenderCtx): string {
     '<div class="st-story">' +
     '<div class="st-story-lead">' +
     '<p class="st-story-copy">' + esc(c.sub) + "</p>" +
-    // The story block's two frames were borrowed rooms. They now take the
-    // shop's own photography, at offsets the social strip does not use, or
-    // the figures are omitted entirely — an empty frame is a hole, not a
-    // composition.
+    // Small frame, offset 23: the clad side view — a product detail with its
+    // own tone, shown WHOLE via the frame's object-fit: contain plate. The
+    // offset choice and the page-wide collision list live in the doc comment
+    // above this function.
     (OWN_PHOTOS.length > 0
       ? '<figure class="st-story-fig2"><div class="st-story-frame2">' +
         decorativeImg(
-          pick(OWN_PHOTOS, ctx.shop.key, 7),
+          pick(OWN_PHOTOS, ctx.shop.key, 23),
           "st-story-photo",
           "(max-width: 809px) 57vw, (max-width: 1439px) 31vw, 440px",
         ) +
@@ -592,9 +645,12 @@ export function renderStudioStatement(ctx: RenderCtx): string {
     // figcaption first: the source puts this label ABOVE the frame.
     '<figcaption class="st-story-label">' + esc(ctx.shop.keyword.category) + "</figcaption>" +
     '<div class="st-story-frame">' +
+    // Large frame, offset 25: the dusk LED shot — the one genuinely
+    // atmospheric picture in the well, and the band's anchor. cover, so it
+    // fills the 826/850 block edge to edge.
     (OWN_PHOTOS.length > 0
       ? decorativeImg(
-          pick(OWN_PHOTOS, ctx.shop.key, 11),
+          pick(OWN_PHOTOS, ctx.shop.key, 25),
           "st-story-photo",
           "(max-width: 809px) 92vw, (max-width: 1439px) 47vw, 660px",
         )
