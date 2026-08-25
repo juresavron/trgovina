@@ -34,6 +34,34 @@ import {
 import { PRICE_UNSET } from "../catalog/pricing";
 
 /**
+ * A counted noun in Slovenian, given its four forms.
+ *
+ * WHY A HELPER RATHER THAN THREE FIXES. Three call sites concatenated a
+ * number straight onto a GENITIVE plural — "masažnih šob", "nastavljivih
+ * šob" — which is right for five and up and wrong for everything below.
+ * Measured against the catalogue: the hot tubs carry 35, 37 and 50 jets, so
+ * two of those sites read correctly today by arithmetic rather than by
+ * design. The swim spas carry 4, 38 and 94, and the 4 is SWIM 450 — the one
+ * model that printed "4 masažnih šob".
+ *
+ * That is the whole reason this is a helper. A bug that only appears when a
+ * supplier figure happens to fall below five is invisible on five pages out
+ * of six, and it comes back the day a model with two pumps or one jet is
+ * added. Passing the forms in makes the agreement a property of the phrase
+ * instead of a property of the numbers that happen to be in the catalogue.
+ *
+ * Forms are [1, 2, 3-4, 5+] — the four Slovenian numeral classes, on the
+ * last two digits.
+ */
+function counted(n: number, forms: readonly [string, string, string, string]): string {
+  const t = n % 100;
+  const i = t === 1 ? 0 : t === 2 ? 1 : t === 3 || t === 4 ? 2 : 3;
+  return n + " " + forms[i];
+}
+
+const MASSAGE_JETS = ["masažna šoba", "masažni šobi", "masažne šobe", "masažnih šob"] as const;
+
+/**
  * The offer, built from the supplier catalogue rather than typed out.
  *
  * Nine models differing only in shell size, seating layout and jet count is
@@ -168,8 +196,8 @@ const swimSpas: ProductCard[] = OFFERED_SWIMSPAS.map((m) => ({
     "Akrilna školjka " +
     swimFootprint(m) +
     (m.swimJets > 0 ? " s protitočno šobo, " : ", ") +
-    m.jets +
-    " masažnih šob, " +
+    counted(m.jets, MASSAGE_JETS) +
+    ", " +
     swimSeating(m) +
     ".",
   meta: swimMetaLine(m),
@@ -196,6 +224,13 @@ const swimSpas: ProductCard[] = OFFERED_SWIMSPAS.map((m) => ({
  *   3, 4     modeli     (plural)
  *   5 and up modelov    (genitive plural)
  */
+/** The sticky buy bar is a cramped strip, so the noun is bare — still agreeing. */
+const JETS_SHORT = ["šoba", "šobi", "šobe", "šob"] as const;
+
+const ADJUSTABLE_JETS = [
+  "nastavljiva šoba", "nastavljivi šobi", "nastavljive šobe", "nastavljivih šob",
+] as const;
+
 function modelCount(n: number): string {
   const t = n % 100;
   if (t === 1) return n + " model";
@@ -262,7 +297,7 @@ const categories: Category[] = [
 
 const models: ProductCard[] = OFFERED_MODELS.map((m) => ({
   name: m.name,
-  desc: "Akrilna školjka " + footprint(m) + ", " + m.jets + " masažnih šob, " + seating(m) + ".",
+  desc: "Akrilna školjka " + footprint(m) + ", " + counted(m.jets, MASSAGE_JETS) + ", " + seating(m) + ".",
   meta: metaLine(m),
   price: modelPrice(m),
   art: "pool" as const,
@@ -293,8 +328,8 @@ function pdpFor(m: PolaModel): PdpContent {
       " za " +
       seating(m) +
       ": " +
-      m.jets +
-      " nastavljivih šob, ogrevanje in filtracija.",
+      counted(m.jets, ADJUSTABLE_JETS) +
+      ", ogrevanje in filtracija.",
     price: modelPrice(m),
     priceCents: modelPriceCents(m),
     // Option names without figures: the supplier prices these in USD FOB too,
@@ -328,7 +363,7 @@ function pdpFor(m: PolaModel): PdpContent {
       ["Priklop", "220 V / 380 V"],
       ["Garancija", "2–5 let, odvisno od sklopa"],
     ],
-    bar: [m.name, seating(m) + " · " + m.jets + " šob", modelPrice(m), "V košarico"],
+    bar: [m.name, seating(m) + " · " + counted(m.jets, JETS_SHORT), modelPrice(m), "V košarico"],
     addons: m.addons.map((x) => ({
       key: x.key,
       label: x.label,
@@ -428,8 +463,8 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       swimSeating(m) +
       ": " +
       swimJets +
-      m.jets +
-      " masažnih šob, ogrevanje in filtracija.",
+      counted(m.jets, MASSAGE_JETS) +
+      ", ogrevanje in filtracija.",
     price: swimModelPrice(m),
     priceCents: swimModelPriceCents(m),
     cfg: [
@@ -467,7 +502,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ["Priklop", "220 V / 380 V"],
       ["Garancija", "2–5 let, odvisno od sklopa"],
     ],
-    bar: [m.name, swimFootprint(m) + " · " + m.jets + " šob", swimModelPrice(m), "V košarico"],
+    bar: [m.name, swimFootprint(m) + " · " + counted(m.jets, JETS_SHORT), swimModelPrice(m), "V košarico"],
     addons: m.addons.map((x) => ({
       key: x.key,
       label: x.label,
@@ -492,7 +527,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
             ? m.swimJets +
               " protitočne šobe ustvarijo tok, v katerem se plava na mestu — "
             : "") +
-          "poleg " + m.jets + " masažnih šob za sprostitev po plavanju.",
+          "poleg " + counted(m.jets, MASSAGE_JETS) + " za sprostitev po plavanju.",
       ],
       [
         "Mere in prostor",
