@@ -1,5 +1,5 @@
 import { describe as suite, it, expect } from "vitest";
-import { storedPaths, widthPath } from "./routes";
+import { CSP, storedPaths, widthPath } from "./routes";
 
 /**
  * Deleting a photograph has to ask for the files that exist.
@@ -52,5 +52,33 @@ suite("the objects behind a row", () => {
     for (const w of [[], [480, 600], [480, 800, 1200, 1600, 2048]]) {
       expect(storedPaths(base, w)[0]).toBe(base);
     }
+  });
+});
+
+/**
+ * The panel's own thumbnails must be allowed to render.
+ *
+ * ⚠️ blob: IS NOT COVERED BY 'self'. The upload card previews every picture
+ * before it sends anything, from a blob: URL its own script made, and CSP
+ * treats blob: as its own scheme — so an img-src of 'self' alone refused all
+ * of them and the operator picked files blind. It also breaks the Safari-
+ * before-15 decode path, which reads a file through an <img> and an object
+ * URL because that browser has no createImageBitmap.
+ */
+suite("the admin content security policy", () => {
+  it("allows the blob: URLs the upload card makes for itself", () => {
+    expect(CSP).toContain("img-src 'self' blob:");
+  });
+
+  it("still lets nothing in from anywhere else", () => {
+    expect(CSP).toContain("default-src 'none'");
+    expect(CSP).toContain("frame-ancestors 'none'");
+    expect(CSP).toContain("base-uri 'none'");
+    // blob: is the ONE addition. A scheme or host list creeping into img-src
+    // would mean the panel had started loading somebody else's pictures.
+    const img = CSP.split(";").map((d) => d.trim()).find((d) => d.startsWith("img-src"));
+    expect(img).toBe("img-src 'self' blob:");
+    expect(CSP).not.toContain("http:");
+    expect(CSP).not.toContain("*");
   });
 });
