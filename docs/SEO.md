@@ -100,9 +100,54 @@ anything could paint, to read prose written for us. Comments are now stripped
 at module scope and never reach the wire (94 KB, and `src/render/size.test.ts`
 fails the build above 100 KB).
 
-Still open: 94 KB of inline CSS is heavy even compressed, and every page ships
-every theme's rules. Emitting only the active theme's CSS is the next
-reduction, worth ~88 KB on non-studio pages.
+Measured again after the 2026-08 audit: the sheet is 129 KB raw and **15 KB
+brotli**, and the whole document is 19-21 KB brotli. Only studio is compiled
+in, so the "every theme's rules" reduction this section used to propose does
+not apply to these shops. What remains is the real trade: inlining costs a
+repeat visitor 15 KB per navigation and saves a first-time visitor a
+render-blocking round trip. Search traffic is overwhelmingly first-time and
+single-page, so the inline stays — but the number is now written down rather
+than assumed, and `scripts/audit-seo.mjs` reports the compressed size on every
+run.
+
+### The 2026-08 audit
+
+`scripts/audit-seo.mjs` reads what a CRAWLER sees — head, structured data,
+link graph, sitemap — the way `audit-site.mjs` reads what a person sees. It
+found, and this pass fixed:
+
+- **Organization structured data published placeholders on every page.**
+  `"telephone": "+386 00 000 000"`, `"streetAddress": "TODO"`,
+  `"postalCode": "0000"` — asserted to Google in machine-readable form and
+  ingested into the knowledge panel. The same rule the codebase already
+  applied to Offers (no price nobody set) and Reviews (none fabricated) now
+  applies to identity: an unset field is omitted. The four predicates that
+  decide "set" moved to `src/lib/filled.ts`, because there were three copies
+  and the third one had none.
+- **No BreadcrumbList anywhere** — six product pages and two collections
+  showed the raw URL path in the SERP instead of a trail.
+- **No ItemList on the two pages built to rank.** To a crawler
+  /masazni-bazeni was three anchors in a div rather than a category.
+- **No FAQPage**, so /pogosta-vprasanja could not win an accordion result.
+  Built from the page's own qa blocks, never a second list, because markup
+  whose answers a visitor cannot read is a manual action.
+- **No og:image on any page.** Every link pasted into WhatsApp, Viber or
+  Slack rendered as a bare text card. Product pages now share their own lead
+  photograph; everything else shares the hero.
+- **Eleven subpages were crawl dead ends** with one outbound body link each.
+  A short onward block at the foot of every editorial and legal page now
+  points at the two collections and the catalogue, by name.
+
+Two checks were **removed** as false positives, which matters as much as the
+additions: an unsized-image warning that fired on 26 images while measured
+CLS was 0.0009, and a robots.txt error that fired on a correct pre-live
+closure. Layout shift is now measured in the browser by `audit-site.mjs`
+instead of guessed from markup.
+
+Still open, and the owner's to close: **thin copy** on /razstavni-salon (117
+words), /kontakt (177), /financiranje (215), /o-nas (255) and /trgovina
+(258). Words cannot be invented here — every one of those pages needs the
+shop's own account of what it does.
 
 ## 5. E-E-A-T for a store that ships pallets
 

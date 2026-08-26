@@ -299,3 +299,50 @@ describe("the collection comparison table", () => {
     expect(renderStudioCollection(ctx(missing), col)).not.toContain("st-cmp-table");
   });
 });
+
+/**
+ * A shop that cannot take an order never offers a basket.
+ *
+ * This is a promise test, not a styling one. The storefront's primary control
+ * used to read "V košarico" and the header carried a basket with a count,
+ * while /kosarica answered "spletno naročanje še ni odprto" — so the biggest
+ * control on a €2,890 page took a visitor who had just decided and told them
+ * no. Nothing in the rendered HTML may make that offer while ordersOnline is
+ * false, and the enquiry that replaces it must actually go somewhere.
+ */
+describe("no basket where there is nothing to fill", () => {
+  const PAGES = ["/", "/trgovina", "/masazni-bazeni", "/bazen/veliki-230", "/bazen/swim-580-maxi"];
+  const shop = SHOPS["bazen"]!;
+
+  for (const path of PAGES) {
+    it("offers no cart control on " + path, async () => {
+      // The rule is only meaningful while this shop takes orders off-site.
+      expect(shop.ordersOnline, "ordersOnline is true — this test is vacuous").toBe(false);
+      const res = handleRequest(
+        new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
+          headers: { host: "trgovina.workers.dev" },
+        }),
+      );
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      // No link into the cart, and no quantity control for a purchase that
+      // cannot happen.
+      expect(html, path + " still links to the cart").not.toContain('href="/kosarica');
+      expect(html, path + " still counts units").not.toContain('name="qty"');
+      expect(html, path + " still says V košarico").not.toContain("V košarico");
+    });
+  }
+
+  it("puts a reachable enquiry in the product page's place", async () => {
+    const res = handleRequest(
+      new Request("https://trgovina.workers.dev/bazen/veliki-230?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+    const html = await res.text();
+    expect(html).toContain("Povprašajte za ponudbo");
+    // And it says what happens next, before the click rather than after it.
+    expect(html).toContain("Naročila sprejemamo po telefonu in e-pošti.");
+    expect(html).toContain('href="' + shop.routeSlugs["/contact"]);
+  });
+});

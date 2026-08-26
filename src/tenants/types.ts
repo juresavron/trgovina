@@ -59,6 +59,30 @@ export type ShopConfig = {
   live: boolean;
 
   /**
+   * True once the shop can take an order through the website.
+   *
+   * SEPARATE FROM `live`, because they are different facts. `live` is about
+   * the domain being served at all; this is about whether pressing a button
+   * can result in a purchase. A shop can be fully launched, indexed and
+   * selling for months while every order still arrives by telephone — which
+   * is exactly where bazen is, and its own /kosarica page says so: "Spletno
+   * naročanje še ni odprto. Naročila zaenkrat sprejemamo po telefonu in
+   * e-pošti."
+   *
+   * IT EXISTS BECAUSE THE PAGE SAID ONE THING AND THE BUTTONS SAID ANOTHER.
+   * The product page's primary control — the biggest, blackest thing on it —
+   * read "V košarico", the header carried a basket with a count, and both led
+   * to a page explaining that ordering is not open. On a €2,400–€8,400
+   * considered purchase that is the worst possible moment to break a promise:
+   * the visitor has decided, pressed the button, and been told no.
+   *
+   * With this false, the storefront asks for an enquiry instead — which is
+   * the channel the shop actually operates. Set it true and the cart controls
+   * come back with no other change.
+   */
+  ordersOnline: boolean;
+
+  /**
    * THE keyword strategy. Every shop exists to rank #1 in Slovenia for
    * exactly one commercial-intent head term. These tokens flow into titles,
    * H1s, descriptions and internal anchor text via shared templates.

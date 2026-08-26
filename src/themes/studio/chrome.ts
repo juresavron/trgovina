@@ -39,7 +39,8 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { brandMark } from "./brand";
-import { searchIcon, basketIcon } from "./icons";
+import { basketIcon, mailIcon } from "./icons";
+import { isSetPhone } from "../../lib/filled";
 
 /* ---- inline line icons ----------------------------------------------- */
 /* 24px grid, stroke-only, currentColor. The chrome's magnifier and basket are
@@ -1164,12 +1165,12 @@ export const STUDIO_CHROME_CSS = `
     :root[data-theme="studio"] .st-foot-rule { margin-block: var(--gap-xl) 25px; }
   }
 
-  /* ≤620: the magnifier steps aside. It is the one action with a duplicate —
-   * its destination, the catalogue, is also the rail's first item. THE CART
-   * STAYS at every width: the rail has no cart route, so dropping the cluster
-   * wholesale once left a phone with no path to the basket at all. */
+  /* ≤620: the wordmark shrinks. The rule that used to hide the magnifier here
+   * went with the magnifier itself — it was the one action with a duplicate,
+   * and the duplicate was the reason it existed to be hidden. The remaining
+   * button STAYS at every width: it is the only path to the enquiry, and the
+   * rail has no contact route of its own. */
   @media (max-width: 620px) {
-    :root[data-theme="studio"] .st-chrome-search { display: none; }
     /* The wordmark shrinks rather than truncates.
      *
      * The cap above stops the name reaching the buttons, but reaching the cap
@@ -1293,21 +1294,66 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     // Before the icon cluster in the DOM because that is its order in the row
     // it appears in — the two-row bar at ≤900px, which is the only place it is
     // shown at all.
-    '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
-    esc(ctx.phoneDisplay) + '">' + icon("phone") +
-    "<span>" + esc(ctx.phoneDisplay) + "</span></a>" +
+    // ONLY WHILE THERE IS A NUMBER TO CALL.
+    //
+    // The bar rendered this unconditionally, so on a phone the header carried
+    // "+386 00 000 000" as a live tel: link — a placeholder dressed as the
+    // shop's number, in the most prominent place a shop has, on the device
+    // where tapping it dials. page.ts already refuses to print an unset value
+    // as a fact for exactly this reason (see isSetPhone, which this imports
+    // rather than restating); the header is the last place that was still
+    // doing it.
+    (isSetPhone(ctx.phoneDisplay)
+      ? '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
+        esc(ctx.phoneDisplay) + '">' + icon("phone") +
+        "<span>" + esc(ctx.phoneDisplay) + "</span></a>"
+      : "") +
     '<div class="st-chrome-actions">' +
-    // Magnifier goes to the catalogue: a real destination, not a dead control.
-    // It is the one action that drops on a phone — the catalogue is also the
-    // nav's first item — while the basket below stays at every width.
-    '<a class="st-chrome-btn st-chrome-search" href="' +
-    esc(s.routeSlugs["/products"] + ctx.q) +
-    '" aria-label="Iščite po ponudbi">' + searchIcon() + "</a>" +
-    '<a class="st-chrome-btn st-chrome-cart" href="' +
-    esc(s.routeSlugs["/cart"] + ctx.q) +
-    '" aria-label="Košarica — ' + cartCount + ' izdelkov">' + basketIcon() +
-    '<span class="st-chrome-badge" data-st-cart-count="' + cartCount + '" aria-hidden="true">' +
-    cartCount + "</span></a>" +
+    // THE MAGNIFIER IS GONE, and its own note explains why it had to be.
+    //
+    // It read "a real destination, not a dead control" — and that was the
+    // problem. There is no search anywhere in this project; the button was a
+    // magnifier that navigated to the catalogue, which is TRGOVINA, the first
+    // item in the nav three inches to its left. So it was simultaneously a
+    // duplicate of a link already on screen and an icon naming a feature the
+    // site does not have: a visitor who wants to search presses it, lands on
+    // a list, and has to work out that searching was never on offer.
+    //
+    // Two round buttons where one is a duplicate is also what left the header
+    // with no room to say anything true. What remains is the one action that
+    // is not reachable from the nav at all.
+
+    // A BASKET ONLY WHERE THERE IS ONE TO FILL.
+    //
+    // The button carried a basket glyph and a count badge on every shop, and
+    // on this one both were fiction: /kosarica answers "spletno naročanje še
+    // ni odprto", so the count was permanently 0 and the destination was an
+    // apology. An icon that names a feature the site does not have is worse
+    // than no icon — it is the header telling a visitor to look for something
+    // that is not there.
+    //
+    // While ordersOnline is false the same round button, in the same place,
+    // goes to the contact page instead: the channel the shop actually takes
+    // orders through. Same geometry, same target size, no layout change —
+    // only the glyph, the label and the destination differ. Flip the flag and
+    // the basket comes back with its badge.
+    //
+    // KONTAKT IS ALSO IN THE NAV, which was the objection that retired the
+    // magnifier, and it does not retire this: the nav is the site's table of
+    // contents and this is the act. A visitor who has just read a price
+    // reaches for the top-right corner, and finding the one thing they can do
+    // there is the difference between an enquiry and a closed tab. It is also
+    // the only control in the bar that survives the phone tier, where the nav
+    // becomes a scroll rail the last item can be off the end of.
+    (s.ordersOnline
+      ? '<a class="st-chrome-btn st-chrome-cart" href="' +
+        esc(s.routeSlugs["/cart"] + ctx.q) +
+        '" aria-label="Košarica — ' + cartCount + ' izdelkov">' + basketIcon() +
+        '<span class="st-chrome-badge" data-st-cart-count="' + cartCount + '" aria-hidden="true">' +
+        cartCount + "</span></a>"
+      : '<a class="st-chrome-btn st-chrome-cart" href="' +
+        esc(s.routeSlugs["/contact"] + ctx.q) +
+        '" aria-label="Povpraševanje in kontakt">' + mailIcon() + "</a>") +
     "</div>" +
     "</div></header>" +
     '<span class="st-anchor" id="st-vsebina" tabindex="-1"></span>'

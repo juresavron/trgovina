@@ -21,6 +21,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 import type { Block, Page } from "../../content/pages";
 
 /* ------------------------------------------------------------------ CSS */
@@ -541,6 +542,128 @@ export const STUDIO_PAGE_CSS = `
     color: var(--ink-mute);
   }
 
+  /* The model an enquiry is about, named above the actions. Body rung with
+   * the title in the display face's weight — it is a restatement, not a
+   * heading, and it must not compete with the h2 above it. */
+  :root[data-theme="studio"] .st-page-about {
+    margin: clamp(14px, 1.4vw, 22px) 0 0;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-page-about strong {
+    font-weight: var(--w-body-med);
+    color: var(--ink);
+  }
+
+  /* ---- the contact page's actions --------------------------------------
+   *
+   * The channels as CONTROLS, sitting above the table that describes them.
+   * Built from the theme's existing button language rather than a new one:
+   * the lead action is the filled black control the product page uses, the
+   * second is the outlined one the marquee toggle and the grid tile use. A
+   * visitor arriving from "Povprašajte za ponudbo" should not have to find
+   * an underlined address in the second column of a definition list. */
+  :root[data-theme="studio"] .st-page-acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(10px, 1vw, 16px);
+    margin-block: clamp(18px, 1.8vw, 28px) clamp(24px, 2.4vw, 36px);
+  }
+  :root[data-theme="studio"] .st-page-act {
+    display: inline-flex;
+    align-items: center;
+    /* A worded control at the label rung, like every other in this theme, and
+     * comfortably past WCAG 2.5.8's 24px by geometry alone. */
+    min-block-size: 52px;
+    padding: 0 clamp(20px, 2vw, 34px);
+    border: var(--bw-line) solid var(--line-strong);
+    border-radius: var(--r-ctrl);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink);
+    transition: background-color .2s ease, color .2s ease;
+  }
+  :root[data-theme="studio"] .st-page-act:hover {
+    background: var(--ink); color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-page-act:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+  }
+  /* Whichever channel is FIRST is the page's primary act, and it is filled.
+   * Which one that is depends on what the shop has filled in — a number when
+   * there is one, the address otherwise — so the modifier is placed by the
+   * renderer rather than by :first-child, which would be the same rule
+   * written where it cannot be read. */
+  :root[data-theme="studio"] .st-page-act--lead {
+    background: var(--ink-invert);
+    border-color: var(--ink-invert);
+    color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-page-act--lead:hover {
+    background: transparent; color: var(--ink); border-color: var(--line-strong);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-page-act { transition: none; }
+  }
+
+  /* ---- where to go next -------------------------------------------------
+   *
+   * A quiet row, ruled off from the document above it, at the foot of every
+   * page. It is navigation rather than content — hence the nav landmark and
+   * the label rung on its heading — and it is deliberately three links and
+   * not a grid of everything: see onward() for what the audit measured and
+   * why these three. */
+  :root[data-theme="studio"] .st-page-onward {
+    margin-block-start: clamp(44px, 4.6vw, 76px);
+    padding-block-start: clamp(20px, 2vw, 30px);
+    border-block-start: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-page-onward-h {
+    margin: 0 0 clamp(10px, 1vw, 14px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-page-onward ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(6px, 0.8vw, 12px) clamp(18px, 2vw, 34px);
+  }
+  :root[data-theme="studio"] .st-page-onward a {
+    display: inline-flex;
+    align-items: center;
+    /* Navigation, not a link inside a sentence, so WCAG 2.2 SC 2.5.8's
+     * inline exception does not cover it and 24px is the floor. */
+    min-block-size: 24px;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: 1.4;
+    color: var(--ink);
+    text-underline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-page-onward a:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+    border-radius: var(--r-ctrl);
+  }
+
   /* The closing call to action. */
   :root[data-theme="studio"] .st-page-cta {
     margin-block-start: clamp(48px, 5vw, 84px);
@@ -627,23 +750,6 @@ export const STUDIO_PAGE_CSS = `
  * reaching for another module's private helpers is a worse coupling than
  * four lines of duplication that a comment ties together.
  */
-const isSet = (v: string): boolean => v.trim() !== "" && !v.includes("TODO");
-
-/** A VAT id is unset while every digit in it is a zero. */
-const isSetVat = (v: string): boolean =>
-  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
-
-/** A postcode is unset while every digit is a zero. */
-const isSetZip = (v: string): boolean =>
-  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
-
-/**
- * A phone number is unset while the subscriber part is all zeros. The country
- * code is stripped first so "+386 00 000 000" cannot be rescued by its 386.
- */
-const isSetPhone = (v: string): boolean =>
-  isSet(v) && v.replace(/[^0-9]/g, "").replace(/^386/, "").replace(/0/g, "") !== "";
-
 /** The mark that stands in for a value nobody has filled in yet. */
 const UNSET = '<span class="st-page-todo">podatek še ni vpisan</span>';
 
@@ -689,19 +795,38 @@ export function sectionId(h: string, i: number): string {
   return "s" + String(i + 1) + (folded ? "-" + folded : "");
 }
 
+/**
+ * A section heading, WITH THE ANCHOR THE INDEX POINTS AT.
+ *
+ * ⚠️ THIS IS WHY IT IS A HELPER. The id used to be threaded into prose() and
+ * nowhere else, while renderStudioPage builds an index entry for every block
+ * that has a heading. So every steps, qa, facts, contact and imprint block on
+ * the site had an entry in "Na tej strani" aimed at an id that did not exist:
+ * 26 dead links across 10 pages, and all four entries on /pogosta-vprasanja.
+ * Nothing failed — the browser simply does not move, which reads as the page
+ * being broken rather than the link.
+ *
+ * One function, called by every block that renders an h2, so a new block kind
+ * cannot be added without one.
+ */
+function h2(text: string | undefined, id?: string): string {
+  if (!text) return "";
+  return (
+    '<h2 class="st-page-h2"' + (id ? ' id="' + esc(id) + '"' : "") + ">" +
+    esc(text) + "</h2>"
+  );
+}
+
 function prose(b: Extract<Block, { kind: "prose" }>, id?: string): string {
   return (
-    (b.h
-      ? '<h2 class="st-page-h2"' + (id ? ' id="' + esc(id) + '"' : "") + ">" +
-        esc(b.h) + "</h2>"
-      : "") +
+    h2(b.h, id) +
     b.p.map((t) => '<p class="st-page-p">' + esc(t) + "</p>").join("")
   );
 }
 
-function steps(b: Extract<Block, { kind: "steps" }>): string {
+function steps(b: Extract<Block, { kind: "steps" }>, id?: string): string {
   return (
-    (b.h ? '<h2 class="st-page-h2">' + esc(b.h) + "</h2>" : "") +
+    h2(b.h, id) +
     '<ol class="st-page-steps">' +
     b.items
       .map(
@@ -715,9 +840,9 @@ function steps(b: Extract<Block, { kind: "steps" }>): string {
   );
 }
 
-function qa(b: Extract<Block, { kind: "qa" }>): string {
+function qa(b: Extract<Block, { kind: "qa" }>, id?: string): string {
   return (
-    (b.h ? '<h2 class="st-page-h2">' + esc(b.h) + "</h2>" : "") +
+    h2(b.h, id) +
     '<div class="st-page-qa">' +
     b.items
       .map(
@@ -741,9 +866,14 @@ function qa(b: Extract<Block, { kind: "qa" }>): string {
  * as raw HTML because it travelled in the same array as the anchors — now
  * goes through esc() at its call site like every other string in this file.
  */
-function facts(h: string | undefined, rows: readonly (readonly [string, string])[], raw = false): string {
+function facts(
+  h: string | undefined,
+  rows: readonly (readonly [string, string])[],
+  raw = false,
+  id?: string,
+): string {
   return (
-    (h ? '<h2 class="st-page-h2">' + esc(h) + "</h2>" : "") +
+    h2(h, id) +
     '<dl class="st-page-facts">' +
     rows
       .map(
@@ -757,7 +887,56 @@ function facts(h: string | undefined, rows: readonly (readonly [string, string])
   );
 }
 
-function contact(ctx: RenderCtx, h?: string): string {
+/**
+ * The contact page's ACTIONS, above the facts that describe them.
+ *
+ * WHY THIS EXISTS. A visitor arriving from a product page's "Povprašajte za
+ * ponudbo" found the one thing they came to do — write to the shop — styled
+ * as a table cell: a small underlined address in the second column of a
+ * definition list, under a heading, below the fold on a phone. The only
+ * button on the page sent them to the FAQ. The page described the channels
+ * perfectly and offered none of them.
+ *
+ * So the channels become controls. The table stays underneath, because a
+ * postal address is a fact to read rather than a thing to press, and because
+ * the imprint obligations are satisfied by the facts and not by the buttons.
+ *
+ * Each one appears only while it goes somewhere: page.ts already refuses to
+ * print an unset value as a fact, and a dead action is worse than a dead fact
+ * because it invites a press. With this shop's placeholder number that means
+ * one button today and two the day it is filled in.
+ */
+function contactActions(ctx: RenderCtx): string {
+  const c = ctx.shop.contact;
+  const acts: string[] = [];
+  if (isSetPhone(ctx.phoneDisplay)) {
+    acts.push(
+      '<a class="st-page-act st-page-act--lead" href="' + esc(ctx.phoneHref) + '">' +
+        "Pokličite " + esc(ctx.phoneDisplay) + "</a>",
+    );
+  }
+  if (isSet(c.email)) {
+    // A subject line, because it costs nothing and it is the difference
+    // between an inbox of "(no subject)" and one that can be sorted.
+    //
+    // ctx.about is the model the visitor pressed "Povprašajte za ponudbo" on,
+    // resolved from ?model= against the catalogue by the router — so it is a
+    // real product's own title, never a string off the wire. Without it the
+    // subject is the plain word, which is what a visitor who arrived from the
+    // nav should get.
+    const subject = ctx.about
+      ? "Povpraševanje — " + ctx.about.title
+      : "Povpraševanje";
+    acts.push(
+      '<a class="st-page-act' + (acts.length === 0 ? " st-page-act--lead" : "") +
+        '" href="mailto:' + esc(c.email) + "?subject=" +
+        encodeURIComponent(subject) + '">Pišite nam</a>',
+    );
+  }
+  return acts.length === 0 ? "" : '<div class="st-page-acts">' + acts.join("") + "</div>";
+}
+
+function contact(ctx: RenderCtx, h?: string, id?: string): string {
   const c = ctx.shop.contact;
   const a = c.address;
   // The postal address is three fields, so it is three questions: a street
@@ -768,18 +947,31 @@ function contact(ctx: RenderCtx, h?: string): string {
   const place = [a.street, [a.zip, a.city].filter(Boolean).join(" ")]
     .filter(Boolean)
     .join(", ");
-  return facts(
-    h ?? "Kontakt",
+  return (
+    h2(h ?? "Kontakt", id) +
+    // WHAT THE VISITOR CAME ABOUT, said back to them before they write.
+    // Arriving from a product page and finding no trace of the product is how
+    // an enquiry turns into a closed tab: the page looks like the wrong one.
+    // The title comes from the catalogue, so this can only ever name a real
+    // model.
+    (ctx.about
+      ? '<p class="st-page-about">Povpraševanje za <strong>' +
+        esc(ctx.about.title) + "</strong> · " + esc(ctx.about.price) + "</p>"
+      : "") +
+    contactActions(ctx) +
+    facts(
+    undefined,
     [
       ["Telefon", link(ctx.phoneHref, ctx.phoneDisplay, isSetPhone(ctx.phoneDisplay))],
       ["E-pošta", link("mailto:" + c.email, c.email, isSet(c.email))],
       ["Naslov", fact(place, placeSet)],
     ],
     true,
+    )
   );
 }
 
-function imprint(ctx: RenderCtx, h?: string): string {
+function imprint(ctx: RenderCtx, h?: string, id?: string): string {
   const co = ctx.shop.company;
   return facts(
     h ?? "Podatki o podjetju",
@@ -789,6 +981,7 @@ function imprint(ctx: RenderCtx, h?: string): string {
       ["Spletno mesto", esc(ctx.shop.domain)],
     ],
     true,
+    id,
   );
 }
 
@@ -809,15 +1002,15 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
     b.kind === "prose"
       ? prose(b, id)
       : b.kind === "steps"
-        ? steps(b)
+        ? steps(b, id)
         : b.kind === "qa"
-          ? qa(b)
+          ? qa(b, id)
           : b.kind === "facts"
-            ? facts(b.h, b.rows)
+            ? facts(b.h, b.rows, false, id)
             : b.kind === "contact"
-              ? contact(ctx, b.h)
+              ? contact(ctx, b.h, id)
               : b.kind === "imprint"
-                ? imprint(ctx, b.h)
+                ? imprint(ctx, b.h, id)
                 : '<div class="st-page-cta">' +
                   '<h2 class="st-page-cta-h">' + esc(b.h) + "</h2>" +
                   '<p class="st-page-cta-p">' + esc(b.p) + "</p>" +
@@ -842,6 +1035,49 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
  * A <nav> with an accessible name rather than a bare list, so a screen reader
  * announces what the links are for and can skip them in one move.
  */
+/**
+ * WHERE TO GO NEXT, at the foot of every editorial and legal page.
+ *
+ * ⚠️ THIS IS AN INTERNAL-LINKING FIX, and the measurement is the reason it
+ * exists. scripts/audit-seo.mjs walks the link graph, and eleven of these
+ * pages linked to exactly ONE other page from their body: /dostava-in-montaza,
+ * /primerjava, /vodniki, /o-nas, /kontakt, the FAQ and every legal page were
+ * crawl dead ends. A page with one outbound link passes almost nothing on and
+ * gives a crawler nowhere to go — on a site whose entire strategy is ranking
+ * two category pages, that is the equity draining out the bottom of every
+ * article.
+ *
+ * The destinations are not "related posts". They are the three pages this
+ * shop exists to sell from, named by their own names so the anchor text says
+ * what is at the other end — which is the half of an internal link that
+ * carries the signal. At the end of a piece about delivery, "Masažni bazeni"
+ * is also simply the right next step for a reader, which is the test any
+ * link block has to pass before it is worth adding.
+ *
+ * The current page is excluded, so this can never link to itself.
+ */
+function onward(ctx: RenderCtx, page: Page): string {
+  const s = ctx.shop;
+  const here = s.routeSlugs[page.key as keyof typeof s.routeSlugs];
+  const links: { path: string; label: string }[] = [
+    ...(ctx.content.collections ?? []).map((c) => ({ path: c.path, label: c.h1 })),
+    { path: s.routeSlugs["/products"], label: "Vsi modeli in cene" },
+  ].filter((l) => l.path !== here);
+  if (links.length === 0) return "";
+  return (
+    '<nav class="st-page-onward" aria-labelledby="st-onward-h">' +
+    '<p class="st-page-onward-h" id="st-onward-h">Oglejte si</p>' +
+    "<ul>" +
+    links
+      .map(
+        (l) =>
+          '<li><a href="' + esc(l.path + ctx.q) + '">' + esc(l.label) + "</a></li>",
+      )
+      .join("") +
+    "</ul></nav>"
+  );
+}
+
 export function renderStudioPage(ctx: RenderCtx, page: Page): string {
   const ids = page.blocks.map((b, i) => ("h" in b && b.h ? sectionId(b.h, i) : ""));
   const headed = page.blocks
@@ -876,6 +1112,7 @@ export function renderStudioPage(ctx: RenderCtx, page: Page): string {
     (index ? '<div class="st-page-rail">' + index + "</div>" : "") +
     '<div class="st-page-body">' +
     page.blocks.map((b, i) => block(ctx, b, ids[i] || undefined)).join("") +
+    onward(ctx, page) +
     "</div></div></div></section></main>"
   );
 }

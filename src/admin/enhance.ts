@@ -29,14 +29,25 @@
 import type { Env } from "./supabase";
 
 /**
- * The model that does the work.
+ * The models that do the work, in the order they are tried.
  *
- * A var rather than a constant because model names move faster than deploys,
- * and pinning one in the source means an outage the day it is retired. The
- * default is Google's current image model; set GEMINI_IMAGE_MODEL in
- * wrangler.jsonc to move it without touching this file.
+ * ⚠️ A LIST, FOR THE REASON describe.ts KEEPS ONE. This was a single pinned
+ * name, and the failure mode of getting it wrong is completely silent: a
+ * retired or misspelled model id answers 404, enhance() returns null exactly
+ * as it does for a refusal, the browser uploads the original, and the panel
+ * goes on saying "Slike se samodejno izboljšajo na 2K" to an operator whose
+ * pictures are not being touched. Nobody finds out.
+ *
+ * Model names move faster than deploys and this code cannot reach the API
+ * from where it is written, so it asks the next one rather than giving up on
+ * the first. Set GEMINI_IMAGE_MODEL in wrangler.jsonc to pin one and skip the
+ * list entirely.
  */
-const DEFAULT_MODEL = "gemini-3-pro-image-preview";
+const MODELS = [
+  "gemini-3-pro-image-preview",
+  "gemini-2.5-flash-image",
+  "gemini-2.0-flash-preview-image-generation",
+];
 
 /**
  * What the model is asked to do.
@@ -96,7 +107,37 @@ export async function enhance(
 ): Promise<Enhanced | null> {
   if (!enhanceAvailable(env)) return null;
 
-  const model = env.GEMINI_IMAGE_MODEL || DEFAULT_MODEL;
+  // Encoded once, however many models are tried.
+  const payload = JSON.stringify({
+    contents: [
+      {
+        parts: [
+          { text: PROMPT },
+          { inline_data: { mime_type: mime, data: base64(bytes) } },
+        ],
+      },
+    ],
+    generationConfig: { imageConfig: { imageSize: "2K" } },
+  });
+
+  const models = env.GEMINI_IMAGE_MODEL ? [env.GEMINI_IMAGE_MODEL] : MODELS;
+  for (const model of models) {
+    const out = await ask(env, model, payload);
+    if (out) return out;
+  }
+  return null;
+}
+
+/**
+ * One model, one attempt. Null means "ask the next one".
+ *
+ * Every outcome collapses to null deliberately — a network error, a 404 for a
+ * name that no longer exists, a refusal, a response with no image in it. The
+ * caller cannot tell them apart and does not need to: the next model gets the
+ * same picture, and when the list runs out the ORIGINAL goes through, which
+ * is the safe direction to fail in.
+ */
+async function ask(env: Env, model: string, payload: string): Promise<Enhanced | null> {
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/" +
     encodeURIComponent(model) +
@@ -112,17 +153,7 @@ export async function enhance(
         // proxy and referrer along the way.
         "x-goog-api-key": env.GEMINI_API_KEY!,
       },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: PROMPT },
-              { inline_data: { mime_type: mime, data: base64(bytes) } },
-            ],
-          },
-        ],
-        generationConfig: { imageConfig: { imageSize: "2K" } },
-      }),
+      body: payload,
     });
   } catch {
     return null;

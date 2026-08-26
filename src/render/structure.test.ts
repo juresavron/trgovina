@@ -194,3 +194,219 @@ describe("every rendered page is structurally sound", () => {
     });
   }
 });
+
+
+/**
+ * EVERY IN-PAGE LINK LANDS ON SOMETHING.
+ *
+ * The subpages carry a "Na tej strani" index built from every block that has
+ * a heading, and the id it points at used to be threaded into ONE block kind.
+ * So steps, questions, fact tables, the contact block and the imprint all had
+ * an index entry aimed at an id that did not exist: 26 dead links across 10
+ * pages, and all four entries on /pogosta-vprasanja. Nothing failed — the
+ * browser simply does not move, which a visitor reads as the page being
+ * broken rather than the link.
+ *
+ * This is a whole-site sweep rather than a page test because the failure is
+ * structural: a new block kind that forgets its anchor breaks silently, and
+ * silently is how this one survived.
+ */
+describe("no in-page link points at nothing", () => {
+  const PATHS = [
+    "/", "/trgovina", "/masazni-bazeni", "/swim-spa", "/bazen/veliki-230",
+    "/kontakt", "/dostava-in-montaza", "/primerjava", "/o-nas", "/vodniki",
+    "/pogoji-poslovanja", "/pogosta-vprasanja", "/piskotki", "/zasebnost",
+    "/odstop-od-pogodbe", "/razstavni-salon", "/financiranje", "/kosarica",
+  ];
+
+  for (const path of PATHS) {
+    it("resolves every fragment on " + path, async () => {
+      const res = handleRequest(
+        new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
+          headers: { host: "trgovina.workers.dev" },
+        }),
+      );
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!));
+      const dead = [...html.matchAll(/href="#([^"]+)"/g)]
+        .map((m) => m[1]!)
+        // "#" alone and "#main" style skip targets are covered by ids too;
+        // anything genuinely empty is not a fragment link.
+        .filter((t) => t !== "" && !ids.has(t));
+      expect(dead, path + " has dead fragments: " + dead.join(", ")).toEqual([]);
+    });
+  }
+});
+
+/**
+ * AN ENQUIRY REMEMBERS WHAT IT IS ABOUT — and cannot be told a lie.
+ *
+ * The product page's "Povprašajte za ponudbo" carries ?model=<slug>, so a
+ * visitor who spent five minutes choosing between three shells does not have
+ * to name the one they picked from memory, and the shop stops receiving
+ * "(no subject)". The slug is resolved against the catalogue in the router,
+ * which is the whole safety story: what reaches a renderer is a real
+ * PdpContent or nothing, so a parameter somebody typed can never become page
+ * text. These four cases are the contract.
+ */
+describe("the enquiry carries its model", () => {
+  const get = async (u: string) => {
+    const res = handleRequest(
+      new Request("https://trgovina.workers.dev" + u, {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+    expect(res.status).toBe(200);
+    return await res.text();
+  };
+
+  it("names the model and puts it in the subject line", async () => {
+    const html = await get("/kontakt?shop=bazen&model=veliki-230");
+    expect(html).toContain("Povpraševanje za <strong>BAZEN 230</strong>");
+    expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje — BAZEN 230"));
+  });
+
+  it("is the ordinary page with no parameter", async () => {
+    const html = await get("/kontakt?shop=bazen");
+    expect(html).not.toContain('class="st-page-about"');
+    expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje"));
+  });
+
+  it("ignores a slug that names nothing", async () => {
+    const html = await get("/kontakt?shop=bazen&model=this-is-not-a-model");
+    expect(html).not.toContain('class="st-page-about"');
+    expect(html).not.toContain("this-is-not-a-model");
+  });
+
+  it("never echoes the parameter, whatever it says", async () => {
+    const html = await get("/kontakt?shop=bazen&model=" + encodeURIComponent('"><script>x</script>'));
+    expect(html).not.toContain("<script>x");
+    expect(html).not.toContain("&lt;script&gt;x");
+    expect(html).not.toContain('class="st-page-about"');
+  });
+
+  it("keeps one canonical URL whatever the parameter", async () => {
+    const shop = SHOPS["bazen"]!;
+    for (const u of ["/kontakt?shop=bazen", "/kontakt?shop=bazen&model=veliki-230"]) {
+      const html = await get(u);
+      expect(html).toContain('rel="canonical" href="' + shop.siteUrl + '/kontakt"');
+    }
+  });
+
+  it("is emitted by every product page", async () => {
+    for (const slug of ["veliki-230", "swim-580-maxi"]) {
+      const html = await get("/bazen/" + slug + "?shop=bazen");
+      expect(html, slug + " loses its model on the enquiry").toContain("model=" + slug);
+    }
+  });
+});
+
+/**
+ * STRUCTURED DATA NEVER ASSERTS A PLACEHOLDER.
+ *
+ * organizationJsonLd used to emit the config verbatim, so every page on the
+ * site told Google — in machine-readable form, ingested into the knowledge
+ * panel — that the business telephone is +386 00 000 000 and its registered
+ * address is "TODO, 0000 TODO". It is the same error as an Offer carrying a
+ * price nobody set, and it is invisible on the page, which is exactly why it
+ * survived: nothing a person looks at shows it.
+ */
+describe("structured data says only what is known", () => {
+  const PATHS = ["/", "/trgovina", "/masazni-bazeni", "/bazen/veliki-230", "/kontakt", "/pogosta-vprasanja"];
+
+  const ldOn = async (path: string) => {
+    const res = handleRequest(
+      new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+    const html = await res.text();
+    return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+      .map((m) => JSON.parse(m[1]!.replace(/\\u003c/g, "<")));
+  };
+
+  for (const path of PATHS) {
+    it("carries no placeholder on " + path, async () => {
+      const flat = JSON.stringify(await ldOn(path));
+      for (const bad of ["TODO", "00 000 000", '"0000"']) {
+        expect(flat, path + " publishes " + bad + " to a search engine").not.toContain(bad);
+      }
+    });
+  }
+
+  it("still says who the shop is", async () => {
+    const org = (await ldOn("/")).find((n) => n["@type"] === "Organization");
+    expect(org).toBeTruthy();
+    expect(org.name).toBe(SHOPS["bazen"]!.name);
+    expect(org.url).toBe(SHOPS["bazen"]!.siteUrl);
+  });
+});
+
+/**
+ * The rich results a SERP is built from.
+ *
+ * Breadcrumbs replace the raw URL path in the result, an ItemList is what
+ * lets a category page compete as a category, and FAQPage is the accordion.
+ * None of them is content — they are the same facts the page already renders,
+ * said in the form a crawler can use — which is why they are cheap and why
+ * their absence was worth finding.
+ */
+describe("rich results", () => {
+  const ldOn = async (path: string) => {
+    const res = handleRequest(
+      new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+    const html = await res.text();
+    return [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+      .map((m) => JSON.parse(m[1]!.replace(/\\u003c/g, "<")));
+  };
+
+  it("gives a product page a trail that ends on itself with no link", async () => {
+    const bc = (await ldOn("/bazen/veliki-230")).find((n) => n["@type"] === "BreadcrumbList");
+    expect(bc).toBeTruthy();
+    const items = bc.itemListElement;
+    expect(items.map((i: { name: string }) => i.name)).toEqual([
+      "Trgovina", "Masažni bazeni", "BAZEN 230",
+    ]);
+    expect(items.map((i: { position: number }) => i.position)).toEqual([1, 2, 3]);
+    // Google's own guidance: the current page carries no item URL.
+    expect(items[items.length - 1].item).toBeUndefined();
+    expect(items[0].item).toBe(SHOPS["bazen"]!.siteUrl + "/trgovina");
+  });
+
+  it("lists a collection's models as a set, each at a real URL", async () => {
+    const list = (await ldOn("/masazni-bazeni")).find((n) => n["@type"] === "ItemList");
+    expect(list).toBeTruthy();
+    expect(list.numberOfItems).toBe(list.itemListElement.length);
+    expect(list.numberOfItems).toBeGreaterThan(1);
+    const content = CONTENT["bazen"]!;
+    for (const el of list.itemListElement) {
+      const slug = String(el.url).split("/").pop();
+      expect(
+        (content.pdps ?? []).some((p) => p.slug === slug),
+        el.url + " names no product",
+      ).toBe(true);
+    }
+  });
+
+  it("offers the FAQ's questions, and only ones the page renders", async () => {
+    const res = handleRequest(
+      new Request("https://trgovina.workers.dev/pogosta-vprasanja?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+    const html = await res.text();
+    const faq = (await ldOn("/pogosta-vprasanja")).find((n) => n["@type"] === "FAQPage");
+    expect(faq).toBeTruthy();
+    expect(faq.mainEntity.length).toBeGreaterThan(1);
+    for (const q of faq.mainEntity) {
+      // Markup whose answer a visitor cannot read is a structured-data
+      // violation, so every question and answer has to be ON the page.
+      expect(html, "question not rendered: " + q.name).toContain(q.name);
+      expect(html, "answer not rendered for: " + q.name).toContain(q.acceptedAnswer.text);
+    }
+  });
+});
