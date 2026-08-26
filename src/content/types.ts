@@ -223,6 +223,16 @@ export interface ShopContent {
    * Collection record of its own.
    */
   hubMetaDescription?: string;
+  /**
+   * The sentence under the hub's h1.
+   *
+   * The hub opened with the bare word "Trgovina" and then 260px of nothing
+   * before the first family band — a page whose only job is to answer "what
+   * do you sell?" was not answering it above the fold. Distinct from
+   * hubMetaDescription on purpose: that one is written for a search result,
+   * where the reader has not arrived yet.
+   */
+  hubIntro?: string;
   moat: {
     h2: string;
     steps: [string, string][];

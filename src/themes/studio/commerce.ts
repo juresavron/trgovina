@@ -307,6 +307,11 @@ export const STUDIO_COMMERCE_CSS = `
    * head read as a separate announcement rather than as the table's own
    * label. 40px is two thirds of the heading's own size, and it is the rung
    * tokens.ts already carries for exactly this distance. */
+  /* The hub's title block is not a section of its own — it is the page's
+   * title, and the band under it is its content. Two full sections of rhythm
+   * between them put a screen of white between a heading and the thing it
+   * heads. */
+  :root[data-theme="studio"] .st-shop--title { padding-bottom: 0; }
   :root[data-theme="studio"] .st-shop-head {
     margin-bottom: clamp(var(--gap-lg), 2.8vw, var(--gap-xl));
   }
@@ -1717,10 +1722,16 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
   const cols = ctx.content.collections ?? [];
   if (cols.length === 0) return "";
   return (
-    '<section class="st-shop"><div class="st-shop-in">' +
+    '<section class="st-shop st-shop--title"><div class="st-shop-in">' +
     '<div class="st-shop-head">' +
     '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
     '<h1 class="st-sec-h">Trgovina</h1>' +
+    // The hub's own sentence, not its meta description: a page that answers
+    // "what do you sell?" has to answer it on the page, and this one opened
+    // with the bare word and then a screen of white before the first band.
+    (ctx.content.hubIntro
+      ? '<p class="st-shop-intro">' + esc(ctx.content.hubIntro) + "</p>"
+      : "") +
     "</div></div></section>" +
     cols
       .map(
