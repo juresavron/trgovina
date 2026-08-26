@@ -189,10 +189,48 @@ for (const [vp, size] of [["desktop", { width: 1440, height: 900 }], ["mobile", 
         window.scrollTo(0, y);
         await new Promise((r) => setTimeout(r, 60));
       }
-      window.scrollTo(0, 0);
-      await new Promise((r) => setTimeout(r, 200));
+      // BACK TO ZERO, AND STAY THERE. A single scrollTo(0,0) was not enough:
+      // measured at 1241px afterwards, because the sliders anchor-scroll
+      // themselves as they initialise. That is not cosmetic in a full-page
+      // capture — Chromium paints a position:fixed element at scrollY + top,
+      // so a header left at 1241 gets drawn ACROSS the middle of the picture,
+      // on top of whatever section happens to be there. Two screenshots were
+      // read as "the chrome overlaps the hero CTA" before this was found.
+      for (let i = 0; i < 40 && window.scrollY !== 0; i++) {
+        window.scrollTo(0, 0);
+        await new Promise((r) => setTimeout(r, 25));
+      }
+      // Decode every picture before the shutter. networkidle says the bytes
+      // arrived, not that a frame was painted with them, and an image inside
+      // a scroll-snap track can still capture blank — which is exactly how a
+      // testimonial medallion showed up as an empty white circle.
+      await Promise.all(
+        Array.from(document.images).map((i) => i.decode().catch(() => {})),
+      );
     });
     await page.waitForLoadState("networkidle");
+    // PARK THE OVERLAYS BEFORE THE SHUTTER.
+    //
+    // A full-page capture expands the viewport but does NOT re-resolve a
+    // fixed or sticky element against it: Chromium keeps drawing them where
+    // the ORIGINAL 900px viewport put them, so in the finished image the
+    // header lands wherever the page was scrolled to and the PDP's sticky buy
+    // bar is painted straight across the middle of the page — over the colour
+    // chips, in the one screenshot meant to prove the chips are fine.
+    //
+    // Both are read as page bugs the first time you see them, so both are
+    // parked: a fixed bar becomes absolute (top of the document, where it
+    // actually sits when a visitor arrives) and a sticky one becomes static
+    // (its natural place in the flow, which is where it ends up at the bottom
+    // of the scroll anyway). Nothing is hidden — everything is still in the
+    // picture, just not on top of the content it exists to sit beside.
+    await page.evaluate(() => {
+      for (const el of document.querySelectorAll("*")) {
+        const pos = getComputedStyle(el).position;
+        if (pos === "fixed") el.style.setProperty("position", "absolute", "important");
+        else if (pos === "sticky") el.style.setProperty("position", "static", "important");
+      }
+    });
     await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
     await page.screenshot({ path: join(OUT, "shot-" + vp + "-" + file.replace(".html", "") + ".png"), fullPage: true });
   }
