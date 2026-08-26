@@ -44,6 +44,8 @@ writeFileSync(join(dir, "d.html"), modelPage("bazen","x","TEST",[],undefined,"a@
 for (const [n, bg] of [["photo.jpg","#8899aa"],["photo2.jpg","#aa8877"],["photo3.jpg","#77aa88"]]) {
   await sharp({ create:{width:1600,height:1200,channels:3,background:bg} }).jpeg().toFile(join(dir,n));
 }
+/** What a working upscaler hands back: a real, larger WebP. */
+const BIG_WEBP = await sharp({ create:{width:2048,height:1536,channels:3,background:"#334455"} }).webp().toBuffer();
 
 async function run(label, patch, files, page, opts) {
   opts = opts || {};
@@ -65,6 +67,15 @@ async function run(label, patch, files, page, opts) {
   let enhanceCalls = 0;
   await p.route("**/admin/enhance", async (route) => {
     enhanceCalls++;
+    if (opts.upscaleWorks) {
+      // A real 2K answer: different bytes, non-empty. The panel has to notice
+      // and say so, because "did it upscale?" is otherwise unanswerable.
+      // A REAL image, not filler bytes: the panel decodes whatever comes back
+      // before it draws the width ladder, so 9 kB of 0x07 fails at decode and
+      // tests nothing but the error path.
+      await route.fulfill({ status: 200, contentType: "image/webp", body: BIG_WEBP });
+      return;
+    }
     // Answer the way the Worker does when the model returns nothing usable:
     // the browser must carry on with the original rather than fail.
     await route.fulfill({ status: 204, body: "" });
@@ -77,14 +88,27 @@ async function run(label, patch, files, page, opts) {
   // the upload. A test that clicked #go would be testing the no-script
   // fallback and would miss the path every operator actually takes.
   await p.setInputFiles("#f", picks);
-  await p.waitForTimeout(1200 + picks.length * 1200);
+  // The page reloads itself when a run finishes, so anything the panel says
+  // at the end is gone by the time a single read happens. Polled instead, and
+  // the last non-empty reading is kept — which is the one the operator sees.
+  let lastStatus = "", lastRows = [];
+  for (let t = 0; t < 1200 + picks.length * 1200; t += 100) {
+    await p.waitForTimeout(100);
+    try {
+      const st = (await p.textContent("#st")) || "";
+      if (st.trim()) lastStatus = st.trim();
+      const rows = await p.$$eval(".picked .rowst", (e) => e.map((x) => x.textContent));
+      if (rows.some((r) => r && r !== "čaka")) lastRows = rows;
+    } catch { /* mid-reload */ }
+  }
   console.log("\n== " + label + " ==");
   console.log("  pageerrors:", errs.length ? errs : "none");
   console.log("  status:", (await p.textContent("#st").catch(()=>"?")).trim());
   console.log("  parts:", parts.join(", ") || "(no request)");
   console.log("  native form POST:", native);
   console.log("  requests:", requests, "alts:", JSON.stringify(altsSent), "enhance calls:", enhanceCalls);
-  console.log("  row status:", JSON.stringify(await p.$$eval(".picked .rowst", (e) => e.map((x) => x.textContent))));
+  console.log("  row status:", JSON.stringify(lastRows));
+  console.log("  last said:", JSON.stringify(lastStatus));
   console.log("  button hidden:", await p.$eval("#gowrap", (e) => e.style.display === "none").catch(() => "?"));
   await b.close();
 }
@@ -99,6 +123,11 @@ await run("toBlob cannot encode webp", () => {
   const real = HTMLCanvasElement.prototype.toBlob;
   HTMLCanvasElement.prototype.toBlob = function (cb, type, q) { return real.call(this, cb, "image/png", q); };
 });
+// THE UPSCALER, BOTH WAYS. It used to be silent whichever way it went: the
+// panel promised 2K and then said nothing, so a missing key and a retired
+// model name looked exactly like success. One upload must now answer it.
+await run("upscaler works", null, ["photo.jpg", "photo2.jpg"], "e.html", { upscaleWorks: true });
+await run("upscaler gives nothing", null, ["photo.jpg", "photo2.jpg"], "e.html");
 // No description crosses the wire at all any more — the server writes it from
 // the picture it receives. The alts list below must be empty on every run.
 await run("ten files, nothing else", null,

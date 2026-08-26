@@ -770,6 +770,12 @@ const UPLOAD_JS = `
     rows[i].className = "rowst" + (cls ? " " + cls : "");
   }
 
+  /* Per file, so a set of ten shows which of them the upscaler took and which
+     it did not — one upload answers "is this working" for good. */
+  function markDone(i, wasUpscaled){
+    mark(i, wasUpscaled ? "naloženo · 2K" : "naloženo", "ok");
+  }
+
   /* ---- conversion ---------------------------------------------------- */
 
   /* The widths the storefront's slots actually paint, doubled for 2x screens.
@@ -837,6 +843,15 @@ const UPLOAD_JS = `
      A 204 means the upscaler produced nothing usable and the ORIGINAL should
      go through — an enhancement must never cost an upload, so every failure
      here resolves rather than rejects. */
+  /* HOW MANY PICTURES THE UPSCALER ACTUALLY TOUCHED.
+     The panel used to promise "Slike se samodejno izboljšajo na 2K" and then
+     say nothing either way. If the key is missing, or the model name has
+     been retired, every call answers 204, the original uploads, and the
+     operator has no way of finding out — which is exactly the state this
+     shop was in. Counted here and reported when the run finishes. */
+  var upscaled = 0;
+  var hit = [];
+
   function enhanced(f, i){
     if (!doEnhance) return Promise.resolve(f);
     mark(i, "izboljšujem …");
@@ -845,7 +860,11 @@ const UPLOAD_JS = `
     return fetch("/admin/enhance", { method: "POST", body: fd, credentials: "same-origin" })
       .then(function(res){
         if (res.status === 204 || !res.ok) return f;
-        return res.blob().then(function(b){ return b.size > 0 ? b : f; });
+        return res.blob().then(function(b){
+          if (!(b.size > 0)) return f;
+          upscaled++; hit[i] = true;
+          return b;
+        });
       })
       .catch(function(){ return f; });
   }
@@ -894,7 +913,7 @@ const UPLOAD_JS = `
       if (!res.ok && !res.redirected) {
         return res.text().then(function(t){ throw new Error(t.slice(0, 200)); });
       }
-      mark(i, "naloženo", "ok");
+      markDone(i, hit[i] === true);
       return res;
     });
   }
@@ -915,7 +934,18 @@ const UPLOAD_JS = `
 
     var done = 0;
     (function next(){
-      if (done >= fs.length) { location.reload(); return; }
+      if (done >= fs.length) {
+        /* Say what happened before the page reloads under them. Reaching the
+           list below with nothing said would leave "did it upscale?" as
+           unanswerable as it was before. */
+        if (doEnhance && upscaled === 0) {
+          st.textContent = "naloženo — nobene slike ni bilo mogoče izboljšati";
+          setTimeout(function(){ location.reload(); }, 2500);
+          return;
+        }
+        location.reload();
+        return;
+      }
       upload(fs[done], done, fs.length)
         .then(function(){
           done++;
