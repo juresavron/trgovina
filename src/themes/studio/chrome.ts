@@ -137,6 +137,21 @@ export const STUDIO_CHROME_CSS = `
    * breakpoint. */
   :root[data-theme="studio"] main { padding-top: var(--chrome-h); }
   :root[data-theme="studio"] main[data-bleed] { padding-top: 0; }
+  /* A SECTION THAT OPENS A RUN PAYS THE RHYTHM ON TOP AS WELL.
+   *
+   * Every section on the page's own white ground pays it on the bottom only
+   * (see --studio-rhythm), which is right for a neighbour that has one above
+   * it and wrong for the first one on a page — that one would start flush
+   * against the bar or the ticker. The source does the same thing the same
+   * way: its opening band is "170px 0" while the ones after it are
+   * "0 40px 170px".
+   *
+   * The hero is excluded because it is full-bleed by construction and the bar
+   * floats over it. */
+  :root[data-theme="studio"] main > section:first-child:not(.st-hero),
+  :root[data-theme="studio"] .st-mq + section {
+    padding-top: var(--studio-rhythm);
+  }
   /* THE SCROLLED STATE. The bar is fixed, so it outlives the hero: 600px down
    * the home page a bare transparent bar floats over whatever band is there —
    * first the dark intro, where its type lands ON the section's own type, and

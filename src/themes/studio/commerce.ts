@@ -291,7 +291,11 @@ export const STUDIO_COMMERCE_CSS = `
     background: var(--bg);
     /* §3: ~130px vertical rhythm on light sections — tokens.ts owns the clamp
      * so every light band in the theme breathes on one number. */
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
   }
   :root[data-theme="studio"] .st-shop-in {
     max-width: var(--studio-container);
@@ -805,7 +809,11 @@ export const STUDIO_COMMERCE_CSS = `
 
   :root[data-theme="studio"] .st-cat-sec {
     background: var(--bg);
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
   }
   /* LEFT, like the grid section below it — not centred.
    *
@@ -950,7 +958,11 @@ export const STUDIO_COMMERCE_CSS = `
 
   :root[data-theme="studio"] .st-rail-sec {
     background: var(--bg);
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
     /* The rail is full-bleed; the section must never widen the page. */
     overflow: clip;
   }

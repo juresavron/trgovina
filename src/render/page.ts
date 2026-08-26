@@ -2,6 +2,7 @@ import type { ShopConfig } from "../tenants/types";
 import type { Collection, PdpContent, ShopContent } from "../content/types";
 import type { Page } from "../content/pages";
 import { renderStudioPage } from "../themes/studio/page";
+import { STUDIO_PRELOAD } from "../themes/studio/fonts";
 import { THEME_CATALOG, type ThemeKey } from "../themes/catalog";
 import { MAX_SECTIONS_PER_PAGE } from "../themes/shared/sections";
 import { SHOPS } from "../tenants";
@@ -47,11 +48,11 @@ import {
 const FONTS_BASE =
   "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Archivo:wdth,wght@62..125,400..800&family=Hanken+Grotesk:wght@300..800&family=Marcellus&display=swap";
 
-/** The two files that carry the headline, including šumniki. */
-const STUDIO_PRELOAD = [
-  "/fonts/chivo-500-latin.woff2",
-  "/fonts/chivo-500-latin-ext.woff2",
-];
+// The files that carry the headline, including šumniki — GENERATED, not
+// listed here. This was a hardcoded pair of Chivo filenames, and the day the
+// theme moved to the source's own faces it went on preloading two files that
+// no longer existed. scripts/vendor-fonts.mjs emits the list from what it
+// actually vendored, so the preload cannot outlive the font again.
 
 function fontLinks(theme: ThemeKey): string {
   if (theme === "studio") {

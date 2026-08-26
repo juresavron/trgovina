@@ -132,7 +132,11 @@ export const STUDIO_EDITORIAL_CSS = `
   /* ================= §4.9 Impact grid ================= */
   :root[data-theme="studio"] .st-imp {
     background: var(--bg);
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
     /* The hero tile is deliberately oversized; the page must never scroll
      * sideways because of it (§6). */
     overflow: clip;
@@ -939,7 +943,11 @@ export const STUDIO_EDITORIAL_CSS = `
   /* ================= §4.11 Blog cards ================= */
   :root[data-theme="studio"] .st-gd {
     background: var(--bg);
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
     overflow: clip;
   }
   :root[data-theme="studio"] .st-gd-in {

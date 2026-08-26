@@ -103,7 +103,11 @@ export const STUDIO_CLOSING_CSS = `
   /* ================= Social strip ================= */
   :root[data-theme="studio"] .st-soc {
     background: var(--bg);
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
     /* The strip is wider than the viewport by design; the page must never
      * scroll sideways because of it. */
     overflow: clip;

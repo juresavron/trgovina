@@ -53,10 +53,23 @@ describe("deploy smoke assertions hold locally", () => {
     expect(await get("/").text()).toContain('data-theme="studio"');
   });
 
-  it("preloads the self-hosted display face and declares its @font-face", async () => {
+  /**
+   * The preload used to name two Chivo files literally, so when the theme
+   * moved to the source's own faces the page preloaded two files that no
+   * longer existed and this test went green on the old name. It now asserts
+   * the RELATIONSHIP: every preloaded file is one the sheet actually serves.
+   */
+  it("preloads only self-hosted faces the sheet declares", async () => {
     const html = await get("/").text();
-    expect(html).toContain("/fonts/chivo-500-latin.woff2");
+    const preloads = [...html.matchAll(/<link rel="preload" as="font"[^>]*href="([^"]+)"/g)]
+      .map((m) => m[1]!);
+    expect(preloads.length, "no display face is preloaded at all").toBeGreaterThan(0);
     expect(html).toContain("@font-face");
+    for (const href of preloads) {
+      expect(html, href + " is preloaded but no @font-face serves it").toContain(
+        "url('" + href + "')",
+      );
+    }
   });
 
   it("reaches no third-party font origin", async () => {

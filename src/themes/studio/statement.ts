@@ -112,7 +112,11 @@ export const STUDIO_STATEMENT_CSS = `
   /* ================= §4.3 Statement + story ================= */
   :root[data-theme="studio"] .st-statement {
     background: var(--bg);
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
     /* Belt-and-braces against a long unbroken head term: the page must never
      * scroll sideways (§6). */
     overflow: clip;
@@ -379,7 +383,11 @@ export const STUDIO_STATEMENT_CSS = `
   /* ================= §4.8 Inline-icon statement + stats ================= */
   :root[data-theme="studio"] .st-stats {
     background: var(--bg);
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
     overflow: clip;
   }
   :root[data-theme="studio"] .st-stats-in {
