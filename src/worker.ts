@@ -16,7 +16,7 @@ import { SHOPS, resolveShop, isDevHost, type ShopConfig } from "./tenants";
 import type { InternalRouteKey } from "./tenants/types";
 import type { PdpContent, ShopContent } from "./content/types";
 import { CONTENT } from "./content";
-import { PAGES } from "./content/pages";
+import { PAGES, type Page } from "./content/pages";
 import { THEME_CATALOG, type ThemeKey } from "./themes/catalog";
 import {
   organizationJsonLd,
@@ -28,6 +28,9 @@ import {
   renderContentPage,
   renderPlaceholder,
   renderShopHub,
+  breadcrumbJsonLd,
+  itemListJsonLd,
+  faqJsonLd,
 } from "./render/page";
 import { handleAdmin, handleMedia } from "./admin/routes";
 import type { Env } from "./admin/supabase";
@@ -40,6 +43,20 @@ import type { Env } from "./admin/supabase";
  * visitor meant is worse than not knowing. Everything downstream then works
  * with catalogue data rather than with a string off the wire.
  */
+/**
+ * The FAQPage node for a page that asks questions, or nothing.
+ *
+ * Every qa block on the page contributes, in order, so /pogosta-vprasanja
+ * offers all four of its groups and a page that happens to carry one
+ * question set offers that. Fewer than two questions is not an FAQ and Google
+ * will not show an accordion for it, so it is left off rather than published
+ * to be ignored.
+ */
+function faqFor(page: Page): object[] {
+  const items = page.blocks.flatMap((b) => (b.kind === "qa" ? b.items : []));
+  return items.length >= 2 ? [faqJsonLd(items)] : [];
+}
+
 function modelParam(url: URL, content: ShopContent): PdpContent | undefined {
   const slug = url.searchParams.get("model");
   if (!slug) return undefined;
@@ -238,8 +255,29 @@ export function handleRequest(request: Request): Response {
         description: pdp.sub,
         noindex: dev,
         q,
+        // The model's own lead photograph on the share card. A product link
+        // sent to somebody's partner should show the product, not the shop's
+        // hero — and where a model has no photography yet the hero is still
+        // the right stand-in, which is renderDocument's default.
+        ...(pdp.photos && pdp.photos[0] ? { image: pdp.photos[0].src } : {}),
         bodyHtml: renderPdp(shop, content, q, theme, pdp),
-        jsonLd: [organizationJsonLd(shop), productJsonLd(shop, content, pdp)],
+        jsonLd: [
+          organizationJsonLd(shop),
+          productJsonLd(shop, content, pdp),
+          // The same trail the page already draws above the gallery, said in
+          // the form a SERP can use — so the result reads
+          // "Trgovina › Masažni bazeni › BAZEN 230" instead of the URL path.
+          // The family is looked up rather than assumed: a model that belongs
+          // to no collection gets the two-step trail, which is still true.
+          breadcrumbJsonLd(shop, [
+            { name: "Trgovina", path: shop.routeSlugs["/products"] },
+            ...((content.collections ?? [])
+              .filter((c) => c.products.some((p) => "slug" in p && p.slug === pdp.slug))
+              .slice(0, 1)
+              .map((c) => ({ name: c.navLabel, path: c.path }))),
+            { name: pdp.title },
+          ]),
+        ],
       });
       return htmlResponse(doc, 200, baseHeaders);
     }
@@ -262,7 +300,10 @@ export function handleRequest(request: Request): Response {
       noindex: dev,
       q,
       bodyHtml: renderShopHub(shop, content, q, theme),
-      jsonLd: [organizationJsonLd(shop)],
+      jsonLd: [
+        organizationJsonLd(shop),
+        breadcrumbJsonLd(shop, [{ name: "Trgovina" }]),
+      ],
     });
     return htmlResponse(doc, 200, baseHeaders);
   }
@@ -282,7 +323,25 @@ export function handleRequest(request: Request): Response {
       noindex: dev,
       q,
       bodyHtml: renderCollection(shop, content, q, theme, collection),
-      jsonLd: [organizationJsonLd(shop)],
+      jsonLd: [
+        organizationJsonLd(shop),
+        breadcrumbJsonLd(shop, [
+          { name: "Trgovina", path: shop.routeSlugs["/products"] },
+          { name: collection.navLabel },
+        ]),
+        // These two pages are what the shop is built to rank, and to a
+        // crawler they were three anchors in a div. Only the models that
+        // actually have a product page are listed — a card without a slug is
+        // not a URL, and a ListItem pointing at nothing is worse than a
+        // shorter list.
+        itemListJsonLd(
+          shop,
+          collection.h1,
+          collection.products
+            .map((p) => ("slug" in p ? p.slug : undefined))
+            .filter((x): x is string => typeof x === "string"),
+        ),
+      ],
     });
     return htmlResponse(doc, 200, baseHeaders);
   }
@@ -322,7 +381,17 @@ export function handleRequest(request: Request): Response {
         page,
         modelParam(url, content),
       ),
-      jsonLd: [organizationJsonLd(shop)],
+      jsonLd: [
+        organizationJsonLd(shop),
+        breadcrumbJsonLd(shop, [{ name: page.h1 }]),
+        // FAQPage FROM THE QUESTIONS THE PAGE ACTUALLY RENDERS, and only
+        // those. Markup whose answers a visitor cannot read is a
+        // structured-data violation and a manual action, so this is built by
+        // walking the page's own qa blocks rather than from a second list
+        // that could drift out of step with them. A page with no questions
+        // emits nothing.
+        ...faqFor(page),
+      ],
     });
     return htmlResponse(
       doc,

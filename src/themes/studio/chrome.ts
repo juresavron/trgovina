@@ -40,7 +40,7 @@
 import { esc, type RenderCtx } from "../../render/sections";
 import { brandMark } from "./brand";
 import { basketIcon, mailIcon } from "./icons";
-import { isSetPhone } from "./page";
+import { isSetPhone } from "../../lib/filled";
 
 /* ---- inline line icons ----------------------------------------------- */
 /* 24px grid, stroke-only, currentColor. The chrome's magnifier and basket are

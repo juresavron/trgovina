@@ -199,6 +199,21 @@ const browser = await chromium.launch({
 });
 for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile", { width: 390, height: 844 }]]) {
   const page = await browser.newPage({ viewport: size });
+  // CUMULATIVE LAYOUT SHIFT, MEASURED RATHER THAN GUESSED.
+  //
+  // The SEO audit used to warn about every <img> with no width/height on the
+  // usual reasoning that an unsized image shifts the layout. It does not
+  // here: these frames reserve their boxes with aspect-ratio, and the real
+  // metric came out between 0.0009 and 0.033 against a 0.1 threshold. A proxy
+  // that fires where the metric is clean buries the findings that matter, so
+  // the proxy went and this took its place — the browser is already open, and
+  // it is the only thing that can answer the question.
+  await page.addInitScript(() => {
+    window.__cls = 0;
+    new PerformanceObserver((l) => {
+      for (const e of l.getEntries()) if (!e.hadRecentInput) window.__cls += e.value;
+    }).observe({ type: "layout-shift", buffered: true });
+  });
   for (const route of Object.keys(docs)) {
     await page.goto("http://127.0.0.1:" + PORT + "/" + file(route), { waitUntil: "networkidle" });
     await page.evaluate(async () => {
@@ -208,6 +223,14 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
       window.scrollTo(0, 0);
     });
     await page.waitForLoadState("networkidle");
+    const cls = await page.evaluate(() => +window.__cls.toFixed(4));
+    // 0.1 is Google's own "good" boundary and 0.25 is where a page is called
+    // poor. Both are reported as what they cost rather than as a number.
+    if (cls > 0.1) {
+      add("error", route, "layout-shift", label + ": CLS " + cls + " — content jumps under the reader as it loads");
+    } else if (cls > 0.05) {
+      add("warn", route, "layout-shift", label + ": CLS " + cls + " — approaching the 0.1 threshold");
+    }
     const r = await page.evaluate(() => {
       const out = { overflow: 0, noAlt: [], dupIds: [], skips: [], smallTargets: [], brokenImgs: [], emptyLinks: [] };
       out.overflow = Math.max(0, document.documentElement.scrollWidth - window.innerWidth);

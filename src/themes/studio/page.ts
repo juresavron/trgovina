@@ -21,6 +21,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 import type { Block, Page } from "../../content/pages";
 
 /* ------------------------------------------------------------------ CSS */
@@ -615,6 +616,54 @@ export const STUDIO_PAGE_CSS = `
     :root[data-theme="studio"] .st-page-act { transition: none; }
   }
 
+  /* ---- where to go next -------------------------------------------------
+   *
+   * A quiet row, ruled off from the document above it, at the foot of every
+   * page. It is navigation rather than content — hence the nav landmark and
+   * the label rung on its heading — and it is deliberately three links and
+   * not a grid of everything: see onward() for what the audit measured and
+   * why these three. */
+  :root[data-theme="studio"] .st-page-onward {
+    margin-block-start: clamp(44px, 4.6vw, 76px);
+    padding-block-start: clamp(20px, 2vw, 30px);
+    border-block-start: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-page-onward-h {
+    margin: 0 0 clamp(10px, 1vw, 14px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-page-onward ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(6px, 0.8vw, 12px) clamp(18px, 2vw, 34px);
+  }
+  :root[data-theme="studio"] .st-page-onward a {
+    display: inline-flex;
+    align-items: center;
+    /* Navigation, not a link inside a sentence, so WCAG 2.2 SC 2.5.8's
+     * inline exception does not cover it and 24px is the floor. */
+    min-block-size: 24px;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: 1.4;
+    color: var(--ink);
+    text-underline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-page-onward a:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+    border-radius: var(--r-ctrl);
+  }
+
   /* The closing call to action. */
   :root[data-theme="studio"] .st-page-cta {
     margin-block-start: clamp(48px, 5vw, 84px);
@@ -701,23 +750,6 @@ export const STUDIO_PAGE_CSS = `
  * reaching for another module's private helpers is a worse coupling than
  * four lines of duplication that a comment ties together.
  */
-const isSet = (v: string): boolean => v.trim() !== "" && !v.includes("TODO");
-
-/** A VAT id is unset while every digit in it is a zero. */
-const isSetVat = (v: string): boolean =>
-  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
-
-/** A postcode is unset while every digit is a zero. */
-const isSetZip = (v: string): boolean =>
-  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
-
-/**
- * A phone number is unset while the subscriber part is all zeros. The country
- * code is stripped first so "+386 00 000 000" cannot be rescued by its 386.
- */
-export const isSetPhone = (v: string): boolean =>
-  isSet(v) && v.replace(/[^0-9]/g, "").replace(/^386/, "").replace(/0/g, "") !== "";
-
 /** The mark that stands in for a value nobody has filled in yet. */
 const UNSET = '<span class="st-page-todo">podatek še ni vpisan</span>';
 
@@ -1003,6 +1035,49 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
  * A <nav> with an accessible name rather than a bare list, so a screen reader
  * announces what the links are for and can skip them in one move.
  */
+/**
+ * WHERE TO GO NEXT, at the foot of every editorial and legal page.
+ *
+ * ⚠️ THIS IS AN INTERNAL-LINKING FIX, and the measurement is the reason it
+ * exists. scripts/audit-seo.mjs walks the link graph, and eleven of these
+ * pages linked to exactly ONE other page from their body: /dostava-in-montaza,
+ * /primerjava, /vodniki, /o-nas, /kontakt, the FAQ and every legal page were
+ * crawl dead ends. A page with one outbound link passes almost nothing on and
+ * gives a crawler nowhere to go — on a site whose entire strategy is ranking
+ * two category pages, that is the equity draining out the bottom of every
+ * article.
+ *
+ * The destinations are not "related posts". They are the three pages this
+ * shop exists to sell from, named by their own names so the anchor text says
+ * what is at the other end — which is the half of an internal link that
+ * carries the signal. At the end of a piece about delivery, "Masažni bazeni"
+ * is also simply the right next step for a reader, which is the test any
+ * link block has to pass before it is worth adding.
+ *
+ * The current page is excluded, so this can never link to itself.
+ */
+function onward(ctx: RenderCtx, page: Page): string {
+  const s = ctx.shop;
+  const here = s.routeSlugs[page.key as keyof typeof s.routeSlugs];
+  const links: { path: string; label: string }[] = [
+    ...(ctx.content.collections ?? []).map((c) => ({ path: c.path, label: c.h1 })),
+    { path: s.routeSlugs["/products"], label: "Vsi modeli in cene" },
+  ].filter((l) => l.path !== here);
+  if (links.length === 0) return "";
+  return (
+    '<nav class="st-page-onward" aria-labelledby="st-onward-h">' +
+    '<p class="st-page-onward-h" id="st-onward-h">Oglejte si</p>' +
+    "<ul>" +
+    links
+      .map(
+        (l) =>
+          '<li><a href="' + esc(l.path + ctx.q) + '">' + esc(l.label) + "</a></li>",
+      )
+      .join("") +
+    "</ul></nav>"
+  );
+}
+
 export function renderStudioPage(ctx: RenderCtx, page: Page): string {
   const ids = page.blocks.map((b, i) => ("h" in b && b.h ? sectionId(b.h, i) : ""));
   const headed = page.blocks
@@ -1037,6 +1112,7 @@ export function renderStudioPage(ctx: RenderCtx, page: Page): string {
     (index ? '<div class="st-page-rail">' + index + "</div>" : "") +
     '<div class="st-page-body">' +
     page.blocks.map((b, i) => block(ctx, b, ids[i] || undefined)).join("") +
+    onward(ctx, page) +
     "</div></div></div></section></main>"
   );
 }

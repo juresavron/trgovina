@@ -1,5 +1,6 @@
 import type { ShopConfig } from "../tenants/types";
 import type { Collection, PdpContent, ShopContent } from "../content/types";
+import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
 import type { Page } from "../content/pages";
 import { renderStudioPage } from "../themes/studio/page";
 import { STUDIO_PRELOAD } from "../themes/studio/fonts";
@@ -83,6 +84,15 @@ export interface PageOptions {
   /** Dev-only switcher bar. */
   bodyHtml: string;
   jsonLd?: object[];
+  /**
+   * The picture a shared link shows, as a path under this shop's own origin.
+   *
+   * Absent on pages that have nothing of their own to show, where the shop's
+   * hero stands in — see renderDocument. A product page passes its lead
+   * photograph, which is the difference between a link that sells and a card
+   * with a wordmark on it.
+   */
+  image?: string;
 }
 
 export function renderDocument(o: PageOptions): string {
@@ -114,6 +124,23 @@ export function renderDocument(o: PageOptions): string {
     '<meta property="og:description" content="' + esc(o.description) + '">' +
     '<meta property="og:url" content="' + esc(canonical) + '">' +
     '<meta property="og:locale" content="' + esc(s.locale.ogLocale) + '">' +
+    // THE CARD HAD NO PICTURE, on any page.
+    //
+    // Every link to this shop — pasted into Facebook, WhatsApp, Viber, a
+    // Slack channel, an e-mail preview — rendered as a bare text card. For a
+    // EUR 2,400-8,400 product bought after somebody sends the page to their
+    // partner, that is the single most-shared moment on the site rendering
+    // as nothing. A product page shows the product; everything else shows
+    // the hero, which is the shop's own picture and always exists.
+    //
+    // Absolute by requirement: og:image is one of the few tags where a
+    // relative URL is simply ignored, and it must be on the shop's own
+    // origin so the crawler that fetches it sees the same bytes a visitor
+    // would. og:image:alt carries the same sentence a screen reader gets.
+    '<meta property="og:image" content="' +
+      esc(s.siteUrl + (o.image ?? "/media/site/hero.webp")) + '">' +
+    '<meta property="og:image:alt" content="' + esc(o.title) + '">' +
+    '<meta name="twitter:card" content="summary_large_image">' +
     // ICONS. There were none at all, so every tab, bookmark and shared link
     // showed the browser's blank-page glyph — on a storefront asking for
     // EUR 2,400-8,400. The SVG is what modern browsers use and the only one
@@ -143,22 +170,49 @@ export function renderDocument(o: PageOptions): string {
   );
 }
 
+/**
+ * Who the shop is, for a search engine.
+ *
+ * ⚠️ NOTHING IN HERE IS ALLOWED TO BE A PLACEHOLDER. This used to emit the
+ * config verbatim, so every page on the site asserted, in machine-readable
+ * form, that the business telephone is +386 00 000 000 and its registered
+ * address is "TODO, 0000 TODO". Structured data is a claim made TO Google
+ * rather than to a reader — it is ingested into the knowledge panel, and a
+ * shop that tells Google its address is TODO has spent its identity signal on
+ * garbage before a single page ranks.
+ *
+ * The rule this file already applies to money (see productJsonLd: no Offer
+ * without a price somebody set) is the same rule, and it now applies here:
+ * a field that has not been filled in is OMITTED. An Organization with a name
+ * and a URL is valid, honest and complete the day the rest lands — see
+ * src/lib/filled.ts for the predicates and why they have one home.
+ */
 export function organizationJsonLd(s: ShopConfig): object {
-  return {
+  const org: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: s.name,
     url: s.siteUrl,
-    telephone: s.contact.phone,
-    email: s.contact.email,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: s.contact.address.street,
-      postalCode: s.contact.address.zip,
-      addressLocality: s.contact.address.city,
-      addressCountry: s.addressCountry,
-    },
   };
+  if (isSetPhone(s.contact.phone)) org["telephone"] = s.contact.phone;
+  if (isSet(s.contact.email)) org["email"] = s.contact.email;
+
+  // The address goes in whole or not at all. A PostalAddress carrying a
+  // country and nothing else is not an address; it is a claim that the shop
+  // could not say where it is, which is worse than saying nothing.
+  const a = s.contact.address;
+  if (isSet(a.street) && isSetZip(a.zip) && isSet(a.city)) {
+    org["address"] = {
+      "@type": "PostalAddress",
+      streetAddress: a.street,
+      postalCode: a.zip,
+      addressLocality: a.city,
+      addressCountry: s.addressCountry,
+    };
+  }
+  if (isSetVat(s.company.vatId)) org["vatID"] = s.company.vatId;
+  if (isSet(s.company.legalName)) org["legalName"] = s.company.legalName;
+  return org;
 }
 
 export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c.pdp): object {
@@ -190,6 +244,94 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
     };
   }
   return product;
+}
+
+/**
+ * The trail a SERP result shows instead of the raw URL.
+ *
+ * Google replaces "masazni-bazeni-vrelec.si › bazen › veliki-230" with
+ * "Trgovina › Masažni bazeni › BAZEN 230" when this is present, and the
+ * second reads like a shop while the first reads like a file path. It is the
+ * cheapest rich result there is: no new content, no claim about anything,
+ * just the position of a page in a hierarchy the site already renders as
+ * visible breadcrumbs.
+ *
+ * The items are given as {name, url} in order, ROOT FIRST. The last item is
+ * the page itself and carries no url — Google's own guidance, because the
+ * current page needs no link to itself and supplying one has been seen to
+ * suppress the whole trail.
+ */
+export function breadcrumbJsonLd(
+  s: ShopConfig,
+  trail: readonly { readonly name: string; readonly path?: string }[],
+): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: trail.map((t, i) => {
+      const item: Record<string, unknown> = {
+        "@type": "ListItem",
+        position: i + 1,
+        name: t.name,
+      };
+      if (t.path) item["item"] = s.siteUrl + t.path;
+      return item;
+    }),
+  };
+}
+
+/**
+ * The models on a collection page, as a set rather than as loose links.
+ *
+ * /masazni-bazeni and /swim-spa are the two pages this shop is built to rank,
+ * and to a crawler they were three anchors in a div. An ItemList says "this
+ * page is a list of these products, in this order", which is what lets a
+ * category page compete as a category rather than as an article that happens
+ * to mention some products.
+ *
+ * Each entry is a URL rather than an inlined Product: the product's own page
+ * carries its Product node with the price and the offer, and repeating that
+ * here would be two sources for one fact, which is how they drift.
+ */
+export function itemListJsonLd(
+  s: ShopConfig,
+  name: string,
+  slugs: readonly string[],
+): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name,
+    numberOfItems: slugs.length,
+    itemListElement: slugs.map((slug, i) => ({
+      "@type": "ListItem",
+      position: i + 1,
+      url: s.siteUrl + s.routeSlugs["/product"] + "/" + slug,
+    })),
+  };
+}
+
+/**
+ * The questions on a page, as the accordion Google can show under a result.
+ *
+ * ⚠️ ONLY FROM QUESTIONS THAT ARE VISIBLE ON THE PAGE. FAQPage markup whose
+ * answers a visitor cannot read is a structured-data violation and a manual
+ * action, so this is built from the same qa blocks the page renders and never
+ * from a separate list. The answers are plain text: the block renders them as
+ * a <p> and nothing else, so there is no markup to carry across.
+ */
+export function faqJsonLd(
+  items: readonly (readonly [string, string])[],
+): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map(([q, a]) => ({
+      "@type": "Question",
+      name: q,
+      acceptedAnswer: { "@type": "Answer", text: a },
+    })),
+  };
 }
 
 export function buildCtx(

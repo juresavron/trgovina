@@ -96,6 +96,7 @@ import { TERMS } from "./pages/pogoji";
 import { PRIVACY } from "./pages/zasebnost";
 import { COOKIES } from "./pages/piskotki";
 import { WITHDRAWAL } from "./pages/odstop";
+import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
 
 /**
  * Every editorial and legal page, in no particular order — the router matches
@@ -137,22 +138,8 @@ export const PAGES: readonly Page[] = [
  * predicate is now per field, and each one only knows how ITS OWN kind of
  * value looks when it is missing.
  */
-const isSet = (v: string): boolean => v.trim() !== "" && !v.includes("TODO");
-
-/** A VAT id is unset while it is the all-zero stand-in. */
-const isSetVat = (v: string): boolean =>
-  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
-
-/** A postcode is unset while every digit is a zero. */
-const isSetZip = (v: string): boolean =>
-  isSet(v) && v.replace(/[^0-9]/g, "").replace(/0/g, "") !== "";
-
-/**
- * A phone number is unset while the subscriber part is all zeros. The country
- * code is stripped first so "+386 00 000 000" cannot be rescued by its 386.
- */
-const isSetPhone = (v: string): boolean =>
-  isSet(v) && v.replace(/[^0-9]/g, "").replace(/^386/, "").replace(/0/g, "") !== "";
+// The four predicates moved to src/lib/filled.ts — see that file for why
+// the third copy of them was publishing "TODO" to Google as structured data.
 
 export function legalPagesReady(
   company: { legalName: string; vatId: string },

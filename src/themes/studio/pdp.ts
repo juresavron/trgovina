@@ -71,7 +71,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import { isSetPhone } from "./page";
+import { isSetPhone } from "../../lib/filled";
 import type { Collection, PdpContent, PdpPhoto } from "../../content/types";
 import { productArt } from "./product-art";
 import { productImg } from "./media";
