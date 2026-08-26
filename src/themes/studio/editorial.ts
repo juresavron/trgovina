@@ -753,6 +753,21 @@ export const STUDIO_EDITORIAL_CSS = `
     text-transform: uppercase;
     color: var(--on-invert-mute);
   }
+  /* The same run of tracked caps WITHOUT the pill, for a quote that is not a
+   * verified purchase. The pill is what reads as a badge, and a badge is a
+   * claim — see quoteBlock. Naming the model is context and stays. */
+  :root[data-theme="studio"] .st-tst-model {
+    min-width: 0;
+    max-inline-size: 100%;
+    overflow-wrap: break-word;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--on-invert-mute);
+  }
 
   /* The circular product medallion (§4.10), clipped to --r-circle. The frame
    * is composition and is built regardless; the picture inside it is
@@ -1362,10 +1377,25 @@ function motif(): string {
  * attribution stands alone with no hole beside it. Nothing in the stylesheet
  * is conditioned on the chip's presence or on what it says.
  */
-function quoteBlock(r: { q: string; who: string; model?: string }): string {
-  const chip = r.model
-    ? '<span class="st-tst-chip">Preverjen nakup · ' + esc(r.model) + "</span>"
-    : "";
+function quoteBlock(r: { q: string; who: string; model?: string; placeholder?: boolean }): string {
+  // ⚠️ A PLACEHOLDER NEVER WEARS THE CHIP.
+  //
+  // ShopContent.reviews states the rule — "the renderer must not dress it as
+  // verified" — and this function was ignoring it: the chip printed whenever
+  // a model was set, so the two known-invented quotes rendered "Preverjen
+  // nakup · BAZEN 230" on every page view. Claiming a review is a checked
+  // purchase when nobody wrote it is Annex I 23b/23c of the Unfair Commercial
+  // Practices Directive, banned outright.
+  //
+  // The launch gate already refuses live: true while any review is flagged,
+  // but a gate on a config flag is one flip away from publishing the claim,
+  // and the QA host renders it in the meantime. The model still shows — it is
+  // useful context — as a plain caption that asserts nothing.
+  const chip = !r.model
+    ? ""
+    : r.placeholder
+      ? '<span class="st-tst-model">' + esc(r.model) + "</span>"
+      : '<span class="st-tst-chip">Preverjen nakup · ' + esc(r.model) + "</span>";
   return (
     '<div class="st-tst-body">' +
     '<span class="st-tst-glyph" aria-hidden="true">„</span>' +
@@ -1475,12 +1505,18 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
 
   const nav = reviews.length < 2 ? "" : sliderNav("#st-tst-" + String(reviews.length));
 
+  // The heading makes the same claim the chip does, so it answers to the same
+  // rule: it may say "verified" only when every quote under it is real.
+  const heading = reviews.some((r) => r.placeholder)
+    ? "Mnenja strank"
+    : "Preverjena mnenja strank";
+
   return (
     '<section class="st-tst" data-st-slider aria-labelledby="st-tst-h">' +
     '<div class="st-tst-in">' +
     '<div class="st-tst-head">' +
     motif() +
-    '<h2 class="st-tst-h" id="st-tst-h">Preverjena mnenja strank</h2>' +
+    '<h2 class="st-tst-h" id="st-tst-h">' + esc(heading) + "</h2>" +
     "</div>" +
     '<div class="st-tst-track" data-st-scroll>' +
     '<ul class="st-tst-list">' + slides + "</ul>" +

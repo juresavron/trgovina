@@ -353,7 +353,23 @@ export const STUDIO_PDP_CSS = `
   }
   /* The links are the loud half: --ink-body, 9.7:1, so the trail reads as two
    * destinations and one dimmer statement of where you are. */
+  /* 24px tall, which is WCAG 2.2 SC 2.5.8's floor and not a design opinion.
+   *
+   * The label rung's line box is 20px, so every crumb link was a 20px target
+   * — the site audit reported 36 of them across the six model pages. The
+   * inline exception in 2.5.8 covers a link inside a sentence; a breadcrumb
+   * trail is a row of navigation, so it does not apply.
+   *
+   * The height comes from padding and an inline-flex box rather than a
+   * min-height on an inline element, where min-height does nothing. The
+   * negative block margin keeps the trail's own spacing exactly as measured:
+   * the target grows, the layout does not move. */
   :root[data-theme="studio"] .st-pdp-crumbs a {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: 24px;
+    padding-block: 2px;
+    margin-block: -2px;
     color: var(--ink-body);
     text-decoration: none;
     transition: color 0.2s ease;

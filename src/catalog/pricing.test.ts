@@ -14,6 +14,16 @@ import { POLA_MODELS, modelPrice, modelPriceCents } from "./pola";
 import { SHOPS } from "../tenants";
 import { PAGES, legalPagesReady } from "../content/pages";
 import { CONTENT } from "../content";
+import { handleRequest } from "../worker";
+
+/** A shop's home page as the browser gets it. */
+async function renderHome(key: string): Promise<string> {
+  return await handleRequest(
+    new Request("https://trgovina.worldfans.workers.dev/?shop=" + key, {
+      headers: { host: "trgovina.worldfans.workers.dev" },
+    }),
+  ).text();
+}
 
 /**
  * A worked set, used only here. It is NOT a suggestion of what the real
@@ -247,6 +257,34 @@ describe("a live shop can identify itself", () => {
         key + " is live while publishing reviews nobody wrote under a " +
           "verified-purchase claim",
       ).toEqual([]);
+    }
+  });
+
+  it("never RENDERS a verified-purchase claim over an invented review", async () => {
+    // The test above gates the CONTENT; this one gates the PAGE. They are
+    // different failures: the flag can be set correctly on every review and
+    // the renderer print "Preverjen nakup" beside them anyway, which is what
+    // it did — the type's own contract says "the renderer must not dress it
+    // as verified" and nothing was checking that it obeyed.
+    //
+    // Annex I 23b/23c is banned outright, so the claim must be absent from
+    // the bytes that reach a browser, not merely absent from a live site: the
+    // QA host serves these pages today, and a launch gate is one config flip
+    // from serving them everywhere.
+    for (const key of Object.keys(SHOPS)) {
+      const content = CONTENT[key];
+      if (!content || !content.reviews.some((r) => r.placeholder)) continue;
+      const html = await renderHome(key);
+      expect(
+        html.includes("Preverjen nakup"),
+        key + ": a review nobody wrote is rendered with a verified-purchase chip",
+      ).toBe(false);
+      expect(
+        html.includes("Preverjena mnenja"),
+        key + ": the band claims verified reviews over quotes flagged as filler",
+      ).toBe(false);
+      // The quotes still render — the point is the claim, not the layout.
+      expect(html.includes(content.reviews[0]!.q.slice(0, 40))).toBe(true);
     }
   });
 

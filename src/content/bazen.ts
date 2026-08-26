@@ -703,6 +703,10 @@ export const bazenContent: ShopContent = {
   hubMetaDescription:
     "Masažni bazeni od 195 do 230 cm in swim spa bazeni od 450 do 580 cm. " +
     "Mere, specifikacije in cene, z dostavo, priklopom in zagonom po Sloveniji.",
+  hubIntro:
+    "Dve družini bazenov. Masažni bazeni za pet ali šest oseb, od 195 do 230 cm, " +
+    "in swim spa bazeni za plavanje na mestu, od 450 do 580 cm. Vsak model " +
+    "pripeljemo, priklopimo in zaženemo.",
   pdp: pdpFor(flagship),
   // Both families' pages. The router matches any slug in here, so the swim
   // spa cards link at real pages rather than at a 404.

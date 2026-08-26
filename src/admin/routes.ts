@@ -39,7 +39,14 @@ import {
   updateMedia,
   uploadObject,
 } from "./supabase";
-import { indexPage, loginPage, modelPage, notConfiguredPage, type MediaView } from "./panel";
+import {
+  indexPage,
+  loginPage,
+  modelPage,
+  notConfiguredPage,
+  notFoundPage,
+  type MediaView,
+} from "./panel";
 import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn } from "./auth";
 
 /** Shops whose catalogue this panel can manage. */
@@ -241,17 +248,26 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   if (parts.length === 1) {
     const key = "bazen";
     const cat = CATALOGUE_SHOPS[key]!;
-    const counts = await Promise.all(
+    // The rows were already being fetched to count them; taking the first
+    // row's url out of the same result turns the dashboard from a list of
+    // names into a contact sheet at no extra request.
+    const shots = await Promise.all(
       cat.models.map(async (m) => {
         const id = await ensureProduct(api, key, m.slug, m.name, m.freightClass);
-        return (await listMedia(api, id)).length;
+        return await listMedia(api, id);
       }),
     );
     return page(
       indexPage(
         SHOPS[key]!.name,
         key,
-        cat.models.map((m, i) => ({ shop: key, slug: m.slug, name: m.name, count: counts[i]! })),
+        cat.models.map((m, i) => ({
+          shop: key,
+          slug: m.slug,
+          name: m.name,
+          count: shots[i]!.length,
+          cover: shots[i]![0]?.url,
+        })),
         admin.email,
       ),
     );
@@ -262,7 +278,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   const slug = parts[2] ?? "";
   const cat = CATALOGUE_SHOPS[shop];
   const model = cat ? adminModelBySlug(slug) : undefined;
-  if (!cat || !model) return page(loginPage("Ta model ne obstaja."), 404);
+  if (!cat || !model) return page(notFoundPage("Ta model ne obstaja.", admin.email), 404);
 
   const productId = await ensureProduct(api, shop, model.slug, model.name, model.freightClass);
   const action = parts[3];
@@ -296,7 +312,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     return seeOther("/admin/" + shop + "/" + slug + "?m=deleted");
   }
 
-  if (action) return page(loginPage("Neznano dejanje."), 404);
+  if (action) return page(notFoundPage("Neznano dejanje.", admin.email), 404);
 
   const rows = await listMedia(api, productId);
   const notice = url.searchParams.get("m")

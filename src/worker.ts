@@ -190,7 +190,13 @@ export function handleRequest(request: Request): Response {
       content,
       theme,
       path: "/",
-      title: cap(shop.keyword.primary) + " — cena, dostava in montaža | " + shop.name,
+      // 60 characters is where Google stops drawing a title, and the shop's
+      // name grew: "Masažni bazeni Vrelec" is 21 of them, which took this
+      // line to 64 and cut "Vrelec" off the end of the one result that
+      // matters most. The head keeps the keyword and the two words a buyer
+      // searches with; "montaža" is in the nav, in the trust strip and on its
+      // own page, so losing it here costs nothing and buys the brand back.
+      title: cap(shop.keyword.primary) + " — cena in dostava | " + shop.name,
       description: content.metaDescription,
       noindex: dev,
       q,

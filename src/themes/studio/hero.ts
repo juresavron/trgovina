@@ -180,58 +180,6 @@ export const STUDIO_HERO_CSS = `
       );
   }
 
-  /* The wordmark, fit to the container's width.
-   *
-   * SVG rather than a font-size in vw, because "fit the text to this box" is
-   * exactly what textLength does and nothing else does it without measuring.
-   * A vw-based size would fit one shop's name and clip or strand every other:
-   * these run from "Ledena Kad" to "Prostostoječa Kad", and a size that suits
-   * ten characters leaves nineteen hanging off the screen.
-   *
-   * lengthAdjust="spacing" and not "spacingAndGlyphs": spacing absorbs the
-   * difference in the TRACKING, which is what a designer would do to a
-   * wordmark. spacingAndGlyphs would stretch the letterforms themselves, and
-   * a stretched typeface is the single most obvious way to make a brand look
-   * cheap. */
-  :root[data-theme="studio"] .st-hero-mark {
-    position: absolute; z-index: 2;
-    inset-block-start: clamp(84px, 13vh, 190px);
-    inset-inline: 0;
-    margin: 0;
-    padding-inline: var(--studio-gutter);
-    display: flex;
-    justify-content: center;
-    pointer-events: none;
-  }
-  :root[data-theme="studio"] .st-hero-mark svg {
-    inline-size: 100%;
-    max-inline-size: var(--studio-container);
-    block-size: auto;
-    display: block;
-    /* The wordmark's height is width-driven (the SVG keeps its aspect) while
-     * the foot block is pixel-sized from the bottom edge, so on a wide-and-
-     * short viewport the two met: at 844x390 the pill printed straight across
-     * the wordmark's letters, and at 1300x450 so did the heading's first
-     * line. This cap spends surplus height on the wordmark and takes scarce
-     * height away from it. 340px is the tallest foot stack plus the mark's
-     * own top offset plus breathing room, so the cap only binds where a
-     * collision was coming — under ~535px of height at full desktop width,
-     * landscape-phone heights below that — and resolves above the natural
-     * height everywhere else, changing nothing. When it does bind, the
-     * viewBox letterboxes inside the full-width viewport and the default
-     * preserveAspectRatio centres the drawing, so the mark renders smaller,
-     * centred, and never under the foot. The 44px floor keeps the device
-     * present rather than letting the subtraction collapse it to a sliver on
-     * the shortest landscapes. */
-    max-block-size: max(44px, calc(100vh - 340px));
-    max-block-size: max(44px, calc(100svh - 340px));
-  }
-  :root[data-theme="studio"] .st-hero-mark text {
-    font-family: var(--f-display);
-    font-weight: var(--w-display);
-    fill: var(--on-invert);
-  }
-
   /* The foot block: pill, heading, one button. */
   :root[data-theme="studio"] .st-hero-foot {
     position: relative; z-index: 4;
@@ -267,14 +215,22 @@ export const STUDIO_HERO_CSS = `
     line-height: var(--lh-label-tight);
     color: var(--on-invert);
   }
+  /* The h1 takes the h2 rung, not h3.
+   *
+   * It was set at h3 because it shared the frame with a poster wordmark and
+   * had to yield to it — the one thing on the page allowed to be loud was the
+   * name. With the wordmark gone (see renderStudioHero) nothing is competing,
+   * and the heading that says what is sold and to whom should be the largest
+   * type in the fold. Still not the h1 rung: 92px over a photograph at 16ch
+   * runs to four lines and turns the whole frame into text. */
   :root[data-theme="studio"] .st-hero-foot h1 {
     margin: 0;
     max-inline-size: 16ch;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: var(--t-h3);
-    letter-spacing: var(--ls-h3);
-    line-height: var(--lh-h3);
+    font-size: var(--t-h2);
+    letter-spacing: var(--ls-h2);
+    line-height: var(--lh-h2);
     color: var(--on-invert);
   }
   /* The source has no paragraph here at all — pill, title, button. Ours keeps
@@ -317,14 +273,12 @@ export const STUDIO_HERO_CSS = `
    * element and matched nothing on any page. scripts/verify-hero-contrast.mjs
    * dropped its matching entry in the same change. */
 
-  /* Below 900px the wordmark rides higher so the foot block keeps its own
-   * air. This block used to re-assert the h1's size, tracking and leading
-   * here too — but it re-read the very same --t-h3/--ls-h3/--lh-h3 the base
-   * rule already reads, and those tokens switch per breakpoint tier on their
-   * own, so the override resolved to identical values at every width it
-   * covered. Removed as dead weight; the ramp tokens are the mechanism. */
+  /* This block used to re-assert the h1's size, tracking and leading here
+   * too — but it re-read the very same --t-h3/--ls-h3/--lh-h3 the base rule
+   * already reads, and those tokens switch per breakpoint tier on their own,
+   * so the override resolved to identical values at every width it covered.
+   * Removed as dead weight; the ramp tokens are the mechanism. */
   @media (max-width: 900px) {
-    :root[data-theme="studio"] .st-hero-mark { inset-block-start: clamp(92px, 15vh, 150px); }
     /* Below 900px the bar doubles to two 44px rows (chrome.ts shares this
      * exact tier), so the fixed chrome is 96px deep while 9% of a phone
      * viewport is 55–76px — the band's hold ended mid-bar and the second
@@ -496,7 +450,11 @@ export const STUDIO_HERO_CSS = `
     isolation: isolate;
     overflow: clip;
     display: flex; flex-direction: column; justify-content: flex-end;
-    min-height: clamp(440px, 64vh, 780px);
+    /* Sized to what is in it. The band held a wordmark three lines deep, so
+     * 64vh was the room that needed; one line and a model bar leave 200px of
+     * empty ground above them, and its backdrop is a gradient rather than a
+     * photograph — so the space shows nothing at all. */
+    min-height: clamp(380px, 46vh, 560px);
     padding: clamp(56px, 6vw, 120px) var(--studio-gutter) clamp(32px, 4vw, 72px);
     background: var(--ink-invert);
   }
@@ -523,7 +481,7 @@ export const STUDIO_HERO_CSS = `
     margin: 0 0 clamp(28px, 3.6vw, 72px);
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(2.75rem, 12vw, 15rem);
+    font-size: clamp(2.5rem, 7.6vw, 9rem);
     letter-spacing: var(--ls-h1);
     line-height: var(--lh-h1);
     text-transform: uppercase;
@@ -781,22 +739,6 @@ function compareAt(d: RenderCtx["content"]["pdp"]): string | null {
  * marquee below deliberately use non-heading elements so this stays the only
  * one on the page.
  */
-/**
- * The wordmark as a self-scaling SVG. See the note at its call site for why
- * the box is measured from the string.
- */
-function markSvg(mark: string): string {
-  const chars = [...mark];
-  const spaces = chars.filter((ch) => ch === " ").length;
-  const w = Math.round((chars.length - spaces) * 0.66 * 290 + spaces * 0.26 * 290);
-  return (
-    '<p class="st-hero-mark" aria-hidden="true">' +
-    '<svg viewBox="0 0 ' + w + ' 340" role="presentation" focusable="false">' +
-    '<text x="' + Math.round(w / 2) + '" y="268" text-anchor="middle" font-size="290" ' +
-    'textLength="' + w + '" lengthAdjust="spacing">' + esc(mark) + "</text>" +
-    "</svg></p>"
-  );
-}
 
 /**
  * §4.1 — the hero.
@@ -853,23 +795,23 @@ export function renderStudioHero(ctx: RenderCtx): string {
     (photo ? eager(decorativeImg(photo, "st-hero-bg", "100vw")) : "") +
     '<span class="st-hero-veil" aria-hidden="true"></span>' +
 
-    // Fit-to-width wordmark.
+    // NO POSTER WORDMARK.
     //
-    // The viewBox width is ESTIMATED from the string rather than fixed, and
-    // that is the whole trick. A fixed width with textLength forced every
-    // shop's name into the same box: "MASAŽNI BAZEN" is naturally about
-    // 2.4× a 1000-unit box at this size, so the tracking went hugely negative
-    // and the two words printed on top of each other. Estimating first means
-    // textLength only has a few percent of error to absorb, which is what
-    // spacing adjustment is for.
+    // A fit-to-width SVG of the shop's name used to sit across the top third
+    // of the photograph, and it was the theme's signature device — read off a
+    // source whose brand name is one short word.
     //
-    // Caps in a grotesque average ~0.66em of advance; a word space is ~0.26em.
-    // The estimate does not need to be right, only close — the SVG scales to
-    // its container, so only the RATIO matters.
+    // It does not survive this shop's name. "MASAŽNI BAZENI VRELEC" is 21
+    // characters, so fit-to-width means it spans the frame, and fit-to-width
+    // ALSO means the longer the name the more of the photograph it covers.
+    // Forty pixels above it, in the bar, stood the same words again. So the
+    // first thing anyone met was the shop's name twice, at five times the
+    // size the second time, over the photograph it was hiding — and the
+    // sentence that says what is sold and to whom was pushed to the bottom
+    // edge of the fold.
     //
-    // 340 tall against a 290 size because Š and Ž reach well above cap height
-    // and a box drawn to Latin caps clips their carons.
-    markSvg(mark) +
+    // The name still gets ONE display-scale moment on this page: the band in
+    // §4.5, where it is the device rather than an obstruction. Once.
 
     // NO ANNOTATION. There was a leader line here pointing at the subject,
     // captioned with the shop's first trust line. It came from the source

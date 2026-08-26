@@ -169,7 +169,20 @@ export const STUDIO_TOKENS = `
 
     /* ---- Rhythm (desktop tier, ≥1200px) ---------------------------------- */
     --studio-gutter: 40px;
-    --studio-rhythm: 170px;
+    /* THE SEPARATION BETWEEN TWO BANDS, NOT THE PADDING ON EACH SIDE OF ONE.
+     *
+     * This was 170px, read off the source's band-scale separation and then
+     * applied as padding-block — so every section paid it top AND bottom and
+     * two neighbours stood 340px apart. Measured on the rendered homepage:
+     * nine consecutive sections at 170/170, about 3000px of the page's 11380
+     * spent on nothing at all. Most of those neighbours share a white ground,
+     * so the gap did not read as one section breathing and the next
+     * beginning; it read as the page having come apart.
+     *
+     * 104 restores the source's own figure as the distance BETWEEN bands
+     * (2 x 104 = 208, near enough at this scale) while leaving a section that
+     * carries its own ground — the dark bands — a generous inset of its own. */
+    --studio-rhythm: 104px;
     /** Chrome is padding-driven in the source: 16px above and below a single
      *  24px label line, giving 56px. --chrome-h is derived from those two so
      *  the hero's viewport math cannot drift away from the bar's real height.
@@ -246,7 +259,7 @@ export const STUDIO_TOKENS = `
   @media (max-width: 1199px) {
     :root[data-theme="studio"] {
       --studio-gutter: 25px;
-      --studio-rhythm: 100px;
+      --studio-rhythm: 76px;
       --chrome-pad-y: 8px;
       --t-h1: 64px;
       --t-h2: 50px;  --lh-h2: 1.1em;
@@ -266,7 +279,7 @@ export const STUDIO_TOKENS = `
   @media (max-width: 809px) {
     :root[data-theme="studio"] {
       --studio-gutter: 25px;
-      --studio-rhythm: 70px;
+      --studio-rhythm: 56px;
       --t-h1: 44px;
       --t-h2: 38px;  --lh-h2: 1.13em;
       --t-h3: 32px;
