@@ -12,21 +12,30 @@
 
   // Public identifiers, not secrets — both are meant to ship to browsers.
   //
-  // THIS WORKER HAS NO SECRETS AT ALL. It used to need three, then one; the
+  // THE WORKER NEEDS NO SECRET TO RUN. It used to need three, then one; the
   // last of them, SUPABASE_SERVICE_KEY, went when the admin panel started
   // acting as the signed-in person rather than as the service role. Every
   // Supabase call now carries that person's own access token, and the database
-  // decides what may happen — see the `admin_acts_as_itself` migration.
+  // decides what may happen — see the admin_acts_as_itself migration. A fresh
+  // clone plus a deploy is a working shop and a working panel, and the
+  // publishable key below can do only what this project's RLS allows an
+  // anonymous visitor to do: read a live shop's published pages.
   //
-  // So `npx wrangler secret put` has nothing to put. A fresh clone plus a
-  // deploy is a working panel, and there is no key here whose leak would cost
-  // anything: the publishable key can do only what this project's RLS allows
-  // an anonymous visitor to do, which is read a live shop's published pages.
+  // ONE OPTIONAL SECRET, for one optional feature:
+  //   GEMINI_API_KEY   npx wrangler secret put GEMINI_API_KEY
+  //                    Turns on the panel's 2K upscaler. Absent, the panel
+  //                    does not offer it and nothing else changes. See
+  //                    src/admin/enhance.ts — it REDRAWS a photograph rather
+  //                    than sharpening it, which is why it is opt-in per
+  //                    upload even once the key is set.
   //
   // Admin accounts are Supabase Auth users on the public.admins allowlist.
   "vars": {
     "SUPABASE_URL": "https://cybwzhgretztcjfdefoy.supabase.co",
-    "SUPABASE_ANON_KEY": "sb_publishable__aHkVGGeNcPgiwyB7tS_Sw_WpVTbBYy"
+    "SUPABASE_ANON_KEY": "sb_publishable__aHkVGGeNcPgiwyB7tS_Sw_WpVTbBYy",
+    // Model names move faster than deploys; this moves the upscaler onto a new
+    // one without touching enhance.ts. Public — it names a model, not a key.
+    "GEMINI_IMAGE_MODEL": "gemini-3-pro-image-preview"
   },
 
   // GOING LIVE (per shop — the onlyworld staged pattern):

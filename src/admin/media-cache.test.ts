@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { isContentAddressed, isWebp, adminModelSlugs } from "./routes";
+import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
 import { OFFERED_MODELS } from "../catalog/pola";
 import { OFFERED_SWIMSPAS } from "../catalog/swimspa";
 import { MEDIA_ALIASES, aliasTarget, encodeBucketKey } from "../media-aliases";
@@ -137,5 +138,49 @@ describe("the media panel's two promises", () => {
     }
     expect(slugs.length).toBe(OFFERED_MODELS.length + OFFERED_SWIMSPAS.length);
     expect(new Set(slugs).size, "two models share a slug").toBe(slugs.length);
+  });
+});
+
+
+/**
+ * The site's own pictures — the hero and the two category banners.
+ *
+ * These are the three files the panel could not reach, which is why the
+ * heaviest image on the storefront was a 2.7 MB PNG. What makes them work is
+ * a FIXED key: the storefront names them in code and renders synchronously, so
+ * it can never learn a new filename, and a replacement therefore has to land
+ * on top of the old one.
+ */
+describe("site images", () => {
+  it("keys are fixed, WebP, and under one prefix", () => {
+    for (const s of SITE_IMAGES) {
+      expect(s.key.startsWith("site/"), s.key).toBe(true);
+      expect(s.key.endsWith(".webp"), s.key).toBe(true);
+      // Anything content-addressed would be cached for a year and a
+      // replacement would never appear — see isContentAddressed.
+      expect(isContentAddressed(s.key), s.key + " must not look content-addressed").toBe(false);
+    }
+  });
+
+  it("every slot resolves by the stem its URL carries, and nothing else does", () => {
+    for (const s of SITE_IMAGES) {
+      expect(siteImageBySlug(stemOf(s.key))?.key).toBe(s.key);
+    }
+    for (const junk of ["", "hero.webp", "site/hero", "../hero", "HERO"]) {
+      expect(siteImageBySlug(junk), junk).toBeUndefined();
+    }
+  });
+
+  /**
+   * The fallback answers for the three managed keys and refuses everything
+   * else — it is a migration bridge, not a general retry, and a general one
+   * would turn /media into something that probes the bucket twice for every
+   * miss.
+   */
+  it("falls back only for the keys it names", () => {
+    expect(legacyFallback("site/hero.webp")).toBe("hero.png");
+    for (const junk of ["hero.png", "site/other.webp", "bazen/x/a.webp", ""]) {
+      expect(legacyFallback(junk), junk).toBeNull();
+    }
   });
 });

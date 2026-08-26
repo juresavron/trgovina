@@ -38,11 +38,12 @@ const { modelPage } = await import(out + "?v=" + Date.now());
 
 const dir = join(tmpdir(), "upl2"); mkdirSync(dir, { recursive: true });
 writeFileSync(join(dir, "m.html"), modelPage("bazen","x","TEST",[],undefined,"a@b.c"));
+writeFileSync(join(dir, "e.html"), modelPage("bazen","x","TEST",[],undefined,"a@b.c",true));
 for (const [n, bg] of [["photo.jpg","#8899aa"],["photo2.jpg","#aa8877"],["photo3.jpg","#77aa88"]]) {
   await sharp({ create:{width:1600,height:1200,channels:3,background:bg} }).jpeg().toFile(join(dir,n));
 }
 
-async function run(label, patch, files) {
+async function run(label, patch, files, page, tick) {
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
   const p = await b.newPage();
   const errs = []; p.on("pageerror", (e) => errs.push(e.message));
@@ -58,7 +59,14 @@ async function run(label, patch, files) {
     await route.fulfill({ status: 200, contentType: "text/html", body: "<p>ok</p>" });
   });
   if (patch) await p.addInitScript(patch);
-  await p.goto("file://" + join(dir, "m.html"));
+  let enhanceCalls = 0;
+  await p.route("**/admin/enhance", async (route) => {
+    enhanceCalls++;
+    // Answer the way the Worker does when the model returns nothing usable:
+    // the browser must carry on with the original rather than fail.
+    await route.fulfill({ status: 204, body: "" });
+  });
+  await p.goto("file://" + join(dir, page || "m.html"));
   const picks = (files || ["photo.jpg"]).map((f) => join(dir, f));
   await p.setInputFiles("#f", picks);
   const boxes = await p.$$(".alt-in");
@@ -74,12 +82,13 @@ async function run(label, patch, files) {
   console.log("  status:", (await p.textContent("#st").catch(()=>"?")).trim());
   console.log("  parts:", parts.join(", ") || "(no request)");
   console.log("  native form POST:", native);
-  console.log("  requests:", requests, "alts:", JSON.stringify(altsSent));
+  console.log("  requests:", requests, "alts:", JSON.stringify(altsSent), "enhance calls:", enhanceCalls);
   await b.close();
 }
 
 await run("modern browser");
 await run("three files at once", null, ["photo.jpg", "photo2.jpg", "photo3.jpg"]);
+await run("upscaler on, model returns nothing", null, ["photo.jpg", "photo2.jpg"], "e.html");
 // Safari <15: no createImageBitmap
 await run("no createImageBitmap", () => { delete window.createImageBitmap; });
 // A browser whose toBlob cannot encode WebP: it silently returns PNG.

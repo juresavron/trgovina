@@ -20,7 +20,7 @@
 import { mkdirSync, writeFileSync, cpSync, existsSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { dirname, extname, join, normalize } from "node:path";
 import { tmpdir } from "node:os";
 import { execFileSync } from "node:child_process";
 import sharp from "sharp";
@@ -130,6 +130,9 @@ for (const name of wanted) {
       ? scene({ w: 1400, h: 1000, label: name })
       : cutout({ w: 900, h: long ? 620 : 900, long, label: name });
   const buf = await sharp(svg).jpeg({ quality: 80 }).toBuffer();
+  // A stand-in path may now be nested — the site's own images live under
+  // "site/" — so the directory has to exist before the write.
+  mkdirSync(dirname(join(OUT, "media", name)), { recursive: true });
   writeFileSync(join(OUT, "media", name), buf);
 }
 console.log("stand-ins:", wanted.size);

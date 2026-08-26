@@ -259,7 +259,7 @@ const categories: Category[] = [
     // setting nobody here has seen. An alt is the picture for a screen reader
     // user; inventing its contents is worse than describing less.
     photo: {
-      src: "/media/kategorija-masazni-bazeni.jpeg",
+      src: "/media/site/kategorija-masazni-bazeni.webp",
       widths: [],
       alt: "Masažni bazen",
     },
@@ -287,7 +287,7 @@ const categories: Category[] = [
     //
     // The alt says only what is certain, for the reason given above.
     photo: {
-      src: "/media/kategorija-swim-spa.jpeg",
+      src: "/media/site/kategorija-swim-spa.webp",
       widths: [],
       alt: "Swim spa bazen",
     },
