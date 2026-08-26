@@ -450,7 +450,11 @@ export const STUDIO_HERO_CSS = `
     isolation: isolate;
     overflow: clip;
     display: flex; flex-direction: column; justify-content: flex-end;
-    min-height: clamp(440px, 64vh, 780px);
+    /* Sized to what is in it. The band held a wordmark three lines deep, so
+     * 64vh was the room that needed; one line and a model bar leave 200px of
+     * empty ground above them, and its backdrop is a gradient rather than a
+     * photograph — so the space shows nothing at all. */
+    min-height: clamp(380px, 46vh, 560px);
     padding: clamp(56px, 6vw, 120px) var(--studio-gutter) clamp(32px, 4vw, 72px);
     background: var(--ink-invert);
   }

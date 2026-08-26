@@ -800,37 +800,48 @@ export function renderStudioStatement(ctx: RenderCtx): string {
 }
 
 /**
- * Split a sentence into up to `n` balanced runs of whole words, so the glyphs
- * can be planted INSIDE the sentence rather than only at its seams — the
- * inline placement is the whole point of §4.8. A sentence with fewer words
- * than `n` simply yields fewer runs, and therefore fewer glyphs.
+ * Cut a clause at its SENTENCE ENDS, so a ring can only land at a pause.
+ *
+ * ⚠️ THIS USED TO CUT INTO N BALANCED RUNS OF WORDS, which plants the rings
+ * inside the sentence — the source's own device, and it works there because
+ * the source's sentence is long enough to have thirds. This shop's is four
+ * words: "Bazen tehta štiristo kilogramov." Cut into three, the rings landed
+ * after "Bazen" and after "štiristo", so the page's one display sentence read
+ * as three fragments with circles wedged between them. The device was
+ * decorating the copy to pieces.
+ *
+ * Cutting at punctuation scales with whatever a shop writes: a two-sentence
+ * clause gets two rings, a one-sentence clause gets one, and neither ever
+ * splits a phrase. Fewer rings than the palette holds is fine — the caller
+ * skips the ones it has no seam for.
  */
-function splitRuns(s: string, n: number): string[] {
-  const words = s.trim().split(/\s+/).filter(Boolean);
-  if (!words.length) return [];
-  const runs = Math.min(n, words.length);
+function sentenceRuns(s: string): string[] {
   const out: string[] = [];
-  for (let i = 0; i < runs; i++) {
-    const from = Math.round((i * words.length) / runs);
-    const to = Math.round(((i + 1) * words.length) / runs);
-    out.push(words.slice(from, to).join(" "));
+  const re = /[^.!?]+[.!?]+\s*/g;
+  let m: RegExpExecArray | null;
+  let end = 0;
+  while ((m = re.exec(s)) !== null) {
+    out.push(m[0].trim());
+    end = re.lastIndex;
   }
-  return out;
+  const tail = s.slice(end).trim();
+  if (tail) out.push(tail);
+  return out.length > 0 ? out : [s.trim()];
 }
 
-/** The three rings that punctuate the claim's first part; the fourth closes it. */
+/** The rings available to punctuate the claim's first part; one more closes it. */
 const CLAIM_RINGS: readonly GlyphKey[] = ["cabin", "drop", "temp"];
 
 /**
  * §4.8 — inline-icon statement + stats. The theme's signature device.
  *
- * The claim's two content parts become one sentence in the source's own shape:
- * FOUR text runs alternating with FOUR rings, no ring leading the paragraph
- * and one closing it. Part one is cut into three balanced runs so two rings
- * land mid-sentence; part two is marked by .st-claim-acc (monochrome now, see
- * the CSS) and the fourth ring closes the line. The rings are aria-hidden
- * punctuation, so a screen reader hears the sentence exactly as written — read
- * it without them and it is still the shop's sentence, unbroken.
+ * The claim's two content parts become one sentence punctuated by rings: no
+ * ring leads the paragraph, one closes it, and the rest land at the sentence
+ * ends inside part one — see sentenceRuns for why at the ends and not inside.
+ * Part two is marked by .st-claim-acc (monochrome now, see the CSS) and the
+ * closing ring ends the line. The rings are aria-hidden punctuation, so a
+ * screen reader hears the sentence exactly as written — read it without them
+ * and it is still the shop's sentence, unbroken.
  *
  * THE CLOSING RING IS TIED TO THE LAST WORD. Every other ring is joined to the
  * sentence with an ordinary space and may start or end a line as the wrap
@@ -850,7 +861,7 @@ const CLAIM_RINGS: readonly GlyphKey[] = ["cabin", "drop", "temp"];
 export function renderStudioStats(ctx: RenderCtx): string {
   const claim = ctx.content.moat.claim;
   const parts: string[] = [];
-  const runs = splitRuns(claim[0], CLAIM_RINGS.length);
+  const runs = sentenceRuns(claim[0]);
   for (let i = 0; i < runs.length; i++) {
     const run = runs[i];
     if (run) parts.push(esc(run));
