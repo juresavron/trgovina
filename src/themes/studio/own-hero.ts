@@ -46,7 +46,13 @@ export const OWN_HERO: Readonly<Partial<Record<string, HeroPlate>>> = {
     // one deploy and the owner judged the previous image better, so it is
     // back — this line is an aesthetic decision, not a technical one, and
     // the technical caveat below survives it.
-    src: "/media/hero.png",
+    // A MANAGED SLOT (src/admin/site-images.ts), not a filename anybody typed
+    // into the bucket. hero.png was a 2.7 MB PNG on the largest element of
+    // every home page view — the one picture the panel's convert-to-WebP
+    // promise never reached, because the panel could not manage it. It can
+    // now, and until it is replaced /media falls back to hero.png so nothing
+    // is missing in the meantime.
+    src: "/media/site/hero.webp",
     widths: [],
   },
 };

@@ -45,9 +45,13 @@ import {
   modelPage,
   notConfiguredPage,
   notFoundPage,
+  siteImagePage,
   type MediaView,
+  type SiteSlot,
 } from "./panel";
 import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn } from "./auth";
+import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
+import { enhance, enhanceAvailable } from "./enhance";
 
 /** Shops whose catalogue this panel can manage. */
 /**
@@ -183,9 +187,22 @@ export async function handleMedia(request: Request, env: Env): Promise<Response>
   const forever = !alias && isContentAddressed(path);
   const ttl = forever ? 31536000 : 300;
 
-  const upstream =
-    env.SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + encodeBucketKey(key);
-  const res = await fetch(upstream, { cf: { cacheEverything: true, cacheTtl: ttl } } as RequestInit);
+  const upstream = (k: string) =>
+    env.SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" + encodeBucketKey(k);
+  let res = await fetch(upstream(key), { cf: { cacheEverything: true, cacheTtl: ttl } } as RequestInit);
+
+  // A MANAGED SITE IMAGE THAT HAS NOT BEEN REPLACED YET falls back to the file
+  // it is taking over from, once. The storefront names these in code and
+  // renders synchronously, so it cannot learn a new filename — which means the
+  // new key has to be referenced before anything exists at it, and a hero that
+  // 404s is worse than a heavy one. The fallback answers only for the three
+  // keys in SITE_IMAGES; it is not a general retry.
+  if (!res.ok) {
+    const legacy = legacyFallback(key);
+    if (legacy) {
+      res = await fetch(upstream(legacy), { cf: { cacheEverything: true, cacheTtl: 300 } } as RequestInit);
+    }
+  }
   if (!res.ok) return new Response("Not found", { status: 404 });
 
   return new Response(res.body, {
@@ -269,6 +286,84 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
           cover: shots[i]![0]?.url,
         })),
         admin.email,
+        SITE_IMAGES.map(
+          (x): SiteSlot => ({
+            stem: stemOf(x.key),
+            label: x.label,
+            note: x.note,
+            src: "/media/" + x.key,
+          }),
+        ),
+      ),
+    );
+  }
+
+  // --- the upscaler ---
+  //
+  // Model-independent: it transforms bytes and returns bytes, so one route
+  // serves a product photograph and a site banner alike. It sits behind the
+  // gate like everything else, and it is the ONLY path that reaches an
+  // outside API — see enhance.ts on why it is opt-in per upload and why a
+  // failure returns the original rather than an error.
+  if (parts[1] === "enhance" && request.method === "POST") {
+    if (!enhanceAvailable(env)) return new Response("Not found", { status: 404 });
+    const form = await request.formData();
+    const part = form.get("file");
+    if (!(part instanceof File) || part.size === 0) {
+      return new Response("No file", { status: 400 });
+    }
+    const bytes = await part.arrayBuffer();
+    const done = await enhance(env, bytes, part.type || "image/jpeg");
+    // Null means the upscaler did not produce anything usable. Answering 204
+    // rather than an error is what lets the browser carry on with the file it
+    // already has: an optional enhancement must never cost an upload.
+    if (!done) return new Response(null, { status: 204, headers: { "cache-control": "no-store" } });
+    return new Response(done.bytes, {
+      status: 200,
+      headers: { "content-type": done.mime, "cache-control": "no-store" },
+    });
+  }
+
+  // --- one site image ---
+  //
+  // Before the model lookup, because "site" is not a shop key and would
+  // otherwise fall through to "this model does not exist".
+  if (parts[1] === "site") {
+    const slot = siteImageBySlug(parts[2] ?? "");
+    if (!slot) return page(notFoundPage("Ta slika ne obstaja.", admin.email), 404);
+
+    if (parts[3] === "upload" && request.method === "POST") {
+      const form = await request.formData();
+      const part = form.get("file");
+      if (!(part instanceof File) || part.size === 0) {
+        return seeOther("/admin/site/" + stemOf(slot.key) + "?e=alt");
+      }
+      const bytes = await part.arrayBuffer();
+      // Same guarantee as every other upload: the bytes decide, not the label.
+      if (!isWebp(bytes)) return seeOther("/admin/site/" + stemOf(slot.key) + "?e=type");
+      // FIXED KEY, overwritten in place — see site-images.ts on why it cannot
+      // be content-addressed and why /media gives it a short cache instead.
+      await uploadObject(api, slot.key, bytes, "image/webp");
+      return seeOther("/admin/site/" + stemOf(slot.key) + "?m=uploaded");
+    }
+    if (parts[3]) return page(notFoundPage("Neznano dejanje.", admin.email), 404);
+
+    const n = url.searchParams.get("m")
+      ? ({ kind: "ok", text: NOTICES[url.searchParams.get("m")!] ?? "Shranjeno." } as const)
+      : url.searchParams.get("e")
+        ? ({ kind: "err", text: ERRORS[url.searchParams.get("e")!] ?? "Nalaganje ni uspelo." } as const)
+        : undefined;
+    return page(
+      siteImagePage(
+        stemOf(slot.key),
+        slot.label,
+        slot.note,
+        // Cache-bust the preview: the key never changes, so the panel would
+        // otherwise show the picture it just replaced.
+        "/media/" + slot.key + "?v=" + String(Date.now()),
+        n,
+        admin.email,
+        enhanceAvailable(env),
       ),
     );
   }
@@ -329,6 +424,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       rows.map((r): MediaView => ({ id: r.id, url: r.url, alt: r.alt, sort: r.sort, widths: r.widths ?? [] })),
       notice,
       admin.email,
+      enhanceAvailable(env),
     ),
   );
 }

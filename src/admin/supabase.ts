@@ -39,6 +39,16 @@ export interface Env {
    * actually DO is decided by the access token sent beside it.
    */
   SUPABASE_ANON_KEY?: string;
+  /**
+   * Google Gemini key, for the optional image upscaler — SECRET.
+   *
+   * The one secret this Worker has, and it is OPTIONAL: absent, the panel
+   * simply does not offer upscaling. See admin/enhance.ts for why the feature
+   * is off by default even when the key is present.
+   */
+  GEMINI_API_KEY?: string;
+  /** Overrides the image model without a code change. Public. */
+  GEMINI_IMAGE_MODEL?: string;
 }
 
 export const BUCKET = "product-media";

@@ -178,6 +178,8 @@ input[type=file]::file-selector-button:hover{background:var(--paper)}
 .drop{border:1px dashed var(--line-ctrl);border-radius:var(--r-card);
   padding:16px;background:#fbfbfb}
 .drop.is-over{border-color:var(--ink);background:var(--paper)}
+.note-ai{margin:16px 0 0;padding:11px 13px;border-left:2px solid var(--ink);
+  background:#fbfbfb;font-size:13px;line-height:1.45;color:var(--mute)}
 .picked{list-style:none;margin:0;padding:0;display:none;flex-direction:column;gap:12px}
 .picked.on{display:flex}
 .picked li{display:flex;gap:12px;align-items:flex-start}
@@ -363,11 +365,20 @@ export function photoCount(n: number): string {
   return n + " fotografij";
 }
 
+export interface SiteSlot {
+  stem: string;
+  label: string;
+  note: string;
+  /** The /media path to preview, whether it has been replaced yet or not. */
+  src: string;
+}
+
 export function indexPage(
   shopName: string,
   shopKey: string,
   models: ModelLink[],
   who = "",
+  site: SiteSlot[] = [],
 ): string {
   return shell(
     "Izdelki",
@@ -390,8 +401,106 @@ export function indexPage(
         )
         .join("") +
       "</ul>" +
+
+      // THE SITE'S OWN PICTURES, which had no way in here at all — so the
+      // heaviest image on the storefront (a 2.7 MB PNG hero) was the one
+      // picture the panel's convert-to-WebP promise never reached.
+      (site.length === 0
+        ? ""
+        : "<h2>Slike strani</h2>" +
+          '<ul class="models">' +
+          site
+            .map(
+              (x) =>
+                '<li class="model"><a href="/admin/site/' + esc(x.stem) + '">' +
+                '<img class="cover" src="' + esc(x.src) + '" alt="" loading="lazy" ' +
+                'width="232" height="174">' +
+                '<span class="meta"><span class="name">' + esc(x.label) + "</span>" +
+                '<span class="count">' + esc(x.note) + "</span></span>" +
+                "</a></li>",
+            )
+            .join("") +
+          "</ul>") +
+
       '<p class="muted" style="margin-top:22px">Ključ trgovine: <code>' +
       esc(shopKey) + "</code></p>",
+    who,
+  );
+}
+
+/**
+ * One site image: what is there now, and a form to replace it.
+ *
+ * Deliberately the same upload component as a model's page — same conversion,
+ * same width check, same WebP guarantee — with the ladder suppressed. These
+ * keys are FIXED so the storefront can name them in code, which means there
+ * is exactly one file per slot and no srcset to describe.
+ */
+export function siteImagePage(
+  stem: string,
+  label: string,
+  note: string,
+  src: string,
+  notice?: { kind: "ok" | "err"; text: string },
+  who = "",
+  enhance = false,
+): string {
+  return shell(
+    label,
+    (notice
+      ? '<p class="note note--' + notice.kind + '"' +
+        (notice.kind === "err" ? ' role="alert"' : "") + ">" + esc(notice.text) + "</p>"
+      : "") +
+      '<a class="back" href="/admin">← Vsi modeli</a>' +
+      '<div class="head"><h1>' + esc(label) + "</h1>" +
+      '<p class="lede">' + esc(note) + "</p></div>" +
+
+      "<h2>Trenutna slika</h2>" +
+      '<div class="card"><img src="' + esc(src) + '" alt="" ' +
+      'style="display:block;width:100%;max-width:720px;border-radius:4px">' +
+      '<p class="hint">Nova slika zamenja to na istem naslovu. Na spletni ' +
+      "strani se pokaže v nekaj minutah.</p></div>" +
+
+      "<h2>Zamenjaj</h2>" +
+      '<form class="card" method="post" action="/admin/site/' + esc(stem) +
+      '/upload" enctype="multipart/form-data" id="up" data-mode="site"' +
+      (enhance ? ' data-enhance="on"' : "") + ">" +
+      '<div class="up">' +
+      '<div class="drop" id="drop">' +
+      '<img id="prev" alt="" width="400" height="300">' +
+      '<label for="f">Slika (JPEG, PNG, WebP)</label>' +
+      '<input id="f" name="file" type="file" ' +
+      'accept="image/webp,image/jpeg,image/png,image/avif" required>' +
+      '<p class="hint" id="fmeta">Sliko lahko tudi povlečete sem. V brskalniku ' +
+      "se samodejno pretvori v WebP.</p>" +
+      "</div>" +
+      "<div>" +
+      // No description field: this picture is decorative on the storefront and
+      // is rendered with an empty alt there. Asking for one would put a
+      // sentence into the panel that never reaches a page.
+      '<div class="field" id="one-alt" style="display:none">' +
+      '<input id="alt" name="alt" type="text" value="' + esc(label) + '"></div>' +
+      '<ul class="picked" id="picked"></ul>' +
+      '<p class="hint">Slika je okrasna — bralnik zaslona je ne prebere, zato ' +
+      "opis ni potreben.</p>" +
+      // THE UPSCALER RUNS ON EVERY UPLOAD when a key is configured — the
+      // owner's instruction, given twice and with the caveat stated: they
+      // upload, it upscales, there is nothing to tick.
+      //
+      // The line stays because it is not a control, it is a disclosure: the
+      // picture is REDRAWN at 2K rather than sharpened, and an operator who
+      // does not know that cannot judge whether the result still shows the
+      // product they are selling.
+      (enhance
+        ? '<p class="note-ai">Slike se samodejno izboljšajo na 2K. ' +
+          "Sliko na novo nariše umetna inteligenca — po nalaganju jo poglejte, " +
+          "podrobnosti izdelka se lahko spremenijo.</p>"
+        : "") +
+      '<p style="margin:18px 0 0"><button class="btn" type="submit" id="go">Naloži</button>' +
+      '<span class="muted" id="st"></span></p>' +
+      '<progress id="pr" max="100" value="0" hidden></progress>' +
+      "</div></div></form>" +
+      "<script>" + UPLOAD_JS + "</script>",
     who,
   );
 }
@@ -413,6 +522,7 @@ export function modelPage(
   media: MediaView[],
   notice?: { kind: "ok" | "err"; text: string },
   who = "",
+  enhance = false,
 ): string {
   const base = "/admin/" + shop + "/" + slug;
   // The badge marks whichever row sorts first, because that is the one the
@@ -432,7 +542,8 @@ export function modelPage(
 
       "<h2>Nova fotografija</h2>" +
       '<form class="card" method="post" action="' + esc(base) +
-      '/upload" enctype="multipart/form-data" id="up">' +
+      '/upload" enctype="multipart/form-data" id="up"' +
+      (enhance ? ' data-enhance="on"' : "") + ">" +
       '<div class="up">' +
 
       '<div class="drop" id="drop">' +
@@ -465,6 +576,19 @@ export function modelPage(
       '<ul class="picked" id="picked"></ul>' +
       '<p class="hint">Opis prebere bralnik zaslona in ga uporabi iskalnik. ' +
       "Opišite, kaj je na vsaki sliki — ne ponavljajte imena modela.</p>" +
+      // THE UPSCALER RUNS ON EVERY UPLOAD when a key is configured — the
+      // owner's instruction, given twice and with the caveat stated: they
+      // upload, it upscales, there is nothing to tick.
+      //
+      // The line stays because it is not a control, it is a disclosure: the
+      // picture is REDRAWN at 2K rather than sharpened, and an operator who
+      // does not know that cannot judge whether the result still shows the
+      // product they are selling.
+      (enhance
+        ? '<p class="note-ai">Slike se samodejno izboljšajo na 2K. ' +
+          "Sliko na novo nariše umetna inteligenca — po nalaganju jo poglejte, " +
+          "podrobnosti izdelka se lahko spremenijo.</p>"
+        : "") +
       '<p style="margin:18px 0 0"><button class="btn" type="submit" id="go">Naloži</button>' +
       '<span class="muted" id="st"></span></p>' +
       '<progress id="pr" max="100" value="0" hidden></progress>' +
@@ -548,6 +672,12 @@ const UPLOAD_JS = `
   "use strict";
   var form = document.getElementById("up");
   if (!form) return;
+  /* SITE MODE: one picture, no description, no width ladder.
+     A site image lands at a FIXED key the storefront names in code, so there
+     is exactly one file per slot and no srcset to describe — and the picture
+     is decorative on the page, rendered with an empty alt, so asking for a
+     description here would collect a sentence nothing reads. */
+  var siteMode = form.getAttribute("data-mode") === "site";
   var file = document.getElementById("f"), go = document.getElementById("go"),
       st = document.getElementById("st"), pr = document.getElementById("pr"),
       drop = document.getElementById("drop"), prev = document.getElementById("prev"),
@@ -618,6 +748,7 @@ const UPLOAD_JS = `
       urls.push(u); prev.src = u; prev.className = "on";
     }
 
+    if (siteMode) { picked.className = "picked"; return; }
     showOneAlt(false);
     picked.className = "picked on";
     fs.forEach(function(f, i){
@@ -720,21 +851,53 @@ const UPLOAD_JS = `
      photograph and its width rungs, so a set is a loop here rather than a new
      shape there — and a failure on the fourth of five leaves the first three
      uploaded and says which one stopped, instead of losing the lot. */
-  function upload(f, alt, done, total){
-    return decode(f).then(function(bmp){
+  /* Nothing is ever painted wider than this, and a picture larger than it is
+     bytes nobody sees. It is also the ceiling the enhancer works to. */
+  var MAX_W = 2048;
+
+  var doEnhance = form.getAttribute("data-enhance") === "on";
+
+  /* Ask the Worker to redraw the picture at 2K, or hand back what we had.
+     A 204 means the upscaler produced nothing usable and the ORIGINAL should
+     go through — an enhancement must never cost an upload, so every failure
+     here resolves rather than rejects. */
+  function enhanced(f, done, total){
+    if (!doEnhance) return Promise.resolve(f);
+    st.textContent = "izboljšujem " + (done + 1) + " od " + total + " …";
+    var fd = new FormData();
+    fd.append("file", f, f.name);
+    return fetch("/admin/enhance", { method: "POST", body: fd, credentials: "same-origin" })
+      .then(function(res){
+        if (res.status === 204 || !res.ok) return f;
+        return res.blob().then(function(b){ return b.size > 0 ? b : f; });
+      })
+      .catch(function(){ return f; });
+  }
+
+  function upload(f0, alt, done, total){
+    return enhanced(f0, done, total).then(function(f){ return decode(f).then(function(bmp){
       var srcW = bmp.width || bmp.naturalWidth;
+      if (siteMode) {
+        var w = Math.min(srcW, MAX_W);
+        return draw(bmp, w).then(function(b){ return { widths: [w], blobs: [b], one: true }; });
+      }
       var widths = LADDER.filter(function(w){ return w < srcW; });
       widths.push(srcW);
       return Promise.all(widths.map(function(w){ return draw(bmp, w); }))
         .then(function(blobs){ return { widths: widths, blobs: blobs }; });
     }).then(function(out){
       var fd = new FormData();
+      if (out.one) {
+        fd.append("file", out.blobs[0], "site.webp");
+        st.textContent = "nalagam …";
+        return fetch(form.action, { method: "POST", body: fd, credentials: "same-origin" });
+      }
       fd.append("alt", alt);
       fd.append("widths", out.widths.join(","));
       out.blobs.forEach(function(b, i){ fd.append("w" + out.widths[i], b, out.widths[i] + ".webp"); });
       st.textContent = "nalagam " + (done + 1) + " od " + total + " …";
       return fetch(form.action, { method: "POST", body: fd, credentials: "same-origin" });
-    }).then(function(res){
+    }); }).then(function(res){
       /* A redirect here is the server's own error path (?e=…): it answers a
          successful upload the same way, so the only safe reading is to follow
          it and let the page say what happened. */
@@ -751,7 +914,7 @@ const UPLOAD_JS = `
     ev.preventDefault();
 
     var alts = Array.prototype.slice.call(picked.querySelectorAll(".alt-in"));
-    for (var i = 0; i < alts.length; i++) {
+    for (var i = 0; i < alts.length && !siteMode; i++) {
       if (!alts[i].value.trim()) {
         st.textContent = "vsaka slika potrebuje opis";
         alts[i].focus();

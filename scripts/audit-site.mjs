@@ -22,7 +22,7 @@
 import { mkdirSync, writeFileSync, cpSync, existsSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import { extname, join, normalize } from "node:path";
+import { dirname, extname, join, normalize } from "node:path";
 import { tmpdir } from "node:os";
 import { execFileSync } from "node:child_process";
 import sharp from "sharp";
@@ -133,6 +133,9 @@ for (const name of wanted) {
       '<rect x="' + w * 0.2 + '" y="' + h * 0.3 + '" width="' + w * 0.6 + '" height="' + h * 0.4 +
       '" fill="#6f7671"/></svg>',
   );
+  // A stand-in path may now be nested — the site's own images live under
+  // "site/" — so the directory has to exist before the write.
+  mkdirSync(dirname(join(OUT, "media", name)), { recursive: true });
   writeFileSync(join(OUT, "media", name), await sharp(svg).jpeg({ quality: 70 }).toBuffer());
 }
 
