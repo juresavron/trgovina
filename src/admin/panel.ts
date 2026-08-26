@@ -178,6 +178,14 @@ input[type=file]::file-selector-button:hover{background:var(--paper)}
 .drop{border:1px dashed var(--line-ctrl);border-radius:var(--r-card);
   padding:16px;background:#fbfbfb}
 .drop.is-over{border-color:var(--ink);background:var(--paper)}
+.picked{list-style:none;margin:0;padding:0;display:none;flex-direction:column;gap:12px}
+.picked.on{display:flex}
+.picked li{display:flex;gap:12px;align-items:flex-start}
+.picked img{width:64px;height:48px;object-fit:cover;border-radius:var(--r-ctrl);
+  background:var(--paper);flex:none;border:1px solid var(--line)}
+.picked .grow{flex:1;min-width:0}
+.picked .nm{display:block;font-size:12px;color:var(--mute);margin:0 0 4px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #prev{display:none;width:100%;aspect-ratio:4/3;object-fit:contain;
   background:var(--paper);border-radius:var(--r-ctrl);margin-bottom:12px}
 #prev.on{display:block}
@@ -429,22 +437,34 @@ export function modelPage(
 
       '<div class="drop" id="drop">' +
       '<img id="prev" alt="" width="400" height="300">' +
-      '<label for="f">Slika (JPEG, PNG, WebP)</label>' +
+      '<label for="f">Slike (JPEG, PNG, WebP)</label>' +
       // accept is a HINT to the file picker, not a guarantee — the server reads
       // the magic bytes — but narrowing it stops an operator choosing a 6 MB
       // JPEG and only learning it is refused after the upload.
-      '<input id="f" name="file" type="file" ' +
+      //
+      // multiple: a model arrives as a set of photographs, and uploading them
+      // one at a time meant one page load per picture. With script on, each
+      // file gets its own description field below and its own request; with
+      // script off the browser still sends the first, which is the same single
+      // upload this form always was.
+      '<input id="f" name="file" type="file" multiple ' +
       'accept="image/webp,image/jpeg,image/png,image/avif" required>' +
-      '<p class="hint" id="fmeta">Sliko lahko tudi povlečete sem. V brskalniku ' +
-      "se samodejno pretvori v WebP in pomanjša v več širin — shranimo samo WebP.</p>" +
+      '<p class="hint" id="fmeta">Slike lahko tudi povlečete sem — izberete jih ' +
+      "lahko več hkrati. V brskalniku se samodejno pretvorijo v WebP in " +
+      "pomanjšajo v več širin.</p>" +
       "</div>" +
 
       "<div>" +
-      '<div class="field"><label for="alt">Opis slike (obvezno)</label>' +
+      // The single description, for the no-script path and as the field the
+      // per-file list replaces the moment JavaScript takes over.
+      '<div class="field" id="one-alt"><label for="alt">Opis slike (obvezno)</label>' +
       '<input id="alt" name="alt" type="text" maxlength="180" required ' +
       'placeholder="Masažni bazen na terasi, pokrit s termo pokrovom"></div>' +
+      // Filled by UPLOAD_JS: a thumbnail and its own description per chosen
+      // file. Empty, and hidden by CSS, until something is chosen.
+      '<ul class="picked" id="picked"></ul>' +
       '<p class="hint">Opis prebere bralnik zaslona in ga uporabi iskalnik. ' +
-      "Opišite, kaj je na sliki — ne ponavljajte imena modela.</p>" +
+      "Opišite, kaj je na vsaki sliki — ne ponavljajte imena modela.</p>" +
       '<p style="margin:18px 0 0"><button class="btn" type="submit" id="go">Naloži</button>' +
       '<span class="muted" id="st"></span></p>' +
       '<progress id="pr" max="100" value="0" hidden></progress>' +
@@ -531,18 +551,93 @@ const UPLOAD_JS = `
   var file = document.getElementById("f"), go = document.getElementById("go"),
       st = document.getElementById("st"), pr = document.getElementById("pr"),
       drop = document.getElementById("drop"), prev = document.getElementById("prev"),
-      fmeta = document.getElementById("fmeta"), hint = fmeta.textContent;
+      fmeta = document.getElementById("fmeta"), hint = fmeta.textContent,
+      picked = document.getElementById("picked"),
+      oneAlt = document.getElementById("one-alt");
 
-  /* Show what was chosen. Picking the wrong photograph and finding out only
-     after it is uploaded is this panel's most annoying failure, and it costs
-     ten lines to make it impossible. */
+  /* Show what was chosen — one row per file, each with its own description.
+     Picking the wrong photograph and finding out only after it is uploaded is
+     this panel's most annoying failure, and a set of five wants five
+     descriptions rather than the same sentence five times: alt text is an SEO
+     and accessibility surface, and five identical ones are worth about as
+     much as none. */
+  var urls = [];
+
+  /* ⚠️ DISABLED, NOT JUST HIDDEN.
+   *
+   * The single description field is the no-script path's, and it carries
+   * the required attribute. A required control that is present but not rendered makes the
+   * form UNSUBMITTABLE: the browser refuses, tries to focus a field nobody can
+   * see, and does nothing at all — no submit event, no error, no request. The
+   * upload simply stopped working the moment the per-file list replaced it.
+   * A disabled control is skipped by validation and by serialisation both. */
+  function showOneAlt(on){
+    oneAlt.style.display = on ? "" : "none";
+    var box = document.getElementById("alt");
+    box.disabled = !on;
+    box.required = on;
+  }
+
+  /* Four forms, and the teens tested first — the same rule photoCount() uses
+     on the server side of this panel. "3 slik" is the genitive plural where
+     the plural belongs. */
+  function slike(n){
+    var teen = n % 100;
+    if (teen >= 11 && teen <= 14) return n + " slik";
+    var u = n % 10;
+    if (u === 1) return n + " slika";
+    if (u === 2) return n + " sliki";
+    if (u === 3 || u === 4) return n + " slike";
+    return n + " slik";
+  }
+
   function shown(){
-    var f = file.files && file.files[0];
-    if (prev.src) URL.revokeObjectURL(prev.src);
-    if (!f) { prev.className = ""; prev.removeAttribute("src"); fmeta.textContent = hint; return; }
-    prev.src = URL.createObjectURL(f);
-    prev.className = "on";
-    fmeta.textContent = f.name + " · " + Math.round(f.size / 1024) + " kB";
+    urls.forEach(URL.revokeObjectURL);
+    urls = [];
+    picked.innerHTML = "";
+    var fs = file.files ? Array.prototype.slice.call(file.files) : [];
+    if (prev.src) { URL.revokeObjectURL(prev.src); prev.removeAttribute("src"); }
+    prev.className = "";
+
+    if (!fs.length) {
+      fmeta.textContent = hint;
+      picked.className = "picked";
+      showOneAlt(true);
+      return;
+    }
+    var kb = 0;
+    fs.forEach(function(f){ kb += f.size; });
+    fmeta.textContent = fs.length === 1
+      ? fs[0].name + " · " + Math.round(kb / 1024) + " kB"
+      : slike(fs.length) + " · " + Math.round(kb / 1024) + " kB";
+
+    /* One file keeps the big preview the panel already had; a set gets the
+       list, where a 64px thumbnail is enough to tell them apart. */
+    if (fs.length === 1) {
+      var u = URL.createObjectURL(fs[0]);
+      urls.push(u); prev.src = u; prev.className = "on";
+    }
+
+    showOneAlt(false);
+    picked.className = "picked on";
+    fs.forEach(function(f, i){
+      var u = URL.createObjectURL(f); urls.push(u);
+      var li = document.createElement("li");
+      var img = document.createElement("img");
+      img.src = u; img.alt = "";
+      var box = document.createElement("div"); box.className = "grow";
+      var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = f.name;
+      var lab = document.createElement("label");
+      lab.setAttribute("for", "alt-" + i);
+      lab.textContent = "Opis slike (obvezno)";
+      var inp = document.createElement("input");
+      inp.type = "text"; inp.id = "alt-" + i; inp.maxLength = 180; inp.required = true;
+      inp.className = "alt-in";
+      inp.placeholder = "Masažni bazen na terasi, pokrit s termo pokrovom";
+      box.appendChild(nm); box.appendChild(lab); box.appendChild(inp);
+      li.appendChild(img); li.appendChild(box);
+      picked.appendChild(li);
+    });
   }
   file.addEventListener("change", shown);
 
@@ -621,13 +716,12 @@ const UPLOAD_JS = `
     });
   }
 
-  form.addEventListener("submit", function(ev){
-    if (!file.files || !file.files[0]) return;
-    ev.preventDefault();
-    go.disabled = true; pr.hidden = false; pr.value = 0;
-    st.textContent = "pretvarjam …";
-
-    decode(file.files[0]).then(function(bmp){
+  /* One file, one request. The server handler already takes exactly one
+     photograph and its width rungs, so a set is a loop here rather than a new
+     shape there — and a failure on the fourth of five leaves the first three
+     uploaded and says which one stopped, instead of losing the lot. */
+  function upload(f, alt, done, total){
+    return decode(f).then(function(bmp){
       var srcW = bmp.width || bmp.naturalWidth;
       var widths = LADDER.filter(function(w){ return w < srcW; });
       widths.push(srcW);
@@ -635,20 +729,54 @@ const UPLOAD_JS = `
         .then(function(blobs){ return { widths: widths, blobs: blobs }; });
     }).then(function(out){
       var fd = new FormData();
-      fd.append("alt", document.getElementById("alt").value);
+      fd.append("alt", alt);
       fd.append("widths", out.widths.join(","));
       out.blobs.forEach(function(b, i){ fd.append("w" + out.widths[i], b, out.widths[i] + ".webp"); });
-      st.textContent = "nalagam …"; pr.value = 50;
+      st.textContent = "nalagam " + (done + 1) + " od " + total + " …";
       return fetch(form.action, { method: "POST", body: fd, credentials: "same-origin" });
     }).then(function(res){
-      pr.value = 100;
-      if (res.redirected) { location.href = res.url; return; }
-      if (res.ok) { location.reload(); return; }
-      return res.text().then(function(t){ throw new Error(t.slice(0, 200)); });
-    }).catch(function(e){
-      go.disabled = false; pr.hidden = true;
-      st.textContent = "napaka: " + e.message;
+      /* A redirect here is the server's own error path (?e=…): it answers a
+         successful upload the same way, so the only safe reading is to follow
+         it and let the page say what happened. */
+      if (!res.ok && !res.redirected) {
+        return res.text().then(function(t){ throw new Error(t.slice(0, 200)); });
+      }
+      return res;
     });
+  }
+
+  form.addEventListener("submit", function(ev){
+    var fs = file.files ? Array.prototype.slice.call(file.files) : [];
+    if (!fs.length) return;
+    ev.preventDefault();
+
+    var alts = Array.prototype.slice.call(picked.querySelectorAll(".alt-in"));
+    for (var i = 0; i < alts.length; i++) {
+      if (!alts[i].value.trim()) {
+        st.textContent = "vsaka slika potrebuje opis";
+        alts[i].focus();
+        return;
+      }
+    }
+
+    go.disabled = true; pr.hidden = false; pr.value = 0;
+    st.textContent = "pretvarjam …";
+
+    var done = 0;
+    (function next(){
+      if (done >= fs.length) { location.reload(); return; }
+      upload(fs[done], alts[done] ? alts[done].value : "", done, fs.length)
+        .then(function(){
+          done++;
+          pr.value = Math.round((done / fs.length) * 100);
+          next();
+        })
+        .catch(function(e){
+          go.disabled = false;
+          st.textContent = "napaka pri sliki " + (done + 1) + ": " + e.message +
+            (done > 0 ? " (prvih " + done + " je naloženih)" : "");
+        });
+    })();
   });
 })();
 `;

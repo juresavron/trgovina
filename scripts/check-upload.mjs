@@ -38,35 +38,48 @@ const { modelPage } = await import(out + "?v=" + Date.now());
 
 const dir = join(tmpdir(), "upl2"); mkdirSync(dir, { recursive: true });
 writeFileSync(join(dir, "m.html"), modelPage("bazen","x","TEST",[],undefined,"a@b.c"));
-await sharp({ create:{width:1600,height:1200,channels:3,background:"#8899aa"} }).jpeg().toFile(join(dir,"photo.jpg"));
+for (const [n, bg] of [["photo.jpg","#8899aa"],["photo2.jpg","#aa8877"],["photo3.jpg","#77aa88"]]) {
+  await sharp({ create:{width:1600,height:1200,channels:3,background:bg} }).jpeg().toFile(join(dir,n));
+}
 
-async function run(label, patch) {
+async function run(label, patch, files) {
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
   const p = await b.newPage();
   const errs = []; p.on("pageerror", (e) => errs.push(e.message));
-  let native = false, parts = [];
+  let native = false, parts = [], requests = 0, altsSent = [];
   await p.route("**/upload", async (route) => {
     const req = route.request();
     const body = req.postData() || "";
+    requests++;
     parts = [...body.matchAll(/name="(w\d+|widths|alt|file)"(?:; filename="([^"]*)")?/g)].map((m) => m[1] + (m[2] ? ":" + m[2] : ""));
+    const a = /name="alt"\r?\n\r?\n([^\r]*)/.exec(body);
+    if (a) altsSent.push(a[1]);
     native = !body.includes("widths");
     await route.fulfill({ status: 200, contentType: "text/html", body: "<p>ok</p>" });
   });
   if (patch) await p.addInitScript(patch);
   await p.goto("file://" + join(dir, "m.html"));
-  await p.setInputFiles("#f", join(dir, "photo.jpg"));
-  await p.fill("#alt", "preizkus");
+  const picks = (files || ["photo.jpg"]).map((f) => join(dir, f));
+  await p.setInputFiles("#f", picks);
+  const boxes = await p.$$(".alt-in");
+  if (boxes.length) {
+    for (let i = 0; i < boxes.length; i++) await boxes[i].fill("opis " + (i + 1));
+  } else {
+    await p.fill("#alt", "preizkus");
+  }
   await p.click("#go");
-  await p.waitForTimeout(2000);
+  await p.waitForTimeout(1000 + picks.length * 1200);
   console.log("\n== " + label + " ==");
   console.log("  pageerrors:", errs.length ? errs : "none");
   console.log("  status:", (await p.textContent("#st").catch(()=>"?")).trim());
   console.log("  parts:", parts.join(", ") || "(no request)");
   console.log("  native form POST:", native);
+  console.log("  requests:", requests, "alts:", JSON.stringify(altsSent));
   await b.close();
 }
 
 await run("modern browser");
+await run("three files at once", null, ["photo.jpg", "photo2.jpg", "photo3.jpg"]);
 // Safari <15: no createImageBitmap
 await run("no createImageBitmap", () => { delete window.createImageBitmap; });
 // A browser whose toBlob cannot encode WebP: it silently returns PNG.
