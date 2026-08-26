@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { isContentAddressed } from "./routes";
+import { isContentAddressed, isWebp, adminModelSlugs } from "./routes";
+import { OFFERED_MODELS } from "../catalog/pola";
+import { OFFERED_SWIMSPAS } from "../catalog/swimspa";
 import { MEDIA_ALIASES, aliasTarget, encodeBucketKey } from "../media-aliases";
 import { OWN_HERO } from "../themes/studio/own-hero";
 import { OWN_MEDIA } from "../themes/studio/own-media";
@@ -92,5 +94,48 @@ describe("media aliases", () => {
     for (const clean of Object.keys(MEDIA_ALIASES)) {
       expect(isContentAddressed(clean), clean).toBe(false);
     }
+  });
+});
+
+/**
+ * EVERY UPLOAD IS WEBP, AND THE PANEL CAN REACH EVERY PRODUCT.
+ *
+ * Both of these were false in ways that produced no error and no log line.
+ */
+describe("the media panel's two promises", () => {
+  it("recognises WebP from the bytes, not from the label", () => {
+    // "RIFF" ... "WEBP" — the container magic and its form type.
+    const webp = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50,
+    ]);
+    expect(isWebp(webp.buffer)).toBe(true);
+
+    // A PNG, a JPEG and a RIFF container that is NOT WebP (a WAV) — the last
+    // one is why the check reads bytes 8-11 as well as 0-3.
+    const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0, 0, 0]);
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    const wav = new Uint8Array([
+      0x52, 0x49, 0x46, 0x46, 0x24, 0x00, 0x00, 0x00, 0x57, 0x41, 0x56, 0x45, 0x66, 0x6d,
+    ]);
+    for (const [name, bytes] of [["png", png], ["jpeg", jpeg], ["wav (RIFF, not WEBP)", wav]] as const) {
+      expect(isWebp(bytes.buffer), name + " must not pass as WebP").toBe(false);
+    }
+    // Too short to carry the magic at all.
+    expect(isWebp(new Uint8Array([0x52, 0x49, 0x46, 0x46]).buffer)).toBe(false);
+  });
+
+  it("offers every offered model, both families", () => {
+    // The panel listed OFFERED_MODELS only, so the three swim spas — half the
+    // catalogue, and the half with the largest tickets — had no page and no
+    // way to change a photograph. Nothing errored; they were simply absent.
+    const slugs = adminModelSlugs();
+    for (const m of OFFERED_MODELS) {
+      expect(slugs, "hot tub " + m.slug + " is not manageable").toContain(m.slug);
+    }
+    for (const m of OFFERED_SWIMSPAS) {
+      expect(slugs, "swim spa " + m.slug + " is not manageable").toContain(m.slug);
+    }
+    expect(slugs.length).toBe(OFFERED_MODELS.length + OFFERED_SWIMSPAS.length);
+    expect(new Set(slugs).size, "two models share a slug").toBe(slugs.length);
   });
 });

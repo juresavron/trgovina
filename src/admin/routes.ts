@@ -15,7 +15,8 @@
  *   * /media is public and read-only, and can only ever proxy the one bucket.
  */
 
-import { OFFERED_MODELS, polaBySlug } from "../catalog/pola";
+import { OFFERED_MODELS } from "../catalog/pola";
+import { OFFERED_SWIMSPAS } from "../catalog/swimspa";
 import { aliasTarget, encodeBucketKey } from "../media-aliases";
 import { SHOPS } from "../tenants";
 import {
@@ -42,9 +43,46 @@ import {
 } from "./session";
 
 /** Shops whose catalogue this panel can manage. */
-const CATALOGUE_SHOPS: Record<string, { models: typeof OFFERED_MODELS; freightClass: string }> = {
-  bazen: { models: OFFERED_MODELS, freightClass: "pallet_xl" },
+/**
+ * Every product the panel can manage, as the panel needs it.
+ *
+ * ⚠️ THIS USED TO BE THE HOT TUBS ONLY. The list was OFFERED_MODELS and the
+ * lookup was polaBySlug, so the three swim spas — half the catalogue, and the
+ * half with the largest tickets — had no page in the panel and no way to
+ * change a photograph. Nothing errored; they were simply not on the
+ * dashboard, which is the quietest way for a tool to be incomplete.
+ *
+ * The two model types are separate on purpose (a Pola shell and a 5.8 m swim
+ * spa share almost no specification) but they agree on the three fields this
+ * panel needs, so the panel takes that intersection rather than either type.
+ */
+interface AdminModel {
+  readonly slug: string;
+  readonly name: string;
+  /** Out-of-gauge freight is not the same problem as a pallet. */
+  readonly freightClass: string;
+}
+
+const ADMIN_MODELS: readonly AdminModel[] = [
+  ...OFFERED_MODELS.map((m) => ({ slug: m.slug, name: m.name, freightClass: "pallet_xl" })),
+  // The enum has no out-of-gauge class; white_glove is the honest closest fit
+  // for a 4.5-5.8 m shell delivered by a team, and is flagged as such where
+  // the products row is written.
+  ...OFFERED_SWIMSPAS.map((m) => ({ slug: m.slug, name: m.name, freightClass: "white_glove" })),
+];
+
+const CATALOGUE_SHOPS: Record<string, { models: readonly AdminModel[] }> = {
+  bazen: { models: ADMIN_MODELS },
 };
+
+/** Every slug the panel can manage — the dashboard's coverage, as data. */
+export function adminModelSlugs(): string[] {
+  return ADMIN_MODELS.map((m) => m.slug);
+}
+
+function adminModelBySlug(slug: string): AdminModel | undefined {
+  return ADMIN_MODELS.find((m) => m.slug === slug);
+}
 
 const HTML = { "content-type": "text/html; charset=utf-8" };
 const PRIVATE = {
@@ -190,7 +228,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     const cat = CATALOGUE_SHOPS[key]!;
     const counts = await Promise.all(
       cat.models.map(async (m) => {
-        const id = await ensureProduct(env, key, m.slug, m.name, cat.freightClass);
+        const id = await ensureProduct(env, key, m.slug, m.name, m.freightClass);
         return (await listMedia(env, id)).length;
       }),
     );
@@ -207,10 +245,10 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   const shop = parts[1]!;
   const slug = parts[2] ?? "";
   const cat = CATALOGUE_SHOPS[shop];
-  const model = cat ? polaBySlug(slug) : undefined;
+  const model = cat ? adminModelBySlug(slug) : undefined;
   if (!cat || !model) return page(loginPage("Ta model ne obstaja."), 404);
 
-  const productId = await ensureProduct(env, shop, model.slug, model.name, cat.freightClass);
+  const productId = await ensureProduct(env, shop, model.slug, model.name, model.freightClass);
   const action = parts[3];
 
   if (action === "upload" && request.method === "POST") {
@@ -248,7 +286,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   const notice = url.searchParams.get("m")
     ? ({ kind: "ok", text: NOTICES[url.searchParams.get("m")!] ?? "Shranjeno." } as const)
     : url.searchParams.get("e")
-      ? ({ kind: "err", text: "Opis slike je obvezen." } as const)
+      ? ({ kind: "err", text: ERRORS[url.searchParams.get("e")!] ?? "Nalaganje ni uspelo." } as const)
       : undefined;
 
   return page(
@@ -262,6 +300,19 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   );
 }
 
+/**
+ * Why an upload was refused, in the operator's language.
+ *
+ * One message for every `e` used to render regardless of cause — it always
+ * said the alt text was missing — so the day a second failure existed the
+ * panel would have confidently reported the wrong one.
+ */
+const ERRORS: Record<string, string> = {
+  alt: "Opis slike je obvezen.",
+  type: "Naložiti je mogoče samo slike v obliki WebP. Brskalnik pretvori sliko " +
+    "samodejno; če JavaScript ni omogočen, jo pretvorite pred nalaganjem.",
+};
+
 const NOTICES: Record<string, string> = {
   saved: "Shranjeno.",
   deleted: "Fotografija je izbrisana.",
@@ -274,12 +325,27 @@ export function widthPath(url: string, w: number): string {
   return dot < 0 ? url + "-" + w : url.slice(0, dot) + "-" + w + url.slice(dot);
 }
 
-const EXT: Record<string, string> = {
-  "image/webp": "webp",
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/avif": "avif",
-};
+/**
+ * Is this actually a WebP file?
+ *
+ * READ FROM THE BYTES, NOT FROM THE CLIENT. A multipart part carries whatever
+ * content-type the sender put on it, and the browser path here sets
+ * "image/webp" itself — so trusting the label means the server's guarantee is
+ * really the client's promise. A file is WebP when it opens with the RIFF
+ * container magic and names WEBP as its form type, and nothing else is.
+ *
+ *   bytes 0-3   "RIFF"
+ *   bytes 4-7   little-endian length, ignored here
+ *   bytes 8-11  "WEBP"
+ */
+export function isWebp(bytes: ArrayBuffer): boolean {
+  if (bytes.byteLength < 12) return false;
+  const b = new Uint8Array(bytes, 0, 12);
+  return (
+    b[0] === 0x52 && b[1] === 0x49 && b[2] === 0x46 && b[3] === 0x46 &&
+    b[8] === 0x57 && b[9] === 0x45 && b[10] === 0x42 && b[11] === 0x50
+  );
+}
 
 async function upload(
   request: Request,
@@ -313,8 +379,13 @@ async function upload(
     for (const w of declared) {
       const part = form.get("w" + w);
       if (!(part instanceof File)) continue;
+      const bytes = await part.arrayBuffer();
+      // The rung says webp and the browser wrote it, but the check is on the
+      // bytes: a label is the sender's claim, and this is the one place that
+      // can make "every upload is WebP" true rather than intended.
+      if (!isWebp(bytes)) return seeOther("/admin/" + shop + "/" + slug + "?e=type");
       const path = w === widest ? base : widthPath(base, w);
-      await uploadObject(env, path, await part.arrayBuffer(), "image/webp");
+      await uploadObject(env, path, bytes, "image/webp");
       if (w !== widest) written.push(w);
     }
     written.push(widest);
@@ -324,9 +395,20 @@ async function upload(
     if (!(part instanceof File) || part.size === 0) {
       return seeOther("/admin/" + shop + "/" + slug + "?e=alt");
     }
-    const ext = EXT[part.type] ?? "jpg";
-    base = shop + "/" + slug + "/" + id + "." + ext;
-    await uploadObject(env, base, await part.arrayBuffer(), part.type || "image/jpeg");
+    // ⚠️ THIS BRANCH USED TO STORE THE ORIGINAL, whatever it was — the EXT map
+    // it consulted listed jpeg, png and avif — so the panel's own promise
+    // that every upload is WebP was false the moment scripting was off or
+    // createImageBitmap was missing. One JPEG in the bucket is all it takes:
+    // the storefront then serves a 250 KB photograph where its neighbours are
+    // 9 KB, and nothing anywhere reports it.
+    //
+    // So the fallback no longer converts by accepting less. It accepts a
+    // WebP, or it refuses and says so. That is a real limitation of a
+    // no-script upload and it is stated on the form rather than papered over.
+    const bytes = await part.arrayBuffer();
+    if (!isWebp(bytes)) return seeOther("/admin/" + shop + "/" + slug + "?e=type");
+    base = shop + "/" + slug + "/" + id + ".webp";
+    await uploadObject(env, base, bytes, "image/webp");
   }
 
   const rows = await listMedia(env, productId);
