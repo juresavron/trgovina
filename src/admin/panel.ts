@@ -38,6 +38,7 @@ button.ghost{background:#fff;color:#151515}
 button.danger{background:#fff;color:#a11;border-color:#d9a6a6}
 label{display:block;font-size:13px;color:#4a4a4a;margin-bottom:4px}
 .thumb{width:96px;height:72px;object-fit:cover;border-radius:4px;background:#eee;border:1px solid #e2e2e2}
+.hint{color:#5c5c5c;font-size:13px;line-height:1.45;margin:6px 0 0}
 .err{background:#fdecec;border:1px solid #f0c2c2;color:#8a1c1c;padding:12px;border-radius:4px;margin-bottom:16px}
 .ok{background:#eaf6ec;border:1px solid #bfe0c6;color:#1c5c2a;padding:12px;border-radius:4px;margin-bottom:16px}
 .list a{display:block;padding:11px 0;border-bottom:1px solid #eee;text-decoration:none}
@@ -146,7 +147,12 @@ export function modelPage(
       "<h2>Nova fotografija</h2>" +
       '<form class="card" method="post" action="' + esc(base) + '/upload" enctype="multipart/form-data" id="up">' +
       '<label for="f">Slika (JPEG, PNG, WebP)</label>' +
-      '<input id="f" name="file" type="file" accept="image/*" required>' +
+      // accept is a HINT to the file picker, not a guarantee — the server
+      // reads the magic bytes — but narrowing it stops an operator choosing a
+      // 6 MB JPEG and only learning it is refused after the upload.
+      '<input id="f" name="file" type="file" accept="image/webp,image/jpeg,image/png,image/avif" required>' +
+      '<p class="hint">Slika se v brskalniku samodejno pretvori v WebP in ' +
+      'pomanjša v več širin. Shranimo samo WebP.</p>' +
       '<p style="margin:12px 0 0"><label for="alt">Opis slike (obvezno)</label>' +
       '<input id="alt" name="alt" type="text" maxlength="180" required ' +
       'placeholder="Masažni bazen na terasi, pokrit s termo pokrovom"></p>' +

@@ -237,8 +237,57 @@ export const STUDIO_CHROME_CSS = `
    * Size is independent of both. Every run stays --on-invert, so contrast is
    * exactly what it was before the brand existed, and the lockup still reads
    * name-first. */
-  :root[data-theme="studio"] .st-chrome-mark > span:first-of-type {
-    font-size: 0.78em;
+  /* ONE NAME, ONE SIZE. The two spans are halves of a single wordmark, not a
+   * title and a subtitle, so setting them at different sizes made the lockup
+   * read as two things stacked rather than as one name. Hierarchy comes from
+   * the break and the mark now, which costs nothing and cannot go wrong on a
+   * ground nobody has measured. */
+
+  /* THE FOOTER SIGNATURE STACKS, DELIBERATELY.
+   *
+   * The footer sets the wordmark at 108px, which fitted while the shop was
+   * called "Masažni Bazen". "Masažni bazeni Vrelec" does not: measured at
+   * 1440 it was 748x230 — two lines — and the break fell MID-PHRASE, so the
+   * mark stood beside a lone "MASAŽNI" and "BAZENI VRELEC" ran underneath
+   * it. An accidental break inside the category is the worst of both
+   * layouts.
+   *
+   * So the break is chosen rather than suffered: the mark and the category
+   * take the first line, the name takes the second at full size. That is
+   * what a signature does anyway — says the category quietly and the name
+   * loudly — and it means the lockup gets narrower as the viewport does
+   * instead of finding a new place to break.
+   *
+   * flex-basis on the brand is what forces it: a 100% basis cannot share a
+   * line, so the wrap lands between the two halves and nowhere else. */
+  :root[data-theme="studio"] .st-foot-mark {
+    /* display:flex is what makes any of this work. The element is a <p>, so
+     * the first version of this rule set flex-wrap, align-items and a
+     * flex-basis on a BLOCK container and every one of them was inert — the
+     * spans went on flowing inline and the 108px name simply sat after the
+     * 28px category on one line, overflowing its own box by 34px. */
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: clamp(2px, 0.4vw, 8px);
+  }
+  /* Both lines at the wordmark's own size — see the header rule above. The
+   * SIZE of that wordmark is what changes instead: the longest line is now
+   * "MASAŽNI BAZENI" rather than "VRELEC", so the type has to be small
+   * enough for the longer of the two to fit the column. Measured rather than
+   * guessed; the clamp below is the largest that keeps line one intact from
+   * 1440 down to 320. */
+  :root[data-theme="studio"] .st-foot-mark > span:last-of-type {
+    flex-basis: 100%;
+  }
+  /* The space between the halves has no job once they are on two lines. */
+  :root[data-theme="studio"] .st-foot-mark .st-mark-gap { display: none; }
+  /* The glyph pairs with the small category line, not with the 108px name. */
+  :root[data-theme="studio"] .st-foot-mark .st-brand-mark {
+    inline-size: 0.86em;
+    block-size: 0.86em;
+    margin-inline-end: 0.24em;
+    transform: none;
   }
 
   /* THE FOOTER SIGNATURE STACKS, DELIBERATELY.
@@ -674,7 +723,24 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-foot-mark {
     font-family: var(--f-display);
     font-weight: var(--w-body);
-    font-size: clamp(2.2rem, 7.5vw, 9.375rem);
+    /* MEASURED, NOT CHOSEN. Both lines are the wordmark's own size now, so
+     * the longest line is "MASAŽNI BAZENI" rather than "VRELEC" — half again
+     * as many characters — and the type has to be small enough for the
+     * LONGER one. Natural line-one width against the column it sits in, per
+     * candidate:
+     *
+     *        1440      1200      1024
+     *   7.5vw  1015/748  848/616  724/536   wraps at all three
+     *   6vw     814/748  680/616  581/536   wraps at all three
+     *   5vw     680/748  568/616  486/536   fits everywhere
+     *
+     * So 5vw — and the CEILING matters as much as the floor. At 1920 the
+     * unclamped 5vw is 96px, which put line one back onto two lines on the
+     * widest screens; 4.5rem holds it at the 72px that was measured to fit.
+     * The floor came down from 2.2rem too: at 320px a 35px line one needs ~330px of a
+     * 270px column, so the old minimum would have reintroduced the
+     * mid-phrase break at the narrowest width — the one place nobody looks. */
+    font-size: clamp(1.6rem, 5vw, 4.5rem);
     letter-spacing: var(--ls-h1);
     line-height: 0.88;
     text-transform: uppercase;
