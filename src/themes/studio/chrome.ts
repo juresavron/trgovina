@@ -237,9 +237,11 @@ export const STUDIO_CHROME_CSS = `
    * Size is independent of both. Every run stays --on-invert, so contrast is
    * exactly what it was before the brand existed, and the lockup still reads
    * name-first. */
-  :root[data-theme="studio"] .st-chrome-mark > span:first-of-type {
-    font-size: 0.78em;
-  }
+  /* ONE NAME, ONE SIZE. The two spans are halves of a single wordmark, not a
+   * title and a subtitle, so setting them at different sizes made the lockup
+   * read as two things stacked rather than as one name. Hierarchy comes from
+   * the break and the mark now, which costs nothing and cannot go wrong on a
+   * ground nobody has measured. */
 
   /* THE FOOTER SIGNATURE STACKS, DELIBERATELY.
    *
@@ -269,12 +271,12 @@ export const STUDIO_CHROME_CSS = `
     align-items: center;
     row-gap: clamp(2px, 0.4vw, 8px);
   }
-  :root[data-theme="studio"] .st-foot-mark > span:first-of-type {
-    /* Small enough to read as a descriptor rather than as a first line of
-     * the name, and it keeps its own tracking at that size. */
-    font-size: 0.26em;
-    letter-spacing: var(--ls-label);
-  }
+  /* Both lines at the wordmark's own size — see the header rule above. The
+   * SIZE of that wordmark is what changes instead: the longest line is now
+   * "MASAŽNI BAZENI" rather than "VRELEC", so the type has to be small
+   * enough for the longer of the two to fit the column. Measured rather than
+   * guessed; the clamp below is the largest that keeps line one intact from
+   * 1440 down to 320. */
   :root[data-theme="studio"] .st-foot-mark > span:last-of-type {
     flex-basis: 100%;
   }
@@ -282,9 +284,9 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-foot-mark .st-mark-gap { display: none; }
   /* The glyph pairs with the small category line, not with the 108px name. */
   :root[data-theme="studio"] .st-foot-mark .st-brand-mark {
-    inline-size: 0.34em;
-    block-size: 0.34em;
-    margin-inline-end: 0.14em;
+    inline-size: 0.86em;
+    block-size: 0.86em;
+    margin-inline-end: 0.24em;
     transform: none;
   }
   /* Two type sizes on one line have to sit on ONE baseline, and baseline is a
@@ -674,7 +676,24 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-foot-mark {
     font-family: var(--f-display);
     font-weight: var(--w-body);
-    font-size: clamp(2.2rem, 7.5vw, 9.375rem);
+    /* MEASURED, NOT CHOSEN. Both lines are the wordmark's own size now, so
+     * the longest line is "MASAŽNI BAZENI" rather than "VRELEC" — half again
+     * as many characters — and the type has to be small enough for the
+     * LONGER one. Natural line-one width against the column it sits in, per
+     * candidate:
+     *
+     *        1440      1200      1024
+     *   7.5vw  1015/748  848/616  724/536   wraps at all three
+     *   6vw     814/748  680/616  581/536   wraps at all three
+     *   5vw     680/748  568/616  486/536   fits everywhere
+     *
+     * So 5vw — and the CEILING matters as much as the floor. At 1920 the
+     * unclamped 5vw is 96px, which put line one back onto two lines on the
+     * widest screens; 4.5rem holds it at the 72px that was measured to fit.
+     * The floor came down from 2.2rem too: at 320px a 35px line one needs ~330px of a
+     * 270px column, so the old minimum would have reintroduced the
+     * mid-phrase break at the narrowest width — the one place nobody looks. */
+    font-size: clamp(1.6rem, 5vw, 4.5rem);
     letter-spacing: var(--ls-h1);
     line-height: 0.88;
     text-transform: uppercase;
