@@ -424,6 +424,38 @@ create policy media_public_read on public.product_media
     )
   );
 
+-- ---------------------------------------------------------------------------
+-- The deploy reads the image index.
+--
+-- The storefront renders src/themes/studio/own-media.ts, generated from these
+-- two tables, because handleRequest is synchronous and cannot query anything.
+-- Regenerating that by hand meant it went stale the moment a photograph was
+-- added or deleted through /admin — which shipped a deleted picture twice and
+-- a broken one once, in one evening.
+--
+-- The two policies above are right for a STOREFRONT and useless for a BUILD:
+-- they require status='published' and is_live, so a pre-live shop shows an
+-- anonymous reader nothing, which is the state the index is most needed in.
+--
+-- ⚠️ WHAT THIS EXPOSES IS ALREADY PUBLIC — every url and alt is rendered into
+-- a product page and served to visitors and to Google. The alternative was the
+-- SERVICE key in CI, which bypasses every policy in this database, to read a
+-- list of filenames.
+--
+-- ⚠️ THE COLUMN GRANT IS THE HALF THAT MAKES IT SAFE. RLS filters rows, grants
+-- filter columns. Opening the rows alone would have published products.specs,
+-- subtitle, power_requirement and lead_time_days — the last of which is a
+-- commercial commitment nobody has made. anon sees the three columns the
+-- generator selects and no others.
+-- ---------------------------------------------------------------------------
+create policy index_build_read on public.products
+  for select to anon using (true);
+create policy index_build_read on public.product_media
+  for select to anon using (true);
+
+revoke select on public.products from anon;
+grant select (id, shop_id, slug) on public.products to anon;
+
 create policy reviews_public_read on public.reviews
   for select using (
     published
