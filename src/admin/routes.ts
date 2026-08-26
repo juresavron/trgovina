@@ -445,8 +445,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       // Rows first: an orphaned object costs storage, an orphaned row renders
       // a broken image on a product page.
       await deleteMedia(api, id);
-      for (const w of row.widths ?? []) await deleteObject(api, widthPath(row.url, w));
-      await deleteObject(api, row.url);
+      for (const path of storedPaths(row.url, row.widths)) await deleteObject(api, path);
     }
     return seeOther("/admin/" + shop + "/" + slug + "?m=deleted");
   }
@@ -505,6 +504,37 @@ const NOTICES: Record<string, string> = {
 export function widthPath(url: string, w: number): string {
   const dot = url.lastIndexOf(".");
   return dot < 0 ? url + "-" + w : url.slice(0, dot) + "-" + w + url.slice(dot);
+}
+
+/**
+ * Every object an image row actually put in the bucket.
+ *
+ * ⚠️ THE WIDEST RUNG HAS NO SUFFIX, and forgetting that is what made deleting
+ * a photograph fail. upload() stores the largest width at the bare path — that
+ * is the URL the row carries and the storefront serves — and only the narrower
+ * ones at "<stem>-<w>.webp". But it records EVERY width in the widths column,
+ * the widest included. So a row reading [480, 800, 1200, 1600, 2048] has five
+ * objects behind it and exactly four of them are suffixed: there is no
+ * "-2048.webp", and there never was.
+ *
+ * Delete used to ask for one anyway. Supabase Storage answers a key that was
+ * never written with 400, not 404 (deleteObject now reads the body, which is
+ * the other half of this fix), so the request threw and the panel said "Napaka
+ * na strežniku" — after deleteMedia had already removed the row. The operator
+ * watched the photograph disappear from the shop while being told the server
+ * had failed, and the four objects that DID exist stayed in the bucket.
+ *
+ * Deriving the set from the row instead of guessing at it is what keeps those
+ * two facts — what was written, what gets removed — from drifting apart again.
+ *
+ * An empty widths column is the one-size case, old dashboard uploads included:
+ * one object, at the row's own url.
+ */
+export function storedPaths(url: string, widths: readonly number[] | null | undefined): string[] {
+  const ladder = (widths ?? []).filter((w) => Number.isFinite(w) && w > 0);
+  const widest = ladder.length > 0 ? Math.max(...ladder) : 0;
+  const narrower = [...new Set(ladder)].filter((w) => w !== widest).sort((a, b) => a - b);
+  return [url, ...narrower.map((w) => widthPath(url, w))];
 }
 
 /**

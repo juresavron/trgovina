@@ -123,10 +123,18 @@ export async function deleteObject(api: Api, path: string): Promise<void> {
     method: "DELETE",
     headers: headers(api),
   });
-  // 404 means it is already gone, which is the state we wanted.
-  if (!res.ok && res.status !== 404) {
-    throw new Error("delete failed (" + res.status + "): " + (await res.text()).slice(0, 300));
-  }
+  if (res.ok) return;
+  // ALREADY GONE IS THE STATE WE WANTED, however it is spelled.
+  //
+  // This tolerated a 404 status and nothing else, and Supabase Storage does
+  // not answer a missing key with 404: it answers 400 with {"statusCode":
+  // "404", "error":"Not Found"} in the body. So deleting a photograph threw,
+  // the panel showed "Napaka na strežniku", and — because the database row is
+  // removed first — the picture had already vanished from the shop while the
+  // operator was being told the server had failed.
+  const body = (await res.text()).slice(0, 300);
+  if (res.status === 404 || (res.status === 400 && /not[ _]?found/i.test(body))) return;
+  throw new Error("delete failed (" + res.status + "): " + body);
 }
 
 /* ---- rows -------------------------------------------------------------- */
