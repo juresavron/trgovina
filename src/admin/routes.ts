@@ -485,7 +485,10 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       shop,
       model.slug,
       model.name,
-      rows.map((r): MediaView => ({ id: r.id, url: r.url, alt: r.alt, sort: r.sort, widths: r.widths ?? [] })),
+      rows.map((r): MediaView => ({
+        id: r.id, url: r.url, alt: r.alt, sort: r.sort,
+        widths: r.widths ?? [], enhanced: r.enhanced === true,
+      })),
       notice,
       admin.email,
       enhanceAvailable(env),
@@ -716,8 +719,12 @@ async function upload(
   if (widest[0] > 0) written.push(widest[0]);
   written.sort((a, b) => a - b);
 
+  // The browser is the only thing that knows whether the upscaler produced
+  // anything, so its word is what gets stored. See the enhanced column.
+  const enhanced = String(form.get("enhanced") ?? "") === "1";
+
   const rows = await listMedia(api, productId);
-  await insertMedia(api, productId, base, alt, rows.length);
+  await insertMedia(api, productId, base, alt, rows.length, enhanced);
   if (written.length > 1) await widthsFor(api, productId, base, written);
 
   return seeOther("/admin/" + shop + "/" + slug + "?m=uploaded");

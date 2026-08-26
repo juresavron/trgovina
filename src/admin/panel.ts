@@ -525,6 +525,8 @@ export interface MediaView {
   alt: string;
   sort: number;
   widths: number[];
+  /** True when the 2K upscaler redrew this image. Never inferred. */
+  enhanced?: boolean;
 }
 
 export function modelPage(
@@ -657,6 +659,10 @@ export function modelPage(
                 "</div>" +
                 '<p class="file">' + esc(m.url) +
                 (m.widths.length ? " · širine: " + m.widths.join(", ") : " · ena širina") +
+                // An enhanced picture is a REDRAWN one, and the person editing
+                // this catalogue is entitled to know which those are without
+                // having to remember the day it was uploaded.
+                (m.enhanced ? " · 2K (obdelano z UI)" : "") +
                 "</p>" +
                 "</div></li>",
             )
@@ -902,6 +908,11 @@ const UPLOAD_JS = `
       // stand in for still differs from its neighbours' — see standInAlt.
       fd.append("n", String(i + 1));
       fd.append("widths", out.widths.join(","));
+      /* WHETHER THE UPSCALER RAN, SENT RATHER THAN GUESSED AT LATER. Only
+         this side knows: the server sees a set of WebP blobs and cannot tell
+         a 2048px photograph from a small one Gemini redrew at 2K. The width
+         ladder cannot answer it either — it is the same either way. */
+      if (hit[i] === true) fd.append("enhanced", "1");
       out.blobs.forEach(function(b, k){ fd.append("w" + out.widths[k], b, out.widths[k] + ".webp"); });
       mark(i, "nalagam …");
       st.textContent = "nalagam " + (i + 1) + " od " + total + " …";
