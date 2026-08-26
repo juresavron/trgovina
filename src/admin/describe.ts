@@ -29,14 +29,24 @@
 import type { Env } from "./supabase";
 
 /**
- * The model that reads the picture.
+ * The models that read the picture, in the order they are tried.
  *
  * Not GEMINI_IMAGE_MODEL — that one is the image GENERATOR the upscaler
- * drives, and asking it for a sentence is asking the wrong tool. A var for
- * the same reason: model names move faster than deploys. Set
- * GEMINI_TEXT_MODEL in wrangler.jsonc to change it without touching this file.
+ * drives, and asking it for a sentence is asking the wrong tool.
+ *
+ * A LIST RATHER THAN ONE NAME, because the failure mode of getting it wrong
+ * is invisible: a retired or misspelled model id answers 404, describe()
+ * returns null exactly as it does for a refusal, and the operator sees ten
+ * empty fields with nothing anywhere saying why. Model names move faster than
+ * deploys and this code cannot reach the API from where it is written, so it
+ * asks the next one instead of giving up on the first. Set GEMINI_TEXT_MODEL
+ * in wrangler.jsonc to pin one and skip the list entirely.
  */
-const DEFAULT_MODEL = "gemini-flash-latest";
+const MODELS = [
+  "gemini-flash-latest",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+];
 
 /** How long an alt string may be — the same cap the panel's input carries. */
 export const ALT_MAX = 180;
@@ -133,7 +143,39 @@ export async function describe(
 ): Promise<string | null> {
   if (!describeAvailable(env)) return null;
 
-  const model = env.GEMINI_TEXT_MODEL || DEFAULT_MODEL;
+  // The image is encoded once, however many models are tried.
+  const payload = JSON.stringify({
+    contents: [
+      {
+        parts: [
+          { text: prompt(subject) },
+          { inline_data: { mime_type: mime, data: base64(bytes) } },
+        ],
+      },
+    ],
+    // Low temperature: this is a description, and the creative end of the
+    // distribution is exactly where the invented details live.
+    generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
+  });
+
+  const models = env.GEMINI_TEXT_MODEL ? [env.GEMINI_TEXT_MODEL] : MODELS;
+  for (const model of models) {
+    const out = await ask(env, model, payload);
+    if (out !== null) return out;
+  }
+  return null;
+}
+
+/**
+ * One model, one attempt. Null means "ask the next one".
+ *
+ * Every outcome collapses to null on purpose — a network error, a 404 for a
+ * name that no longer exists, a refusal, a body with no text in it. The caller
+ * cannot tell them apart and does not need to: the next model gets the same
+ * question, and when the list runs out the field stays empty, which is the
+ * state the form had before any of this existed.
+ */
+async function ask(env: Env, model: string, payload: string): Promise<string | null> {
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/" +
     encodeURIComponent(model) +
@@ -149,19 +191,7 @@ export async function describe(
         // proxy and referrer along the way.
         "x-goog-api-key": env.GEMINI_API_KEY!,
       },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt(subject) },
-              { inline_data: { mime_type: mime, data: base64(bytes) } },
-            ],
-          },
-        ],
-        // Low temperature: this is a description, and the creative end of the
-        // distribution is exactly where the invented details live.
-        generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
-      }),
+      body: payload,
     });
   } catch {
     return null;
