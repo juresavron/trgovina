@@ -122,8 +122,13 @@ function scene({ w, h, label }) {
 
 for (const name of wanted) {
   const long = /zr78|zr7861|swim/i.test(name);
-  const isHero = /^hero\./i.test(name);
-  const isCat = /^kategorija-/i.test(name);
+  // The site's own pictures moved under "site/" when the panel took them
+  // over, and these patterns were anchored at the start of the path — so a
+  // hero stopped being recognised as a hero and got drawn as a product
+  // cutout. Matched on the STEM now, which is what actually names the slot.
+  const stem = name.slice(name.lastIndexOf("/") + 1);
+  const isHero = /^hero\./i.test(stem);
+  const isCat = /^kategorija-/i.test(stem);
   const svg = isHero
     ? scene({ w: 2000, h: 1100, label: "HERO" })
     : isCat
