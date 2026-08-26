@@ -23,8 +23,87 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const URL_BASE = process.env.SUPABASE_URL;
-const KEY = process.env.SUPABASE_SERVICE_KEY;
+/**
+ * Where the project is, and which key opens it.
+ *
+ * ⚠️ THE PUBLISHABLE KEY IS ENOUGH NOW, and that is deliberate. These two
+ * tables carry image paths and alt text — every byte of which is rendered into
+ * a product page and served to visitors and to Google — so the index_build_read
+ * policy lets an anonymous reader see them, and anon's grant on products is
+ * narrowed to the three columns selected below. The alternative was the
+ * SERVICE key in CI, which bypasses every policy in the database including
+ * orders and customers, to read a list of filenames.
+ *
+ * Both keys are accepted because the service key still works locally and there
+ * is no reason to break that. Neither is required if SUPABASE_MEDIA_JSON is
+ * given instead.
+ */
+/**
+ * wrangler.jsonc's vars, without a JSONC parser.
+ *
+ * ⚠️ SCANNED CHARACTER BY CHARACTER, because the obvious version is wrong in a
+ * way that looks right: stripping block and line comments with two regexes cuts
+ * "https://..." in half at the // inside the string, and the failure is a JSON
+ * parse error thirty lines away from the cause. So this tracks whether it is
+ * inside a string literal and only treats a comment marker as a comment when
+ * it is not.
+ *
+ * Reading the file rather than being handed the values keeps the deploy from
+ * having to restate configuration that already exists in one place — and both
+ * values here are public by design, which is why they live in vars at all.
+ */
+function wranglerVars() {
+  let src;
+  try {
+    src = fs.readFileSync(path.join(process.cwd(), "wrangler.jsonc"), "utf8");
+  } catch {
+    return {};
+  }
+  let out = "", inStr = false, esc = false;
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i];
+    if (inStr) {
+      out += c;
+      if (esc) esc = false;
+      else if (c === "\\") esc = true;
+      else if (c === '"') inStr = false;
+      continue;
+    }
+    if (c === '"') { inStr = true; out += c; continue; }
+    if (c === "/" && src[i + 1] === "/") { while (i < src.length && src[i] !== "\n") i++; out += "\n"; continue; }
+    if (c === "/" && src[i + 1] === "*") { i += 2; while (i < src.length && !(src[i] === "*" && src[i + 1] === "/")) i++; i++; continue; }
+    out += c;
+  }
+  // Trailing commas are legal in JSONC and not in JSON.
+  out = out.replace(/,(\s*[}\]])/g, "$1");
+  try {
+    return JSON.parse(out).vars ?? {};
+  } catch {
+    return {};
+  }
+}
+
+const VARS = wranglerVars();
+
+/**
+ * Where the project is, and which key opens it.
+ *
+ * ⚠️ THE PUBLISHABLE KEY IS ENOUGH NOW, and that is deliberate. These two
+ * tables carry image paths and alt text — every byte of which is rendered into
+ * a product page and served to visitors and to Google — so the index_build_read
+ * policy lets an anonymous reader see them, and anon's grant on products is
+ * narrowed to the three columns selected below. The alternative was the
+ * SERVICE key in CI, which bypasses every policy in the database including
+ * orders and customers, to read a list of filenames.
+ *
+ * The service key still works where somebody has one; neither is needed when
+ * SUPABASE_MEDIA_JSON is given instead.
+ */
+const URL_BASE = process.env.SUPABASE_URL || VARS.SUPABASE_URL;
+const KEY =
+  process.env.SUPABASE_SERVICE_KEY ||
+  process.env.SUPABASE_ANON_KEY ||
+  VARS.SUPABASE_ANON_KEY;
 
 /**
  * A dump instead of a fetch.
@@ -53,7 +132,7 @@ if (DUMP) {
   ({ products, media } = d);
 } else {
   if (!URL_BASE || !KEY) {
-    console.error("set SUPABASE_URL and SUPABASE_SERVICE_KEY, or SUPABASE_MEDIA_JSON");
+    console.error("set SUPABASE_URL and SUPABASE_ANON_KEY (or SUPABASE_SERVICE_KEY), or SUPABASE_MEDIA_JSON");
     process.exit(1);
   }
   const rest = async (q) => {
@@ -63,7 +142,11 @@ if (DUMP) {
     if (!r.ok) throw new Error(q + " -> " + r.status + " " + (await r.text()).slice(0, 200));
     return r.json();
   };
-  products = await rest("products?select=id,shop_id,slug&order=sort");
+  // NOT ordered by sort. PostgREST needs SELECT on any column it orders by,
+  // and anon's grant is deliberately the three columns below — ordering here
+  // would 403 for the sake of nothing, since the output is grouped by
+  // "<shop>/<slug>" and those keys are sorted alphabetically further down.
+  products = await rest("products?select=id,shop_id,slug");
   media = await rest("product_media?select=product_id,url,alt,sort,widths&order=sort");
 }
 
