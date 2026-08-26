@@ -541,6 +541,63 @@ export const STUDIO_PAGE_CSS = `
     color: var(--ink-mute);
   }
 
+  /* ---- the contact page's actions --------------------------------------
+   *
+   * The channels as CONTROLS, sitting above the table that describes them.
+   * Built from the theme's existing button language rather than a new one:
+   * the lead action is the filled black control the product page uses, the
+   * second is the outlined one the marquee toggle and the grid tile use. A
+   * visitor arriving from "Povprašajte za ponudbo" should not have to find
+   * an underlined address in the second column of a definition list. */
+  :root[data-theme="studio"] .st-page-acts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(10px, 1vw, 16px);
+    margin-block: clamp(18px, 1.8vw, 28px) clamp(24px, 2.4vw, 36px);
+  }
+  :root[data-theme="studio"] .st-page-act {
+    display: inline-flex;
+    align-items: center;
+    /* A worded control at the label rung, like every other in this theme, and
+     * comfortably past WCAG 2.5.8's 24px by geometry alone. */
+    min-block-size: 52px;
+    padding: 0 clamp(20px, 2vw, 34px);
+    border: var(--bw-line) solid var(--line-strong);
+    border-radius: var(--r-ctrl);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--ink);
+    transition: background-color .2s ease, color .2s ease;
+  }
+  :root[data-theme="studio"] .st-page-act:hover {
+    background: var(--ink); color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-page-act:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+  }
+  /* Whichever channel is FIRST is the page's primary act, and it is filled.
+   * Which one that is depends on what the shop has filled in — a number when
+   * there is one, the address otherwise — so the modifier is placed by the
+   * renderer rather than by :first-child, which would be the same rule
+   * written where it cannot be read. */
+  :root[data-theme="studio"] .st-page-act--lead {
+    background: var(--ink-invert);
+    border-color: var(--ink-invert);
+    color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-page-act--lead:hover {
+    background: transparent; color: var(--ink); border-color: var(--line-strong);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-page-act { transition: none; }
+  }
+
   /* The closing call to action. */
   :root[data-theme="studio"] .st-page-cta {
     margin-block-start: clamp(48px, 5vw, 84px);
@@ -689,19 +746,38 @@ export function sectionId(h: string, i: number): string {
   return "s" + String(i + 1) + (folded ? "-" + folded : "");
 }
 
+/**
+ * A section heading, WITH THE ANCHOR THE INDEX POINTS AT.
+ *
+ * ⚠️ THIS IS WHY IT IS A HELPER. The id used to be threaded into prose() and
+ * nowhere else, while renderStudioPage builds an index entry for every block
+ * that has a heading. So every steps, qa, facts, contact and imprint block on
+ * the site had an entry in "Na tej strani" aimed at an id that did not exist:
+ * 26 dead links across 10 pages, and all four entries on /pogosta-vprasanja.
+ * Nothing failed — the browser simply does not move, which reads as the page
+ * being broken rather than the link.
+ *
+ * One function, called by every block that renders an h2, so a new block kind
+ * cannot be added without one.
+ */
+function h2(text: string | undefined, id?: string): string {
+  if (!text) return "";
+  return (
+    '<h2 class="st-page-h2"' + (id ? ' id="' + esc(id) + '"' : "") + ">" +
+    esc(text) + "</h2>"
+  );
+}
+
 function prose(b: Extract<Block, { kind: "prose" }>, id?: string): string {
   return (
-    (b.h
-      ? '<h2 class="st-page-h2"' + (id ? ' id="' + esc(id) + '"' : "") + ">" +
-        esc(b.h) + "</h2>"
-      : "") +
+    h2(b.h, id) +
     b.p.map((t) => '<p class="st-page-p">' + esc(t) + "</p>").join("")
   );
 }
 
-function steps(b: Extract<Block, { kind: "steps" }>): string {
+function steps(b: Extract<Block, { kind: "steps" }>, id?: string): string {
   return (
-    (b.h ? '<h2 class="st-page-h2">' + esc(b.h) + "</h2>" : "") +
+    h2(b.h, id) +
     '<ol class="st-page-steps">' +
     b.items
       .map(
@@ -715,9 +791,9 @@ function steps(b: Extract<Block, { kind: "steps" }>): string {
   );
 }
 
-function qa(b: Extract<Block, { kind: "qa" }>): string {
+function qa(b: Extract<Block, { kind: "qa" }>, id?: string): string {
   return (
-    (b.h ? '<h2 class="st-page-h2">' + esc(b.h) + "</h2>" : "") +
+    h2(b.h, id) +
     '<div class="st-page-qa">' +
     b.items
       .map(
@@ -741,9 +817,14 @@ function qa(b: Extract<Block, { kind: "qa" }>): string {
  * as raw HTML because it travelled in the same array as the anchors — now
  * goes through esc() at its call site like every other string in this file.
  */
-function facts(h: string | undefined, rows: readonly (readonly [string, string])[], raw = false): string {
+function facts(
+  h: string | undefined,
+  rows: readonly (readonly [string, string])[],
+  raw = false,
+  id?: string,
+): string {
   return (
-    (h ? '<h2 class="st-page-h2">' + esc(h) + "</h2>" : "") +
+    h2(h, id) +
     '<dl class="st-page-facts">' +
     rows
       .map(
@@ -757,7 +838,49 @@ function facts(h: string | undefined, rows: readonly (readonly [string, string])
   );
 }
 
-function contact(ctx: RenderCtx, h?: string): string {
+/**
+ * The contact page's ACTIONS, above the facts that describe them.
+ *
+ * WHY THIS EXISTS. A visitor arriving from a product page's "Povprašajte za
+ * ponudbo" found the one thing they came to do — write to the shop — styled
+ * as a table cell: a small underlined address in the second column of a
+ * definition list, under a heading, below the fold on a phone. The only
+ * button on the page sent them to the FAQ. The page described the channels
+ * perfectly and offered none of them.
+ *
+ * So the channels become controls. The table stays underneath, because a
+ * postal address is a fact to read rather than a thing to press, and because
+ * the imprint obligations are satisfied by the facts and not by the buttons.
+ *
+ * Each one appears only while it goes somewhere: page.ts already refuses to
+ * print an unset value as a fact, and a dead action is worse than a dead fact
+ * because it invites a press. With this shop's placeholder number that means
+ * one button today and two the day it is filled in.
+ */
+function contactActions(ctx: RenderCtx): string {
+  const c = ctx.shop.contact;
+  const acts: string[] = [];
+  if (isSetPhone(ctx.phoneDisplay)) {
+    acts.push(
+      '<a class="st-page-act st-page-act--lead" href="' + esc(ctx.phoneHref) + '">' +
+        "Pokličite " + esc(ctx.phoneDisplay) + "</a>",
+    );
+  }
+  if (isSet(c.email)) {
+    // A subject line, because it costs nothing and it is the difference
+    // between an inbox of "(no subject)" and one that can be sorted. It says
+    // only what the message is — nothing about the product, which this page
+    // has no way of knowing.
+    acts.push(
+      '<a class="st-page-act' + (acts.length === 0 ? " st-page-act--lead" : "") +
+        '" href="mailto:' + esc(c.email) + "?subject=" +
+        encodeURIComponent("Povpraševanje") + '">Pišite nam</a>',
+    );
+  }
+  return acts.length === 0 ? "" : '<div class="st-page-acts">' + acts.join("") + "</div>";
+}
+
+function contact(ctx: RenderCtx, h?: string, id?: string): string {
   const c = ctx.shop.contact;
   const a = c.address;
   // The postal address is three fields, so it is three questions: a street
@@ -768,18 +891,22 @@ function contact(ctx: RenderCtx, h?: string): string {
   const place = [a.street, [a.zip, a.city].filter(Boolean).join(" ")]
     .filter(Boolean)
     .join(", ");
-  return facts(
-    h ?? "Kontakt",
+  return (
+    h2(h ?? "Kontakt", id) +
+    contactActions(ctx) +
+    facts(
+    undefined,
     [
       ["Telefon", link(ctx.phoneHref, ctx.phoneDisplay, isSetPhone(ctx.phoneDisplay))],
       ["E-pošta", link("mailto:" + c.email, c.email, isSet(c.email))],
       ["Naslov", fact(place, placeSet)],
     ],
     true,
+    )
   );
 }
 
-function imprint(ctx: RenderCtx, h?: string): string {
+function imprint(ctx: RenderCtx, h?: string, id?: string): string {
   const co = ctx.shop.company;
   return facts(
     h ?? "Podatki o podjetju",
@@ -789,6 +916,7 @@ function imprint(ctx: RenderCtx, h?: string): string {
       ["Spletno mesto", esc(ctx.shop.domain)],
     ],
     true,
+    id,
   );
 }
 
@@ -809,15 +937,15 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
     b.kind === "prose"
       ? prose(b, id)
       : b.kind === "steps"
-        ? steps(b)
+        ? steps(b, id)
         : b.kind === "qa"
-          ? qa(b)
+          ? qa(b, id)
           : b.kind === "facts"
-            ? facts(b.h, b.rows)
+            ? facts(b.h, b.rows, false, id)
             : b.kind === "contact"
-              ? contact(ctx, b.h)
+              ? contact(ctx, b.h, id)
               : b.kind === "imprint"
-                ? imprint(ctx, b.h)
+                ? imprint(ctx, b.h, id)
                 : '<div class="st-page-cta">' +
                   '<h2 class="st-page-cta-h">' + esc(b.h) + "</h2>" +
                   '<p class="st-page-cta-p">' + esc(b.p) + "</p>" +

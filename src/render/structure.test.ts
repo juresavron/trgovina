@@ -194,3 +194,47 @@ describe("every rendered page is structurally sound", () => {
     });
   }
 });
+
+
+/**
+ * EVERY IN-PAGE LINK LANDS ON SOMETHING.
+ *
+ * The subpages carry a "Na tej strani" index built from every block that has
+ * a heading, and the id it points at used to be threaded into ONE block kind.
+ * So steps, questions, fact tables, the contact block and the imprint all had
+ * an index entry aimed at an id that did not exist: 26 dead links across 10
+ * pages, and all four entries on /pogosta-vprasanja. Nothing failed — the
+ * browser simply does not move, which a visitor reads as the page being
+ * broken rather than the link.
+ *
+ * This is a whole-site sweep rather than a page test because the failure is
+ * structural: a new block kind that forgets its anchor breaks silently, and
+ * silently is how this one survived.
+ */
+describe("no in-page link points at nothing", () => {
+  const PATHS = [
+    "/", "/trgovina", "/masazni-bazeni", "/swim-spa", "/bazen/veliki-230",
+    "/kontakt", "/dostava-in-montaza", "/primerjava", "/o-nas", "/vodniki",
+    "/pogoji-poslovanja", "/pogosta-vprasanja", "/piskotki", "/zasebnost",
+    "/odstop-od-pogodbe", "/razstavni-salon", "/financiranje", "/kosarica",
+  ];
+
+  for (const path of PATHS) {
+    it("resolves every fragment on " + path, async () => {
+      const res = handleRequest(
+        new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
+          headers: { host: "trgovina.workers.dev" },
+        }),
+      );
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      const ids = new Set([...html.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!));
+      const dead = [...html.matchAll(/href="#([^"]+)"/g)]
+        .map((m) => m[1]!)
+        // "#" alone and "#main" style skip targets are covered by ids too;
+        // anything genuinely empty is not a fragment link.
+        .filter((t) => t !== "" && !ids.has(t));
+      expect(dead, path + " has dead fragments: " + dead.join(", ")).toEqual([]);
+    });
+  }
+});
