@@ -41,6 +41,22 @@
   //   cannot re-establish it.
   //
   // Admin accounts are Supabase Auth users on the public.admins allowlist.
+  // ⚠️ KEEP WHAT THE DASHBOARD HOLDS.
+  //
+  // Without this, `wrangler deploy` DELETES every runtime variable that is not
+  // declared below before setting the ones that are. A key added in the
+  // Cloudflare dashboard therefore survived until the next deploy and then
+  // vanished — silently, because the feature it powers is optional and simply
+  // switched itself off. That is a deploy pipeline quietly undoing the
+  // operator's work, which is not a thing an operator should have to know
+  // about, so the pipeline stops doing it.
+  //
+  // The cost is that this file is no longer the sole authority on vars: one
+  // removed here stays on the Worker until it is removed in the dashboard too.
+  // That is the right trade. The values below are public config; the one thing
+  // that is NOT public is added in the dashboard, and it now stays there.
+  "keep_vars": true,
+
   "vars": {
     "SUPABASE_URL": "https://cybwzhgretztcjfdefoy.supabase.co",
     "SUPABASE_ANON_KEY": "sb_publishable__aHkVGGeNcPgiwyB7tS_Sw_WpVTbBYy",
