@@ -550,21 +550,55 @@ export function isWebp(bytes: ArrayBuffer): boolean {
   );
 }
 
+/**
+ * What goes in the alt column when nobody wrote anything.
+ *
+ * Truthful and nothing else: the model's own name, and where the picture sits
+ * in the set. It is deliberately not a description — inventing one server-side
+ * would be a claim about a photograph this code has never looked at, which is
+ * the one thing describe.ts exists to avoid doing carelessly.
+ *
+ * The position is what stops a set of ten collapsing into ten identical
+ * strings, which is the state this whole change is trying to get out of. It
+ * comes from the client because only the client knows which file this is; a
+ * missing or nonsense value simply leaves the name alone.
+ */
+export function standInAlt(name: string, n: FormDataEntryValue | null): string {
+  const i = Number(String(n ?? "").trim());
+  const pos = Number.isInteger(i) && i > 0 && i < 1000 ? " — fotografija " + i : "";
+  // product_media.alt carries a length check, and the model name comes from
+  // the catalogue rather than from anything this function controls. The
+  // position is what makes the string unique, so the NAME is what gets cut.
+  const room = 180 - pos.length;
+  const base = (name || "Fotografija izdelka").slice(0, room).trim();
+  return base + pos;
+}
+
 async function upload(
   request: Request,
   api: Api,
   shop: string,
   slug: string,
-  _name: string,
+  name: string,
   productId: string,
 ): Promise<Response> {
   const form = await request.formData();
-  const alt = String(form.get("alt") ?? "").trim();
-  // product_media.alt is NOT NULL with a length check in the schema, because
-  // alt text is an SEO and accessibility surface rather than an afterthought.
-  // Refuse here too, so the failure is a sentence rather than a 400 from
-  // PostgREST.
-  if (!alt) return seeOther("/admin/" + shop + "/" + slug + "?e=alt");
+  // AN EMPTY DESCRIPTION NO LONGER REFUSES THE UPLOAD.
+  //
+  // product_media.alt is NOT NULL with a length check, so something has to go
+  // in — but "something" was being extracted from the operator one sentence
+  // at a time, and a set of ten meant ten sentences before the button would
+  // work at all. That is how the bucket ended up with nine photographs
+  // sharing one pasted string: a required field does not produce good alt
+  // text, it produces whatever gets past it.
+  //
+  // So the field is optional at every layer now and the stand-in is written
+  // here. It is not a description and does not pretend to be one — it names
+  // the model and the picture's position, which is true of the file and
+  // nothing more. The describer writes a real one when it is configured, the
+  // operator can correct any of them from the list below, and neither is a
+  // precondition for getting the photograph into the shop.
+  const alt = String(form.get("alt") ?? "").trim() || standInAlt(name, form.get("n"));
 
   // THE STEM IS THE ALT TEXT, and it is here for image search: the filename
   // is one of the few signals Google has about what a picture shows, and a

@@ -1,6 +1,6 @@
 import { describe as suite, it, expect } from "vitest";
 import { describeAvailable, tidy, ALT_MAX } from "./describe";
-import { isContentAddressed, slugStem } from "./routes";
+import { isContentAddressed, slugStem, standInAlt } from "./routes";
 
 /**
  * The describer is off unless a key is configured.
@@ -106,5 +106,51 @@ suite("upload filenames", () => {
     expect(isContentAddressed("bazen/veliki-230/masazni-bazen-na-terasi.webp")).toBe(false);
     // A stem that merely CONTAINS something UUID-shaped is not addressed by it.
     expect(isContentAddressed("bazen/veliki-230/" + uuid + "-terasa.webp")).toBe(false);
+  });
+});
+
+/**
+ * An upload is never refused for want of a sentence.
+ *
+ * A required alt field does not produce good alt text — it produces whatever
+ * gets past it, which is how nine photographs came to share one pasted
+ * string. The column is NOT NULL, so something has to go in; this is what.
+ */
+suite("the stand-in description", () => {
+  it("names the model and the picture's position", () => {
+    expect(standInAlt("SWIM 580 HIDRO", "3")).toBe("SWIM 580 HIDRO — fotografija 3");
+  });
+
+  it("is different for every picture in a set", () => {
+    const set = ["1", "2", "3"].map((n) => standInAlt("BAZEN 230", n));
+    expect(new Set(set).size).toBe(3);
+  });
+
+  it("falls back to the name alone when the position is missing or absurd", () => {
+    expect(standInAlt("BAZEN 230", null)).toBe("BAZEN 230");
+    expect(standInAlt("BAZEN 230", "")).toBe("BAZEN 230");
+    expect(standInAlt("BAZEN 230", "nonsense")).toBe("BAZEN 230");
+    expect(standInAlt("BAZEN 230", "0")).toBe("BAZEN 230");
+    expect(standInAlt("BAZEN 230", "99999")).toBe("BAZEN 230");
+  });
+
+  it("is never empty, because the column is NOT NULL", () => {
+    expect(standInAlt("", null)).not.toBe("");
+    expect(standInAlt("", "2")).not.toBe("");
+  });
+
+  it("slugifies into a usable filename stem", () => {
+    // The stand-in is what names the object when nobody described the
+    // picture, so it has to survive slugStem into something /media will serve.
+    expect(slugStem(standInAlt("SWIM 580 HIDRO", "3"))).toBe("swim-580-hidro-fotografija-3");
+  });
+});
+
+suite("the stand-in fits the column", () => {
+  it("never exceeds the alt length check, cutting the name rather than the position", () => {
+    const long = "B".repeat(400);
+    const out = standInAlt(long, "7");
+    expect(out.length).toBeLessThanOrEqual(180);
+    expect(out.endsWith("— fotografija 7")).toBe(true);
   });
 });

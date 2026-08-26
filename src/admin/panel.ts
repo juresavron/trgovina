@@ -188,6 +188,13 @@ input[type=file]::file-selector-button:hover{background:var(--paper)}
 .picked .grow{flex:1;min-width:0}
 .picked .nm{display:block;font-size:12px;color:var(--mute);margin:0 0 4px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* The name the file will be STORED under, built from the description. It is
+   the SEO-visible half of what the description does, and it was invisible:
+   the operator wrote a sentence and had no way of knowing a filename came out
+   of it. Monospace and quiet, under the field it is derived from. */
+.picked .fn{display:block;margin:5px 0 0;font-family:ui-monospace,SFMono-Regular,
+  Menlo,monospace;font-size:11px;color:var(--mute);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #prev{display:none;width:100%;aspect-ratio:4/3;object-fit:contain;
   background:var(--paper);border-radius:var(--r-ctrl);margin-bottom:12px}
 #prev.on{display:block}
@@ -545,10 +552,13 @@ export function modelPage(
       '<form class="card" method="post" action="' + esc(base) +
       '/upload" enctype="multipart/form-data" id="up"' +
       (enhance ? ' data-enhance="on"' : "") +
-      // The subject travels with the switch: describe.ts is told which product
-      // it is looking at so it uses the right noun, and told not to print the
-      // name — the heading, the caption and the URL already carry it.
-      (describe ? ' data-describe="on" data-subject="' + esc(name) + '"' : "") + ">" +
+      (describe ? ' data-describe="on"' : "") +
+      // ALWAYS, not only with the describer on. Two things need the model's
+      // name: describe.ts, which is told which product it is looking at so it
+      // uses the right noun and is told not to print the name; and the
+      // filename preview, which has to show what the server will actually
+      // write when a description is left empty — and that is built from this.
+      ' data-subject="' + esc(name) + '"' + ">" +
       '<div class="up">' +
 
       '<div class="drop" id="drop">' +
@@ -573,18 +583,34 @@ export function modelPage(
       "<div>" +
       // The single description, for the no-script path and as the field the
       // per-file list replaces the moment JavaScript takes over.
-      '<div class="field" id="one-alt"><label for="alt">Opis slike (obvezno)</label>' +
-      '<input id="alt" name="alt" type="text" maxlength="180" required ' +
+      // Not required, here either: an upload is never refused for want of a
+      // sentence — the server writes a truthful stand-in. See the per-file
+      // input in UPLOAD_JS for the whole reasoning.
+      '<div class="field" id="one-alt"><label for="alt">Opis slike</label>' +
+      '<input id="alt" name="alt" type="text" maxlength="180" ' +
       'placeholder="Masažni bazen na terasi, pokrit s termo pokrovom"></div>' +
       // Filled by UPLOAD_JS: a thumbnail and its own description per chosen
       // file. Empty, and hidden by CSS, until something is chosen.
       '<ul class="picked" id="picked"></ul>' +
       '<p class="hint">Opis prebere bralnik zaslona in ga uporabi iskalnik. ' +
+      "Iz njega nastane tudi ime datoteke. " +
       (describe
         ? "Opise napiše umetna inteligenca, ko izberete slike — preberite jih " +
-          "in po potrebi popravite. Opisujejo naj le to, kar je na sliki."
-        : "Opišite, kaj je na vsaki sliki — ne ponavljajte imena modela.") +
+          "in po potrebi popravite."
+        : "Pustite prazno in zapišemo ime modela; kadarkoli ga lahko popravite " +
+          "v seznamu spodaj.") +
       "</p>" +
+      // WHEN THE DESCRIBER IS OFF, SAY SO. Without this the panel looked
+      // identical either way: the operator picked ten files, nothing was
+      // written, and there was no way to tell whether the feature had failed
+      // or had never been switched on. Naming the missing setting is the same
+      // thing notConfiguredPage does for Supabase, on the same admin-only
+      // page, and it is the difference between a bug report and a two-minute
+      // fix.
+      (describe
+        ? ""
+        : '<p class="note-ai">Samodejnih opisov ni: nastavljen ni ' +
+          "GEMINI_API_KEY. Nalaganje deluje tudi brez njega.</p>") +
       // THE UPSCALER RUNS ON EVERY UPLOAD when a key is configured — the
       // owner's instruction, given twice and with the caveat stated: they
       // upload, it upscales, there is nothing to tick.
@@ -710,6 +736,23 @@ const UPLOAD_JS = `
    * see, and does nothing at all — no submit event, no error, no request. The
    * upload simply stopped working the moment the per-file list replaced it.
    * A disabled control is skipped by validation and by serialisation both. */
+  /* The server's slugStem, in the browser, so the filename shown here is the
+     filename that will be written. Kept deliberately small and identical in
+     behaviour: transliterate, lowercase, collapse to hyphens, cap at 60 on a
+     word boundary. If the two ever drift the only cost is a preview that is
+     slightly wrong, never a bad key — the server is the one that names the
+     object. */
+  function slugOf(s){
+    var map = { "č":"c","ć":"c","š":"s","ž":"z","đ":"d" };
+    var out = "";
+    var low = String(s || "").toLowerCase();
+    for (var i = 0; i < low.length; i++) out += (map[low[i]] || low[i]);
+    out = out.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    if (out.length <= 60) return out;
+    var cut = out.slice(0, 60), d = cut.lastIndexOf("-");
+    return (d > 20 ? cut.slice(0, d) : cut).replace(/^-+|-+$/g, "");
+  }
+
   function showOneAlt(on){
     oneAlt.style.display = on ? "" : "none";
     var box = document.getElementById("alt");
@@ -771,10 +814,38 @@ const UPLOAD_JS = `
       lab.setAttribute("for", "alt-" + i);
       lab.textContent = "Opis slike (obvezno)";
       var inp = document.createElement("input");
-      inp.type = "text"; inp.id = "alt-" + i; inp.maxLength = 180; inp.required = true;
+      inp.type = "text"; inp.id = "alt-" + i; inp.maxLength = 180;
       inp.className = "alt-in";
       inp.placeholder = "Masažni bazen na terasi, pokrit s termo pokrovom";
+      /* NOT required, and that is the point.
+         A required empty field is a browser-level block: constraint validation
+         runs BEFORE the submit event, so the page never even reaches this
+         script — ten files, ten empty boxes, "Please fill in this field", and
+         no way to upload without typing ten sentences. The description is
+         worth having, not worth refusing an upload over: the server writes a
+         truthful stand-in when the field is empty (the model's own name and
+         the picture's position) and the list below shows which photographs
+         are still carrying one. */
+      var fn = document.createElement("span"); fn.className = "fn";
       box.appendChild(nm); box.appendChild(lab); box.appendChild(inp);
+      box.appendChild(fn);
+      /* The stored FILENAME, forming as the description does. It is built
+         from the description on the server — see slugStem — so showing it
+         here is the one place the operator can see what the picture will be
+         called in the bucket and in image search. */
+      var showName = function(){
+        /* An EMPTY field is not the file's own name — it is the stand-in the
+           server writes, which is the model plus this picture's position (see
+           standInAlt). Showing the picked file's name there was a preview of
+           something that never happens. */
+        var basis = inp.value.trim() ||
+          ((form.getAttribute("data-subject") || "") + " fotografija " + (i + 1));
+        var t = slugOf(basis);
+        fn.textContent = t ? t + "--\u2026.webp" : "";
+      };
+      inp.addEventListener("input", showName);
+      inp._showName = showName;
+      showName();
       li.appendChild(img); li.appendChild(box);
       picked.appendChild(li);
     });
@@ -903,6 +974,9 @@ const UPLOAD_JS = `
         return fetch(form.action, { method: "POST", body: fd, credentials: "same-origin" });
       }
       fd.append("alt", alt);
+      // The picture's position in this set, so a description the server has to
+      // stand in for still differs from its neighbours' — see standInAlt.
+      fd.append("n", String(done + 1));
       fd.append("widths", out.widths.join(","));
       out.blobs.forEach(function(b, i){ fd.append("w" + out.widths[i], b, out.widths[i] + ".webp"); });
       st.textContent = "nalagam " + (done + 1) + " od " + total + " …";
@@ -956,7 +1030,14 @@ const UPLOAD_JS = `
     (function next(){
       if (i >= fs.length || i >= ins.length) {
         describing = false;
-        if (st.textContent.indexOf("opis") === 0) st.textContent = "";
+        /* SAY WHEN NOTHING CAME BACK. The describer failing looks exactly like
+           the describer being switched off looks exactly like the operator not
+           having picked anything yet — ten empty boxes either way. If not one
+           field was written, the status line says so, and the upload still
+           works because nothing depends on those fields any more. */
+        var any = ins.some(function(el){ return el.value.trim() !== ""; });
+        st.textContent = any ? "" : "opisov ni bilo mogoče napisati — lahko " +
+          "naložite tudi brez njih";
         return;
       }
       var inp = ins[i];
@@ -974,7 +1055,13 @@ const UPLOAD_JS = `
         /* The emptiness is re-checked here, not only above: the operator may
            have started typing into this very field while the request was in
            flight, and their sentence outranks the model's. */
-        if (text && !inp.value.trim()) inp.value = text;
+        if (text && !inp.value.trim()) {
+          inp.value = text;
+          /* Setting .value from script fires no input event, so the filename
+             under the field kept showing the stand-in it had before the
+             description landed. */
+          if (inp._showName) inp._showName();
+        }
         i++; next();
       });
     })();
@@ -986,21 +1073,18 @@ const UPLOAD_JS = `
     ev.preventDefault();
 
     var alts = Array.prototype.slice.call(picked.querySelectorAll(".alt-in"));
-    /* Naming what is actually happening. Without this, pressing Naloži while
-       the descriptions are still being written says "vsaka slika potrebuje
-       opis" about a field that is about to fill itself, which reads as the
-       feature being broken. */
+    /* Still writing? Wait for it rather than uploading ten empty descriptions
+       a second before they would have filled themselves. This is the only
+       thing left that can hold the button, and it clears on its own. */
     if (describing) {
       st.textContent = "še opisujem slike — trenutek";
       return;
     }
-    for (var i = 0; i < alts.length && !siteMode; i++) {
-      if (!alts[i].value.trim()) {
-        st.textContent = "vsaka slika potrebuje opis";
-        alts[i].focus();
-        return;
-      }
-    }
+    /* NO EMPTY-FIELD GATE. An upload is not refused for want of a sentence:
+       the server writes a truthful stand-in from the model's name and the
+       picture's position, and the list below shows which photographs are
+       carrying one so they can be improved later. Blocking here was the same
+       mistake the required attribute made, just in JavaScript. */
 
     go.disabled = true; pr.hidden = false; pr.value = 0;
     st.textContent = "pretvarjam …";

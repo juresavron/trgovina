@@ -39,11 +39,14 @@ const { modelPage } = await import(out + "?v=" + Date.now());
 const dir = join(tmpdir(), "upl2"); mkdirSync(dir, { recursive: true });
 writeFileSync(join(dir, "m.html"), modelPage("bazen","x","TEST",[],undefined,"a@b.c"));
 writeFileSync(join(dir, "e.html"), modelPage("bazen","x","TEST",[],undefined,"a@b.c",true));
+// describe on: the panel asks /admin/describe for each picked file.
+writeFileSync(join(dir, "d.html"), modelPage("bazen","x","TEST",[],undefined,"a@b.c",false,true));
 for (const [n, bg] of [["photo.jpg","#8899aa"],["photo2.jpg","#aa8877"],["photo3.jpg","#77aa88"]]) {
   await sharp({ create:{width:1600,height:1200,channels:3,background:bg} }).jpeg().toFile(join(dir,n));
 }
 
-async function run(label, patch, files, page, tick) {
+async function run(label, patch, files, page, opts) {
+  opts = opts || {};
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
   const p = await b.newPage();
   const errs = []; p.on("pageerror", (e) => errs.push(e.message));
@@ -66,15 +69,31 @@ async function run(label, patch, files, page, tick) {
     // the browser must carry on with the original rather than fail.
     await route.fulfill({ status: 204, body: "" });
   });
+  let describeCalls = 0;
+  await p.route("**/admin/describe", async (route) => {
+    describeCalls++;
+    if (opts.describeFails) { await route.fulfill({ status: 204, body: "" }); return; }
+    await route.fulfill({
+      status: 200, contentType: "text/plain; charset=utf-8",
+      body: "Masazni bazen na terasi ob hisi " + describeCalls,
+    });
+  });
   await p.goto("file://" + join(dir, page || "m.html"));
   const picks = (files || ["photo.jpg"]).map((f) => join(dir, f));
   await p.setInputFiles("#f", picks);
+  // Give the describer, where it is on, time to answer before anything is
+  // typed over it.
+  if (page === "d.html") await p.waitForTimeout(400 + picks.length * 200);
   const boxes = await p.$$(".alt-in");
-  if (boxes.length) {
-    for (let i = 0; i < boxes.length; i++) await boxes[i].fill("opis " + (i + 1));
-  } else {
-    await p.fill("#alt", "preizkus");
+  if (!opts.leaveEmpty) {
+    if (boxes.length) {
+      for (let i = 0; i < boxes.length; i++) await boxes[i].fill("opis " + (i + 1));
+    } else {
+      await p.fill("#alt", "preizkus");
+    }
   }
+  const filled = await p.$$eval(".alt-in", (els) => els.map((e) => e.value));
+  const names = await p.$$eval(".picked .fn", (els) => els.map((e) => e.textContent));
   await p.click("#go");
   await p.waitForTimeout(1000 + picks.length * 1200);
   console.log("\n== " + label + " ==");
@@ -83,6 +102,8 @@ async function run(label, patch, files, page, tick) {
   console.log("  parts:", parts.join(", ") || "(no request)");
   console.log("  native form POST:", native);
   console.log("  requests:", requests, "alts:", JSON.stringify(altsSent), "enhance calls:", enhanceCalls);
+  if (describeCalls) console.log("  describe calls:", describeCalls, "fields:", JSON.stringify(filled));
+  if (names.length) console.log("  filenames shown:", JSON.stringify(names));
   await b.close();
 }
 
@@ -96,3 +117,14 @@ await run("toBlob cannot encode webp", () => {
   const real = HTMLCanvasElement.prototype.toBlob;
   HTMLCanvasElement.prototype.toBlob = function (cb, type, q) { return real.call(this, cb, "image/png", q); };
 });
+// THE CASE THE OWNER HIT: ten files, nothing typed, press Naloži. The browser
+// used to refuse it outright — a required empty field blocks submission before
+// any script runs — so the upload was impossible without typing a sentence per
+// picture. Every file must go up, with the server writing the stand-in.
+await run("nothing typed at all", null, ["photo.jpg", "photo2.jpg"], "m.html", { leaveEmpty: true });
+// The describer on and answering: every field fills itself, and the filename
+// each description produces is shown under it.
+await run("describer answers", null, ["photo.jpg", "photo2.jpg"], "d.html", { leaveEmpty: true });
+// The describer on and giving nothing back: the upload still has to work.
+await run("describer answers nothing", null, ["photo.jpg", "photo2.jpg"], "d.html",
+  { leaveEmpty: true, describeFails: true });
