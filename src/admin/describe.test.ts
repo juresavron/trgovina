@@ -154,3 +154,40 @@ suite("the stand-in fits the column", () => {
     expect(out.endsWith("— fotografija 7")).toBe(true);
   });
 });
+
+/**
+ * Nothing is asked of the operator at upload time.
+ *
+ * The panel's shape is the feature: a picker and a progress bar. Every field
+ * that used to sit in that card is a field somebody had to fill in ten times,
+ * and the last one of them blocked the upload outright. These assertions are
+ * on the rendered HTML because the markup IS the contract — a field
+ * reintroduced here is a regression nothing else would catch.
+ */
+suite("the upload card asks for nothing", () => {
+  it("renders no description field and no required control", async () => {
+    const { modelPage } = await import("./panel");
+    const html = modelPage("bazen", "veliki-230", "BAZEN 230", [], undefined, "a@b.c", true, true);
+    const card = html.slice(html.indexOf("Nova fotografija"), html.indexOf("<h2>Fotografije"));
+    expect(card).not.toContain("alt-in");
+    expect(card).not.toContain('name="alt"');
+    expect(card).not.toContain("required");
+    // The file input is the only control in the card besides the fallback
+    // button, and it takes a set.
+    expect(card).toContain('type="file"');
+    expect(card).toContain("multiple");
+  });
+
+  it("still lets every uploaded photograph be described afterwards", async () => {
+    const { modelPage } = await import("./panel");
+    const html = modelPage(
+      "bazen", "veliki-230", "BAZEN 230",
+      [{ id: "a1", url: "bazen/veliki-230/x.webp", alt: "opis", sort: 0, widths: [] }],
+      undefined, "a@b.c", true, true,
+    );
+    const list = html.slice(html.indexOf("<h2>Fotografije"));
+    // Review happens here, which is the only place it was ever going to.
+    expect(list).toContain('name="alt"');
+    expect(list).toContain("Shrani");
+  });
+});

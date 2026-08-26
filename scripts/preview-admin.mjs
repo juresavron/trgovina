@@ -83,7 +83,7 @@ const pages = {
   // enhance + describe on: the shot has to show the two AI disclosures, which
   // are the lines an operator reads before trusting either.
   "model.html": modelPage("bazen", "veliki-230", "Masažni bazen ZR6801", MEDIA, undefined, "savronsavron@gmail.com", true, true),
-  "model-notice.html": modelPage("bazen", "veliki-230", "Masažni bazen ZR6801", MEDIA, { kind: "ok", text: "Fotografija je naložena." }, "savronsavron@gmail.com"),
+  "model-notice.html": modelPage("bazen", "veliki-230", "Masažni bazen ZR6801", MEDIA, { kind: "ok", text: "Fotografija je naložena." }, "savronsavron@gmail.com", true, true),
   // describe OFF, so the shot shows the line that says WHY nothing is being
   // written — the state an operator with no GEMINI_API_KEY actually sees.
   "model-empty.html": modelPage("bazen", "swim-580", "Swim spa ZR7809 Hydrotherapy", [], { kind: "err", text: "Naložiti je mogoče samo slike v obliki WebP." }, "savronsavron@gmail.com", false, false),
