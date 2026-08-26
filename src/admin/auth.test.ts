@@ -9,27 +9,33 @@ import {
 import type { Env } from "./supabase";
 
 /**
- * The admin panel holds the service-role key, which bypasses every RLS policy
- * in the database. What stands between the open internet and that key is now
- * two questions rather than one — is this a real Supabase account, and is that
- * account on the allowlist — so both are written down as tests rather than
- * trusted to a reading of the code.
+ * Who gets into the panel.
  *
- * The second question is the one worth being paranoid about. ANYONE CAN CREATE
- * AN ACCOUNT on a Supabase project: sign-up is a public endpoint. A gate that
- * only checked "is this token valid" would therefore admit the entire internet
- * while looking exactly like a login.
+ * Two questions, and the second is the one worth being paranoid about. ANYONE
+ * CAN CREATE AN ACCOUNT on a Supabase project: sign-up is a public endpoint.
+ * So a gate that only checked "is this token valid" would admit the entire
+ * internet while looking exactly like a login. Being on public.admins is what
+ * actually grants entry, and these tests are the record of that rather than a
+ * reading of the code.
+ *
+ * The panel no longer holds a key of its own — it acts as the signed-in person
+ * — so what these tests protect is narrower than it once was, and the database
+ * refuses anyone this gate lets through by mistake. That is defence in depth,
+ * not a reason to test it less.
  */
 
 const ANON = "sb_publishable_test";
-const SERVICE = "sb_secret_test";
+const TOKEN = "header.payload.signature";
 const ENV = {
   SUPABASE_URL: "https://project.supabase.co",
   SUPABASE_ANON_KEY: ANON,
-  SUPABASE_SERVICE_KEY: SERVICE,
 } as Env;
 
-const USER = { id: "11111111-1111-1111-1111-111111111111", email: "kdo@example.test" };
+const USER = {
+  id: "11111111-1111-1111-1111-111111111111",
+  email: "kdo@example.test",
+  token: TOKEN,
+};
 
 interface Call {
   url: string;
@@ -45,7 +51,7 @@ interface Call {
 function stubFetch(routes: {
   token?: { status: number; body: unknown };
   user?: { status: number; body: unknown };
-  admins?: { status: number; body: unknown };
+  isAdmin?: { status: number; body: unknown };
 }): Call[] {
   const calls: Call[] = [];
   vi.stubGlobal("fetch", async (input: string, init?: RequestInit) => {
@@ -60,8 +66,8 @@ function stubFetch(routes: {
       ? routes.token
       : url.includes("/auth/v1/user")
         ? routes.user
-        : url.includes("/rest/v1/admins")
-          ? routes.admins
+        : url.includes("/rest/v1/rpc/is_admin")
+          ? routes.isAdmin
           : undefined;
     if (!r) throw new Error("unexpected request: " + url);
     return new Response(JSON.stringify(r.body), {
@@ -105,16 +111,15 @@ describe("admin sign-in", () => {
   });
 
   /**
-   * The PUBLISHABLE key, not the service key. Sending the service key here
-   * would work, which is exactly why it is worth pinning: the login path must
-   * stay usable with a key that is public by design, or the panel quietly
-   * grows a second dependency on the one real secret.
+   * The publishable key, which is public by design and lives in
+   * wrangler.jsonc. There is no secret in this Worker to accidentally reach
+   * for, and this pins that: if a service key ever reappears here, it will be
+   * because someone added one back.
    */
-  it("signs in with the publishable key", async () => {
+  it("signs in with the publishable key — the panel has no other", async () => {
     const calls = stubFetch({ token: { status: 200, body: { access_token: "t" } } });
     await signIn(ENV, "kdo@example.test", "geslo");
     expect(calls[0]!.headers["apikey"]).toBe(ANON);
-    expect(calls[0]!.headers["apikey"]).not.toBe(SERVICE);
     expect(calls[0]!.url).toContain("grant_type=password");
     expect(JSON.parse(calls[0]!.body)).toEqual({
       email: "kdo@example.test",
@@ -126,10 +131,10 @@ describe("admin sign-in", () => {
 describe("the /admin gate", () => {
   it("admits an account that is signed in and on the allowlist", async () => {
     stubFetch({
-      user: { status: 200, body: USER },
-      admins: { status: 200, body: [{ user_id: USER.id }] },
+      user: { status: 200, body: { id: USER.id, email: USER.email } },
+      isAdmin: { status: 200, body: true },
     });
-    expect(await currentAdmin(signedIn("tok"), ENV)).toEqual(USER);
+    expect(await currentAdmin(signedIn(TOKEN), ENV)).toEqual(USER);
   });
 
   /**
@@ -139,10 +144,10 @@ describe("the /admin gate", () => {
    */
   it("refuses a valid account that nobody added", async () => {
     stubFetch({
-      user: { status: 200, body: USER },
-      admins: { status: 200, body: [] },
+      user: { status: 200, body: { id: USER.id, email: USER.email } },
+      isAdmin: { status: 200, body: false },
     });
-    expect(await currentAdmin(signedIn("tok"), ENV)).toBeNull();
+    expect(await currentAdmin(signedIn(TOKEN), ENV)).toBeNull();
   });
 
   it("refuses a token Supabase no longer accepts", async () => {
@@ -157,44 +162,44 @@ describe("the /admin gate", () => {
   });
 
   /**
-   * The allowlist must be asked about THIS user. A query that fetched the
-   * table and checked it was non-empty would admit every signed-in account the
-   * moment one admin existed — a bug that passes every other test here.
+   * The allowlist answers about the CALLER, and the caller is established by
+   * the token's signature inside Postgres. Sending the user id would be worse
+   * than useless: an id in a request body is a claim, and a gate that trusted
+   * one would let anyone name an admin's id and be let in.
    */
-  it("asks the allowlist about the signed-in user specifically", async () => {
+  it("asks as the user, and never sends a user id to be trusted", async () => {
     const calls = stubFetch({
-      user: { status: 200, body: USER },
-      admins: { status: 200, body: [{ user_id: USER.id }] },
+      user: { status: 200, body: { id: USER.id, email: USER.email } },
+      isAdmin: { status: 200, body: true },
     });
-    await currentAdmin(signedIn("tok"), ENV);
-    const admins = calls.find((c) => c.url.includes("/rest/v1/admins"))!;
-    expect(admins.url).toContain("user_id=eq." + USER.id);
+    await currentAdmin(signedIn(TOKEN), ENV);
+    const rpc = calls.find((c) => c.url.includes("/rest/v1/rpc/is_admin"))!;
+    expect(rpc.headers["authorization"]).toBe("Bearer " + TOKEN);
+    expect(rpc.headers["apikey"]).toBe(ANON);
+    expect(rpc.body).not.toContain(USER.id);
   });
 
   /**
-   * public.admins has RLS enabled and no policies at all, so the publishable
-   * key reads it as an empty table — which fails CLOSED (nobody gets in) and
-   * would therefore look like a mysterious lockout rather than a hole. Pin the
-   * service key anyway: the failure it prevents is the one where a policy is
-   * added later and the browser-safe key starts returning rows.
+   * A truthy-looking answer is not a true one. PostgREST returning an object,
+   * a string, or the JSON `null` on some future error must not read as yes.
    */
-  it("reads the allowlist with the service key", async () => {
-    const calls = stubFetch({
-      user: { status: 200, body: USER },
-      admins: { status: 200, body: [{ user_id: USER.id }] },
-    });
-    await currentAdmin(signedIn("tok"), ENV);
-    const admins = calls.find((c) => c.url.includes("/rest/v1/admins"))!;
-    expect(admins.headers["apikey"]).toBe(SERVICE);
-    expect(admins.headers["authorization"]).toBe("Bearer " + SERVICE);
+  it("admits only on a literal true", async () => {
+    for (const body of [false, null, {}, [], "true", 1]) {
+      stubFetch({
+        user: { status: 200, body: { id: USER.id, email: USER.email } },
+        isAdmin: { status: 200, body },
+      });
+      expect(await currentAdmin(signedIn(TOKEN), ENV), JSON.stringify(body)).toBeNull();
+      vi.unstubAllGlobals();
+    }
   });
 
-  it("refuses when the allowlist cannot be read at all", async () => {
+  it("refuses when the allowlist cannot be asked at all", async () => {
     stubFetch({
-      user: { status: 200, body: USER },
-      admins: { status: 500, body: { message: "down" } },
+      user: { status: 200, body: { id: USER.id, email: USER.email } },
+      isAdmin: { status: 500, body: { message: "down" } },
     });
-    expect(await currentAdmin(signedIn("tok"), ENV)).toBeNull();
+    expect(await currentAdmin(signedIn(TOKEN), ENV)).toBeNull();
   });
 });
 

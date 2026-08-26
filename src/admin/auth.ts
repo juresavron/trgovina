@@ -18,9 +18,11 @@
  *   RECOVERY. Supabase owns password reset and rate limiting, which are two
  *   more things this repo would otherwise have to get right.
  *
- * It also removes two of the three secrets the panel needed. Only
- * SUPABASE_SERVICE_KEY is left, because writing to storage genuinely requires
- * it; the login path uses the PUBLISHABLE key, which is public by design.
+ * It also removes every secret the panel needed. All three are gone: the
+ * password, the signing key, and — once the panel started acting as the
+ * signed-in person rather than as the service role — the service key too.
+ * What is left is the project URL and the publishable key, both public by
+ * design, both in wrangler.jsonc. There is nothing to set and nothing to leak.
  *
  * AUTHENTICATION IS NOT AUTHORISATION, and conflating them here would be the
  * whole vulnerability: anyone can create an account on a Supabase project.
@@ -53,6 +55,12 @@ export const SESSION_TTL_SECONDS = 60 * 60;
 export interface AdminUser {
   readonly id: string;
   readonly email: string;
+  /**
+   * Their access token, carried on to every Supabase call the request makes.
+   * The panel has no authority of its own — see supabase.ts — so this travels
+   * with the user rather than being fetched from the environment.
+   */
+  readonly token: string;
 }
 
 /**
@@ -95,29 +103,37 @@ async function whoAmI(env: Env, token: string): Promise<AdminUser | null> {
   if (!res.ok) return null;
   const body = (await res.json()) as { id?: unknown; email?: unknown };
   if (typeof body.id !== "string") return null;
-  return { id: body.id, email: typeof body.email === "string" ? body.email : "" };
+  return { id: body.id, email: typeof body.email === "string" ? body.email : "", token };
 }
 
 /**
- * Is this user on the allowlist?
+ * Is the holder of this token on the allowlist?
  *
- * Read with the SERVICE key on purpose. public.admins has RLS enabled and no
- * policies at all, so the table is unreadable by any browser client even with
- * the publishable key in hand — the only way to ask this question is from the
- * server, which is the only place the answer should be trusted.
+ * Asked as a QUESTION rather than a lookup. public.admins has RLS enabled and
+ * no policies at all, so it is unreadable by every client — including this
+ * one, and including an admin. What answers is public.is_admin(), a
+ * SECURITY DEFINER function that reads the table on the caller's behalf and
+ * returns nothing but a boolean about the caller themselves. The table cannot
+ * be enumerated, and the answer comes from the database rather than from
+ * anything this Worker could be talked into believing.
+ *
+ * The token proves who is asking: Postgres derives auth.uid() from its
+ * signature, so a request cannot ask on somebody else's behalf. The userId
+ * argument is therefore not passed to Supabase at all — it exists only so the
+ * caller cannot forget which user this answer is about.
  */
-async function isAllowed(env: Env, userId: string): Promise<boolean> {
-  const url =
-    env.SUPABASE_URL + "/rest/v1/admins?select=user_id&user_id=eq." + encodeURIComponent(userId);
-  const res = await fetch(url, {
+async function isAllowed(env: Env, token: string): Promise<boolean> {
+  const res = await fetch(env.SUPABASE_URL + "/rest/v1/rpc/is_admin", {
+    method: "POST",
     headers: {
-      apikey: env.SUPABASE_SERVICE_KEY!,
-      authorization: "Bearer " + env.SUPABASE_SERVICE_KEY!,
+      apikey: env.SUPABASE_ANON_KEY!,
+      authorization: "Bearer " + token,
+      "content-type": "application/json",
     },
+    body: "{}",
   });
   if (!res.ok) return false;
-  const rows = (await res.json()) as unknown;
-  return Array.isArray(rows) && rows.length > 0;
+  return (await res.json()) === true;
 }
 
 /**
@@ -135,7 +151,7 @@ export async function currentAdmin(
   if (!token) return null;
   const user = await whoAmI(env, token);
   if (!user) return null;
-  return (await isAllowed(env, user.id)) ? user : null;
+  return (await isAllowed(env, token)) ? user : null;
 }
 
 /** Read one cookie by name, without a regex over attacker-controlled input. */

@@ -10,18 +10,20 @@
   // next deploy and silently disables trgovina.worldfans.workers.dev.
   "workers_dev": true,
 
-  // Public identifiers, not secrets — both are meant to ship to browsers, and
-  // the publishable key is safe here only because every table it can reach has
-  // RLS on (public.admins has RLS with zero policies, so it is unreadable with
-  // this key by design).
+  // Public identifiers, not secrets — both are meant to ship to browsers.
   //
-  // Exactly ONE real secret is left, set with `npx wrangler secret put` and
-  // never in this file:
-  //   SUPABASE_SERVICE_KEY  bypasses RLS; the admin panel writes storage and
-  //                         reads the allowlist with it
-  // Admin accounts are Supabase Auth users on the public.admins allowlist —
-  // there is no shared password and no signing secret to rotate. Until all
-  // three settings exist, /admin serves a page naming what is missing.
+  // THIS WORKER HAS NO SECRETS AT ALL. It used to need three, then one; the
+  // last of them, SUPABASE_SERVICE_KEY, went when the admin panel started
+  // acting as the signed-in person rather than as the service role. Every
+  // Supabase call now carries that person's own access token, and the database
+  // decides what may happen — see the `admin_acts_as_itself` migration.
+  //
+  // So `npx wrangler secret put` has nothing to put. A fresh clone plus a
+  // deploy is a working panel, and there is no key here whose leak would cost
+  // anything: the publishable key can do only what this project's RLS allows
+  // an anonymous visitor to do, which is read a live shop's published pages.
+  //
+  // Admin accounts are Supabase Auth users on the public.admins allowlist.
   "vars": {
     "SUPABASE_URL": "https://cybwzhgretztcjfdefoy.supabase.co",
     "SUPABASE_ANON_KEY": "sb_publishable__aHkVGGeNcPgiwyB7tS_Sw_WpVTbBYy"

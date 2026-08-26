@@ -7,8 +7,10 @@
  *     account that is ALSO on the public.admins allowlist — signing in proves
  *     who you are, the allowlist decides whether you may be here, and anyone
  *     in the world can do the first. The check happens in `handleAdmin` BEFORE
- *     any handler that touches the service role is reached, so there is one
- *     gate, not eight.
+ *     any handler that talks to Supabase is reached, so there is one gate, not
+ *     eight — and the panel carries no authority of its own to leak past it:
+ *     every call it makes is made as the signed-in person, so the database
+ *     refuses anything this gate lets through by mistake.
  *   * Every response from /admin carries `x-robots-tag: noindex, nofollow`
  *     and `cache-control: no-store`, and robots.txt disallows /admin.
  *   * Writes are POST only. A GET that changed data would be triggerable by
@@ -25,6 +27,7 @@ import { OFFERED_SWIMSPAS } from "../catalog/swimspa";
 import { aliasTarget, encodeBucketKey } from "../media-aliases";
 import { SHOPS } from "../tenants";
 import {
+  type Api,
   type Env,
   BUCKET,
   deleteMedia,
@@ -228,14 +231,20 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   const admin = await currentAdmin(request, env);
   if (!admin) return page(loginPage(), parts.length > 1 ? 401 : 200);
 
+  // Everything past this point talks to Supabase AS THIS PERSON. There is no
+  // service key in the Worker to fall back to, so a bug that skipped the gate
+  // would produce an unauthenticated request that the database refuses, rather
+  // than an unauthenticated request that the database happily serves.
+  const api: Api = { env, token: admin.token };
+
   // --- dashboard ---
   if (parts.length === 1) {
     const key = "bazen";
     const cat = CATALOGUE_SHOPS[key]!;
     const counts = await Promise.all(
       cat.models.map(async (m) => {
-        const id = await ensureProduct(env, key, m.slug, m.name, m.freightClass);
-        return (await listMedia(env, id)).length;
+        const id = await ensureProduct(api, key, m.slug, m.name, m.freightClass);
+        return (await listMedia(api, id)).length;
       }),
     );
     return page(
@@ -255,11 +264,11 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   const model = cat ? adminModelBySlug(slug) : undefined;
   if (!cat || !model) return page(loginPage("Ta model ne obstaja."), 404);
 
-  const productId = await ensureProduct(env, shop, model.slug, model.name, model.freightClass);
+  const productId = await ensureProduct(api, shop, model.slug, model.name, model.freightClass);
   const action = parts[3];
 
   if (action === "upload" && request.method === "POST") {
-    return await upload(request, env, shop, model.slug, model.name, productId);
+    return await upload(request, api, shop, model.slug, model.name, productId);
   }
 
   if (action === "update" && request.method === "POST") {
@@ -268,28 +277,28 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     const alt = String(form.get("alt") ?? "").trim();
     const sort = Number(form.get("sort") ?? 0);
     if (!id || !alt) return seeOther("/admin/" + shop + "/" + slug + "?e=alt");
-    await updateMedia(env, id, { alt, sort: Number.isFinite(sort) ? sort : 0 });
+    await updateMedia(api, id, { alt, sort: Number.isFinite(sort) ? sort : 0 });
     return seeOther("/admin/" + shop + "/" + slug + "?m=saved");
   }
 
   if (action === "delete" && request.method === "POST") {
     const form = await request.formData();
     const id = String(form.get("id") ?? "");
-    const rows = await listMedia(env, productId);
+    const rows = await listMedia(api, productId);
     const row = rows.find((r) => r.id === id);
     if (row) {
       // Rows first: an orphaned object costs storage, an orphaned row renders
       // a broken image on a product page.
-      await deleteMedia(env, id);
-      for (const w of row.widths ?? []) await deleteObject(env, widthPath(row.url, w));
-      await deleteObject(env, row.url);
+      await deleteMedia(api, id);
+      for (const w of row.widths ?? []) await deleteObject(api, widthPath(row.url, w));
+      await deleteObject(api, row.url);
     }
     return seeOther("/admin/" + shop + "/" + slug + "?m=deleted");
   }
 
   if (action) return page(loginPage("Neznano dejanje."), 404);
 
-  const rows = await listMedia(env, productId);
+  const rows = await listMedia(api, productId);
   const notice = url.searchParams.get("m")
     ? ({ kind: "ok", text: NOTICES[url.searchParams.get("m")!] ?? "Shranjeno." } as const)
     : url.searchParams.get("e")
@@ -357,7 +366,7 @@ export function isWebp(bytes: ArrayBuffer): boolean {
 
 async function upload(
   request: Request,
-  env: Env,
+  api: Api,
   shop: string,
   slug: string,
   _name: string,
@@ -393,7 +402,7 @@ async function upload(
       // can make "every upload is WebP" true rather than intended.
       if (!isWebp(bytes)) return seeOther("/admin/" + shop + "/" + slug + "?e=type");
       const path = w === widest ? base : widthPath(base, w);
-      await uploadObject(env, path, bytes, "image/webp");
+      await uploadObject(api, path, bytes, "image/webp");
       if (w !== widest) written.push(w);
     }
     written.push(widest);
@@ -416,19 +425,19 @@ async function upload(
     const bytes = await part.arrayBuffer();
     if (!isWebp(bytes)) return seeOther("/admin/" + shop + "/" + slug + "?e=type");
     base = shop + "/" + slug + "/" + id + ".webp";
-    await uploadObject(env, base, bytes, "image/webp");
+    await uploadObject(api, base, bytes, "image/webp");
   }
 
-  const rows = await listMedia(env, productId);
-  await insertMedia(env, productId, base, alt, rows.length);
-  if (written.length > 1) await widthsFor(env, productId, base, written);
+  const rows = await listMedia(api, productId);
+  await insertMedia(api, productId, base, alt, rows.length);
+  if (written.length > 1) await widthsFor(api, productId, base, written);
 
   return seeOther("/admin/" + shop + "/" + slug + "?m=uploaded");
 }
 
 /** Record the ladder on the row the upload just created. */
-async function widthsFor(env: Env, productId: string, url: string, widths: number[]): Promise<void> {
-  const rows = await listMedia(env, productId);
+async function widthsFor(api: Api, productId: string, url: string, widths: number[]): Promise<void> {
+  const rows = await listMedia(api, productId);
   const row = rows.find((r) => r.url === url);
-  if (row) await updateMedia(env, row.id, { widths });
+  if (row) await updateMedia(api, row.id, { widths });
 }

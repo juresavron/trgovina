@@ -92,26 +92,19 @@ export function loginPage(error?: string): string {
 }
 
 export function notConfiguredPage(missing: string[]): string {
-  // SUPABASE_URL and SUPABASE_ANON_KEY are public identifiers and belong in
-  // wrangler.jsonc; SUPABASE_SERVICE_KEY is the only real secret left, and
-  // saying which is which here saves the operator guessing.
-  const isSecret = (name: string): boolean => name === "SUPABASE_SERVICE_KEY";
+  // Both remaining settings are PUBLIC values that live in wrangler.jsonc and
+  // ship with the code. If this page is ever seen in production, something was
+  // deleted from that file — there is no secret to forget to set.
   return shell(
     "Ni nastavljeno",
     "<h1>Nadzorna plošča ni nastavljena</h1>" +
-      '<p class="lede">Manjka naslednja nastavitev Workerja:</p>' +
+      '<p class="lede">V <code>wrangler.jsonc</code> manjka nastavitev ' +
+      "pod <code>vars</code>:</p>" +
       '<div class="card"><ul>' +
-      missing
-        .map(
-          (m) =>
-            "<li><code>" + esc(m) + "</code> — " +
-            (isSecret(m)
-              ? "skrivnost: <code>npx wrangler secret put " + esc(m) + "</code>"
-              : "javna vrednost: v <code>vars</code> v wrangler.jsonc") +
-            "</li>",
-        )
-        .join("") +
-      "</ul></div>",
+      missing.map((m) => "<li><code>" + esc(m) + "</code></li>").join("") +
+      "</ul></div>" +
+      '<p class="muted">To sta javna podatka, ne skrivnosti — nastavita se v ' +
+      "kodi in objavita z naslednjo objavo.</p>",
     "",
   );
 }
