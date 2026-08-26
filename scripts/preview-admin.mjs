@@ -80,7 +80,9 @@ const pages = {
   "login.html": loginPage(),
   "login-error.html": loginPage("Napačen e-naslov ali geslo."),
   "index.html": indexPage("Masažni bazeni Vrelec", "bazen", MODELS, "savronsavron@gmail.com"),
-  "model.html": modelPage("bazen", "veliki-230", "Masažni bazen ZR6801", MEDIA, undefined, "savronsavron@gmail.com"),
+  // enhance + describe on: the shot has to show the two AI disclosures, which
+  // are the lines an operator reads before trusting either.
+  "model.html": modelPage("bazen", "veliki-230", "Masažni bazen ZR6801", MEDIA, undefined, "savronsavron@gmail.com", true, true),
   "model-notice.html": modelPage("bazen", "veliki-230", "Masažni bazen ZR6801", MEDIA, { kind: "ok", text: "Fotografija je naložena." }, "savronsavron@gmail.com"),
   "model-empty.html": modelPage("bazen", "swim-580", "Swim spa ZR7809 Hydrotherapy", [], { kind: "err", text: "Naložiti je mogoče samo slike v obliki WebP." }, "savronsavron@gmail.com"),
   "notfound.html": notFoundPage("Ta model ne obstaja.", "savronsavron@gmail.com"),

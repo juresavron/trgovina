@@ -52,6 +52,7 @@ import {
 import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn } from "./auth";
 import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
 import { enhance, enhanceAvailable } from "./enhance";
+import { describe, describeAvailable } from "./describe";
 
 /** Shops whose catalogue this panel can manage. */
 /**
@@ -148,15 +149,58 @@ function seeOther(location: string, extra: Record<string, string> = {}): Respons
  */
 
 /**
- * True for a path whose filename is a UUID, optionally with a -<width> rung:
- * the shape crypto.randomUUID() produces in the admin upload. Those URLs
- * change when their content changes, which is the whole precondition for
+ * True for a path whose filename ENDS in a UUID, optionally with a -<width>
+ * rung: the shape crypto.randomUUID() produces in the admin upload. Those
+ * URLs change when their content changes, which is the whole precondition for
  * caching something forever.
+ *
+ * A DESCRIPTIVE PREFIX IS ALLOWED, and that is the point of the "--".
+ * Uploads used to be a bare UUID, which is content-addressed and cacheable
+ * and says nothing: an image URL is a ranking signal in image search, and
+ * "3f2a…-…-….webp" spends it on nothing. The stem is now slugified alt text
+ * — masazni-bazen-na-terasi--3f2a…webp — so the filename describes the
+ * picture while the UUID after the double hyphen still guarantees the URL
+ * changes whenever the bytes do.
+ *
+ * Two hyphens, not one, because a slug contains single hyphens and this has
+ * to be an unambiguous seam. Bare UUIDs still match: every file already in
+ * the bucket keeps its immutable year.
  */
 export function isContentAddressed(path: string): boolean {
-  return /(^|\/)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(-\d+)?\.[a-z0-9]+$/i.test(
+  return /(^|\/)([a-z0-9][a-z0-9_-]*--)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(-\d+)?\.[a-z0-9]+$/i.test(
     path,
   );
+}
+
+/**
+ * A filename stem from a sentence of Slovenian.
+ *
+ * Transliterated rather than stripped: č/š/ž are most of the consonants in
+ * this shop's vocabulary, and dropping them turns "masažni" into "masani".
+ * The output has to satisfy handleMedia's own path pattern — lowercase
+ * letters, digits, hyphen, underscore — or the URL this function names would
+ * 404 on the way back out.
+ *
+ * Capped at 60 characters on a WORD boundary. Long is not better here: the
+ * signal is in the first few words, and a 180-character filename is what
+ * makes a URL unreadable in the one place people actually see it.
+ */
+export function slugStem(s: string, max = 60): string {
+  const map: Record<string, string> = {
+    č: "c", ć: "c", š: "s", ž: "z", đ: "d",
+    à: "a", á: "a", ä: "a", â: "a", è: "e", é: "e", ë: "e", ê: "e",
+    ì: "i", í: "i", ï: "i", î: "i", ò: "o", ó: "o", ö: "o", ô: "o",
+    ù: "u", ú: "u", ü: "u", û: "u",
+  };
+  let out = "";
+  for (const ch of s.toLowerCase()) out += map[ch] ?? ch;
+  out = out
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  if (out.length <= max) return out;
+  const cut = out.slice(0, max);
+  const dash = cut.lastIndexOf("-");
+  return (dash > 20 ? cut.slice(0, dash) : cut).replace(/^-+|-+$/g, "");
 }
 export async function handleMedia(request: Request, env: Env): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
@@ -324,6 +368,30 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     });
   }
 
+  // --- the describer ---
+  //
+  // Sits beside the upscaler and behaves the same way: one image in, an
+  // optional improvement out, 204 when there is nothing to give. It writes
+  // the alt text the operator would otherwise type ten times for ten files —
+  // see describe.ts on what the model is and is not allowed to say, and why
+  // the answer lands in an editable field rather than in the database.
+  if (parts[1] === "describe" && request.method === "POST") {
+    if (!describeAvailable(env)) return new Response("Not found", { status: 404 });
+    const form = await request.formData();
+    const part = form.get("file");
+    if (!(part instanceof File) || part.size === 0) {
+      return new Response("No file", { status: 400 });
+    }
+    const subject = String(form.get("subject") ?? "").slice(0, 120);
+    const bytes = await part.arrayBuffer();
+    const text = await describe(env, bytes, part.type || "image/jpeg", subject);
+    if (!text) return new Response(null, { status: 204, headers: { "cache-control": "no-store" } });
+    return new Response(text, {
+      status: 200,
+      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
+    });
+  }
+
   // --- one site image ---
   //
   // Before the model lookup, because "site" is not a shop key and would
@@ -425,6 +493,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       notice,
       admin.email,
       enhanceAvailable(env),
+      describeAvailable(env),
     ),
   );
 }
@@ -497,7 +566,18 @@ async function upload(
   // PostgREST.
   if (!alt) return seeOther("/admin/" + shop + "/" + slug + "?e=alt");
 
-  const id = crypto.randomUUID();
+  // THE STEM IS THE ALT TEXT, and it is here for image search: the filename
+  // is one of the few signals Google has about what a picture shows, and a
+  // bare UUID spends it on nothing. The UUID stays after a double hyphen so
+  // the URL still changes whenever the bytes do — see isContentAddressed,
+  // which is what keeps these files on the immutable year.
+  //
+  // The alt text is the operator's own sentence about this photograph, which
+  // makes it the best description of it anybody has. If it slugifies to
+  // nothing (a description with no latin letters in it at all) the model slug
+  // stands in, so a file always has a readable stem.
+  const stem = slugStem(alt) || slugStem(slug) || "slika";
+  const id = stem + "--" + crypto.randomUUID();
   const declared = String(form.get("widths") ?? "")
     .split(",")
     .map((n) => Number(n.trim()))
