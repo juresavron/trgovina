@@ -619,6 +619,21 @@ export function modelPage(
       "</div></form>" +
 
       "<h2>Fotografije</h2>" +
+      // ⚠️ SAY WHEN THIS REACHES THE SHOP, because it is not now.
+      //
+      // The storefront renders a generated index rather than querying the
+      // database: handleRequest is synchronous and takes no env, so a round
+      // trip inside it is a different architecture, not a refactor. The index
+      // is rebuilt at deploy time. That is a defensible trade and it was
+      // written down — in a source comment, where the person deleting a
+      // photograph will never see it. They deleted one, watched the shop keep
+      // showing it, and reasonably concluded the panel was broken.
+      //
+      // A tool that does something other than what it appears to do owes the
+      // person using it a sentence.
+      '<p class="note-ai">Spremembe se v trgovini pokažejo po naslednji ' +
+      "objavi strani, ne takoj. Fotografije so tu shranjene takoj — trgovina " +
+      "pa svoj seznam slik zgradi ob objavi.</p>" +
       (media.length === 0
         ? '<div class="card"><p class="empty">Ta model še nima fotografij. ' +
           "Do takrat trgovina prikaže risbo izdelka.</p></div>"
