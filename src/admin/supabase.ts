@@ -168,6 +168,16 @@ export interface MediaRow {
   sort: number;
   /** Widths written for this image, narrowest first. Empty = one natural size. */
   widths: number[];
+  /**
+   * True when the 2K upscaler redrew this image before it was uploaded.
+   *
+   * RECORDED, NEVER INFERRED. The width ladder cannot answer this: a row
+   * reading [480,800,1200,1600,2048] is produced identically by a 2048px
+   * photograph nobody touched and by a small one Gemini redrew at 2K, because
+   * the ladder is "every rung below the source, plus the source". Only the
+   * browser that made the request knows, so only the browser can say.
+   */
+  enhanced: boolean;
 }
 
 /**
@@ -209,7 +219,7 @@ export async function ensureProduct(
 export async function listMedia(api: Api, productId: string): Promise<MediaRow[]> {
   return (await rest(
     api,
-    "product_media?select=id,product_id,url,alt,sort,widths&product_id=eq." +
+    "product_media?select=id,product_id,url,alt,sort,widths,enhanced&product_id=eq." +
       encodeURIComponent(productId) + "&order=sort.asc",
   )) as MediaRow[];
 }
@@ -220,17 +230,18 @@ export async function insertMedia(
   url: string,
   alt: string,
   sort: number,
+  enhanced = false,
 ): Promise<void> {
   await rest(api, "product_media", {
     method: "POST",
-    body: JSON.stringify({ product_id: productId, url, alt, sort, kind: "image" }),
+    body: JSON.stringify({ product_id: productId, url, alt, sort, kind: "image", enhanced }),
   });
 }
 
 export async function updateMedia(
   api: Api,
   id: string,
-  patch: Partial<Pick<MediaRow, "alt" | "sort" | "widths">>,
+  patch: Partial<Pick<MediaRow, "alt" | "sort" | "widths" | "enhanced">>,
 ): Promise<void> {
   await rest(api, "product_media?id=eq." + encodeURIComponent(id), {
     method: "PATCH",

@@ -120,7 +120,27 @@ create table public.product_media (
   url text not null,
   -- Alt text is an SEO surface, not an afterthought; enforced non-empty.
   alt text not null check (length(alt) > 0),
-  sort integer not null default 0
+  sort integer not null default 0,
+  -- The width rungs written for this image, narrowest first. Empty means one
+  -- natural size. ⚠️ The WIDEST rung is stored at the bare url above and the
+  -- narrower ones at "<stem>-<w>.webp" — so this array has one more entry than
+  -- there are suffixed objects. Deriving the object set from it by hand is
+  -- what once made deleting a photograph fail; admin/routes.ts storedPaths()
+  -- is the one place that knows the rule.
+  widths integer[] not null default '{}',
+  -- True when the 2K upscaler REDREW this image before upload.
+  --
+  -- Recorded, never inferred. The width ladder cannot answer it: a row reading
+  -- [480,800,1200,1600,2048] is produced identically by a 2048px photograph
+  -- nobody touched and by a small one Gemini redrew at 2K, because the ladder
+  -- is "every rung below the source, plus the source". Only the browser that
+  -- made the request knows, so only the browser says.
+  --
+  -- It matters beyond curiosity: an enhanced image contains pixels that were
+  -- never photographed. Under UCPD Article 6 a shop should be able to say
+  -- which of its product images are generative output rather than guess, and
+  -- whoever edits this catalogue is entitled to the same answer.
+  enhanced boolean not null default false
 );
 
 -- ---------------------------------------------------------------------------

@@ -52,12 +52,17 @@ async function run(label, patch, files, page, opts) {
   const b = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium" });
   const p = await b.newPage();
   const errs = []; p.on("pageerror", (e) => errs.push(e.message));
-  let native = false, parts = [], requests = 0, altsSent = [];
+  let native = false, parts = [], requests = 0, altsSent = [], enhancedSent = [];
   await p.route("**/upload", async (route) => {
     const req = route.request();
     const body = req.postData() || "";
     requests++;
-    parts = [...body.matchAll(/name="(w\d+|widths|alt|file)"(?:; filename="([^"]*)")?/g)].map((m) => m[1] + (m[2] ? ":" + m[2] : ""));
+    // "enhanced" and "n" are in this list because a field that is not
+    // captured cannot be asserted on, and the enhanced flag is the ONLY
+    // record of whether the upscaler ran — the width ladder cannot say.
+    parts = [...body.matchAll(/name="(w\d+|widths|alt|file|enhanced|n)"(?:; filename="([^"]*)")?/g)].map((m) => m[1] + (m[2] ? ":" + m[2] : ""));
+    const e = /name="enhanced"\r?\n\r?\n([^\r]*)/.exec(body);
+    if (e) enhancedSent.push(e[1]);
     const a = /name="alt"\r?\n\r?\n([^\r]*)/.exec(body);
     if (a) altsSent.push(a[1]);
     native = !body.includes("widths");
@@ -107,6 +112,7 @@ async function run(label, patch, files, page, opts) {
   console.log("  parts:", parts.join(", ") || "(no request)");
   console.log("  native form POST:", native);
   console.log("  requests:", requests, "alts:", JSON.stringify(altsSent), "enhance calls:", enhanceCalls);
+  console.log("  enhanced flag sent:", JSON.stringify(enhancedSent));
   console.log("  row status:", JSON.stringify(lastRows));
   console.log("  last said:", JSON.stringify(lastStatus));
   console.log("  button hidden:", await p.$eval("#gowrap", (e) => e.style.display === "none").catch(() => "?"));

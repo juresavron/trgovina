@@ -122,3 +122,32 @@ describe("the panel's pages", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 });
+
+/**
+ * Whether a photograph was redrawn is shown, not remembered.
+ *
+ * An upscaled image contains pixels that were never photographed. The person
+ * editing this catalogue should be able to see which ones those are months
+ * later, without having to recall the day it was uploaded — and the width
+ * ladder cannot tell them, because [480,800,1200,1600,2048] is what a 2048px
+ * photograph and a 2K upscale both produce.
+ */
+describe("an enhanced photograph says so", () => {
+  const row = (enhanced: boolean) => ({
+    id: "a1", url: "bazen/x/a.webp", alt: "opis", sort: 0,
+    widths: [480, 800, 1200, 1600, 2048], enhanced,
+  });
+
+  it("marks one the upscaler redrew", () => {
+    const html = modelPage("bazen", "x", "BAZEN", [row(true)], undefined, "a@b.c", true, true);
+    expect(html).toContain("2K (obdelano z UI)");
+  });
+
+  it("says nothing about one it did not", () => {
+    // Identical widths. The ONLY difference is the recorded flag, which is the
+    // whole reason the column exists.
+    const html = modelPage("bazen", "x", "BAZEN", [row(false)], undefined, "a@b.c", true, true);
+    expect(html).not.toContain("2K (obdelano z UI)");
+    expect(html).toContain("širine: 480, 800, 1200, 1600, 2048");
+  });
+});
