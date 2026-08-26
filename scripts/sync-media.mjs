@@ -25,21 +25,47 @@ import path from "node:path";
 
 const URL_BASE = process.env.SUPABASE_URL;
 const KEY = process.env.SUPABASE_SERVICE_KEY;
-if (!URL_BASE || !KEY) {
-  console.error("set SUPABASE_URL and SUPABASE_SERVICE_KEY");
-  process.exit(1);
+
+/**
+ * A dump instead of a fetch.
+ *
+ * Reading these two tables needs the SERVICE key, because RLS quite correctly
+ * shows an anonymous reader nothing until the shop is live and its products
+ * published — which is exactly the state this index is most needed in. That
+ * key is not available everywhere this script needs to run, and it is not a
+ * key to scatter about, so the generator also accepts the rows as JSON:
+ *
+ *   SUPABASE_MEDIA_JSON=dump.json node scripts/sync-media.mjs
+ *
+ * where dump.json is { "products": [...], "media": [...] } with the same
+ * columns the queries below select. One generator, one output format, two
+ * ways to feed it.
+ */
+const DUMP = process.env.SUPABASE_MEDIA_JSON;
+
+let products, media;
+if (DUMP) {
+  const d = JSON.parse(fs.readFileSync(DUMP, "utf8"));
+  if (!Array.isArray(d.products) || !Array.isArray(d.media)) {
+    console.error(DUMP + ": expected { products: [...], media: [...] }");
+    process.exit(1);
+  }
+  ({ products, media } = d);
+} else {
+  if (!URL_BASE || !KEY) {
+    console.error("set SUPABASE_URL and SUPABASE_SERVICE_KEY, or SUPABASE_MEDIA_JSON");
+    process.exit(1);
+  }
+  const rest = async (q) => {
+    const r = await fetch(URL_BASE + "/rest/v1/" + q, {
+      headers: { apikey: KEY, authorization: "Bearer " + KEY },
+    });
+    if (!r.ok) throw new Error(q + " -> " + r.status + " " + (await r.text()).slice(0, 200));
+    return r.json();
+  };
+  products = await rest("products?select=id,shop_id,slug&order=sort");
+  media = await rest("product_media?select=product_id,url,alt,sort,widths&order=sort");
 }
-
-const rest = async (q) => {
-  const r = await fetch(URL_BASE + "/rest/v1/" + q, {
-    headers: { apikey: KEY, authorization: "Bearer " + KEY },
-  });
-  if (!r.ok) throw new Error(q + " -> " + r.status + " " + (await r.text()).slice(0, 200));
-  return r.json();
-};
-
-const products = await rest("products?select=id,shop_id,slug&order=sort");
-const media = await rest("product_media?select=product_id,url,alt,sort,widths&order=sort");
 
 const byProduct = new Map(products.map((p) => [p.id, p]));
 const groups = new Map();

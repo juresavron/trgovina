@@ -28,18 +28,63 @@ describe("media caching matches how the file is named", () => {
   });
 
   /**
-   * The site's own media is all human-named today, because it was uploaded
-   * through the dashboard rather than the panel. If that ever stops being
-   * true this test should be updated, not deleted — the point is to know
-   * which regime every live URL is under, not to assert one forever.
+   * THIS TEST CHANGED THE DAY THE PANEL'S FIRST PHOTOGRAPH WENT LIVE, which
+   * is what its previous note asked for: it used to assert that NOTHING the
+   * site serves is content-addressed, because everything had gone in through
+   * the Supabase dashboard. That stopped being true, and an assertion kept
+   * past the fact it described is worse than none — it fails on the change
+   * working rather than on the change breaking.
+   *
+   * What is worth pinning is not which regime the files are in but that every
+   * one of them is in a regime DELIBERATELY: a name that decides its own
+   * cache lifetime. A dashboard upload can be replaced in place, so it must
+   * stay revalidatable; a panel upload carries a UUID that changes with its
+   * bytes, so it can cache for a year. Both are correct. A file that is
+   * neither would be a URL nobody can reason about.
    */
-  it("knows every URL the site actually serves is in the short-cache regime", () => {
+  it("knows which cache regime every URL the site serves is under", () => {
     const live = [
       ...Object.values(OWN_HERO).map((h) => h!.src),
       ...Object.values(OWN_MEDIA).flat().map((p) => p.src),
     ].map((u) => u.replace(/^\/media\//, ""));
     expect(live.length).toBeGreaterThan(0);
-    expect(live.filter(isContentAddressed)).toEqual([]);
+
+    const forever = live.filter(isContentAddressed);
+    const revalidated = live.filter((u) => !isContentAddressed(u));
+    // The partition is total by construction; asserting it is how a third
+    // state would announce itself rather than hide.
+    expect(forever.length + revalidated.length).toBe(live.length);
+
+    // Everything cached for a year must carry a UUID, because that is the
+    // only thing making the URL change when the bytes do.
+    for (const u of forever) {
+      expect(u, u).toMatch(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/);
+    }
+    // And nothing cached for a year may be a bare human name, which is what
+    // gets replaced in place.
+    for (const u of revalidated) {
+      expect(isContentAddressed(u), u).toBe(false);
+    }
+  });
+
+  /**
+   * A width rung caches exactly as its photograph does.
+   *
+   * The rungs are separate URLs and the browser picks between them, so a
+   * ladder whose members disagreed about cache lifetime would serve a stale
+   * 800px file beside a fresh 1600px one — the same picture, two versions,
+   * depending on the viewport.
+   */
+  it("puts every rung in the same regime as its photograph", () => {
+    for (const set of Object.values(OWN_MEDIA)) {
+      for (const photo of set) {
+        const base = photo.src.replace(/^\/media\//, "");
+        for (const [rung] of photo.widths) {
+          expect(isContentAddressed(rung.replace(/^\/media\//, "")), rung)
+            .toBe(isContentAddressed(base));
+        }
+      }
+    }
   });
 });
 
