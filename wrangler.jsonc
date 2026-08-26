@@ -22,12 +22,23 @@
   // anonymous visitor to do: read a live shop's published pages.
   //
   // ONE OPTIONAL SECRET, for one optional feature:
-  //   GEMINI_API_KEY   npx wrangler secret put GEMINI_API_KEY
-  //                    Turns on the panel's 2K upscaler. Absent, the panel
-  //                    does not offer it and nothing else changes. See
-  //                    src/admin/enhance.ts — it REDRAWS a photograph rather
-  //                    than sharpening it, which is why it is opt-in per
-  //                    upload even once the key is set.
+  //   GEMINI_API_KEY   Turns on the panel's alt-text writer and its 2K
+  //                    upscaler. Absent, the panel writes stand-in
+  //                    descriptions, uploads photographs at their original
+  //                    size, and nothing else changes. See enhance.ts — it
+  //                    REDRAWS a photograph rather than sharpening it, which
+  //                    is why the panel says so when it has.
+  //
+  //   ⚠️ SET IT AS A GITHUB REPOSITORY SECRET, not in the Cloudflare
+  //   dashboard. The deploy workflow puts it on the Worker with `wrangler
+  //   secret put` on every run. Added in the dashboard as a plaintext
+  //   VARIABLE it does not survive: `wrangler deploy` replaces the vars
+  //   block below with exactly what this file declares, so the next deploy
+  //   deletes it — silently, and the only symptom is a line of grey text in
+  //   the admin panel saying automatic descriptions are off. That happened.
+  //   A dashboard SECRET (the encrypted kind) does survive, but then the
+  //   key's existence lives nowhere in this repository, and the deploy
+  //   cannot re-establish it.
   //
   // Admin accounts are Supabase Auth users on the public.admins allowlist.
   "vars": {
