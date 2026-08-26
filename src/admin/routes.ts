@@ -96,14 +96,35 @@ function adminModelBySlug(slug: string): AdminModel | undefined {
   return ADMIN_MODELS.find((m) => m.slug === slug);
 }
 
+/** Exported so a test can hold it to account; see the note on PRIVATE. */
+export const CSP =
+  "default-src 'none'; img-src 'self' blob:; style-src 'unsafe-inline'; " +
+  "script-src 'unsafe-inline'; form-action 'self'; connect-src 'self'; " +
+  "base-uri 'none'; frame-ancestors 'none'";
+
 const HTML = { "content-type": "text/html; charset=utf-8" };
 const PRIVATE = {
   ...HTML,
   "x-robots-tag": "noindex, nofollow",
   "cache-control": "no-store",
   // The panel has no third-party anything; say so rather than relying on it.
-  "content-security-policy":
-    "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'",
+  //
+  // ⚠️ blob: IS NOT COVERED BY 'self', and leaving it out broke the feature
+  // this panel was rebuilt around. The upload card shows a thumbnail of every
+  // picture before it sends anything, and it does that from a blob: URL its
+  // own script made — the file never leaves the browser to be previewed. CSP
+  // treats blob: as its own scheme rather than as same-origin, so every one of
+  // those thumbnails was refused and the operator picked files blind.
+  //
+  // It widens nothing: a blob: URL can only be minted by script already
+  // running in this document, from bytes that document already holds. There is
+  // no way to point one at somebody else's server.
+  //
+  // Also why the two decode paths matter — see panel.ts, where Safari before
+  // 15 reads a file through an <img> and an object URL because it has no
+  // createImageBitmap. On that browser this directive is the difference
+  // between converting a photograph and refusing it.
+  "content-security-policy": CSP,
   "referrer-policy": "no-referrer",
 };
 
