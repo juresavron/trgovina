@@ -175,6 +175,11 @@ input[type=file]::file-selector-button:hover{background:var(--paper)}
 .up{display:grid;gap:18px}
 @media (min-width:760px){.up{grid-template-columns:minmax(0,1fr) minmax(0,1fr);
   align-items:start}}
+/* The picker used to share the row with a column of description fields, so
+   half the card was a form. There is no form left — the right-hand column is
+   a progress report — so the picker takes the space it needs and the status
+   sits beside it rather than opposite it. */
+@media (min-width:760px){.up--solo{grid-template-columns:minmax(0,320px) minmax(0,1fr)}}
 .drop{border:1px dashed var(--line-ctrl);border-radius:var(--r-card);
   padding:16px;background:#fbfbfb}
 .drop.is-over{border-color:var(--ink);background:var(--paper)}
@@ -186,15 +191,15 @@ input[type=file]::file-selector-button:hover{background:var(--paper)}
 .picked img{width:64px;height:48px;object-fit:cover;border-radius:var(--r-ctrl);
   background:var(--paper);flex:none;border:1px solid var(--line)}
 .picked .grow{flex:1;min-width:0}
-.picked .nm{display:block;font-size:12px;color:var(--mute);margin:0 0 4px;
+.picked .nm{display:block;font-size:12px;color:var(--mute);margin:0 0 2px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* The name the file will be STORED under, built from the description. It is
-   the SEO-visible half of what the description does, and it was invisible:
-   the operator wrote a sentence and had no way of knowing a filename came out
-   of it. Monospace and quiet, under the field it is derived from. */
-.picked .fn{display:block;margin:5px 0 0;font-family:ui-monospace,SFMono-Regular,
-  Menlo,monospace;font-size:11px;color:var(--mute);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* One line of state per file. The list is now the only progress report the
+   operator gets per picture, so it has to say where each one is. */
+.picked .rowst{display:block;font-size:13px;color:var(--ink)}
+.picked .rowst.ok{color:var(--ok,#1a7f37)}
+.picked .rowst.bad{color:var(--danger,#b42318)}
+.picked li{align-items:center}
+.stline{margin:10px 0 0;min-height:20px}
 #prev{display:none;width:100%;aspect-ratio:4/3;object-fit:contain;
   background:var(--paper);border-radius:var(--r-ctrl);margin-bottom:12px}
 #prev.on{display:block}
@@ -481,15 +486,15 @@ export function siteImagePage(
       '<p class="hint" id="fmeta">Sliko lahko tudi povlečete sem. V brskalniku ' +
       "se samodejno pretvori v WebP.</p>" +
       "</div>" +
-      "<div>" +
-      // No description field: this picture is decorative on the storefront and
-      // is rendered with an empty alt there. Asking for one would put a
-      // sentence into the panel that never reaches a page.
-      '<div class="field" id="one-alt" style="display:none">' +
-      '<input id="alt" name="alt" type="text" value="' + esc(label) + '"></div>' +
+      '<div class="side">' +
+      // No description field, and no hidden one either: this picture is
+      // decorative on the storefront and is rendered with an empty alt there,
+      // so a sentence collected here would never reach a page. The field that
+      // used to sit here disabled — the whole showOneAlt mechanism — went with
+      // the per-file description fields it existed to hide.
       '<ul class="picked" id="picked"></ul>' +
       '<p class="hint">Slika je okrasna — bralnik zaslona je ne prebere, zato ' +
-      "opis ni potreben.</p>" +
+      "opis ni potreben. Nalaganje se začne samo.</p>" +
       // THE UPSCALER RUNS ON EVERY UPLOAD when a key is configured — the
       // owner's instruction, given twice and with the caveat stated: they
       // upload, it upscales, there is nothing to tick.
@@ -503,9 +508,9 @@ export function siteImagePage(
           "Sliko na novo nariše umetna inteligenca — po nalaganju jo poglejte, " +
           "podrobnosti izdelka se lahko spremenijo.</p>"
         : "") +
-      '<p style="margin:18px 0 0"><button class="btn" type="submit" id="go">Naloži</button>' +
-      '<span class="muted" id="st"></span></p>' +
       '<progress id="pr" max="100" value="0" hidden></progress>' +
+      '<p class="stline"><span class="muted" id="st"></span></p>' +
+      '<p id="gowrap"><button class="btn" type="submit" id="go">Naloži</button></p>' +
       "</div></div></form>" +
       "<script>" + UPLOAD_JS + "</script>",
     who,
@@ -549,17 +554,30 @@ export function modelPage(
       ". Vrstni red določa številka; najmanjša je glavna.</p></div>" +
 
       "<h2>Nova fotografija</h2>" +
+      // THE WHOLE CARD IS A FILE PICKER AND A PROGRESS BAR.
+      //
+      // It used to be a picker plus one description field per chosen file, and
+      // that was the wrong shape for what this panel is for. Ten photographs
+      // meant ten sentences before the button would work; the field was
+      // required, so the browser refused the upload before any script ran; and
+      // the descriptions collected that way were the same sentence pasted ten
+      // times, which is worth nothing to a screen reader and nothing to image
+      // search.
+      //
+      // So nothing is asked for here. Choose the files and they go: converted
+      // to WebP in the browser, upscaled if a key is set, described by the
+      // server from the picture it just received, and named after that
+      // description. Every one of those is a thing the machine can do without
+      // being told. What the operator DOES get is the list below, where every
+      // photograph's description is an ordinary editable field — review after
+      // the fact, which is the only place review was ever going to happen.
       '<form class="card" method="post" action="' + esc(base) +
       '/upload" enctype="multipart/form-data" id="up"' +
-      (enhance ? ' data-enhance="on"' : "") +
-      (describe ? ' data-describe="on"' : "") +
-      // ALWAYS, not only with the describer on. Two things need the model's
-      // name: describe.ts, which is told which product it is looking at so it
-      // uses the right noun and is told not to print the name; and the
-      // filename preview, which has to show what the server will actually
-      // write when a description is left empty — and that is built from this.
-      ' data-subject="' + esc(name) + '"' + ">" +
-      '<div class="up">' +
+      // The upscaler is the one thing the BROWSER still has to know about:
+      // it runs before the width ladder is drawn, so the client has to make
+      // that call. The describer moved to the server and needs no flag here.
+      (enhance ? ' data-enhance="on"' : "") + ">" +
+      '<div class="up up--solo">' +
 
       '<div class="drop" id="drop">' +
       '<img id="prev" alt="" width="400" height="300">' +
@@ -567,66 +585,33 @@ export function modelPage(
       // accept is a HINT to the file picker, not a guarantee — the server reads
       // the magic bytes — but narrowing it stops an operator choosing a 6 MB
       // JPEG and only learning it is refused after the upload.
-      //
-      // multiple: a model arrives as a set of photographs, and uploading them
-      // one at a time meant one page load per picture. With script on, each
-      // file gets its own description field below and its own request; with
-      // script off the browser still sends the first, which is the same single
-      // upload this form always was.
       '<input id="f" name="file" type="file" multiple ' +
-      'accept="image/webp,image/jpeg,image/png,image/avif" required>' +
-      '<p class="hint" id="fmeta">Slike lahko tudi povlečete sem — izberete jih ' +
-      "lahko več hkrati. V brskalniku se samodejno pretvorijo v WebP in " +
-      "pomanjšajo v več širin.</p>" +
+      'accept="image/jpeg,image/png,image/webp">' +
+      '<p class="fmeta" id="fmeta">Slike lahko tudi povlečete sem — ' +
+      "izberete jih lahko več hkrati. Nalaganje se začne samo.</p>" +
       "</div>" +
 
-      "<div>" +
-      // The single description, for the no-script path and as the field the
-      // per-file list replaces the moment JavaScript takes over.
-      // Not required, here either: an upload is never refused for want of a
-      // sentence — the server writes a truthful stand-in. See the per-file
-      // input in UPLOAD_JS for the whole reasoning.
-      '<div class="field" id="one-alt"><label for="alt">Opis slike</label>' +
-      '<input id="alt" name="alt" type="text" maxlength="180" ' +
-      'placeholder="Masažni bazen na terasi, pokrit s termo pokrovom"></div>' +
-      // Filled by UPLOAD_JS: a thumbnail and its own description per chosen
-      // file. Empty, and hidden by CSS, until something is chosen.
+      '<div class="side">' +
+      // The chosen files, as thumbnails with a line of status each. No fields:
+      // there is nothing here to fill in.
       '<ul class="picked" id="picked"></ul>' +
-      '<p class="hint">Opis prebere bralnik zaslona in ga uporabi iskalnik. ' +
-      "Iz njega nastane tudi ime datoteke. " +
-      (describe
-        ? "Opise napiše umetna inteligenca, ko izberete slike — preberite jih " +
-          "in po potrebi popravite."
-        : "Pustite prazno in zapišemo ime modela; kadarkoli ga lahko popravite " +
-          "v seznamu spodaj.") +
-      "</p>" +
-      // WHEN THE DESCRIBER IS OFF, SAY SO. Without this the panel looked
-      // identical either way: the operator picked ten files, nothing was
-      // written, and there was no way to tell whether the feature had failed
-      // or had never been switched on. Naming the missing setting is the same
-      // thing notConfiguredPage does for Supabase, on the same admin-only
-      // page, and it is the difference between a bug report and a two-minute
-      // fix.
-      (describe
-        ? ""
-        : '<p class="note-ai">Samodejnih opisov ni: nastavljen ni ' +
-          "GEMINI_API_KEY. Nalaganje deluje tudi brez njega.</p>") +
-      // THE UPSCALER RUNS ON EVERY UPLOAD when a key is configured — the
-      // owner's instruction, given twice and with the caveat stated: they
-      // upload, it upscales, there is nothing to tick.
-      //
-      // The line stays because it is not a control, it is a disclosure: the
-      // picture is REDRAWN at 2K rather than sharpened, and an operator who
-      // does not know that cannot judge whether the result still shows the
-      // product they are selling.
+      '<progress id="pr" max="100" value="0" hidden></progress>' +
+      '<p class="stline"><span class="muted" id="st"></span></p>' +
+      // Without script nothing starts by itself, so the button is the whole
+      // upload; with script it is a fallback nobody needs to press.
+      '<p id="gowrap"><button class="btn" type="submit" id="go">Naloži</button></p>' +
+      // The two disclosures. Neither is a control — they are what an operator
+      // has to know to judge what came out the other end.
       (enhance
         ? '<p class="note-ai">Slike se samodejno izboljšajo na 2K. ' +
           "Sliko na novo nariše umetna inteligenca — po nalaganju jo poglejte, " +
           "podrobnosti izdelka se lahko spremenijo.</p>"
         : "") +
-      '<p style="margin:18px 0 0"><button class="btn" type="submit" id="go">Naloži</button>' +
-      '<span class="muted" id="st"></span></p>' +
-      '<progress id="pr" max="100" value="0" hidden></progress>' +
+      (describe
+        ? '<p class="note-ai">Opis in ime datoteke napiše umetna inteligenca ' +
+          "iz same slike. Oboje lahko popravite spodaj.</p>"
+        : '<p class="note-ai">Samodejnih opisov ni: nastavljen ni ' +
+          "GEMINI_API_KEY. Zapišemo ime modela; opis popravite spodaj.</p>") +
       "</div>" +
 
       "</div></form>" +
@@ -707,175 +692,93 @@ const UPLOAD_JS = `
   "use strict";
   var form = document.getElementById("up");
   if (!form) return;
-  /* SITE MODE: one picture, no description, no width ladder.
-     A site image lands at a FIXED key the storefront names in code, so there
-     is exactly one file per slot and no srcset to describe — and the picture
-     is decorative on the page, rendered with an empty alt, so asking for a
-     description here would collect a sentence nothing reads. */
+  /* SITE MODE: one picture, one fixed key, no width ladder. A site image is
+     rendered decoratively by the storefront, so it has no description to
+     collect and no srcset to describe. */
   var siteMode = form.getAttribute("data-mode") === "site";
   var file = document.getElementById("f"), go = document.getElementById("go"),
       st = document.getElementById("st"), pr = document.getElementById("pr"),
       drop = document.getElementById("drop"), prev = document.getElementById("prev"),
       fmeta = document.getElementById("fmeta"), hint = fmeta.textContent,
       picked = document.getElementById("picked"),
-      oneAlt = document.getElementById("one-alt");
+      gowrap = document.getElementById("gowrap");
 
-  /* Show what was chosen — one row per file, each with its own description.
-     Picking the wrong photograph and finding out only after it is uploaded is
-     this panel's most annoying failure, and a set of five wants five
-     descriptions rather than the same sentence five times: alt text is an SEO
-     and accessibility surface, and five identical ones are worth about as
-     much as none. */
+  /* The button is the no-script path's whole upload. Script is running, so it
+     is a fallback nobody needs: the files go the moment they are chosen. */
+  if (gowrap) gowrap.style.display = "none";
+
   var urls = [];
+  var rows = [];
+  var busy = false;
 
-  /* ⚠️ DISABLED, NOT JUST HIDDEN.
-   *
-   * The single description field is the no-script path's, and it carries
-   * the required attribute. A required control that is present but not rendered makes the
-   * form UNSUBMITTABLE: the browser refuses, tries to focus a field nobody can
-   * see, and does nothing at all — no submit event, no error, no request. The
-   * upload simply stopped working the moment the per-file list replaced it.
-   * A disabled control is skipped by validation and by serialisation both. */
-  /* The server's slugStem, in the browser, so the filename shown here is the
-     filename that will be written. Kept deliberately small and identical in
-     behaviour: transliterate, lowercase, collapse to hyphens, cap at 60 on a
-     word boundary. If the two ever drift the only cost is a preview that is
-     slightly wrong, never a bad key — the server is the one that names the
-     object. */
-  function slugOf(s){
-    var map = { "č":"c","ć":"c","š":"s","ž":"z","đ":"d" };
-    var out = "";
-    var low = String(s || "").toLowerCase();
-    for (var i = 0; i < low.length; i++) out += (map[low[i]] || low[i]);
-    out = out.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-    if (out.length <= 60) return out;
-    var cut = out.slice(0, 60), d = cut.lastIndexOf("-");
-    return (d > 20 ? cut.slice(0, d) : cut).replace(/^-+|-+$/g, "");
-  }
-
-  function showOneAlt(on){
-    oneAlt.style.display = on ? "" : "none";
-    var box = document.getElementById("alt");
-    box.disabled = !on;
-    box.required = on;
-  }
-
-  /* Four forms, and the teens tested first — the same rule photoCount() uses
-     on the server side of this panel. "3 slik" is the genitive plural where
-     the plural belongs. */
   function slike(n){
+    if (n === 0) return "brez fotografij";
     var teen = n % 100;
-    if (teen >= 11 && teen <= 14) return n + " slik";
+    if (teen >= 11 && teen <= 14) return n + " fotografij";
     var u = n % 10;
-    if (u === 1) return n + " slika";
-    if (u === 2) return n + " sliki";
-    if (u === 3 || u === 4) return n + " slike";
-    return n + " slik";
+    if (u === 1) return n + " fotografija";
+    if (u === 2) return n + " fotografiji";
+    if (u === 3 || u === 4) return n + " fotografije";
+    return n + " fotografij";
   }
 
+  /* Show what was chosen. Thumbnails and a status line each — picking the
+     wrong photograph and finding out only after it is uploaded is this
+     panel's most annoying failure, and it is the ONLY thing this list is
+     for now. There is nothing here to fill in. */
   function shown(){
-    urls.forEach(URL.revokeObjectURL);
-    urls = [];
+    urls.forEach(URL.revokeObjectURL); urls = [];
+    rows = [];
     picked.innerHTML = "";
+    prev.className = ""; prev.removeAttribute("src");
     var fs = file.files ? Array.prototype.slice.call(file.files) : [];
-    if (prev.src) { URL.revokeObjectURL(prev.src); prev.removeAttribute("src"); }
-    prev.className = "";
+    if (!fs.length) { fmeta.textContent = hint; picked.className = "picked"; return; }
 
-    if (!fs.length) {
-      fmeta.textContent = hint;
-      picked.className = "picked";
-      showOneAlt(true);
-      return;
-    }
     var kb = 0;
     fs.forEach(function(f){ kb += f.size; });
-    fmeta.textContent = fs.length === 1
-      ? fs[0].name + " · " + Math.round(kb / 1024) + " kB"
-      : slike(fs.length) + " · " + Math.round(kb / 1024) + " kB";
+    fmeta.textContent = (fs.length === 1
+      ? fs[0].name
+      : slike(fs.length)) + " · " + Math.round(kb / 1024) + " kB";
 
-    /* One file keeps the big preview the panel already had; a set gets the
-       list, where a 64px thumbnail is enough to tell them apart. */
     if (fs.length === 1) {
       var u = URL.createObjectURL(fs[0]);
       urls.push(u); prev.src = u; prev.className = "on";
     }
-
     if (siteMode) { picked.className = "picked"; return; }
-    showOneAlt(false);
+
     picked.className = "picked on";
-    fs.forEach(function(f, i){
+    fs.forEach(function(f){
       var u = URL.createObjectURL(f); urls.push(u);
       var li = document.createElement("li");
       var img = document.createElement("img");
       img.src = u; img.alt = "";
       var box = document.createElement("div"); box.className = "grow";
       var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = f.name;
-      var lab = document.createElement("label");
-      lab.setAttribute("for", "alt-" + i);
-      lab.textContent = "Opis slike (obvezno)";
-      var inp = document.createElement("input");
-      inp.type = "text"; inp.id = "alt-" + i; inp.maxLength = 180;
-      inp.className = "alt-in";
-      inp.placeholder = "Masažni bazen na terasi, pokrit s termo pokrovom";
-      /* NOT required, and that is the point.
-         A required empty field is a browser-level block: constraint validation
-         runs BEFORE the submit event, so the page never even reaches this
-         script — ten files, ten empty boxes, "Please fill in this field", and
-         no way to upload without typing ten sentences. The description is
-         worth having, not worth refusing an upload over: the server writes a
-         truthful stand-in when the field is empty (the model's own name and
-         the picture's position) and the list below shows which photographs
-         are still carrying one. */
-      var fn = document.createElement("span"); fn.className = "fn";
-      box.appendChild(nm); box.appendChild(lab); box.appendChild(inp);
-      box.appendChild(fn);
-      /* The stored FILENAME, forming as the description does. It is built
-         from the description on the server — see slugStem — so showing it
-         here is the one place the operator can see what the picture will be
-         called in the bucket and in image search. */
-      var showName = function(){
-        /* An EMPTY field is not the file's own name — it is the stand-in the
-           server writes, which is the model plus this picture's position (see
-           standInAlt). Showing the picked file's name there was a preview of
-           something that never happens. */
-        var basis = inp.value.trim() ||
-          ((form.getAttribute("data-subject") || "") + " fotografija " + (i + 1));
-        var t = slugOf(basis);
-        fn.textContent = t ? t + "--\u2026.webp" : "";
-      };
-      inp.addEventListener("input", showName);
-      inp._showName = showName;
-      showName();
+      var stat = document.createElement("span"); stat.className = "rowst";
+      stat.textContent = "čaka";
+      box.appendChild(nm); box.appendChild(stat);
       li.appendChild(img); li.appendChild(box);
       picked.appendChild(li);
+      rows.push(stat);
     });
-    writeAlts(fs);
-  }
-  file.addEventListener("change", shown);
-
-  /* Drag and drop. The file input still works exactly as before; this only
-     gives the browser a second way to hand the same file over. */
-  if (window.DataTransfer && "files" in DataTransfer.prototype) {
-    ["dragenter","dragover"].forEach(function(e){
-      drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.add("is-over"); });
-    });
-    ["dragleave","drop"].forEach(function(e){
-      drop.addEventListener(e, function(){ drop.classList.remove("is-over"); });
-    });
-    drop.addEventListener("drop", function(ev){
-      ev.preventDefault();
-      if (!ev.dataTransfer || !ev.dataTransfer.files.length) return;
-      file.files = ev.dataTransfer.files;
-      shown();
-    });
+    return fs;
   }
 
-  if (!HTMLCanvasElement.prototype.toBlob) return;
+  function mark(i, text, cls){
+    if (!rows[i]) return;
+    rows[i].textContent = text;
+    rows[i].className = "rowst" + (cls ? " " + cls : "");
+  }
+
+  /* ---- conversion ---------------------------------------------------- */
 
   /* The widths the storefront's slots actually paint, doubled for 2x screens.
      Never upscale: a rung wider than the source is the same pixels in a bigger
      file, and its w descriptor would then be a lie the browser acts on. */
   var LADDER = [480, 800, 1200, 1600];
+  /* Nothing is ever painted wider than this, and a picture larger than it is
+     bytes nobody sees. It is also the ceiling the enhancer works to. */
+  var MAX_W = 2048;
 
   /* DECODE. createImageBitmap is the direct route and Safari only got it in
      15 — before that this whole block bailed out, the form did an ordinary
@@ -928,23 +831,15 @@ const UPLOAD_JS = `
     });
   }
 
-  /* One file, one request. The server handler already takes exactly one
-     photograph and its width rungs, so a set is a loop here rather than a new
-     shape there — and a failure on the fourth of five leaves the first three
-     uploaded and says which one stopped, instead of losing the lot. */
-  /* Nothing is ever painted wider than this, and a picture larger than it is
-     bytes nobody sees. It is also the ceiling the enhancer works to. */
-  var MAX_W = 2048;
-
   var doEnhance = form.getAttribute("data-enhance") === "on";
 
   /* Ask the Worker to redraw the picture at 2K, or hand back what we had.
      A 204 means the upscaler produced nothing usable and the ORIGINAL should
      go through — an enhancement must never cost an upload, so every failure
      here resolves rather than rejects. */
-  function enhanced(f, done, total){
+  function enhanced(f, i){
     if (!doEnhance) return Promise.resolve(f);
-    st.textContent = "izboljšujem " + (done + 1) + " od " + total + " …";
+    mark(i, "izboljšujem …");
     var fd = new FormData();
     fd.append("file", f, f.name);
     return fetch("/admin/enhance", { method: "POST", body: fd, credentials: "same-origin" })
@@ -955,8 +850,19 @@ const UPLOAD_JS = `
       .catch(function(){ return f; });
   }
 
-  function upload(f0, alt, done, total){
-    return enhanced(f0, done, total).then(function(f){ return decode(f).then(function(bmp){
+  /* One file, one request. The server handler takes exactly one photograph
+     and its width rungs, so a set is a loop here rather than a new shape
+     there — and a failure on the fourth of five leaves the first three
+     uploaded and says which one stopped, instead of losing the lot.
+
+     NO DESCRIPTION IS SENT. The server writes it, from the picture it has
+     just been handed: see describe.ts, and standInAlt for what happens when
+     there is no key or the model gives nothing back. */
+  function upload(f0, i, total){
+    return enhanced(f0, i).then(function(f){
+      mark(i, "pretvarjam …");
+      return decode(f);
+    }).then(function(bmp){
       var srcW = bmp.width || bmp.naturalWidth;
       if (siteMode) {
         var w = Math.min(srcW, MAX_W);
@@ -973,137 +879,80 @@ const UPLOAD_JS = `
         st.textContent = "nalagam …";
         return fetch(form.action, { method: "POST", body: fd, credentials: "same-origin" });
       }
-      fd.append("alt", alt);
       // The picture's position in this set, so a description the server has to
       // stand in for still differs from its neighbours' — see standInAlt.
-      fd.append("n", String(done + 1));
+      fd.append("n", String(i + 1));
       fd.append("widths", out.widths.join(","));
-      out.blobs.forEach(function(b, i){ fd.append("w" + out.widths[i], b, out.widths[i] + ".webp"); });
-      st.textContent = "nalagam " + (done + 1) + " od " + total + " …";
+      out.blobs.forEach(function(b, k){ fd.append("w" + out.widths[k], b, out.widths[k] + ".webp"); });
+      mark(i, "nalagam …");
+      st.textContent = "nalagam " + (i + 1) + " od " + total + " …";
       return fetch(form.action, { method: "POST", body: fd, credentials: "same-origin" });
-    }); }).then(function(res){
+    }).then(function(res){
       /* A redirect here is the server's own error path (?e=…): it answers a
          successful upload the same way, so the only safe reading is to follow
          it and let the page say what happened. */
       if (!res.ok && !res.redirected) {
         return res.text().then(function(t){ throw new Error(t.slice(0, 200)); });
       }
+      mark(i, "naloženo", "ok");
       return res;
     });
   }
 
-  /* THE DESCRIPTIONS WRITE THEMSELVES.
-     Ten files used to mean ten sentences typed by hand, which is how a bucket
-     ends up with nine photographs sharing one alt string — the accessible
-     equivalent of no alt text at all, and a wasted image-search signal on
-     every one of them.
+  /* ---- the run ------------------------------------------------------- */
 
-     Three rules hold this honest:
-       - it FILLS, it does not submit. The field stays editable and still
-         required, so the operator reads the suggestion before pressing Naloži;
-       - it never overwrites something already typed;
-       - it runs one file at a time and any failure simply leaves that field
-         empty, which is the state this form had before.
-
-     The picture sent is a 768px copy, not the original: the model reads a
-     thumbnail as well as it reads 4000px, and ten full-size photographs is
-     tens of megabytes uploaded twice. Where the browser cannot make one
-     (no canvas WebP — the same limitation the uploader names), the original
-     goes instead rather than the feature disappearing. */
-  var describing = false;
-
-  function small(f){
-    if (!HTMLCanvasElement.prototype.toBlob) return Promise.resolve(f);
-    return decode(f).then(function(bmp){
-      var w = Math.min(bmp.width || bmp.naturalWidth, 768);
-      return draw(bmp, w);
-    }).catch(function(){ return f; });
-  }
-
-  function writeAlts(fs){
-    if (form.getAttribute("data-describe") !== "on" || siteMode) return;
-    if (describing) return;
-    describing = true;
-    var subject = form.getAttribute("data-subject") || "";
-    var ins = Array.prototype.slice.call(picked.querySelectorAll(".alt-in"));
-    var i = 0;
-    (function next(){
-      if (i >= fs.length || i >= ins.length) {
-        describing = false;
-        /* SAY WHEN NOTHING CAME BACK. The describer failing looks exactly like
-           the describer being switched off looks exactly like the operator not
-           having picked anything yet — ten empty boxes either way. If not one
-           field was written, the status line says so, and the upload still
-           works because nothing depends on those fields any more. */
-        var any = ins.some(function(el){ return el.value.trim() !== ""; });
-        st.textContent = any ? "" : "opisov ni bilo mogoče napisati — lahko " +
-          "naložite tudi brez njih";
-        return;
-      }
-      var inp = ins[i];
-      if (inp.value.trim()) { i++; next(); return; }
-      st.textContent = "opisujem " + (i + 1) + " od " + fs.length + " …";
-      small(fs[i]).then(function(b){
-        var fd = new FormData();
-        fd.append("file", b, "d.webp");
-        fd.append("subject", subject);
-        return fetch("/admin/describe", { method: "POST", body: fd, credentials: "same-origin" });
-      }).then(function(res){
-        if (res.status === 204 || !res.ok) return "";
-        return res.text();
-      }).catch(function(){ return ""; }).then(function(text){
-        /* The emptiness is re-checked here, not only above: the operator may
-           have started typing into this very field while the request was in
-           flight, and their sentence outranks the model's. */
-        if (text && !inp.value.trim()) {
-          inp.value = text;
-          /* Setting .value from script fires no input event, so the filename
-             under the field kept showing the stand-in it had before the
-             description landed. */
-          if (inp._showName) inp._showName();
-        }
-        i++; next();
-      });
-    })();
-  }
-
-  form.addEventListener("submit", function(ev){
+  function start(){
     var fs = file.files ? Array.prototype.slice.call(file.files) : [];
-    if (!fs.length) return;
-    ev.preventDefault();
-
-    var alts = Array.prototype.slice.call(picked.querySelectorAll(".alt-in"));
-    /* Still writing? Wait for it rather than uploading ten empty descriptions
-       a second before they would have filled themselves. This is the only
-       thing left that can hold the button, and it clears on its own. */
-    if (describing) {
-      st.textContent = "še opisujem slike — trenutek";
+    if (!fs.length || busy) return;
+    if (!HTMLCanvasElement.prototype.toBlob) {
+      st.textContent = "ta brskalnik ne zna shraniti v WebP — poskusite v Chromu";
+      if (gowrap) gowrap.style.display = "";
       return;
     }
-    /* NO EMPTY-FIELD GATE. An upload is not refused for want of a sentence:
-       the server writes a truthful stand-in from the model's name and the
-       picture's position, and the list below shows which photographs are
-       carrying one so they can be improved later. Blocking here was the same
-       mistake the required attribute made, just in JavaScript. */
-
-    go.disabled = true; pr.hidden = false; pr.value = 0;
-    st.textContent = "pretvarjam …";
+    busy = true;
+    if (go) go.disabled = true;
+    pr.hidden = false; pr.value = 0;
 
     var done = 0;
     (function next(){
       if (done >= fs.length) { location.reload(); return; }
-      upload(fs[done], alts[done] ? alts[done].value : "", done, fs.length)
+      upload(fs[done], done, fs.length)
         .then(function(){
           done++;
           pr.value = Math.round((done / fs.length) * 100);
           next();
         })
         .catch(function(e){
-          go.disabled = false;
+          busy = false;
+          if (go) go.disabled = false;
+          if (gowrap) gowrap.style.display = "";
+          mark(done, "napaka", "bad");
           st.textContent = "napaka pri sliki " + (done + 1) + ": " + e.message +
             (done > 0 ? " (prvih " + done + " je naloženih)" : "");
         });
     })();
-  });
+  }
+
+  /* CHOOSING THE FILES IS THE WHOLE INTERACTION. No description to write, no
+     button to find: the change event is the upload. */
+  file.addEventListener("change", function(){ shown(); start(); });
+  form.addEventListener("submit", function(ev){ ev.preventDefault(); start(); });
+
+  /* Drag and drop. The file input still works exactly as before; this only
+     gives the browser a second way to hand the same file over. */
+  if (window.DataTransfer && "files" in DataTransfer.prototype) {
+    ["dragenter","dragover"].forEach(function(e){
+      drop.addEventListener(e, function(ev){ ev.preventDefault(); drop.classList.add("is-over"); });
+    });
+    ["dragleave","drop"].forEach(function(e){
+      drop.addEventListener(e, function(){ drop.classList.remove("is-over"); });
+    });
+    drop.addEventListener("drop", function(ev){
+      ev.preventDefault();
+      if (!ev.dataTransfer || !ev.dataTransfer.files.length) return;
+      file.files = ev.dataTransfer.files;
+      shown(); start();
+    });
+  }
 })();
 `;

@@ -368,30 +368,6 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     });
   }
 
-  // --- the describer ---
-  //
-  // Sits beside the upscaler and behaves the same way: one image in, an
-  // optional improvement out, 204 when there is nothing to give. It writes
-  // the alt text the operator would otherwise type ten times for ten files —
-  // see describe.ts on what the model is and is not allowed to say, and why
-  // the answer lands in an editable field rather than in the database.
-  if (parts[1] === "describe" && request.method === "POST") {
-    if (!describeAvailable(env)) return new Response("Not found", { status: 404 });
-    const form = await request.formData();
-    const part = form.get("file");
-    if (!(part instanceof File) || part.size === 0) {
-      return new Response("No file", { status: 400 });
-    }
-    const subject = String(form.get("subject") ?? "").slice(0, 120);
-    const bytes = await part.arrayBuffer();
-    const text = await describe(env, bytes, part.type || "image/jpeg", subject);
-    if (!text) return new Response(null, { status: 204, headers: { "cache-control": "no-store" } });
-    return new Response(text, {
-      status: 200,
-      headers: { "content-type": "text/plain; charset=utf-8", "cache-control": "no-store" },
-    });
-  }
-
   // --- one site image ---
   //
   // Before the model lookup, because "site" is not a shop key and would
@@ -506,7 +482,10 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
  * panel would have confidently reported the wrong one.
  */
 const ERRORS: Record<string, string> = {
+  // Kept for links that may still carry it; nothing emits it any more — an
+  // upload is no longer refused for want of a description.
   alt: "Opis slike je obvezen.",
+  file: "Nobena slika ni bila izbrana.",
   // The panel converts every upload itself, in the browser, before it sends
   // anything — so this message is about the CONVERSION not having run, not
   // about the operator's file being the wrong kind. Naming JavaScript first
@@ -598,32 +577,25 @@ async function upload(
   // nothing more. The describer writes a real one when it is configured, the
   // operator can correct any of them from the list below, and neither is a
   // precondition for getting the photograph into the shop.
-  const alt = String(form.get("alt") ?? "").trim() || standInAlt(name, form.get("n"));
-
-  // THE STEM IS THE ALT TEXT, and it is here for image search: the filename
-  // is one of the few signals Google has about what a picture shows, and a
-  // bare UUID spends it on nothing. The UUID stays after a double hyphen so
-  // the URL still changes whenever the bytes do — see isContentAddressed,
-  // which is what keeps these files on the immutable year.
-  //
-  // The alt text is the operator's own sentence about this photograph, which
-  // makes it the best description of it anybody has. If it slugifies to
-  // nothing (a description with no latin letters in it at all) the model slug
-  // stands in, so a file always has a readable stem.
-  const stem = slugStem(alt) || slugStem(slug) || "slika";
-  const id = stem + "--" + crypto.randomUUID();
   const declared = String(form.get("widths") ?? "")
     .split(",")
     .map((n) => Number(n.trim()))
     .filter((n) => Number.isInteger(n) && n > 0 && n <= 8000);
 
-  // With script: one part per width, already WebP. Without: the original file.
-  const written: number[] = [];
-  let base = "";
-
+  // EVERY RUNG IS READ AND CHECKED BEFORE ANYTHING IS WRITTEN.
+  //
+  // The old shape uploaded each width as it read it, which was fine while the
+  // key was known in advance. It is not any more: the key is built from the
+  // description, and the description is written by looking at the picture —
+  // so the picture has to be in hand first. Reading them all up front also
+  // means a bad rung fails before any object is stored, instead of leaving
+  // three of five in the bucket.
+  //
+  // Five rungs of a 2048px photograph is a couple of megabytes against a
+  // Worker's 128, which is the whole reason this can be held rather than
+  // streamed.
+  const parts: [number, ArrayBuffer][] = [];
   if (declared.length > 0) {
-    base = shop + "/" + slug + "/" + id + ".webp";
-    const widest = Math.max(...declared);
     for (const w of declared) {
       const part = form.get("w" + w);
       if (!(part instanceof File)) continue;
@@ -632,16 +604,12 @@ async function upload(
       // bytes: a label is the sender's claim, and this is the one place that
       // can make "every upload is WebP" true rather than intended.
       if (!isWebp(bytes)) return seeOther("/admin/" + shop + "/" + slug + "?e=type");
-      const path = w === widest ? base : widthPath(base, w);
-      await uploadObject(api, path, bytes, "image/webp");
-      if (w !== widest) written.push(w);
+      parts.push([w, bytes]);
     }
-    written.push(widest);
-    written.sort((a, b) => a - b);
   } else {
     const part = form.get("file");
     if (!(part instanceof File) || part.size === 0) {
-      return seeOther("/admin/" + shop + "/" + slug + "?e=alt");
+      return seeOther("/admin/" + shop + "/" + slug + "?e=file");
     }
     // ⚠️ THIS BRANCH USED TO STORE THE ORIGINAL, whatever it was — the EXT map
     // it consulted listed jpeg, png and avif — so the panel's own promise
@@ -655,9 +623,47 @@ async function upload(
     // no-script upload and it is stated on the form rather than papered over.
     const bytes = await part.arrayBuffer();
     if (!isWebp(bytes)) return seeOther("/admin/" + shop + "/" + slug + "?e=type");
-    base = shop + "/" + slug + "/" + id + ".webp";
-    await uploadObject(api, base, bytes, "image/webp");
+    parts.push([0, bytes]);
   }
+  if (parts.length === 0) return seeOther("/admin/" + shop + "/" + slug + "?e=file");
+
+  const widest = parts.reduce((a, b) => (b[0] > a[0] ? b : a));
+
+  // THE DESCRIPTION IS WRITTEN HERE, not typed in the panel.
+  //
+  // This is the whole point of the panel's new shape: the operator chooses
+  // files and nothing else, so the one place that can say what is in a
+  // photograph is the code holding the photograph. describe() looks at the
+  // widest rung — the same bytes the storefront will serve — and returns a
+  // sentence or null; null means no key, a refusal, or an answer that did not
+  // survive tidy(), and the stand-in takes over.
+  //
+  // An operator-supplied alt still wins where one arrives, which keeps the
+  // no-script form and any future edit path honest.
+  const given = String(form.get("alt") ?? "").trim();
+  const written_alt = given || (await describe(api.env, widest[1], "image/webp", name));
+  const alt = written_alt || standInAlt(name, form.get("n"));
+
+  // THE STEM IS THE ALT TEXT, and it is here for image search: the filename
+  // is one of the few signals Google has about what a picture shows, and a
+  // bare UUID spends it on nothing. The UUID stays after a double hyphen so
+  // the URL still changes whenever the bytes do — see isContentAddressed,
+  // which is what keeps these files on the immutable year.
+  //
+  // If the description slugifies to nothing (no latin letters in it at all)
+  // the model slug stands in, so a file always has a readable stem.
+  const stem = slugStem(alt) || slugStem(slug) || "slika";
+  const id = stem + "--" + crypto.randomUUID();
+
+  const base = shop + "/" + slug + "/" + id + ".webp";
+  const written: number[] = [];
+  for (const [w, bytes] of parts) {
+    const path = w === widest[0] ? base : widthPath(base, w);
+    await uploadObject(api, path, bytes, "image/webp");
+    if (w !== widest[0] && w > 0) written.push(w);
+  }
+  if (widest[0] > 0) written.push(widest[0]);
+  written.sort((a, b) => a - b);
 
   const rows = await listMedia(api, productId);
   await insertMedia(api, productId, base, alt, rows.length);
