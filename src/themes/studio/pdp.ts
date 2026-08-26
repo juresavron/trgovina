@@ -752,6 +752,31 @@ export const STUDIO_PDP_CSS = `
     text-transform: uppercase;
     transition: background-color .2s ease, color .2s ease;
   }
+  /* The channel line under the enquiry button. It is not a disclaimer — it is
+   * the answer to "and then what happens", which a visitor deserves before
+   * pressing rather than on the page after it. Body rung, muted, sitting with
+   * the control rather than with the copy above it. */
+  :root[data-theme="studio"] .st-pdp-chan {
+    margin: clamp(8px, 0.8vw, 12px) 0 0;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    color: var(--ink-mute);
+  }
+  /* The enquiry control is an ANCHOR where the cart control is a button, so
+   * the button's own reset does not reach it: a link needs the text centred
+   * on its own box and its underline off. Everything else — fill, ring,
+   * radius, height, hover — is inherited from .st-pdp-add above, which is
+   * what keeps the two states of this control the same object. */
+  :root[data-theme="studio"] a.st-pdp-add {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    text-align: center;
+  }
   :root[data-theme="studio"] .st-pdp-add:hover {
     background: transparent;
     color: var(--ink);
@@ -1793,16 +1818,36 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   // form that GETs the cart route with what was chosen — there is no cart yet,
   // so it lands on the cart page rather than pretending to add anything. A
   // stepper wired to nothing would be a control that lies.
-  const buy =
-    '<form class="st-pdp-buyrow" method="get" action="' +
-    esc(ctx.shop.routeSlugs["/cart"]) + '">' +
-    '<input type="hidden" name="model" value="' + esc(d.slug) + '">' +
-    '<span class="st-pdp-qty">' +
-    '<label class="st-pdp-vh" for="st-pdp-q">Količina</label>' +
-    '<input id="st-pdp-q" name="qty" type="number" value="1" min="1" max="9" step="1" inputmode="numeric">' +
-    "</span>" +
-    '<button class="st-pdp-add" type="submit">' + esc(d.bar[3]) + "</button>" +
-    "</form>";
+  // THE PRIMARY CONTROL, AND WHAT IT IS ALLOWED TO PROMISE.
+  //
+  // It used to be a quantity stepper and a "V košarico" button on every shop,
+  // unconditionally. On this one that was a lie told at the worst possible
+  // moment: /kosarica answers "Spletno naročanje še ni odprto — naročila
+  // zaenkrat sprejemamo po telefonu in e-pošti", so the biggest, blackest
+  // thing on a €2,890 page took a visitor who had just decided and told them
+  // no. The stepper was the same lie in miniature, counting units of
+  // something that cannot be ordered — and nobody buys two hot tubs.
+  //
+  // So while shop.ordersOnline is false the page asks for the thing the shop
+  // can actually do. The destination is /kontakt, which lists the e-mail and
+  // the telephone; the line under the button says which channels those are,
+  // in the words the cart page uses, so the click is not a surprise either.
+  // Flip ordersOnline and the cart controls return with no other change.
+  const buy = ctx.shop.ordersOnline
+    ? '<form class="st-pdp-buyrow" method="get" action="' +
+      esc(ctx.shop.routeSlugs["/cart"]) + '">' +
+      '<input type="hidden" name="model" value="' + esc(d.slug) + '">' +
+      '<span class="st-pdp-qty">' +
+      '<label class="st-pdp-vh" for="st-pdp-q">Količina</label>' +
+      '<input id="st-pdp-q" name="qty" type="number" value="1" min="1" max="9" step="1" inputmode="numeric">' +
+      "</span>" +
+      '<button class="st-pdp-add" type="submit">' + esc(d.bar[3]) + "</button>" +
+      "</form>"
+    : '<div class="st-pdp-buyrow">' +
+      '<a class="st-pdp-add" href="' +
+      esc(ctx.shop.routeSlugs["/contact"] + ctx.q) + '">Povprašajte za ponudbo</a>' +
+      "</div>" +
+      '<p class="st-pdp-chan">Naročila sprejemamo po telefonu in e-pošti.</p>';
 
   const freight = d.freight
     .map(
@@ -1905,8 +1950,10 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     alsoLike(ctx) +
 
     // --- §4.1 chrome band as the sticky buy bar ---
-    // The CTA goes to the cart route, which is what its label says (bar[3]);
-    // chrome.ts's basket button points at the same slug.
+    // The bar's CTA follows the column's, for the same reason: it is the same
+    // promise, made a second time in the one control that is on screen at
+    // every scroll position. bar[3] is the content layer's cart label and is
+    // used only where a cart exists.
     '<div class="st-pdp-bar"><div class="st-pdp-bar-in">' +
     '<span class="st-pdp-sum">' +
     '<span class="st-pdp-sum-name">' + esc(d.bar[0]) + "</span>" +
@@ -1919,8 +1966,12 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       ? ' data-st-total data-st-base="' + String(d.priceCents) + '"'
       : "") +
     ">" + esc(d.bar[2]) + "</span>" +
-    '<a class="st-pdp-cta" href="' + esc(ctx.shop.routeSlugs["/cart"] + ctx.q) + '">' +
-    esc(d.bar[3]) + "</a>" +
+    '<a class="st-pdp-cta" href="' +
+    esc(
+      (ctx.shop.ordersOnline ? ctx.shop.routeSlugs["/cart"] : ctx.shop.routeSlugs["/contact"]) +
+        ctx.q,
+    ) + '">' +
+    esc(ctx.shop.ordersOnline ? d.bar[3] : "Povpraševanje") + "</a>" +
     "</div></div>" +
     "</section>"
   );

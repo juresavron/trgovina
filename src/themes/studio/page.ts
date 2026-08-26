@@ -641,7 +641,7 @@ const isSetZip = (v: string): boolean =>
  * A phone number is unset while the subscriber part is all zeros. The country
  * code is stripped first so "+386 00 000 000" cannot be rescued by its 386.
  */
-const isSetPhone = (v: string): boolean =>
+export const isSetPhone = (v: string): boolean =>
   isSet(v) && v.replace(/[^0-9]/g, "").replace(/^386/, "").replace(/0/g, "") !== "";
 
 /** The mark that stands in for a value nobody has filled in yet. */

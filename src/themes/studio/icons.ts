@@ -76,6 +76,22 @@ export function basketIcon(): string {
 }
 
 /**
+ * An envelope — "write to us".
+ *
+ * Same grid, same stroke, same 18px box as the magnifier and the basket it
+ * stands beside, because the header's two round buttons have to read as one
+ * pair. The flap is drawn as a separate path rather than folded into the
+ * rectangle so it keeps its own join at 1.4 and does not thicken the corner.
+ */
+export function mailIcon(): string {
+  return (
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true" focusable="false">' +
+    '<rect x="3" y="5.5" width="18" height="13" rx="2"/>' +
+    '<path d="m3.8 7 7.1 5.4a2 2 0 0 0 2.2 0L20.2 7" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+  );
+}
+
+/**
  * The product page's assurance row — delivery, returns, payment, help.
  *
  * Same construction as the chrome glyphs above: a 24-unit box, 1.4 stroke, no
