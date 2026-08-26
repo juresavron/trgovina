@@ -15,12 +15,18 @@
 export interface Env {
   /** https://<ref>.supabase.co — public, so it lives in wrangler.jsonc vars. */
   SUPABASE_URL?: string;
+  /**
+   * Publishable key. PUBLIC by design — it is the key a browser would carry,
+   * and it can do nothing this project's RLS does not allow. It lives in
+   * wrangler.jsonc vars beside SUPABASE_URL, not in a secret, because
+   * pretending a public value is a secret teaches people the wrong lesson
+   * about the ones that are.
+   *
+   * Used only for the login exchange: email + password in, access token out.
+   */
+  SUPABASE_ANON_KEY?: string;
   /** Service role key. SECRET. Bypasses RLS; never send it to a browser. */
   SUPABASE_SERVICE_KEY?: string;
-  /** The admin password. SECRET. */
-  ADMIN_PASSWORD?: string;
-  /** HMAC key for session cookies. SECRET. Changing it signs everyone out. */
-  ADMIN_SECRET?: string;
 }
 
 export const BUCKET = "product-media";
@@ -29,9 +35,8 @@ export const BUCKET = "product-media";
 export function missingConfig(env: Env): string[] {
   const need: (keyof Env)[] = [
     "SUPABASE_URL",
+    "SUPABASE_ANON_KEY",
     "SUPABASE_SERVICE_KEY",
-    "ADMIN_PASSWORD",
-    "ADMIN_SECRET",
   ];
   return need.filter((k) => !env[k]).map(String);
 }

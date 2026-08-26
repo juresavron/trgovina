@@ -21,6 +21,7 @@ header.bar{background:#151515;color:#fff;padding:14px 20px}
 header.bar .in{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:16px}
 header.bar a{color:#fff;text-decoration:none}
 header.bar .sp{margin-left:auto}
+header.bar .who{font-size:13px;color:#c9c9c9;max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 h1{font-size:24px;margin:24px 0 4px}
 h2{font-size:16px;margin:32px 0 8px;text-transform:uppercase;letter-spacing:.06em;color:#6d6d6d}
 p.lede{color:#4a4a4a;margin:0 0 18px}
@@ -47,7 +48,13 @@ form.inline{display:contents}
 progress{width:100%;height:6px}
 `;
 
-function shell(title: string, body: string, signedIn: boolean): string {
+/**
+ * @param who The signed-in account, shown in the bar. With one shared password
+ *   there was nothing to show; with accounts there is, and seeing which one you
+ *   are is how you notice you are on a colleague's session before you delete
+ *   their photographs. Empty string when signed out.
+ */
+function shell(title: string, body: string, who: string): string {
   return (
     "<!doctype html><html lang=\"sl\"><head><meta charset=\"utf-8\">" +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
@@ -55,8 +62,9 @@ function shell(title: string, body: string, signedIn: boolean): string {
     "<title>" + esc(title) + " — nadzorna plošča</title>" +
     "<style>" + CSS + "</style></head><body>" +
     '<header class="bar"><div class="in"><a href="/admin"><strong>Nadzorna plošča</strong></a>' +
-    (signedIn
-      ? '<span class="sp"></span><form method="post" action="/admin/logout">' +
+    (who
+      ? '<span class="sp"></span><span class="who">' + esc(who) + "</span>" +
+        '<form method="post" action="/admin/logout">' +
         '<button class="ghost" style="background:transparent;color:#fff;border-color:#555">Odjava</button></form>'
       : "") +
     "</div></header><div class=\"wrap\">" + body + "</div></body></html>"
@@ -70,25 +78,41 @@ export function loginPage(error?: string): string {
       "<h1>Prijava</h1>" +
       '<p class="lede">Nadzorna plošča za slike izdelkov.</p>' +
       '<form method="post" action="/admin/login" class="card">' +
-      '<label for="pw">Geslo</label>' +
-      '<input id="pw" name="password" type="password" autocomplete="current-password" required autofocus>' +
+      '<label for="em">E-naslov</label>' +
+      '<input id="em" name="email" type="email" autocomplete="username" ' +
+      'autocapitalize="none" spellcheck="false" required autofocus>' +
+      '<p style="margin:12px 0 0"><label for="pw">Geslo</label>' +
+      '<input id="pw" name="password" type="password" autocomplete="current-password" required></p>' +
       '<p style="margin:14px 0 0"><button type="submit">Prijava</button></p>' +
+      '<p class="hint">Račune ureja Supabase. Če ste geslo pozabili, ga ponastavite ' +
+      "tam; nova prijava velja eno uro.</p>" +
       "</form>",
-    false,
+    "",
   );
 }
 
 export function notConfiguredPage(missing: string[]): string {
+  // SUPABASE_URL and SUPABASE_ANON_KEY are public identifiers and belong in
+  // wrangler.jsonc; SUPABASE_SERVICE_KEY is the only real secret left, and
+  // saying which is which here saves the operator guessing.
+  const isSecret = (name: string): boolean => name === "SUPABASE_SERVICE_KEY";
   return shell(
     "Ni nastavljeno",
     "<h1>Nadzorna plošča ni nastavljena</h1>" +
-      '<p class="lede">Manjkajo naslednje skrivnosti Workerja:</p>' +
+      '<p class="lede">Manjka naslednja nastavitev Workerja:</p>' +
       '<div class="card"><ul>' +
-      missing.map((m) => "<li><code>" + esc(m) + "</code></li>").join("") +
-      "</ul></div>" +
-      '<p class="muted">Nastavite jih z <code>npx wrangler secret put &lt;IME&gt;</code> ' +
-      "(<code>SUPABASE_URL</code> sodi med <code>vars</code> v wrangler.jsonc).</p>",
-    false,
+      missing
+        .map(
+          (m) =>
+            "<li><code>" + esc(m) + "</code> — " +
+            (isSecret(m)
+              ? "skrivnost: <code>npx wrangler secret put " + esc(m) + "</code>"
+              : "javna vrednost: v <code>vars</code> v wrangler.jsonc") +
+            "</li>",
+        )
+        .join("") +
+      "</ul></div>",
+    "",
   );
 }
 
@@ -99,7 +123,12 @@ export interface ModelLink {
   count: number;
 }
 
-export function indexPage(shopName: string, shopKey: string, models: ModelLink[]): string {
+export function indexPage(
+  shopName: string,
+  shopKey: string,
+  models: ModelLink[],
+  who = "",
+): string {
   return shell(
     "Izdelki",
     "<h1>" + esc(shopName) + "</h1>" +
@@ -117,7 +146,7 @@ export function indexPage(shopName: string, shopKey: string, models: ModelLink[]
         .join("") +
       "</div>" +
       '<p class="muted">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>",
-    true,
+    who,
   );
 }
 
@@ -135,6 +164,7 @@ export function modelPage(
   name: string,
   media: MediaView[],
   notice?: { kind: "ok" | "err"; text: string },
+  who = "",
 ): string {
   const base = "/admin/" + shop + "/" + slug;
   return shell(
@@ -192,7 +222,7 @@ export function modelPage(
             )
             .join("")) +
       "<script>" + UPLOAD_JS + "</script>",
-    true,
+    who,
   );
 }
 

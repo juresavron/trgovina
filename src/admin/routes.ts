@@ -3,15 +3,20 @@
  *
  * SECURITY SHAPE, in one place so it can be checked at a glance:
  *
- *   * Every path under /admin except the login POST requires a verified
- *     session. The check happens in `handleAdmin` BEFORE any handler that
- *     touches the service role is reached, so there is one gate, not eight.
+ *   * Every path under /admin except the login POST requires a Supabase
+ *     account that is ALSO on the public.admins allowlist — signing in proves
+ *     who you are, the allowlist decides whether you may be here, and anyone
+ *     in the world can do the first. The check happens in `handleAdmin` BEFORE
+ *     any handler that touches the service role is reached, so there is one
+ *     gate, not eight.
  *   * Every response from /admin carries `x-robots-tag: noindex, nofollow`
  *     and `cache-control: no-store`, and robots.txt disallows /admin.
  *   * Writes are POST only. A GET that changed data would be triggerable by
  *     any image tag on any page in the world.
- *   * The session cookie is SameSite=Strict, so a form on another origin
- *     cannot post with it — that plus POST-only is the CSRF defence.
+ *   * The session cookie carries the Supabase access token and is HttpOnly,
+ *     Secure, SameSite=Strict and scoped to /admin: script cannot read it, a
+ *     form on another origin cannot post with it — that plus POST-only is the
+ *     CSRF defence — and no storefront request ever carries it.
  *   * /media is public and read-only, and can only ever proxy the one bucket.
  */
 
@@ -32,15 +37,7 @@ import {
   uploadObject,
 } from "./supabase";
 import { indexPage, loginPage, modelPage, notConfiguredPage, type MediaView } from "./panel";
-import {
-  SESSION_COOKIE,
-  SESSION_TTL_SECONDS,
-  mintSession,
-  readCookie,
-  sessionCookie,
-  timingSafeEqual,
-  verifySession,
-} from "./session";
+import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn } from "./auth";
 
 /** Shops whose catalogue this panel can manage. */
 /**
@@ -204,14 +201,17 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // --- login / logout, the only paths reachable without a session ---
   if (parts[1] === "login" && request.method === "POST") {
     const form = await request.formData();
-    const given = String(form.get("password") ?? "");
-    if (!timingSafeEqual(given, env.ADMIN_PASSWORD!)) {
-      // No distinction between "wrong password" and "no password": both are
-      // the same failure, and saying which is free information.
-      return page(loginPage("Napačno geslo."), 401);
+    const email = String(form.get("email") ?? "").trim();
+    const password = String(form.get("password") ?? "");
+    const token = email && password ? await signIn(env, email, password) : null;
+    if (!token) {
+      // ONE MESSAGE FOR EVERY FAILURE, on purpose. Wrong password, unknown
+      // address, unconfirmed account and rate limited are told apart by
+      // Supabase but must not be told apart here: "no account with that
+      // address" hands anyone guessing a way to enumerate who works here.
+      return page(loginPage("Napačen e-naslov ali geslo."), 401);
     }
-    const value = await mintSession(env.ADMIN_SECRET!);
-    return seeOther("/admin", { "set-cookie": sessionCookie(value, SESSION_TTL_SECONDS) });
+    return seeOther("/admin", { "set-cookie": sessionCookie(token, SESSION_TTL_SECONDS) });
   }
 
   if (parts[1] === "logout" && request.method === "POST") {
@@ -219,8 +219,14 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   }
 
   // --- the gate ---
-  const ok = await verifySession(readCookie(request, SESSION_COOKIE), env.ADMIN_SECRET!);
-  if (!ok) return page(loginPage(), parts.length > 1 ? 401 : 200);
+  //
+  // Two questions, both asked of Supabase on every request: whose token is
+  // this (so a signed-out or deleted account loses access at once rather than
+  // when the hour runs out), and is that person on the admins allowlist —
+  // because anyone at all can create an account on a Supabase project, so
+  // signing in is not by itself permission to be here.
+  const admin = await currentAdmin(request, env);
+  if (!admin) return page(loginPage(), parts.length > 1 ? 401 : 200);
 
   // --- dashboard ---
   if (parts.length === 1) {
@@ -237,6 +243,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         SHOPS[key]!.name,
         key,
         cat.models.map((m, i) => ({ shop: key, slug: m.slug, name: m.name, count: counts[i]! })),
+        admin.email,
       ),
     );
   }
@@ -296,6 +303,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       model.name,
       rows.map((r): MediaView => ({ id: r.id, url: r.url, alt: r.alt, sort: r.sort, widths: r.widths ?? [] })),
       notice,
+      admin.email,
     ),
   );
 }
