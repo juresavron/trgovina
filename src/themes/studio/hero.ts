@@ -625,7 +625,22 @@ export const STUDIO_HERO_CSS = `
   /* ---- Below 900px: the message leads, ONE photo supports it ---- */
   @media (max-width: 900px) {
 
-    :root[data-theme="studio"] .st-band { min-height: clamp(380px, 72vh, 620px); }
+    /* THE PHONE OVERRIDE IS GONE, not retuned.
+     *
+     * It asked for 72vh where the desktop rule asks for 46, so the band came
+     * out TALLER on a phone than on a laptop: 608px at 390x844 against 414px
+     * at 1440x900. That is backwards on its own terms, and it was left behind
+     * by the same edit that fixed the desktop value — the note on the base
+     * rule explains that the band once held a three-line wordmark and no
+     * longer does, and only the desktop half of that was acted on.
+     *
+     * Measured at 390x844: 56px of top padding, an 83px two-line wordmark,
+     * the model bar and the button — 268px of content inside a 608px band,
+     * so 340px of empty black on the smallest screen the shop has. The base
+     * clamp gives 388px there, which leaves about 120px of air above the
+     * wordmark: enough for a display band to breathe, and min-height is a
+     * floor, so a longer shop name still grows the band rather than
+     * overflowing it. */
     :root[data-theme="studio"] .st-band-callout { display: none; }
     /* No phone override for the band's object: there is no object. It used to need one
      * because it hung off the band's floor and the floor moved; anchored to the

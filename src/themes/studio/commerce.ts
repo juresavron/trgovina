@@ -101,6 +101,7 @@ import type {
   ArtKey,
   Category,
   Collection,
+  PdpContent,
   PdpPhoto,
   ProductCard,
   UtilCard,
@@ -1256,6 +1257,118 @@ export const STUDIO_COMMERCE_CSS = `
     :root[data-theme="studio"] .st-dot { transition: none; }
   }
 
+  /* ---- the family comparison table (see compareTable) ------------------
+   *
+   * Built in the PDP spec table's language — hairline rules, body rung on both
+   * sides, the term/value distinction carried by COLOUR rather than by size,
+   * because the ramp has no separate table rung. What differs is the axis: the
+   * PDP's is a two-column list of one model, this is one row per property
+   * across three.
+   *
+   * The scroller exists for the phone, where four columns cannot fit 390px and
+   * squashing them would wrap "1 x 3 KM + obtočna 0,35 KM" to four lines in a
+   * 90px cell. min-inline-size is what makes it scroll rather than squash, and
+   * it is stated in ch so it tracks the type rather than a guess about the
+   * viewport: a label column plus three value columns of about 22 characters.
+   * Above the tablet tier the table is narrower than its container and the
+   * scroller never engages. */
+  :root[data-theme="studio"] .st-cmp {
+    margin-top: var(--gap-xl);
+  }
+  :root[data-theme="studio"] .st-cmp-h {
+    margin: 0 0 var(--gap-md);
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
+    color: var(--ink);
+  }
+  /* Hidden where it would not be true — see the note beside the markup. */
+  :root[data-theme="studio"] .st-cmp-hint { display: none; }
+  @media (max-width: 809px) {
+    :root[data-theme="studio"] .st-cmp-hint {
+      display: block;
+      margin: calc(-1 * var(--gap-sm)) 0 var(--gap-md);
+      font-family: var(--f-body);
+      font-size: var(--t-body);
+      font-weight: var(--w-body);
+      letter-spacing: var(--ls-body);
+      line-height: var(--lh-body);
+      color: var(--ink-mute);
+    }
+  }
+  :root[data-theme="studio"] .st-cmp-scroll {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+  /* A focusable scroll region draws a ring when it is tabbed to, and that ring
+   * is the only thing telling a keyboard user the arrows will now move the
+   * table. :focus-visible so a pointer click does not light it up. */
+  :root[data-theme="studio"] .st-cmp-scroll:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-cmp-table {
+    inline-size: 100%;
+    min-inline-size: 74ch;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  :root[data-theme="studio"] .st-cmp-table tr {
+    border-bottom: 1px solid var(--line);
+  }
+  :root[data-theme="studio"] .st-cmp-table thead tr {
+    border-bottom: 1px solid var(--line-strong);
+  }
+  :root[data-theme="studio"] .st-cmp-table th,
+  :root[data-theme="studio"] .st-cmp-table td {
+    padding: clamp(11px, 1vw, 20px) clamp(10px, 1.2vw, 24px);
+    vertical-align: top;
+  }
+  :root[data-theme="studio"] .st-cmp-table th:first-child,
+  :root[data-theme="studio"] .st-cmp-table td:first-child {
+    padding-inline-start: 0;
+  }
+  /* The model names are the one display-face run in the table, at the product
+   * name's own rung — these are the same objects the cards above name, and a
+   * heading a rung louder here would claim they are something else. */
+  :root[data-theme="studio"] .st-cmp-model {
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
+    white-space: nowrap;
+  }
+  :root[data-theme="studio"] .st-cmp-model a {
+    color: var(--ink);
+    text-decoration: none;
+  }
+  :root[data-theme="studio"] .st-cmp-model a:hover,
+  :root[data-theme="studio"] .st-cmp-model a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 0.22em;
+  }
+  :root[data-theme="studio"] .st-cmp-label {
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    color: var(--ink-mute);
+    white-space: nowrap;
+  }
+  :root[data-theme="studio"] .st-cmp-v {
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
   /* ---- responsive ----------------------------------------------------
    * The tiers are the theme's own 1199/809, not the 1000/640 this module used
    * to invent — a module inventing its own breakpoints is how a storefront ends
@@ -1727,6 +1840,100 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
  * once, which is a worse landing page for each. The home page keeps the
  * keyword and routes; these pages do the selling.
  */
+/**
+ * The models in one family, side by side.
+ *
+ * WHY A COLLECTION PAGE NEEDED THIS. /masazni-bazeni is one of the two pages
+ * this shop is built to rank, and it carried a heading, one paragraph, three
+ * cards and a link — 2550px at 1440, half of it the closing band and the
+ * footer. A visitor who has got that far has already chosen the family and is
+ * choosing BETWEEN THREE MODELS, and the only thing on the page to choose on
+ * was the cards' one-line meta.
+ *
+ * EVERY FIGURE HERE IS ALREADY WRITTEN. The rows come from each model's own
+ * PdpContent.spec — the same pairs the product page prints in its first
+ * panel — copied verbatim and never reordered, so nothing on this table is a
+ * claim that is not already made, in the same words, one click away. The
+ * shop's spec order is the shop's; a table that sorts the interesting rows to
+ * the top would be the renderer editing the owner's document.
+ *
+ * NO PRICES. The cards directly above carry each model's price with its "z
+ * DDV" qualifier, and a price under a model name in a table would be the same
+ * claim stripped of the qualifier — and, while pricesProvisional is set, of
+ * the sentence that says the figure is not final. Article 4 of Directive
+ * 98/6/EC wants the selling price shown unambiguously; the cards do that and
+ * this table does not need to repeat it.
+ *
+ * IT RENDERS OR IT DOES NOT. Two models at least, every one of them with a
+ * product page, and every one carrying the SAME spec labels in the SAME
+ * order. Anything else — a model with no page, a family whose specs were
+ * written to different templates — and the function returns nothing rather
+ * than a table with holes in it or, worse, one that lines a "Filter" value up
+ * under a "Filtracija" heading.
+ */
+function compareTable(ctx: RenderCtx, c: Collection): string {
+  const pdps = ctx.content.pdps ?? [];
+  const rows: PdpContent[] = [];
+  for (const p of c.products) {
+    if (!p.slug) return "";
+    const d = pdps.find((x) => x.slug === p.slug);
+    if (!d || d.spec.length === 0) return "";
+    rows.push(d);
+  }
+  if (rows.length < 2) return "";
+
+  const labels = rows[0]!.spec.map((r) => r[0]);
+  for (const d of rows) {
+    if (d.spec.length !== labels.length) return "";
+    if (d.spec.some((r, i) => r[0] !== labels[i])) return "";
+  }
+
+  const base = ctx.shop.routeSlugs["/product"] + "/";
+  const head =
+    "<tr><td></td>" +
+    rows
+      .map(
+        (d) =>
+          '<th scope="col" class="st-cmp-model">' +
+          '<a href="' + esc(base + d.slug + ctx.q) + '">' + esc(d.title) + "</a>" +
+          "</th>",
+      )
+      .join("") +
+    "</tr>";
+
+  const body = labels
+    .map(
+      (label, i) =>
+        "<tr>" +
+        '<th scope="row" class="st-cmp-label">' + esc(label) + "</th>" +
+        rows
+          .map((d) => '<td class="st-cmp-v">' + esc(d.spec[i]![1]) + "</td>")
+          .join("") +
+        "</tr>",
+    )
+    .join("");
+
+  // The scroller is a labelled, focusable region because on a phone this table
+  // is wider than the screen: a scroll container that only a pointer can move
+  // fails WCAG 2.1.1, and the PDP's gallery stage already carries exactly this
+  // treatment for exactly this reason.
+  return (
+    '<div class="st-cmp">' +
+    '<h2 class="st-cmp-h" id="st-cmp-h">Primerjajte modele</h2>' +
+    // The hint is CSS-hidden above the tablet tier, where the table fits and
+    // the sentence would be a lie. Below it the table is always wider than the
+    // screen — min-inline-size is 74ch against a 390px viewport — so it is
+    // always true where it shows. A cut-off column is a hint of a kind, but it
+    // is the kind a visitor reads as "this page only compares one model".
+    '<p class="st-cmp-hint">Tabelo povlecite v stran za ostale modele.</p>' +
+    '<div class="st-cmp-scroll" role="region" tabindex="0" aria-labelledby="st-cmp-h">' +
+    '<table class="st-cmp-table">' +
+    "<thead>" + head + "</thead>" +
+    "<tbody>" + body + "</tbody>" +
+    "</table></div></div>"
+  );
+}
+
 export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
   // h2: this page's h1 is the collection name, and nothing sits between it
   // and the grid.
@@ -1747,6 +1954,9 @@ export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
     '<p class="st-shop-intro">' + esc(c.intro) + "</p>" +
     "</div>" +
     (cards === "" ? "" : '<div class="st-grid">' + cards + "</div>") +
+    // Between the cards and the way out: somebody still on this page after the
+    // grid is comparing, not browsing.
+    compareTable(ctx, c) +
     (other
       ? '<p class="st-shop-more"><a class="st-btn-line" href="' +
         esc(other.path + ctx.q) + '">Poglejte tudi — ' + esc(other.navLabel) + "</a></p>"

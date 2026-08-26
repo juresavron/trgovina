@@ -523,6 +523,7 @@ export function modelPage(
   notice?: { kind: "ok" | "err"; text: string },
   who = "",
   enhance = false,
+  describe = false,
 ): string {
   const base = "/admin/" + shop + "/" + slug;
   // The badge marks whichever row sorts first, because that is the one the
@@ -543,7 +544,11 @@ export function modelPage(
       "<h2>Nova fotografija</h2>" +
       '<form class="card" method="post" action="' + esc(base) +
       '/upload" enctype="multipart/form-data" id="up"' +
-      (enhance ? ' data-enhance="on"' : "") + ">" +
+      (enhance ? ' data-enhance="on"' : "") +
+      // The subject travels with the switch: describe.ts is told which product
+      // it is looking at so it uses the right noun, and told not to print the
+      // name — the heading, the caption and the URL already carry it.
+      (describe ? ' data-describe="on" data-subject="' + esc(name) + '"' : "") + ">" +
       '<div class="up">' +
 
       '<div class="drop" id="drop">' +
@@ -575,7 +580,11 @@ export function modelPage(
       // file. Empty, and hidden by CSS, until something is chosen.
       '<ul class="picked" id="picked"></ul>' +
       '<p class="hint">Opis prebere bralnik zaslona in ga uporabi iskalnik. ' +
-      "Opišite, kaj je na vsaki sliki — ne ponavljajte imena modela.</p>" +
+      (describe
+        ? "Opise napiše umetna inteligenca, ko izberete slike — preberite jih " +
+          "in po potrebi popravite. Opisujejo naj le to, kar je na sliki."
+        : "Opišite, kaj je na vsaki sliki — ne ponavljajte imena modela.") +
+      "</p>" +
       // THE UPSCALER RUNS ON EVERY UPLOAD when a key is configured — the
       // owner's instruction, given twice and with the caveat stated: they
       // upload, it upscales, there is nothing to tick.
@@ -769,6 +778,7 @@ const UPLOAD_JS = `
       li.appendChild(img); li.appendChild(box);
       picked.appendChild(li);
     });
+    writeAlts(fs);
   }
   file.addEventListener("change", shown);
 
@@ -908,12 +918,82 @@ const UPLOAD_JS = `
     });
   }
 
+  /* THE DESCRIPTIONS WRITE THEMSELVES.
+     Ten files used to mean ten sentences typed by hand, which is how a bucket
+     ends up with nine photographs sharing one alt string — the accessible
+     equivalent of no alt text at all, and a wasted image-search signal on
+     every one of them.
+
+     Three rules hold this honest:
+       - it FILLS, it does not submit. The field stays editable and still
+         required, so the operator reads the suggestion before pressing Naloži;
+       - it never overwrites something already typed;
+       - it runs one file at a time and any failure simply leaves that field
+         empty, which is the state this form had before.
+
+     The picture sent is a 768px copy, not the original: the model reads a
+     thumbnail as well as it reads 4000px, and ten full-size photographs is
+     tens of megabytes uploaded twice. Where the browser cannot make one
+     (no canvas WebP — the same limitation the uploader names), the original
+     goes instead rather than the feature disappearing. */
+  var describing = false;
+
+  function small(f){
+    if (!HTMLCanvasElement.prototype.toBlob) return Promise.resolve(f);
+    return decode(f).then(function(bmp){
+      var w = Math.min(bmp.width || bmp.naturalWidth, 768);
+      return draw(bmp, w);
+    }).catch(function(){ return f; });
+  }
+
+  function writeAlts(fs){
+    if (form.getAttribute("data-describe") !== "on" || siteMode) return;
+    if (describing) return;
+    describing = true;
+    var subject = form.getAttribute("data-subject") || "";
+    var ins = Array.prototype.slice.call(picked.querySelectorAll(".alt-in"));
+    var i = 0;
+    (function next(){
+      if (i >= fs.length || i >= ins.length) {
+        describing = false;
+        if (st.textContent.indexOf("opis") === 0) st.textContent = "";
+        return;
+      }
+      var inp = ins[i];
+      if (inp.value.trim()) { i++; next(); return; }
+      st.textContent = "opisujem " + (i + 1) + " od " + fs.length + " …";
+      small(fs[i]).then(function(b){
+        var fd = new FormData();
+        fd.append("file", b, "d.webp");
+        fd.append("subject", subject);
+        return fetch("/admin/describe", { method: "POST", body: fd, credentials: "same-origin" });
+      }).then(function(res){
+        if (res.status === 204 || !res.ok) return "";
+        return res.text();
+      }).catch(function(){ return ""; }).then(function(text){
+        /* The emptiness is re-checked here, not only above: the operator may
+           have started typing into this very field while the request was in
+           flight, and their sentence outranks the model's. */
+        if (text && !inp.value.trim()) inp.value = text;
+        i++; next();
+      });
+    })();
+  }
+
   form.addEventListener("submit", function(ev){
     var fs = file.files ? Array.prototype.slice.call(file.files) : [];
     if (!fs.length) return;
     ev.preventDefault();
 
     var alts = Array.prototype.slice.call(picked.querySelectorAll(".alt-in"));
+    /* Naming what is actually happening. Without this, pressing Naloži while
+       the descriptions are still being written says "vsaka slika potrebuje
+       opis" about a field that is about to fill itself, which reads as the
+       feature being broken. */
+    if (describing) {
+      st.textContent = "še opisujem slike — trenutek";
+      return;
+    }
     for (var i = 0; i < alts.length && !siteMode; i++) {
       if (!alts[i].value.trim()) {
         st.textContent = "vsaka slika potrebuje opis";

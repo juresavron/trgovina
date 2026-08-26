@@ -49,6 +49,14 @@ export interface Env {
   GEMINI_API_KEY?: string;
   /** Overrides the image model without a code change. Public. */
   GEMINI_IMAGE_MODEL?: string;
+  /**
+   * Overrides the model that WRITES the alt text. Public.
+   *
+   * A separate entry because it is a separate tool: GEMINI_IMAGE_MODEL names
+   * an image generator, and the describer needs one that reads a picture and
+   * answers in words. Same key, different endpoint model.
+   */
+  GEMINI_TEXT_MODEL?: string;
 }
 
 export const BUCKET = "product-media";

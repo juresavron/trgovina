@@ -580,19 +580,35 @@ export const STUDIO_PDP_CSS = `
    * carrying prices ("Za 4 osebe — 1.990 €"), and caps would push them past
    * two-per-row at 390px. One line by construction (PILL_MAX_CHARS), so it
    * takes the tight label leading. */
+  /* A TAG, NOT A BUTTON — and it has to look like one.
+   *
+   * These are ten finish NAMES, listed as reference: nothing on this page can
+   * take a colour choice (the note under the configuration says so, and the
+   * panel below narrows the ten to the seven a given model offers). Outlined
+   * pills on a white ground are this theme's control language — the marquee's
+   * pause toggle and the grid tile's CTA are built exactly that way — so ten
+   * of them, stacked directly above two columns of REAL checkboxes, read as
+   * ten broken controls. A visitor clicks one, nothing happens, and the page
+   * has taught them the form is unreliable.
+   *
+   * Flat fill, no border: the ordinary web convention for a tag, and in this
+   * theme's own vocabulary the one shape that is never a control. --ink-body
+   * rather than --ink-mute because the ground moved: mute on the panel grey
+   * measures 4.54:1, which passes 4.5 by four hundredths at label size, and a
+   * finish name is product information rather than furniture. Body ink on the
+   * same ground is 14.1:1. */
   :root[data-theme="studio"] .st-pdp-pill {
     position: relative;
     display: inline-flex; align-items: center;
     padding: clamp(8px, 0.6vw, 12px) clamp(13px, 1.2vw, 24px);
-    border: 1px solid var(--line);
     border-radius: var(--r-pill);
-    background: var(--surface);
+    background: var(--bg-alt);
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
-    color: var(--ink-mute);
+    color: var(--ink-body);
   }
   /* Chosen = inverted fill. In a monochrome theme the only louder state than
    * a black hairline is a black ground (§4.7 uses the same escalation). No

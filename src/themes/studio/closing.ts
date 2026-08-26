@@ -189,26 +189,46 @@ export const STUDIO_CLOSING_CSS = `
    * inside them. A flex gap on the track adds one extra gap that -50% then
    * halves, and the ticker drifts by half a gap every lap. A trailing margin
    * puts that space inside the group, where the doubling accounts for it. */
-  :root[data-theme="studio"] .st-soc-img {
+  /* THE TILE IS A BOX NOW, AND THE PICTURE SITS IN IT.
+   *
+   * A hairline was the previous answer to "cutouts on a white sweep dissolve
+   * into a white page", and it did not hold: with object-fit COVER the file
+   * paints the whole tile, so the panel grey underneath was never visible and
+   * all that separated a photograph from the page was one pixel of #dfdfdf.
+   * Shot at 1440 the strip read as four faint outlines with products floating
+   * loose inside them — the exact failure the hairline was added to prevent.
+   *
+   * The impact grid solved the same problem for the same files (see
+   * .st-imp-hero in editorial.ts): give the picture a real ground and let
+   * multiply resolve the sweep into it. Multiply needs a BACKDROP to blend
+   * with, and an element cannot blend with its own background, so the ground
+   * moves to a wrapper — which also gives the tile a stable box for the
+   * marquee's seam maths. Everything the seam depends on now lives here:
+   * width, the trailing margin, and nothing that can learn about a border.
+   *
+   * Contain rather than cover, for the reason the tiles that already use it
+   * do: this well mixes 900x900 hot tubs with 900x620 swim spas, and cover
+   * throws away a third of the wider file's width — the part with the product
+   * in it. */
+  :root[data-theme="studio"] .st-soc-tile {
     flex: none;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     inline-size: var(--studio-soc-tile);
     block-size: var(--studio-soc-tile);
     margin-inline-end: var(--studio-card-gap);
-    object-fit: cover;
     border-radius: var(--r-media);
-    /* The tile's ground until its file lands — decorativeImg ships
-     * loading="lazy", and a tile that scrolls in under transform can paint a
-     * frame or two late. The panel grey reads as an empty tile, not a hole. */
     background: var(--bg-alt);
-    /* The photography is studio cutouts on a white sweep and the band's
-     * ground is --bg: without an edge the tiles dissolve into the page and
-     * the strip reads as loose product shadows drifting by, not six
-     * photographs. The same hairline the PDP gallery frames these exact
-     * files with (--bw-line / --line, pdp.ts). box-sizing is border-box
-     * globally, so the border draws INSIDE the tile edge and the tile stays
-     * exactly var(--studio-soc-tile) wide — the -50% seam depends on that
-     * width and must not learn about the border. */
-    border: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-soc-img {
+    inline-size: 100%;
+    block-size: 100%;
+    padding: 7%;
+    object-fit: contain;
+    /* White times ground is ground: the sweep disappears into the tile and
+     * what is left standing on it is the product. */
+    mix-blend-mode: multiply;
   }
   /* One perceived speed across tiers, and slow enough to look at a picture.
    *
@@ -528,7 +548,14 @@ export function renderStudioSocial(ctx: RenderCtx): string {
   // leaves 19–24 free as growth room for the testimonial run above it.
   const group = [25, 26, 27, 28, 29, 30]
     .map((i) => pick(OWN_PHOTOS, ctx.shop.key, i))
-    .map((m) => decorativeImg(m, "st-soc-img", TILE_SIZES))
+    .map(
+      (m) =>
+        // The wrapper is the tile — ground, radius and the trailing margin the
+        // marquee's -50% seam is measured from. See .st-soc-tile.
+        '<span class="st-soc-tile">' +
+        decorativeImg(m, "st-soc-img", TILE_SIZES) +
+        "</span>",
+    )
     .join("");
 
   return (

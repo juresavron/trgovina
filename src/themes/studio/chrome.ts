@@ -147,9 +147,20 @@ export const STUDIO_CHROME_CSS = `
    * "0 40px 170px".
    *
    * The hero is excluded because it is full-bleed by construction and the bar
-   * floats over it. */
+   * floats over it.
+   *
+   * AN INVERTED BAND ENDS A RUN, so the section after one opens a new one and
+   * pays the same way. There are two — the wordmark band and the testimonial
+   * band — and both paint their own ground edge to edge, so the section below
+   * inherits nothing from them: measured on the home page, .st-band ended at
+   * 5080 and .st-imp began at 5080 with no top padding at all, leaving the
+   * heading about 45px under a hard black edge on a page whose rhythm is 170.
+   * A colour change is a separator, but it is not a substitute for the space
+   * every other section boundary gets. */
   :root[data-theme="studio"] main > section:first-child:not(.st-hero),
-  :root[data-theme="studio"] .st-mq + section {
+  :root[data-theme="studio"] .st-mq + section,
+  :root[data-theme="studio"] .st-band + section,
+  :root[data-theme="studio"] .st-tst + section {
     padding-top: var(--studio-rhythm);
   }
   /* THE SCROLLED STATE. The bar is fixed, so it outlives the hero: 600px down

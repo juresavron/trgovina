@@ -224,9 +224,38 @@ export const STUDIO_EDITORIAL_CSS = `
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
   }
+  /* THE MIDDLE TILE, AND WHY IT NO LONGER PAINTS ITSELF GREY.
+   *
+   * --tile-mid (#a4a4a4) was never visible: the picture below covered the
+   * tile edge to edge, so the token was doing nothing but describing an
+   * intention. The intention was a full-bleed atmospheric crop, and this
+   * shop's photography cannot supply one — every file in the well is a studio
+   * cutout on a white sweep. Cover-crop a 900x900 cutout into a 4/5 portrait
+   * and what fills the tile is SWEEP: measured at 1440, a 500x627 tile
+   * holding a product about 390px across in a field of near-white, sitting on
+   * a white page with no edge of its own. Between a labelled tile and a
+   * stat tile it read as a hole in the row, not as the anchor of it.
+   *
+   * So the middle tile takes the same ground and the same seating as the
+   * labelled one — see .st-imp-quiet .st-imp-photo for the full reasoning:
+   * contain, so the product survives whatever aspect the file has, and
+   * multiply, so the sweep resolves into the ground instead of floating a
+   * white rectangle on it. It stays the anchor by SCALE — 1.22fr wide, 4/5
+   * tall against its neighbours' squares — rather than by a treatment the
+   * bucket cannot pay for. It carries no label, which is still what makes it
+   * the picture in a row of two panels.
+   *
+   * SQUARE, not 4/5, for the same reason. A portrait tile is a frame for a
+   * portrait photograph; contain a square cutout in one and the tile pays for
+   * the difference in empty ground — measured at 1440, a 500x627 tile with
+   * the product occupying its middle third and 150px of bare grey above and
+   * below. The tile is still the biggest thing in the row (1.22fr against two
+   * 1fr columns, so 500px against 412px) and still breaks its neighbours'
+   * baseline top and bottom, because align-items is center. The stagger is
+   * paid for by WIDTH, which the grid gives away for free, instead of by a
+   * ratio the photography cannot fill. */
   :root[data-theme="studio"] .st-imp-hero {
-    aspect-ratio: 4 / 5;
-    background: var(--tile-mid);
+    aspect-ratio: 1 / 1;
   }
 
   /* Photo-ready mass. Flatter and more neutral than zarja's lit scenes —
@@ -295,11 +324,13 @@ export const STUDIO_EDITORIAL_CSS = `
      * tile, and the stat scrim above can only get MORE opaque under it. */
     mix-blend-mode: multiply;
   }
-  /* The hero is the one PURE photograph — full-bleed over --tile-mid, a mid
-   * grey that multiply would smear across every highlight. It keeps its true
-   * tones; its cover crop shows no floating edge to seat anyway. */
+  /* Seated exactly like the labelled tile, and for the same reason — the note
+   * on .st-imp-hero above has the measurement. The padding is smaller than
+   * the quiet tile's because nothing sits under this picture: no label row to
+   * clear, so the product gets the whole tile minus a frame of air. */
   :root[data-theme="studio"] .st-imp-hero .st-imp-photo {
-    mix-blend-mode: normal;
+    padding: 6% 8%;
+    object-fit: contain;
   }
   /* The LABELLED tile is the exception, and it has to be: full-bleed cover
    * here would print "Ogled lokacije" straight across the middle of a hot
