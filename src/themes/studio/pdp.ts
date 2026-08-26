@@ -71,6 +71,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { isSetPhone } from "./page";
 import type { Collection, PdpContent, PdpPhoto } from "../../content/types";
 import { productArt } from "./product-art";
 import { productImg } from "./media";
@@ -1844,8 +1845,19 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       '<button class="st-pdp-add" type="submit">' + esc(d.bar[3]) + "</button>" +
       "</form>"
     : '<div class="st-pdp-buyrow">' +
+      // THE MODEL TRAVELS WITH THE ENQUIRY.
+      //
+      // Without it the visitor arrives at /kontakt having just spent five
+      // minutes choosing between three shells, and has to name the one they
+      // picked from memory — while the shop receives "(no subject)". The slug
+      // is carried in the query, resolved back to a real PdpContent on the
+      // contact page (never echoed as text), and becomes the subject line of
+      // the message. The canonical link is built from the path alone, so a
+      // parameter here creates no second indexable URL.
       '<a class="st-pdp-add" href="' +
-      esc(ctx.shop.routeSlugs["/contact"] + ctx.q) + '">Povprašajte za ponudbo</a>' +
+      esc(ctx.shop.routeSlugs["/contact"] + ctx.q) +
+      (ctx.q ? "&" : "?") + "model=" + encodeURIComponent(d.slug) +
+      '">Povprašajte za ponudbo</a>' +
       "</div>" +
       '<p class="st-pdp-chan">Naročila sprejemamo po telefonu in e-pošti.</p>';
 
@@ -1930,10 +1942,20 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     finishes +
     (cfg
       ? '<div class="st-pdp-cfg">' + cfg + "</div>" +
+        // THE NUMBER, ONLY WHILE THERE IS ONE. This sentence carried a live
+        // tel: link to "+386 00 000 000" — the placeholder, underlined and
+        // dialable, in the middle of the configuration block on a €2,890
+        // page. It is the same fault the header had, in the one place a
+        // visitor is most likely to act on it: they have just read that the
+        // combination they want needs a call. Without a number the sentence
+        // says to write instead, which is the channel that actually works.
         '<p class="st-pdp-cfg-note">Prikazana je izbrana konfiguracija. ' +
-        'Za drugo kombinacijo nas, prosimo, pokličite na <a href="' +
-        esc(ctx.phoneHref) + '">' +
-        esc(ctx.phoneDisplay) + "</a>.</p>"
+        (isSetPhone(ctx.phoneDisplay)
+          ? 'Za drugo kombinacijo nas, prosimo, pokličite na <a href="' +
+            esc(ctx.phoneHref) + '">' + esc(ctx.phoneDisplay) + "</a>."
+          : 'Za drugo kombinacijo nam, prosimo, <a href="' +
+            esc(ctx.shop.routeSlugs["/contact"] + ctx.q) + '">pišite</a>.') +
+        "</p>"
       : "") +
     addons +
     panels +
@@ -1968,9 +1990,12 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     ">" + esc(d.bar[2]) + "</span>" +
     '<a class="st-pdp-cta" href="' +
     esc(
-      (ctx.shop.ordersOnline ? ctx.shop.routeSlugs["/cart"] : ctx.shop.routeSlugs["/contact"]) +
-        ctx.q,
-    ) + '">' +
+      ctx.shop.ordersOnline
+        ? ctx.shop.routeSlugs["/cart"] + ctx.q
+        : ctx.shop.routeSlugs["/contact"] + ctx.q,
+    ) +
+    (ctx.shop.ordersOnline ? "" : (ctx.q ? "&" : "?") + "model=" + encodeURIComponent(d.slug)) +
+    '">' +
     esc(ctx.shop.ordersOnline ? d.bar[3] : "Povpraševanje") + "</a>" +
     "</div></div>" +
     "</section>"

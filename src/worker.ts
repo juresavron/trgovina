@@ -14,6 +14,7 @@
 
 import { SHOPS, resolveShop, isDevHost, type ShopConfig } from "./tenants";
 import type { InternalRouteKey } from "./tenants/types";
+import type { PdpContent, ShopContent } from "./content/types";
 import { CONTENT } from "./content";
 import { PAGES } from "./content/pages";
 import { THEME_CATALOG, type ThemeKey } from "./themes/catalog";
@@ -30,6 +31,20 @@ import {
 } from "./render/page";
 import { handleAdmin, handleMedia } from "./admin/routes";
 import type { Env } from "./admin/supabase";
+
+/**
+ * The product a ?model= parameter names, or nothing.
+ *
+ * Matched against the shop's own pdps by exact slug — there is no fuzzy
+ * lookup and no fallback to the flagship, because guessing which product a
+ * visitor meant is worse than not knowing. Everything downstream then works
+ * with catalogue data rather than with a string off the wire.
+ */
+function modelParam(url: URL, content: ShopContent): PdpContent | undefined {
+  const slug = url.searchParams.get("model");
+  if (!slug) return undefined;
+  return (content.pdps ?? []).find((p) => p.slug === slug);
+}
 
 function cap(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
@@ -294,7 +309,19 @@ export function handleRequest(request: Request): Response {
       description: page.metaDescription,
       noindex,
       q,
-      bodyHtml: renderContentPage(shop, content, q, theme, page),
+      // ?model=<slug> is RESOLVED HERE, against this shop's own catalogue,
+      // before anything downstream can see it. A renderer therefore receives a
+      // real PdpContent or nothing at all, and a parameter a visitor typed can
+      // never become page text. It is what lets an enquiry that started on a
+      // product page arrive with a subject line.
+      bodyHtml: renderContentPage(
+        shop,
+        content,
+        q,
+        theme,
+        page,
+        modelParam(url, content),
+      ),
       jsonLd: [organizationJsonLd(shop)],
     });
     return htmlResponse(

@@ -541,6 +541,23 @@ export const STUDIO_PAGE_CSS = `
     color: var(--ink-mute);
   }
 
+  /* The model an enquiry is about, named above the actions. Body rung with
+   * the title in the display face's weight — it is a restatement, not a
+   * heading, and it must not compete with the h2 above it. */
+  :root[data-theme="studio"] .st-page-about {
+    margin: clamp(14px, 1.4vw, 22px) 0 0;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-page-about strong {
+    font-weight: var(--w-body-med);
+    color: var(--ink);
+  }
+
   /* ---- the contact page's actions --------------------------------------
    *
    * The channels as CONTROLS, sitting above the table that describes them.
@@ -868,13 +885,20 @@ function contactActions(ctx: RenderCtx): string {
   }
   if (isSet(c.email)) {
     // A subject line, because it costs nothing and it is the difference
-    // between an inbox of "(no subject)" and one that can be sorted. It says
-    // only what the message is — nothing about the product, which this page
-    // has no way of knowing.
+    // between an inbox of "(no subject)" and one that can be sorted.
+    //
+    // ctx.about is the model the visitor pressed "Povprašajte za ponudbo" on,
+    // resolved from ?model= against the catalogue by the router — so it is a
+    // real product's own title, never a string off the wire. Without it the
+    // subject is the plain word, which is what a visitor who arrived from the
+    // nav should get.
+    const subject = ctx.about
+      ? "Povpraševanje — " + ctx.about.title
+      : "Povpraševanje";
     acts.push(
       '<a class="st-page-act' + (acts.length === 0 ? " st-page-act--lead" : "") +
         '" href="mailto:' + esc(c.email) + "?subject=" +
-        encodeURIComponent("Povpraševanje") + '">Pišite nam</a>',
+        encodeURIComponent(subject) + '">Pišite nam</a>',
     );
   }
   return acts.length === 0 ? "" : '<div class="st-page-acts">' + acts.join("") + "</div>";
@@ -893,6 +917,15 @@ function contact(ctx: RenderCtx, h?: string, id?: string): string {
     .join(", ");
   return (
     h2(h ?? "Kontakt", id) +
+    // WHAT THE VISITOR CAME ABOUT, said back to them before they write.
+    // Arriving from a product page and finding no trace of the product is how
+    // an enquiry turns into a closed tab: the page looks like the wrong one.
+    // The title comes from the catalogue, so this can only ever name a real
+    // model.
+    (ctx.about
+      ? '<p class="st-page-about">Povpraševanje za <strong>' +
+        esc(ctx.about.title) + "</strong> · " + esc(ctx.about.price) + "</p>"
+      : "") +
     contactActions(ctx) +
     facts(
     undefined,

@@ -238,3 +238,66 @@ describe("no in-page link points at nothing", () => {
     });
   }
 });
+
+/**
+ * AN ENQUIRY REMEMBERS WHAT IT IS ABOUT — and cannot be told a lie.
+ *
+ * The product page's "Povprašajte za ponudbo" carries ?model=<slug>, so a
+ * visitor who spent five minutes choosing between three shells does not have
+ * to name the one they picked from memory, and the shop stops receiving
+ * "(no subject)". The slug is resolved against the catalogue in the router,
+ * which is the whole safety story: what reaches a renderer is a real
+ * PdpContent or nothing, so a parameter somebody typed can never become page
+ * text. These four cases are the contract.
+ */
+describe("the enquiry carries its model", () => {
+  const get = async (u: string) => {
+    const res = handleRequest(
+      new Request("https://trgovina.workers.dev" + u, {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+    expect(res.status).toBe(200);
+    return await res.text();
+  };
+
+  it("names the model and puts it in the subject line", async () => {
+    const html = await get("/kontakt?shop=bazen&model=veliki-230");
+    expect(html).toContain("Povpraševanje za <strong>BAZEN 230</strong>");
+    expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje — BAZEN 230"));
+  });
+
+  it("is the ordinary page with no parameter", async () => {
+    const html = await get("/kontakt?shop=bazen");
+    expect(html).not.toContain('class="st-page-about"');
+    expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje"));
+  });
+
+  it("ignores a slug that names nothing", async () => {
+    const html = await get("/kontakt?shop=bazen&model=this-is-not-a-model");
+    expect(html).not.toContain('class="st-page-about"');
+    expect(html).not.toContain("this-is-not-a-model");
+  });
+
+  it("never echoes the parameter, whatever it says", async () => {
+    const html = await get("/kontakt?shop=bazen&model=" + encodeURIComponent('"><script>x</script>'));
+    expect(html).not.toContain("<script>x");
+    expect(html).not.toContain("&lt;script&gt;x");
+    expect(html).not.toContain('class="st-page-about"');
+  });
+
+  it("keeps one canonical URL whatever the parameter", async () => {
+    const shop = SHOPS["bazen"]!;
+    for (const u of ["/kontakt?shop=bazen", "/kontakt?shop=bazen&model=veliki-230"]) {
+      const html = await get(u);
+      expect(html).toContain('rel="canonical" href="' + shop.siteUrl + '/kontakt"');
+    }
+  });
+
+  it("is emitted by every product page", async () => {
+    for (const slug of ["veliki-230", "swim-580-maxi"]) {
+      const html = await get("/bazen/" + slug + "?shop=bazen");
+      expect(html, slug + " loses its model on the enquiry").toContain("model=" + slug);
+    }
+  });
+});

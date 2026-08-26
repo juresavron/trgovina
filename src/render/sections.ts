@@ -27,6 +27,15 @@ export interface RenderCtx {
   q: string;
   phoneHref: string;
   phoneDisplay: string;
+  /**
+   * The model a visitor arrived from, on the contact page only.
+   *
+   * Set from ?model=<slug> after the slug has been RESOLVED against the
+   * catalogue, so what reaches a renderer is a real PdpContent or nothing —
+   * a request parameter never becomes page text. It is what lets the enquiry
+   * arrive with a subject line instead of "(no subject)".
+   */
+  about?: PdpContent;
 }
 
 /* Product art — duotone scenes; colors ride the theme CSS vars. Redrawn

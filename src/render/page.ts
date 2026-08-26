@@ -302,8 +302,17 @@ export function renderContentPage(
   q: string,
   theme: ThemeKey,
   page: Page,
+  /**
+   * The model the visitor arrived from, already resolved against the
+   * catalogue by the router. A slug that matches nothing arrives as
+   * undefined, so an unknown parameter simply renders the ordinary page.
+   */
+  about?: PdpContent,
 ): string {
-  const ctx = buildCtx(shop, content, q);
+  // Spread rather than assign, because exactOptionalPropertyTypes draws a
+  // distinction between "absent" and "present and undefined" — and `about`
+  // being absent is the ordinary case.
+  const ctx: RenderCtx = { ...buildCtx(shop, content, q), ...(about ? { about } : {}) };
   return renderStudioHeader(ctx) + renderStudioPage(ctx, page) + renderStudioFooter(ctx);
 }
 
