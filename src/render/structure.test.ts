@@ -23,6 +23,23 @@ function audit(html: string): string[] {
   const problems: string[] = [];
   const body = html.slice(html.indexOf("<body"));
 
+  // ⚠️ NO INTERNAL IDENTIFIER MAY REACH A CUSTOMER.
+  //
+  // A product page printed "Cenik logistike: razred pallet_xl · cona SI" —
+  // the freight engine's own enum, in the delivery panel, in a sentence
+  // otherwise written in Slovenian. It reads as a bug to anyone who notices
+  // and as nothing at all to anyone who does not, and it is the kind of leak
+  // that arrives whenever a value is passed to copy without being translated.
+  //
+  // These are matched as whole words so ordinary prose cannot trip them.
+  for (const token of ["pallet_xl", "white_glove", "pallet_std", "parcel", "freightClass"]) {
+    const re = new RegExp("(^|[^a-z_])" + token + "([^a-z_]|$)", "i");
+    // Strip attribute values: a class name or data attribute is markup, not
+    // copy, and only what a reader SEES is the failure here.
+    const text = body.replace(/<[^>]*>/g, " ");
+    if (re.test(text)) problems.push("internal identifier in visible copy: " + token);
+  }
+
   // Exactly one h1, and no skipped level. Heading structure IS the document
   // outline a screen-reader user navigates by.
   const levels = [...body.matchAll(/<h([1-6])\b/g)].map((m) => Number(m[1]));

@@ -130,6 +130,64 @@ export const STUDIO_PAGE_CSS = `
     line-height: var(--lh-h4);
     color: var(--ink);
     text-wrap: balance;
+    /* The bar is fixed, so an anchor jump lands the heading UNDER it. The
+     * chrome's own height plus a line of air is what the reader needs to see
+     * the heading they asked for rather than the paragraph after it. */
+    scroll-margin-top: calc(var(--chrome-h) + 24px);
+  }
+
+  /* ---- The section index ------------------------------------------------
+   * A quiet list, not a card: it sits between the lead and the first section
+   * and its job is to be skipped by anyone who does not need it. Ruled at the
+   * top and bottom so it reads as an interruption of the column rather than a
+   * block floating in it. */
+  /* Only a TOP rule. .st-page-body already opens with a hairline of its own,
+   * so a bottom rule here drew a second one an inch below the first with an
+   * empty band between them — a ruled box containing nothing. */
+  :root[data-theme="studio"] .st-page-toc {
+    margin-block: clamp(28px, 3vw, 48px) 0;
+    padding-block-start: clamp(18px, 1.8vw, 26px);
+    border-block-start: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-page-toc-h {
+    margin: 0 0 clamp(10px, 1vw, 14px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-page-toc ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 0.5vw, 8px);
+  }
+  :root[data-theme="studio"] .st-page-toc a {
+    display: inline-flex;
+    align-items: center;
+    /* 24px is WCAG 2.2 SC 2.5.8's floor and these are navigation, not links
+     * inside a sentence, so the inline exception does not cover them. */
+    min-block-size: 24px;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: 1.4;
+    color: var(--ink-body);
+    text-decoration: none;
+    text-underline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-page-toc a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+  :root[data-theme="studio"] .st-page-toc a:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+    border-radius: var(--r-ctrl);
   }
   :root[data-theme="studio"] .st-page-h2 + * { margin-block-start: clamp(14px, 1.4vw, 22px); }
   /* Prose takes --ink-body, which is what tokens.ts calls body copy: a hair
@@ -504,9 +562,34 @@ function link(href: string, value: string, set: boolean): string {
   return set ? '<a href="' + esc(href) + '">' + esc(value) + "</a>" : UNSET;
 }
 
-function prose(b: Extract<Block, { kind: "prose" }>): string {
+/**
+ * A stable, readable anchor for a section heading.
+ *
+ * Slovenian diacritics are folded rather than percent-encoded: an id is
+ * allowed to hold them, but the URL that reaches a chat window or an email is
+ * far more likely to survive as "kaj-preveriti" than as
+ * "kaj-preveriti-%C5%A1obe". The index is appended so two headings that fold
+ * to the same slug cannot collide — a duplicate id would break every anchor
+ * on the page at once, and it is the one failure the structural audit already
+ * watches for.
+ */
+export function sectionId(h: string, i: number): string {
+  const folded = h
+    .toLowerCase()
+    .replace(/[čć]/g, "c").replace(/š/g, "s").replace(/ž/g, "z").replace(/đ/g, "d")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+    .replace(/-+$/g, "");
+  return "s" + String(i + 1) + (folded ? "-" + folded : "");
+}
+
+function prose(b: Extract<Block, { kind: "prose" }>, id?: string): string {
   return (
-    (b.h ? '<h2 class="st-page-h2">' + esc(b.h) + "</h2>" : "") +
+    (b.h
+      ? '<h2 class="st-page-h2"' + (id ? ' id="' + esc(id) + '"' : "") + ">" +
+        esc(b.h) + "</h2>"
+      : "") +
     b.p.map((t) => '<p class="st-page-p">' + esc(t) + "</p>").join("")
   );
 }
@@ -604,10 +687,10 @@ function imprint(ctx: RenderCtx, h?: string): string {
   );
 }
 
-function block(ctx: RenderCtx, b: Block): string {
+function block(ctx: RenderCtx, b: Block, id?: string): string {
   const inner =
     b.kind === "prose"
-      ? prose(b)
+      ? prose(b, id)
       : b.kind === "steps"
         ? steps(b)
         : b.kind === "qa"
@@ -626,15 +709,45 @@ function block(ctx: RenderCtx, b: Block): string {
   return '<div class="st-page-block">' + inner + "</div>";
 }
 
-/** The whole page: masthead, hairline, blocks. */
+/**
+ * The whole page: masthead, hairline, index, blocks.
+ *
+ * THE INDEX EXISTS BECAUSE THESE PAGES ARE LONG. /vodniki is three full
+ * articles in one column, /dostava and /pogoji are procedures — a reader
+ * arriving with one question had to scroll past everything else to find out
+ * whether it was answered at all. Three headed sections is the threshold: at
+ * two, a list of two links is furniture.
+ *
+ * A <nav> with an accessible name rather than a bare list, so a screen reader
+ * announces what the links are for and can skip them in one move.
+ */
 export function renderStudioPage(ctx: RenderCtx, page: Page): string {
+  const ids = page.blocks.map((b, i) => ("h" in b && b.h ? sectionId(b.h, i) : ""));
+  const headed = page.blocks
+    // A closing call to action carries a heading and is not a section of the
+    // document — "Ostalo vprašanje?" listed among the guides read as a fourth
+    // guide. It keeps its heading and its id; it just does not get an entry.
+    .map((b, i) => (b.kind !== "cta" && "h" in b && b.h ? { h: b.h, id: ids[i]! } : null))
+    .filter((x): x is { h: string; id: string } => x !== null);
+  const index =
+    headed.length < 3
+      ? ""
+      : '<nav class="st-page-toc" aria-labelledby="st-toc-h">' +
+        '<p class="st-page-toc-h" id="st-toc-h">Na tej strani</p>' +
+        "<ol>" +
+        headed
+          .map((x) => '<li><a href="#' + esc(x.id) + '">' + esc(x.h) + "</a></li>")
+          .join("") +
+        "</ol></nav>";
+
   return (
     '<main><section class="st-page"><div class="st-page-in">' +
     '<p class="st-page-eyebrow">' + esc(ctx.shop.name) + "</p>" +
     '<h1 class="st-page-h">' + esc(page.h1) + "</h1>" +
     '<p class="st-page-lead">' + esc(page.lead) + "</p>" +
+    index +
     '<div class="st-page-body">' +
-    page.blocks.map((b) => block(ctx, b)).join("") +
+    page.blocks.map((b, i) => block(ctx, b, ids[i] || undefined)).join("") +
     "</div></div></section></main>"
   );
 }

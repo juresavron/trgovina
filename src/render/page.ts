@@ -20,6 +20,7 @@ import {
   renderStudioExtras,
   renderStudioFooter,
   renderStudioHeader,
+  renderStudioMembership,
   renderStudioPdp,
   renderStudioSection,
   renderStudioShopHub,
@@ -263,7 +264,11 @@ export function renderCollection(
   const ctx = buildCtx(shop, content, q);
   return (
     renderStudioHeader(ctx) +
-    "<main>" + renderStudioCollection(ctx, collection) + "</main>" +
+    // The closing band is the page's ending, and a collection page had none:
+    // it stopped at the last card and went straight into the footer's link
+    // columns. Same component the home page closes with, so the two pages end
+    // the same way rather than one of them just running out.
+    "<main>" + renderStudioCollection(ctx, collection) + renderStudioMembership(ctx) + "</main>" +
     renderStudioFooter(ctx)
   );
 }
@@ -278,7 +283,7 @@ export function renderShopHub(
   const ctx = buildCtx(shop, content, q);
   return (
     renderStudioHeader(ctx) +
-    "<main>" + renderStudioShopHub(ctx) + "</main>" +
+    "<main>" + renderStudioShopHub(ctx) + renderStudioMembership(ctx) + "</main>" +
     renderStudioFooter(ctx)
   );
 }
