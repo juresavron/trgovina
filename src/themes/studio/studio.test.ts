@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { handleRequest } from "../../worker";
 import { SHOPS } from "../../tenants";
+import { CONTENT } from "../../content";
+import type { PdpContent } from "../../content/types";
 import { STUDIO_CSS } from ".";
 import { STUDIO_TOKENS } from "./tokens";
 import { STUDIO_CHROME_CSS } from "./chrome";
@@ -196,4 +198,104 @@ describe("no placeholder masses survive the photography", () => {
       }
     });
   }
+});
+
+/**
+ * The family comparison table says only what the product pages already say.
+ *
+ * Two properties, and both are load-bearing rather than cosmetic:
+ *
+ *  1. EVERY VALUE IS A PDP'S OWN. The table is built from PdpContent.spec, so
+ *     a figure that appears here but not on the model's page would mean the
+ *     renderer had started editing the shop's document — the exact failure a
+ *     specification table makes invisible, because a plausible wrong number
+ *     looks like a right one.
+ *  2. NO PRICES. A price under a model name in a table is the same claim the
+ *     card above makes, minus the "z DDV" qualifier and, while prices are
+ *     provisional, minus the sentence that says the figure is not final.
+ *     Directive 98/6/EC wants the selling price shown unambiguously; the
+ *     cards do that and this table must not restate it worse.
+ */
+describe("the collection comparison table", () => {
+  const get = async (path: string) => {
+    const res = handleRequest(
+      new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+    expect(res.status).toBe(200);
+    return await res.text();
+  };
+
+  for (const path of ["/masazni-bazeni", "/swim-spa"]) {
+    it("renders on " + path + " with every value taken from a product page", async () => {
+      const html = await get(path);
+      const table = html.slice(html.indexOf('class="st-cmp"'));
+      expect(table, path + " renders no comparison table").toContain("st-cmp-table");
+
+      const content = CONTENT["bazen"]!;
+      const col = (content.collections ?? []).find((c) => c.path === path)!;
+      const specs = col.products.map(
+        (p) => (content.pdps ?? []).find((d) => d.slug === p.slug)!,
+      );
+      // Every label and every value on the page, in the shop's own words.
+      for (const d of specs) {
+        expect(table, "the table omits " + d.title).toContain(d.title);
+        for (const [label, value] of d.spec) {
+          expect(table, d.title + " is missing " + label).toContain(label);
+          expect(table, d.title + " is missing the value for " + label).toContain(value);
+        }
+      }
+      // And nothing else: no price in any cell.
+      const cells = [...table.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/g)].map((m) => m[1]!);
+      expect(cells.length).toBeGreaterThan(0);
+      for (const cell of cells) {
+        expect(cell, "a comparison cell carries a price: " + cell).not.toMatch(/€/);
+      }
+    });
+  }
+
+  /**
+   * The guard, not the happy path: a family whose models were written to
+   * different spec templates must render NOTHING rather than a table that
+   * lines one model's "Filter" up under another's "Filtracija".
+   *
+   * Driven through the renderer directly — the router has no seam for a
+   * doctored catalogue, and the point of the test is the catalogue.
+   */
+  it("renders nothing when the models' spec labels disagree", async () => {
+    const { renderStudioCollection } = await import("./commerce");
+    const content = CONTENT["bazen"]!;
+    const col = (content.collections ?? [])[0]!;
+    const shop = SHOPS["bazen"]!;
+    const ctx = (pdps: PdpContent[]) => ({
+      shop,
+      content: { ...content, pdps },
+      pdp: content.pdp,
+      q: "",
+      phoneHref: "tel:+38600000000",
+      phoneDisplay: "+386 00 000 000",
+    });
+
+    // Sanity: the real catalogue does produce a table, or the negative below
+    // would pass for the wrong reason.
+    expect(renderStudioCollection(ctx(content.pdps ?? []), col)).toContain("st-cmp-table");
+
+    // One model's first spec label renamed — nothing else touched.
+    const skewed = (content.pdps ?? []).map((d) =>
+      d.slug === col.products[1]?.slug
+        ? {
+            ...d,
+            spec: d.spec.map(
+              ([k, v], i) => [i === 0 ? k + " (drugace)" : k, v] as [string, string],
+            ),
+          }
+        : d,
+    );
+    expect(renderStudioCollection(ctx(skewed), col)).not.toContain("st-cmp-table");
+
+    // And a model with no product page of its own.
+    const missing = (content.pdps ?? []).filter((d) => d.slug !== col.products[0]?.slug);
+    expect(renderStudioCollection(ctx(missing), col)).not.toContain("st-cmp-table");
+  });
 });
