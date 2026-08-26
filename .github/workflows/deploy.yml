@@ -4,11 +4,17 @@ name: Deploy trgovina
 # workflow). Deliberately NOT automatic on push — a human presses the button,
 # same convention as fans-network and ocenagor-landing.
 #
-# Required repo secret (Settings -> Secrets and variables -> Actions):
-#   CLOUDFLARE_API_TOKEN — token from the "Edit Cloudflare Workers" template.
-#     The same token used by the fans-network / ocenagor-landing workflows
-#     works here; it is account-scoped. Zone-level DNS permission becomes
-#     necessary only once custom domains are attached.
+# Repo secrets (Settings -> Secrets and variables -> Actions):
+#   CLOUDFLARE_API_TOKEN — REQUIRED. Token from the "Edit Cloudflare Workers"
+#     template. The same token used by the fans-network / ocenagor-landing
+#     workflows works here; it is account-scoped. Zone-level DNS permission
+#     becomes necessary only once custom domains are attached.
+#   GEMINI_API_KEY — OPTIONAL. Turns on the panel's alt-text writer and its 2K
+#     upscaler. Put it HERE, not in the Cloudflare dashboard: a value added
+#     there as a plaintext variable is deleted by the next `wrangler deploy`,
+#     which replaces the variables block with what wrangler.jsonc declares.
+#     That is exactly how it went missing once already. This workflow pushes it
+#     to the Worker as an encrypted secret on every deploy, so it cannot drift.
 on:
   workflow_dispatch:
 
@@ -43,6 +49,66 @@ jobs:
         run: npx wrangler deploy
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # THE ONE SECRET, PUT WHERE A DEPLOY CANNOT LOSE IT.
+      #
+      # The panel reported "nastavljen ni GEMINI_API_KEY" on a live deploy
+      # after the key had been added, which has two causes and they look
+      # identical from the outside:
+      #
+      #   1. It was added as a GitHub repository secret. Cloudflare never
+      #      sees those — `wrangler deploy` uploads the script and the vars
+      #      block, and nothing else.
+      #   2. It was added in the Cloudflare dashboard as a plaintext
+      #      VARIABLE rather than an encrypted SECRET. `wrangler deploy`
+      #      replaces the variables with what wrangler.jsonc declares, so
+      #      every deploy after that quietly deleted it.
+      #
+      # Either way the feature switched itself off and the only signal was a
+      # line of grey text in the panel. Pushing it from the repository secret
+      # on every deploy makes its presence declarative: it survives a deploy,
+      # it survives the dashboard, and it is re-established from the one
+      # place the CLOUDFLARE_API_TOKEN already lives.
+      #
+      # An absent secret is NOT a failure. The feature is optional by design
+      # — no key means stand-in descriptions and no upscaling, which is a
+      # working shop. Failing the deploy over it would be worse than the bug.
+      - name: Put GEMINI_API_KEY on the Worker
+        run: |
+          set -euo pipefail
+          if [ -z "${GEMINI_API_KEY:-}" ]; then
+            echo "No GEMINI_API_KEY repository secret — skipping."
+            echo "The panel will write stand-in descriptions and will not upscale."
+            exit 0
+          fi
+          # printf, not echo: echo appends a newline, and a trailing newline in
+          # an API key is a 400 from Google that reads like a bad key.
+          printf '%s' "$GEMINI_API_KEY" | npx wrangler secret put GEMINI_API_KEY
+          # Prove it landed. `secret list` prints names, never values.
+          npx wrangler secret list > /tmp/secrets.json
+          if ! grep -q "GEMINI_API_KEY" /tmp/secrets.json; then
+            echo "FAIL: the secret did not stick"; exit 1
+          fi
+          echo "GEMINI_API_KEY is on the Worker."
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+      # THE KEY BEING PRESENT IS NOT THE KEY WORKING.
+      #
+      # A valid-looking key can be rejected, restricted to the wrong API, or
+      # simply be pointed at a preview model that has since been renamed —
+      # and every one of those failures looks the same from the shop, because
+      # the Worker is built to fall back rather than break. So the deploy asks
+      # Google directly and prints which of the three parts answer.
+      #
+      # Deliberately NOT --strict: a Google outage must not fail a deploy for
+      # an optional feature. This is a report, and the report is the point.
+      - name: Check the Gemini integration
+        continue-on-error: true
+        run: node scripts/check-gemini.mjs
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       # The renderer changes with every code change, so content assertions are
       # an honest deploy check for this worker (no static _redirects layer —
