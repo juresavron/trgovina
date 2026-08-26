@@ -563,19 +563,62 @@ const UPLOAD_JS = `
     });
   }
 
-  if (!window.createImageBitmap || !HTMLCanvasElement.prototype.toBlob) return;
+  if (!HTMLCanvasElement.prototype.toBlob) return;
 
   /* The widths the storefront's slots actually paint, doubled for 2x screens.
      Never upscale: a rung wider than the source is the same pixels in a bigger
      file, and its w descriptor would then be a lie the browser acts on. */
   var LADDER = [480, 800, 1200, 1600];
 
+  /* DECODE. createImageBitmap is the direct route and Safari only got it in
+     15 — before that this whole block bailed out, the form did an ordinary
+     POST, and the server refused the JPEG with a message telling the operator
+     to convert it themselves. An <img> and an object URL decode anywhere. */
+  function decode(f){
+    if (window.createImageBitmap) return createImageBitmap(f);
+    return new Promise(function(res, rej){
+      var img = new Image(), url = URL.createObjectURL(f);
+      img.onload = function(){ URL.revokeObjectURL(url); res(img); };
+      img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error("slike ni bilo mogoče prebrati")); };
+      img.src = url;
+    });
+  }
+
+  /* Is this really WebP? RIFF at 0 and WEBP at 8 — the same check the server
+     makes on the bytes it receives.
+
+     ⚠️ toBlob SILENTLY FALLS BACK TO PNG when the browser cannot encode the
+     type you asked for, and several Safari versions cannot encode WebP. The
+     old code trusted it, labelled the PNG "480.webp", and let the server
+     discover the lie — so a working upload path produced an error message
+     about the operator's own file. Verified here, the browser's limitation is
+     named where it happens. */
+  function isWebp(buf){
+    var b = new Uint8Array(buf);
+    return b.length > 12 &&
+      b[0] === 82 && b[1] === 73 && b[2] === 70 && b[3] === 70 &&
+      b[8] === 87 && b[9] === 69 && b[10] === 66 && b[11] === 80;
+  }
+
   function draw(bmp, w){
-    var h = Math.round(bmp.height * (w / bmp.width));
+    var srcW = bmp.width || bmp.naturalWidth, srcH = bmp.height || bmp.naturalHeight;
+    var h = Math.round(srcH * (w / srcW));
     var c = document.createElement("canvas");
     c.width = w; c.height = h;
     c.getContext("2d").drawImage(bmp, 0, 0, w, h);
-    return new Promise(function(res){ c.toBlob(res, "image/webp", 0.82); });
+    return new Promise(function(res, rej){
+      c.toBlob(function(blob){
+        if (!blob) { rej(new Error("pretvorba ni uspela")); return; }
+        blob.arrayBuffer().then(function(buf){
+          if (!isWebp(buf)) {
+            rej(new Error("ta brskalnik ne zna shraniti v WebP — poskusite v " +
+              "Chromu ali posodobite Safari"));
+            return;
+          }
+          res(blob);
+        }, function(){ rej(new Error("pretvorba ni uspela")); });
+      }, "image/webp", 0.82);
+    });
   }
 
   form.addEventListener("submit", function(ev){
@@ -584,9 +627,10 @@ const UPLOAD_JS = `
     go.disabled = true; pr.hidden = false; pr.value = 0;
     st.textContent = "pretvarjam …";
 
-    createImageBitmap(file.files[0]).then(function(bmp){
-      var widths = LADDER.filter(function(w){ return w < bmp.width; });
-      widths.push(bmp.width);
+    decode(file.files[0]).then(function(bmp){
+      var srcW = bmp.width || bmp.naturalWidth;
+      var widths = LADDER.filter(function(w){ return w < srcW; });
+      widths.push(srcW);
       return Promise.all(widths.map(function(w){ return draw(bmp, w); }))
         .then(function(blobs){ return { widths: widths, blobs: blobs }; });
     }).then(function(out){

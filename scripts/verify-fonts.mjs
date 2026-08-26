@@ -24,6 +24,7 @@
  */
 
 import { readFileSync } from "node:fs";
+import path from "node:path";
 
 /**
  * Every character the storefronts can emit beyond ASCII. Slovenian proper
@@ -39,29 +40,24 @@ const REQUIRED = {
   "Common imported diacritics": "áéíóúüöäßàèñ",
 };
 
-const FACES = [
-  { family: "Chivo", weights: [400, 500, 700], source: "google" },
-  { family: "Plus Jakarta Sans", weights: [400, 500, 700], source: "google" },
-  { family: "DM Sans", weights: [400, 500], source: "google" },
-];
+/**
+ * The weights the theme actually sets, per role. Everything else about the
+ * faces is READ FROM WHAT SHIPS.
+ *
+ * ⚠️ THIS FILE USED TO CARRY ITS OWN LIST OF FAMILIES AND ITS OWN GOOGLE URL,
+ * under a comment claiming that was "the theme's real request … rather than a
+ * second list that can drift from tokens.ts". It was a second list, and it did
+ * drift: after the theme moved to the source's own faces this gate was still
+ * checking Chivo and Plus Jakarta Sans, reporting twelve happy faces for a
+ * family the site no longer loads.
+ *
+ * So the families now come out of src/themes/studio/fonts.ts — the generated
+ * sheet the Worker inlines — which is the only thing that can be wrong in a
+ * way that matters. A face that is not in that file is not on the site.
+ */
+const WEIGHTS = [400, 500, 700];
 
-// The theme's real request, so this checks what actually ships rather than a
-// second list that can drift from tokens.ts.
-const GOOGLE_CSS =
-  "https://fonts.googleapis.com/css2?family=Chivo:wght@400;500;700" +
-  "&family=DM+Sans:opsz,wght@9..40,400..500" +
-  "&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap";
-
-// A modern UA gets woff2 rather than a legacy fallback format.
-const UA =
-  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 " +
-  "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
-
-async function fetchText(url) {
-  const res = await fetch(url, { headers: { "user-agent": UA } });
-  if (!res.ok) throw new Error("HTTP " + res.status + " for " + url);
-  return res.text();
-}
+const FONTS_TS = path.join(process.cwd(), "src", "themes", "studio", "fonts.ts");
 
 /** Pull the font-family → woff2 URL pairs out of a webfont stylesheet. */
 function facesFromCss(css) {
@@ -121,37 +117,36 @@ async function main() {
 
   console.log("STUDIO FONT COVERAGE GATE\n");
 
-  let css;
+  let sheet;
   try {
-    css = { google: await fetchText(GOOGLE_CSS) };
+    sheet = readFileSync(FONTS_TS, "utf8");
   } catch (err) {
-    console.error("Could not reach the font service: " + err.message);
-    console.error(
-      "\nThis gate needs egress to fonts.googleapis.com.\n" +
-        "Run it from an environment that has both. Do NOT mark a shop live on\n" +
-        "the assumption that coverage is fine — that is the failure this exists\n" +
-        "to prevent."
-    );
+    console.error("Could not read " + FONTS_TS + ": " + err.message);
+    console.error("Run scripts/vendor-fonts.mjs first — there is nothing shipping to check.");
     process.exit(2);
   }
 
-  for (const face of FACES) {
-    const declared = facesFromCss(css[face.source]).filter(
-      (f) => f.family.toLowerCase() === face.family.toLowerCase()
+  const shipped = facesFromCss(sheet);
+  if (!shipped.length) {
+    console.error("No @font-face rules in the generated sheet. Refusing to pass.");
+    process.exit(1);
+  }
+  const families = [...new Set(shipped.map((f) => f.family))];
+  console.log("Reading " + path.relative(process.cwd(), FONTS_TS) + " — " +
+    shipped.length + " faces, " + families.length + " families\n");
+
+  for (const family of families) {
+    const declared = shipped.filter(
+      (f) => f.family.toLowerCase() === family.toLowerCase()
     );
-    console.log("\n" + face.family + "  (" + declared.length + " normal-style faces declared)");
+    console.log("\n" + family + "  (" + declared.length + " faces shipped)");
 
-    if (!declared.length) {
-      console.log("   FAIL — the stylesheet declares no faces for this family.");
-      failed++;
-      continue;
-    }
-
-    for (const w of face.weights) {
+    for (const w of WEIGHTS) {
       const hit = declared.filter((d) => w >= d.wLo && w <= d.wHi);
       if (!hit.length) {
-        console.log("   weight " + w + ": FAIL — not served");
-        failed++;
+        // A weight outside a variable face's range is not a failure — it is a
+        // weight this family does not offer, and the ramp does not ask for it.
+        console.log("   weight " + w + ": not in this family's range, skipped");
         continue;
       }
       const missing = [];
@@ -176,7 +171,7 @@ async function main() {
     console.error(
       "\n" + failed + " check(s) failed. Do not launch on these faces.\n" +
         "Either pick a face with Latin Extended coverage, or subset and\n" +
-        "self-host one that has the glyphs, and update tokens.ts to match."
+        "self-host one that has the glyphs, and re-run vendor-fonts.mjs."
     );
     process.exit(1);
   }

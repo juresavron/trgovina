@@ -92,6 +92,10 @@ const STUDIO_SECTIONS: Partial<Record<SectionKey, (ctx: RenderCtx) => string>> =
 };
 
 export { renderStudioCollection, renderStudioShopHub };
+// The membership band on its own, for the pages that need an ending but not
+// the home page's whole closing sequence: a collection and the hub close with
+// it, and the social strip stays a home-page device.
+export { renderStudioMembership };
 
 export function renderStudioSection(key: SectionKey, ctx: RenderCtx): string | null {
   const fn = STUDIO_SECTIONS[key];

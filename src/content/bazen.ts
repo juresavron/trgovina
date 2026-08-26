@@ -348,7 +348,14 @@ function pdpFor(m: PolaModel): PdpContent {
       ["Zagon, umeritev in predaja", "vključeno", true],
       ["Ogled lokacije pred dostavo", "vključeno", true],
     ],
-    note: "Cenik logistike: razred pallet_xl · cona SI. Ogled uskladimo pred potrditvijo termina.",
+    // ⚠️ THIS LINE USED TO PRINT "razred pallet_xl · cona SI" — the freight
+    // engine's own enum, rendered to a customer. It is a key in
+    // src/lib/freight.ts, not Slovenian, and a buyer reading it learns
+    // nothing except that something leaked out of the back office.
+    note:
+      "Dostava se obračuna po ponudbi: bazen te velikosti potuje na paleti " +
+      "in cena je odvisna od naslova in dostopa. Ogled uskladimo pred " +
+      "potrditvijo termina.",
     // Straight from the supplier's sheet. Nothing here is rounded to suit the
     // layout — the weights in particular are what the terrace has to carry.
     spec: [
@@ -408,7 +415,8 @@ function pdpFor(m: PolaModel): PdpContent {
         "Dostava in montaža",
         "Bazen pripeljemo, postavimo, priklopimo in zaženemo. Pred dostavo " +
           "brezplačno preverimo dostop, podlago in električni priklop. " +
-          "Cenik logistike: razred pallet_xl, cona SI.",
+          "Ceno dostave pripravimo po ponudbi — odvisna je od naslova in " +
+          "dostopa do mesta postavitve.",
       ],
       [
         "Garancija",

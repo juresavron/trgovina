@@ -291,7 +291,11 @@ export const STUDIO_COMMERCE_CSS = `
     background: var(--bg);
     /* §3: ~130px vertical rhythm on light sections — tokens.ts owns the clamp
      * so every light band in the theme breathes on one number. */
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
   }
   :root[data-theme="studio"] .st-shop-in {
     max-width: var(--studio-container);
@@ -538,6 +542,20 @@ export const STUDIO_COMMERCE_CSS = `
     color: var(--ink);
     /* A long unbroken Slovenian model name (or an SKU) must fold inside the
      * card rather than push the grid column open. */
+    overflow-wrap: break-word;
+  }
+  /* The spec line. Body ink at the small prose rung rather than the label
+   * rung's tracked caps: it is three facts to read, not a badge, and caps
+   * would make it compete with the name directly above it. --ink-mute is
+   * 5.17:1 on white. */
+  :root[data-theme="studio"] .st-card-meta {
+    margin-top: calc(-1 * clamp(4px, 0.4vw, 9px));
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    letter-spacing: var(--ls-body);
+    line-height: 1.45;
+    color: var(--ink-mute);
     overflow-wrap: break-word;
   }
   :root[data-theme="studio"] .st-price-row {
@@ -791,7 +809,11 @@ export const STUDIO_COMMERCE_CSS = `
 
   :root[data-theme="studio"] .st-cat-sec {
     background: var(--bg);
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
   }
   /* LEFT, like the grid section below it — not centred.
    *
@@ -936,7 +958,11 @@ export const STUDIO_COMMERCE_CSS = `
 
   :root[data-theme="studio"] .st-rail-sec {
     background: var(--bg);
-    padding-block: var(--studio-rhythm);
+    /* BOTTOM ONLY — see --studio-rhythm. This section shares the page's white
+     * ground with its neighbour, so the separation between them is paid once,
+     * here, exactly as the source pays it (0 40px 170px). Paying it on both
+     * sides is what made every boundary twice the source's. */
+    padding-block: 0 var(--studio-rhythm);
     /* The rail is full-bleed; the section must never widen the page. */
     overflow: clip;
   }
@@ -1481,6 +1507,14 @@ function productCards(
         "</span>" +
         '<span class="st-card-body">' +
         "<" + level + ' class="st-card-name">' + esc(p.name) + "</" + level + ">" +
+        // THE CARD KNEW THIS AND WAS NOT SAYING IT. ProductCard.meta has
+        // carried "5 oseb · 50 šob · 2,30 × 2,30 m" since the catalogue was
+        // written, and the grid printed a name and a price and nothing else —
+        // so six models differing in exactly these three numbers looked, at a
+        // glance, like six prices. It is the line a buyer compares on, it is
+        // already derived from the supplier's own figures, and it costs one
+        // row of the card.
+        (p.meta ? '<span class="st-card-meta">' + esc(p.meta) + "</span>" : "") +
         '<span class="st-price-row">' +
         // The struck price's only cue is the line through it, and most screen
         // readers announce neither <s> nor text-decoration — so the row would
@@ -1697,6 +1731,14 @@ export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
   // h2: this page's h1 is the collection name, and nothing sits between it
   // and the grid.
   const cards = productCards(ctx, c.products, "h2");
+  // The SIBLING FAMILY, linked from the foot of the grid.
+  //
+  // A collection page used to stop dead after its last card: no next step, no
+  // way across to the other half of the catalogue, and nothing telling a
+  // visitor who has just decided a 2,30 m shell is too small that 4,50 m
+  // exists. It is also the internal link between the two pages this shop
+  // needs to rank, which a crawler only has if the markup carries it.
+  const other = (ctx.content.collections ?? []).find((x) => x.path !== c.path);
   return (
     '<section class="st-shop" id="izbor"><div class="st-shop-in">' +
     '<div class="st-shop-head">' +
@@ -1705,6 +1747,10 @@ export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
     '<p class="st-shop-intro">' + esc(c.intro) + "</p>" +
     "</div>" +
     (cards === "" ? "" : '<div class="st-grid">' + cards + "</div>") +
+    (other
+      ? '<p class="st-shop-more"><a class="st-btn-line" href="' +
+        esc(other.path + ctx.q) + '">Poglejte tudi — ' + esc(other.navLabel) + "</a></p>"
+      : "") +
     "</div></section>"
   );
 }

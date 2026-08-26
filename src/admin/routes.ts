@@ -342,8 +342,13 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
  */
 const ERRORS: Record<string, string> = {
   alt: "Opis slike je obvezen.",
-  type: "Naložiti je mogoče samo slike v obliki WebP. Brskalnik pretvori sliko " +
-    "samodejno; če JavaScript ni omogočen, jo pretvorite pred nalaganjem.",
+  // The panel converts every upload itself, in the browser, before it sends
+  // anything — so this message is about the CONVERSION not having run, not
+  // about the operator's file being the wrong kind. Naming JavaScript first
+  // is the useful half: with script on, no browser this panel supports
+  // reaches here.
+  type: "Slika ni bila pretvorjena v WebP. To se zgodi le, če je JavaScript " +
+    "izklopljen — vklopite ga in poskusite znova.",
 };
 
 const NOTICES: Record<string, string> = {
