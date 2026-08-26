@@ -56,9 +56,81 @@ export const STUDIO_PAGE_CSS = `
     padding-block: var(--studio-rhythm);
     background: var(--bg);
   }
+  /* THE MEASURE MOVED OFF THE CONTAINER, and that is the whole restructure.
+   *
+   * Every subpage used to be ONE 31rem column centred in the viewport: the
+   * title, the section index, the prose, the fact tables and the closing call
+   * to action, all 496px wide, with 944px of empty page beside them at 1440.
+   * Two things went wrong with that, and they pull in opposite directions:
+   *
+   *   - the TITLE wrapped. "Dostava in montaža" and "Primerjava modelov" both
+   *     broke across two lines in a column sized for running text, which is
+   *     the one line on the page that should not have to;
+   *   - the TABLES were crushed. A fact row is a 12rem label beside its
+   *     value, so inside 31rem the value gets about 220px: on /primerjava
+   *     every single value wrapped to two or three lines, in the one block on
+   *     the page whose entire job is to be scanned.
+   *
+   * So the container is now the studio container and the 31rem measure is
+   * carried by the things that are actually running text — see
+   * .st-page-block, which applies it by default, and the --wide modifier the
+   * renderer puts on the data blocks that opt out. The measure itself is
+   * unchanged and its calibration note above still stands: 64 median
+   * characters, 73 at worst, re-measure if --t-body or the body face moves. */
   :root[data-theme="studio"] .st-page-in {
-    max-inline-size: min(31rem, calc(100% - 2 * var(--studio-gutter)));
+    max-inline-size: min(var(--studio-container), calc(100% - 2 * var(--studio-gutter)));
     margin-inline: auto;
+  }
+  /* Below the two-column tier this is simply the old single column: the grid
+   * is inert, and the max-inline-size is the same 31rem the container used to
+   * carry, so a phone and a tablet get exactly the page they had. */
+  :root[data-theme="studio"] .st-page-grid {
+    max-inline-size: 31rem;
+    margin-inline: auto;
+  }
+  /* THE INDEX BECOMES A RAIL at the width where there is room for one.
+   *
+   * 1100px is where 15rem of rail, 80px of gutter and 40rem of column stop
+   * fitting inside the container with air to spare — below it the index goes
+   * back to being an interruption of the single column, which is what it was
+   * built as and still reads correctly as.
+   *
+   * The masthead sits in the CONTENT column rather than spanning both, so the
+   * h1, the standfirst and the first paragraph of the document share one left
+   * edge; a title that started 15rem left of its own text would read as a
+   * banner over the page rather than the head of it. Reading order is the DOM
+   * order — head, index, body — which is also the order a screen reader wants
+   * and the order the tab key takes. */
+  @media (min-width: 1100px) {
+    :root[data-theme="studio"] .st-page-grid {
+      display: grid;
+      max-inline-size: none;
+      grid-template-columns: minmax(0, 15rem) minmax(0, 40rem);
+      column-gap: clamp(48px, 5vw, 88px);
+      justify-content: center;
+    }
+    :root[data-theme="studio"] .st-page-head { grid-area: 1 / 2; }
+    :root[data-theme="studio"] .st-page-rail { grid-area: 2 / 1; }
+    :root[data-theme="studio"] .st-page-body { grid-area: 2 / 2; }
+    /* A PAGE WITH NO INDEX HAS NO RAIL, and must not reserve a track for one.
+     * Fewer than three headed sections and the index is furniture, so it is
+     * not rendered — but the grid still declared two columns and pinned the
+     * text to the second, which parked the whole document 15rem right of
+     * centre with an empty margin where the rail would have been. The legal
+     * pages are exactly this shape. */
+    :root[data-theme="studio"] .st-page-grid--solo {
+      grid-template-columns: minmax(0, 40rem);
+    }
+    :root[data-theme="studio"] .st-page-grid--solo .st-page-head { grid-area: 1 / 1; }
+    :root[data-theme="studio"] .st-page-grid--solo .st-page-body { grid-area: 2 / 1; }
+    /* Sticky, so a document three screens long keeps its map. align-self:
+     * start is what gives the rail a box shorter than its row — a stretched
+     * grid item is as tall as the body and has nothing to stick against. */
+    :root[data-theme="studio"] .st-page-rail {
+      position: sticky;
+      align-self: start;
+      top: calc(var(--chrome-h) + 32px);
+    }
   }
   /* THE INK RUNGS, AND WHY THEY ARE NOT --ink-soft ANY MORE.
    *
@@ -106,6 +178,10 @@ export const STUDIO_PAGE_CSS = `
     text-wrap: balance;
   }
   :root[data-theme="studio"] .st-page-lead {
+    /* The standfirst keeps a measure of its own: the head is 40rem wide so the
+     * title can have it, and a 20px lead run to 40rem is 75 characters — past
+     * the top of the range the body measure was calibrated against. */
+    max-inline-size: 34rem;
     margin-block-start: clamp(16px, 1.6vw, 26px);
     font-family: var(--f-body);
     font-size: var(--t-lead);
@@ -113,11 +189,32 @@ export const STUDIO_PAGE_CSS = `
     color: var(--ink-body);
     text-wrap: pretty;
   }
-  /* A hairline closes the masthead and opens the body. */
+  /* A hairline closes the masthead and opens the body.
+   *
+   * It hangs off the HEAD rather than the body now, because in the two-column
+   * form the body is one grid cell of two: a rule on it would start 15rem in,
+   * leaving the index sitting above an unruled gap. On the head it draws
+   * under the title, across the content column, at every width. */
+  :root[data-theme="studio"] .st-page-head {
+    padding-block-end: clamp(40px, 4.4vw, 72px);
+    border-block-end: var(--bw-line) solid var(--line);
+  }
   :root[data-theme="studio"] .st-page-body {
     margin-block-start: clamp(40px, 4.4vw, 72px);
-    border-block-start: var(--bw-line) solid var(--line);
-    padding-block-start: clamp(40px, 4.4vw, 72px);
+  }
+  :root[data-theme="studio"] .st-page-rail {
+    margin-block-start: clamp(40px, 4.4vw, 72px);
+  }
+  /* THE MEASURE LIVES HERE. Every block is running text until it says it is
+   * not: a paragraph, a numbered procedure, a question and its answer all
+   * read at 31rem, which is the width the note at the top of this file
+   * measured. A block that is DATA opts out — see --wide, which the renderer
+   * puts on the fact tables, the contact block and the imprint. */
+  :root[data-theme="studio"] .st-page-block {
+    max-inline-size: 31rem;
+  }
+  :root[data-theme="studio"] .st-page-block--wide {
+    max-inline-size: none;
   }
   :root[data-theme="studio"] .st-page-block + .st-page-block {
     margin-block-start: clamp(38px, 4vw, 64px);
@@ -141,13 +238,20 @@ export const STUDIO_PAGE_CSS = `
    * and its job is to be skipped by anyone who does not need it. Ruled at the
    * top and bottom so it reads as an interruption of the column rather than a
    * block floating in it. */
-  /* Only a TOP rule. .st-page-body already opens with a hairline of its own,
-   * so a bottom rule here drew a second one an inch below the first with an
-   * empty band between them — a ruled box containing nothing. */
+  /* NO RULE OF ITS OWN, at either tier.
+   *
+   * It used to draw one on top, which was right while the masthead's hairline
+   * hung off the body BELOW it. The rule moved to the masthead (see
+   * .st-page-head, which had to own it so the two-column form could draw it
+   * across the content column) and this one immediately became the second of
+   * two hairlines 40px apart with an empty band between them — the exact
+   * "ruled box containing nothing" the note this replaces was written to
+   * prevent, arrived at from the other direction.
+   *
+   * The spacing comes from .st-page-rail, which is the index's container at
+   * both tiers and carries the same top margin the body does. */
   :root[data-theme="studio"] .st-page-toc {
-    margin-block: clamp(28px, 3vw, 48px) 0;
-    padding-block-start: clamp(18px, 1.8vw, 26px);
-    border-block-start: var(--bw-line) solid var(--line);
+    margin-block: 0;
   }
   :root[data-theme="studio"] .st-page-toc-h {
     margin: 0 0 clamp(10px, 1vw, 14px);
@@ -189,6 +293,7 @@ export const STUDIO_PAGE_CSS = `
     outline-offset: 3px;
     border-radius: var(--r-ctrl);
   }
+
   :root[data-theme="studio"] .st-page-h2 + * { margin-block-start: clamp(14px, 1.4vw, 22px); }
   /* Prose takes --ink-body, which is what tokens.ts calls body copy: a hair
    * lighter than a heading, so a run of paragraphs under an h2 reads as one
@@ -687,6 +792,18 @@ function imprint(ctx: RenderCtx, h?: string): string {
   );
 }
 
+/**
+ * Which blocks are DATA rather than running text.
+ *
+ * The three that render a fact table. They opt out of the 31rem measure
+ * because a term/value row inside it leaves the value about 220px, and on
+ * /primerjava that wrapped every single value to two or three lines — in the
+ * one block on the page whose job is to be scanned rather than read.
+ */
+function isWide(b: Block): boolean {
+  return b.kind === "facts" || b.kind === "contact" || b.kind === "imprint";
+}
+
 function block(ctx: RenderCtx, b: Block, id?: string): string {
   const inner =
     b.kind === "prose"
@@ -706,7 +823,11 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
                   '<p class="st-page-cta-p">' + esc(b.p) + "</p>" +
                   '<a class="st-page-cta-a" href="' + esc(b.href) + esc(ctx.q) + '">' +
                   esc(b.label) + "</a></div>";
-  return '<div class="st-page-block">' + inner + "</div>";
+  return (
+    '<div class="st-page-block' + (isWide(b) ? " st-page-block--wide" : "") + '">' +
+    inner +
+    "</div>"
+  );
 }
 
 /**
@@ -740,14 +861,21 @@ export function renderStudioPage(ctx: RenderCtx, page: Page): string {
           .join("") +
         "</ol></nav>";
 
+  // Three parts in reading order — masthead, index, document — laid out as
+  // one grid so the index can become a sticky rail beside the text where
+  // there is room for one, and stay an interruption of the column where
+  // there is not. See .st-page-grid.
   return (
     '<main><section class="st-page"><div class="st-page-in">' +
+    '<div class="st-page-grid' + (index ? "" : " st-page-grid--solo") + '">' +
+    '<header class="st-page-head">' +
     '<p class="st-page-eyebrow">' + esc(ctx.shop.name) + "</p>" +
     '<h1 class="st-page-h">' + esc(page.h1) + "</h1>" +
     '<p class="st-page-lead">' + esc(page.lead) + "</p>" +
-    index +
+    "</header>" +
+    (index ? '<div class="st-page-rail">' + index + "</div>" : "") +
     '<div class="st-page-body">' +
     page.blocks.map((b, i) => block(ctx, b, ids[i] || undefined)).join("") +
-    "</div></div></section></main>"
+    "</div></div></div></section></main>"
   );
 }
