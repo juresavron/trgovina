@@ -741,8 +741,14 @@ export const STUDIO_COMMERCE_CSS = `
    * them to be the thing that stands out. */
   /* Collection and hub pages: the intro under the H1, and the hand-off link
    * at the foot of each band on the hub. */
+  /* Left, under the heading it belongs to. The auto side margins centred it.
+   *
+   * The header above it is left-aligned (eyebrow, then h1), so a centred
+   * paragraph started at neither the gutter nor the page's centre: on a
+   * collection page it began 227px in from a heading that began at 40, which
+   * reads as an indent nobody chose. */
   :root[data-theme="studio"] .st-shop-intro {
-    margin: clamp(12px, 1.2vw, 20px) auto 0;
+    margin: clamp(12px, 1.2vw, 20px) 0 0;
     max-width: 62ch;
     font-family: var(--f-body);
     font-size: var(--t-lead);
@@ -782,16 +788,23 @@ export const STUDIO_COMMERCE_CSS = `
     background: var(--bg);
     padding-block: var(--studio-rhythm);
   }
+  /* LEFT, like the grid section below it — not centred.
+   *
+   * The page's headers had no rule: this one was centred and the product grid
+   * immediately under it was left, so two adjacent sections that do the same
+   * job (here is what we sell, choose one) disagreed about where a heading
+   * starts. The rule now is the one the page can actually be read by —
+   * things you BUY are left-aligned, things you READ (the statement, the
+   * guides, the testimonials) stay centred. */
   :root[data-theme="studio"] .st-cat-head {
     max-width: var(--studio-container);
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
-    text-align: center;
     margin-bottom: clamp(28px, 3.4vw, 68px);
   }
   :root[data-theme="studio"] .st-cat-head .st-sec-h {
     max-width: 24ch;
-    margin-inline: auto;
+    margin-inline: 0;
   }
   :root[data-theme="studio"] .st-cat-row {
     list-style: none;

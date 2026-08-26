@@ -23,11 +23,36 @@ import { mkdirSync, writeFileSync, cpSync, existsSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
+import { tmpdir } from "node:os";
+import { execFileSync } from "node:child_process";
 import sharp from "sharp";
 import { chromium } from "playwright-core";
-import { handleRequest } from "../src/worker.ts";
-import { SHOPS } from "../src/tenants/index.ts";
-import { CONTENT } from "../src/content/index.ts";
+/**
+ * Load a TypeScript module the way the deploy does: bundled.
+ *
+ * Node can execute a .ts file directly, but it will not resolve the
+ * extensionless, directory-style imports this project uses throughout
+ * ("../tenants", "./sections") — resolving those is a bundler's job, and
+ * wrangler does exactly this with esbuild on every deploy. So the audit
+ * bundles too, rather than the source being contorted to suit a script that
+ * only ever runs here.
+ */
+async function bundle(entry) {
+  const out = join(tmpdir(), "audit-" + entry.replace(/[^a-z0-9]+/gi, "-") + ".mjs");
+  // The shipped esbuild is a native binary, not a JS wrapper — running it
+  // through node gets you the ELF header as a syntax error.
+  execFileSync(
+    "node_modules/.bin/esbuild",
+    [entry, "--bundle", "--format=esm", "--platform=node",
+     "--log-level=warning", "--outfile=" + out],
+    { stdio: "inherit" },
+  );
+  return await import(out);
+}
+
+const { handleRequest } = await bundle("src/worker.ts");
+const { SHOPS } = await bundle("src/tenants/index.ts");
+const { CONTENT } = await bundle("src/content/index.ts");
 
 const OUT = process.env.AUDIT_DIR || "/tmp/site-audit";
 const PORT = Number(process.env.AUDIT_PORT || 8890);

@@ -1116,7 +1116,21 @@ export const STUDIO_CHROME_CSS = `
      * Flex shrinks proportionally to base size, so the long word gives way and
      * the short one — the product noun, the half that carries the meaning —
      * survives whole: "PROSTOSTOJE… KAD". */
-    :root[data-theme="studio"] .st-chrome-mark { grid-area: 1 / 1; min-width: 0; }
+    /* max-inline-size is the BELT, and it is what was missing.
+     *
+     * justify-self:start sizes a grid item to fit-content, which should already
+     * clamp it to its track — it does not here, and the result was measurable:
+     * at 390px the track is 242px and the mark rendered 310px, so the last
+     * word printed straight through the phone and basket buttons. White
+     * letters under a white icon is also what the contrast audit reported, at
+     * 1.00:1, which is how a layout bug arrives disguised as a colour one.
+     *
+     * 100% of a grid item resolves against the track, so this pins the mark
+     * inside its cell whatever the shop is called, and the ellipsis below then
+     * has something to shorten against. */
+    :root[data-theme="studio"] .st-chrome-mark {
+      grid-area: 1 / 1; min-width: 0; max-inline-size: 100%;
+    }
     :root[data-theme="studio"] .st-chrome-mark > span {
       min-inline-size: 0; overflow: hidden; text-overflow: ellipsis;
     }
@@ -1165,6 +1179,18 @@ export const STUDIO_CHROME_CSS = `
    * wholesale once left a phone with no path to the basket at all. */
   @media (max-width: 620px) {
     :root[data-theme="studio"] .st-chrome-search { display: none; }
+    /* The wordmark shrinks rather than truncates.
+     *
+     * The cap above stops the name reaching the buttons, but reaching the cap
+     * means an ellipsis, and "MASAŽNI BAZ… VRELEC" in the one place the shop
+     * says who it is looks like a defect rather than a decision. Three words
+     * at the h6 rung need 310px of a 242px cell on a 390px phone; at ~16px
+     * they need 210 and fit whole. The floor keeps it legible on the narrowest
+     * phone in use, and the ceiling hands the tier's own rung back as soon as
+     * there is room for it. */
+    :root[data-theme="studio"] .st-chrome-mark {
+      font-size: clamp(15px, 4.2vw, var(--t-h6));
+    }
   }
 
   /* ≤460: wordmark + number + basket stop fitting on one 360px row. The number
