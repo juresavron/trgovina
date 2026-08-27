@@ -19,6 +19,7 @@ import { CONTENT } from "./content";
 import { PAGES, type Page } from "./content/pages";
 import { THEME_CATALOG, type ThemeKey } from "./themes/catalog";
 import {
+  buildCtx,
   organizationJsonLd,
   productJsonLd,
   renderDocument,
@@ -34,6 +35,7 @@ import {
 } from "./render/page";
 import { sitemapPaths, sitemapXml } from "./render/sitemap";
 import { assetResponse } from "./render/assets";
+import { renderStudioFinder } from "./themes/studio/finder";
 import { handleAdmin, handleMedia } from "./admin/routes";
 import { handlePosts } from "./blog/routes";
 import type { Env } from "./admin/supabase";
@@ -398,6 +400,40 @@ export function handleRequest(request: Request): Response {
     }
   }
 
+  // The guided choice — three questions, one recommendation, all GET links.
+  // Indexable: the entry page is stable content answering "kateri bazen je
+  // pravi zame", and the terminal views link real model pages; the answer
+  // permutations canonicalize to the entry so six leaf URLs cannot compete
+  // with it in an index.
+  if (path === shop.routeSlugs["/finder"]) {
+    const p = url.searchParams;
+    const answers = {
+      ...(p.get("namen") ? { namen: p.get("namen")! } : {}),
+      ...(p.get("osebe") ? { osebe: p.get("osebe")! } : {}),
+      ...(p.get("prostor") ? { prostor: p.get("prostor")! } : {}),
+      ...(p.get("masaza") ? { masaza: p.get("masaza")! } : {}),
+    };
+    const doc = renderDocument({
+      shop,
+      content,
+      theme,
+      path,
+      title: "Kateri bazen je pravi za vas? | " + shop.name,
+      description:
+        "Tri vprašanja — namen, število oseb in prostor — in predlagamo " +
+        "model iz naše ponudbe, z razlogi, ki jih lahko preverite v " +
+        "specifikacijah.",
+      noindex: dev,
+      q,
+      bodyHtml: renderStudioFinder(buildCtx(shop, content, q), answers),
+      jsonLd: [
+        organizationJsonLd(shop),
+        breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: "Izbira bazena" }]),
+      ],
+    });
+    return htmlResponse(doc, 200, baseHeaders);
+  }
+
   // The shop hub — every family on one page. A real page, indexable, so
   // "Trgovina" in the nav answers "what do you sell?" rather than redirecting
   // to whichever family happens to be first.
@@ -481,7 +517,7 @@ export function handleRequest(request: Request): Response {
       content,
       theme,
       path,
-      title: page.h1 + " | " + shop.name,
+      title: (page.seoTitle ?? page.h1) + " | " + shop.name,
       description: page.metaDescription,
       noindex,
       q,

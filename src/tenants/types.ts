@@ -26,6 +26,7 @@ export type InternalRouteKey =
   | "/compare" // model comparison table (a top-3 SERP feature for buying queries)
   | "/guide" // buying-guide article segment (/guide/$slug)
   | "/guides" // guide index — the topical-authority hub
+  | "/finder" // guided model choice — three questions, one recommendation
   | "/blog" // the blog index; a post is /blog/$slug
   | "/delivery" // delivery & installation promise (the logistics moat, as a page)
   | "/showroom" // visit/see-it-live page — trust anchor for high AOV

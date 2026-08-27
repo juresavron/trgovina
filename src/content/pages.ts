@@ -111,6 +111,16 @@ export interface Page {
   /** InternalRouteKey this page answers, e.g. "/about". */
   readonly key: string;
   readonly h1: string;
+  /**
+   * The <title>, where the QUERY and the HEADING part ways. The h1 speaks to
+   * a reader already on the page; the title competes in a results list for
+   * the words people actually type. The competitive teardown found two
+   * queries no Slovenian shop answers editorially — "swim spa ali masažni
+   * bazen" and "masažni bazen na obroke" — and the pages that answer them
+   * here carried generic titles ("Primerjava modelov", "Financiranje").
+   * Absent, the h1 is the title, as before.
+   */
+  readonly seoTitle?: string;
   /** The standfirst under the h1 — one or two sentences, plain. */
   readonly lead: string;
   readonly metaDescription: string;

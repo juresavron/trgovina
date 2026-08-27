@@ -1696,6 +1696,58 @@ export const STUDIO_PDP_CSS = `
    * 1024. No value wraps at any of them, so every row in a table is the
    * height of its neighbours (65.4px at 1920 down to 49 at 1024) instead of
    * alternating 49 and 75 as the text happened to fall. */
+  :root[data-theme="studio"] .st-pdp-printhead { display: none; }
+  :root[data-theme="studio"] .st-pdp-printrow { margin: 14px 0 0; }
+  :root[data-theme="studio"] .st-pdp-print {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    background: none;
+    border: var(--bw-line) solid var(--line-strong);
+    border-radius: var(--r-ctrl);
+    color: var(--ink);
+    padding: 10px 16px;
+    cursor: pointer;
+  }
+  :root[data-theme="studio"] .st-pdp-print:hover { border-color: var(--ink); }
+  /* PAPER: the page becomes the technical sheet. Everything that is not the
+   * letterhead, the title block or the spec list leaves; the letterhead
+   * (screen: hidden) opens the sheet with who sells this and for how much.
+   * details[open] is already the server-rendered state of the spec panel,
+   * so no-JS printing works too. */
+  @media print {
+    :root[data-theme="studio"] .st-chrome,
+    :root[data-theme="studio"] .st-foot,
+    :root[data-theme="studio"] .st-top,
+    :root[data-theme="studio"] .st-pdp-gallery,
+    :root[data-theme="studio"] .st-pdp-buy,
+    :root[data-theme="studio"] .st-pdp-bar,
+    :root[data-theme="studio"] .st-pdp-crumbs,
+    :root[data-theme="studio"] .st-also,
+    :root[data-theme="studio"] .st-mq,
+    :root[data-theme="studio"] .st-mem,
+    :root[data-theme="studio"] .st-soc,
+    :root[data-theme="studio"] .st-band,
+    :root[data-theme="studio"] .st-gd,
+    :root[data-theme="studio"] .st-pdp-panel:not([open]),
+    :root[data-theme="studio"] .st-pdp-printrow,
+    :root[data-theme="studio"] .st-pdp-panel[open] > summary {
+      display: none !important;
+    }
+    :root[data-theme="studio"] .st-pdp-printhead {
+      display: block;
+      font-family: var(--f-body);
+      font-size: 12pt;
+      line-height: 1.5;
+      border-bottom: 1pt solid #000;
+      padding-bottom: 8pt;
+      margin-bottom: 12pt;
+    }
+    :root[data-theme="studio"] .st-pdp-panel { border: 0; }
+    :root[data-theme="studio"] .st-pdp-panel-b { padding: 0; }
+  }
   :root[data-theme="studio"] .st-pdp-srow {
     display: grid;
     grid-template-columns: minmax(0, 16ch) minmax(0, 1fr);
@@ -2499,11 +2551,29 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   const specRows = d.spec
     .map((row) => '<div class="st-pdp-srow"><dt>' + esc(row[0]) + "</dt><dd>" + esc(dotBind(row[1])) + "</dd></div>")
     .join("");
+  // The printable technical sheet, without a PDF pipeline: a print-only
+  // letterhead inside the spec panel, a print stylesheet that reduces the
+  // page to it, and a button the behaviour script reveals ([data-st-print]
+  // → window.print()). The category's better shops hand out per-model spec
+  // sheets; a browser already knows how to make one from a page that
+  // formats itself for paper — including "print to PDF", which every OS
+  // offers, so the shop gets the artefact with no file to maintain.
+  const printHead =
+    '<div class="st-pdp-printhead" aria-hidden="true">' +
+    "<strong>" + esc(ctx.shop.name) + "</strong> · " + esc(ctx.shop.domain) +
+    (ctx.phoneDisplay ? " · " + esc(ctx.phoneDisplay) : "") +
+    "<br>Tehnični list · " + esc(d.title) +
+    (d.price.includes("€") ? " · " + esc(d.price) + " z DDV" : "") +
+    "</div>";
   const panels =
     '<div class="st-pdp-panels">' +
     '<details class="st-pdp-panel" open><summary>' +
     '<h3 class="st-pdp-panel-h">Tehnični podatki</h3></summary>' +
-    '<div class="st-pdp-panel-b"><dl class="st-pdp-spec-table">' + specRows + "</dl></div></details>" +
+    '<div class="st-pdp-panel-b">' + printHead +
+    '<dl class="st-pdp-spec-table">' + specRows + "</dl>" +
+    '<p class="st-pdp-printrow"><button type="button" class="st-pdp-print" ' +
+    'data-st-print hidden>Natisnite tehnični list</button></p>' +
+    "</div></details>" +
     (d.panels ?? [])
       .map(
         (x) =>

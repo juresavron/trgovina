@@ -331,6 +331,13 @@ export const STUDIO_COMMERCE_CSS = `
    * between them put a screen of white between a heading and the thing it
    * heads. */
   :root[data-theme="studio"] .st-shop--title { padding-bottom: 0; }
+  :root[data-theme="studio"] .st-fnd-link {
+    color: var(--ink);
+    text-underline-offset: 4px;
+    display: inline-block;
+    padding-block: 10px;
+    margin-block: -10px;
+  }
   :root[data-theme="studio"] .st-shop-head {
     margin-bottom: clamp(var(--gap-lg), 2.8vw, var(--gap-xl));
   }
@@ -2385,6 +2392,12 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
     (ctx.content.hubIntro
       ? '<p class="st-shop-intro">' + esc(ctx.content.hubIntro) + "</p>"
       : "") +
+    // The guided choice, offered exactly where indecision lives: a visitor
+    // reading a hub of two families and six models is the visitor the three
+    // questions were built for.
+    '<p class="st-shop-intro"><a class="st-fnd-link" href="' +
+    esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
+    '">Ne veste, kateri? Odgovorite na tri vprašanja → predlagamo model.</a></p>' +
     "</div>" +
     hubChoice(ctx) +
     "</div></section>" +

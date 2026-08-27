@@ -44,6 +44,9 @@ export function sitemapPaths(shop: ShopConfig, content: ShopContent): string[] {
     // the database is unreachable or before the first post exists, and the
     // index is an indexable page linked from every footer in either state.
     shop.routeSlugs["/blog"],
+    // The guided choice — stable, indexable entry content; the answered
+    // permutations all canonicalize back to this URL.
+    shop.routeSlugs["/finder"],
     ...PAGES.filter((p) => !p.noindex)
       .map((p) => shop.routeSlugs[p.key as keyof typeof shop.routeSlugs])
       .filter((slug): slug is string => typeof slug === "string" && slug !== ""),

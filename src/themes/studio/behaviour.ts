@@ -392,11 +392,23 @@ function topDisc(){
   sync();
 }
 
+/* The print button exists only where script does: window.print() is the
+   whole feature, so a no-JS visitor is not shown a control that cannot
+   work. (They can still print the page — the print stylesheet does not
+   care how the dialog was opened.) */
+function printBtn(){
+  [].forEach.call(document.querySelectorAll("[data-st-print]"), function(b){
+    b.hidden = false;
+    b.addEventListener("click", function(){ window.print(); });
+  });
+}
+
 function init(){
   navCurrent();
   barConfig();
   reveal();
   topDisc();
+  printBtn();
   [].forEach.call(document.querySelectorAll(".st-pdp-gallery"), lightbox);
   [].forEach.call(document.querySelectorAll("[data-st-slider]"), slider);
   [].forEach.call(document.querySelectorAll("[data-st-count]"), counter);
