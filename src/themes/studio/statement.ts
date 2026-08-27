@@ -127,7 +127,7 @@ export const STUDIO_STATEMENT_CSS = `
    * pattern ⇒ this section's gutter-left statement lines up with the section
    * above and below it. */
   :root[data-theme="studio"] .st-statement-in {
-    max-width: var(--studio-container);
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-statement-gutter);
   }
@@ -391,7 +391,7 @@ export const STUDIO_STATEMENT_CSS = `
     overflow: clip;
   }
   :root[data-theme="studio"] .st-stats-in {
-    max-width: var(--studio-container);
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-statement-gutter);
     text-align: center;

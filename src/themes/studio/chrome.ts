@@ -158,10 +158,21 @@ export const STUDIO_CHROME_CSS = `
    * heading about 45px under a hard black edge on a page whose rhythm is 170.
    * A colour change is a separator, but it is not a substitute for the space
    * every other section boundary gets. */
+  /* ⚠️ .st-tst IS NOT IN THIS LIST ANY MORE, and that is the fix for the
+   * largest hole on the home page.
+   *
+   * The rule exists for sections that paint their own ground edge to edge and
+   * therefore hand the next section no space at all — the marquee and the
+   * dark band. .st-tst is not one of those: it pays the rhythm on BOTH sides
+   * itself (editorial.ts). Matching it here added a second 170px on top of
+   * the 170px it had already paid, so every .st-tst boundary opened a 340px
+   * gap, and the one before the guides section measured 447px of nothing.
+   *
+   * Measured on the home page at 1440: eight boundaries over 200px, the four
+   * worst of them all downstream of this doubling. */
   :root[data-theme="studio"] main > section:first-child:not(.st-hero),
   :root[data-theme="studio"] .st-mq + section,
-  :root[data-theme="studio"] .st-band + section,
-  :root[data-theme="studio"] .st-tst + section {
+  :root[data-theme="studio"] .st-band + section {
     padding-top: var(--studio-rhythm);
   }
   /* THE SCROLLED STATE. The bar is fixed, so it outlives the hero: 600px down
@@ -1021,6 +1032,12 @@ export const STUDIO_CHROME_CSS = `
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     color: var(--on-invert-mute);
+    /* It had no measure at all, so it ran the full width of the footer: 118
+     * characters on a tablet and 87 on a desktop, both past the point where
+     * the eye reliably finds the start of the next line. It is the longest
+     * single run of text on every page of the site. 70ch is generous for a
+     * meta row and still lets the whole line sit on one at most widths. */
+    max-inline-size: 70ch;
   }
 
   /* ---- responsive ----

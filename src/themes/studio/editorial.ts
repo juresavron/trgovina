@@ -142,7 +142,7 @@ export const STUDIO_EDITORIAL_CSS = `
     overflow: clip;
   }
   :root[data-theme="studio"] .st-imp-in {
-    max-width: var(--studio-container);
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
@@ -492,7 +492,7 @@ export const STUDIO_EDITORIAL_CSS = `
   }
   :root[data-theme="studio"] .st-tst-in {
     position: relative;
-    max-width: var(--studio-container);
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
@@ -982,7 +982,7 @@ export const STUDIO_EDITORIAL_CSS = `
     overflow: clip;
   }
   :root[data-theme="studio"] .st-gd-in {
-    max-width: var(--studio-container);
+    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }

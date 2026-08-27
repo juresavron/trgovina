@@ -201,7 +201,20 @@ export const STUDIO_TOKENS = `
      *  its label. */
     --chrome-nav-gap: 50px;
     --chrome-item-gap: 8px;
-    --studio-container: 1440px;
+    /* ⚠️ 1560px, up from the source's 1440.
+     *
+     * Measured on a 1920 screen, 1440 put 240px of dead margin on each side —
+     * a quarter of the display — while the product grid, frozen at three
+     * columns, simply stopped growing. That is most of what "everything is
+     * super narrow" was describing: not a measure that is too tight, but a
+     * page that stops using the screen.
+     *
+     * The measures inside it are unchanged and deliberately so. Running text
+     * still reads at --studio-read and the subpage measure; what widens is
+     * the FURNITURE — cards, bands, the gallery, the footer columns — which is
+     * where the empty space actually was. pdp.ts's header comment has claimed
+     * 1560 for some time and was wrong about the token; it is right now. */
+    --studio-container: 1560px;
     /** Text measures the source uses inside that container. */
     --studio-read: 863px;
     --studio-read-narrow: 620px;
