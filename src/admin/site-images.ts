@@ -51,7 +51,20 @@ export const SITE_IMAGES: readonly SiteImage[] = [
   {
     key: "site/hero.webp",
     label: "Naslovna slika",
-    note: "Velika slika na vrhu domače strani. Priporočena širina 2000 px ali več.",
+    // ⚠️ THE CROP IS THE THING TO SAY, not the file size. This picture fills
+    // the whole screen at whatever shape the screen is: about 2:1 on a laptop
+    // and about 1:2 on a phone held upright. Nothing resizes to fit — the
+    // browser scales the image until it covers the box and cuts off whatever
+    // hangs over the edge, from the CENTRE outward. So on a phone the visitor
+    // sees a tall strip out of the middle and none of the sides.
+    //
+    // An operator told only "2000 px or more" uploads a wide garden shot with
+    // the tub off to one side, and the phone shows the side of the garden the
+    // tub is not in. Which is what happened.
+    note: "Velika slika na vrhu domače strani. Najbolje 2560 × 1440 px " +
+      "(razmerje 16:9), najmanj 2000 px široka. Slika se razteza čez cel " +
+      "zaslon in se ob robovih obreže — na telefonu se vidi le sredinski " +
+      "navpični pas — zato naj bo bazen na SREDINI slike in ne ob robu.",
     legacy: "hero.png",
   },
   {
