@@ -213,8 +213,12 @@ jobs:
           # different worker versions — the page came from the new one and
           # this request 404'd off the old one, once, in the run that added
           # this loop.
+          # -L: a 302 here is the stale-hash SELF-HEAL working — during
+          # propagation the old worker answers the new hash with a redirect
+          # to its own current asset. Following it lands on real CSS either
+          # way; the @font-face grep below proves the body is the sheet.
           for i in 1 2 3 4 5; do
-            code=$(curl -s -o /tmp/site.css -w "%{http_code}" "https://${WORKERS_DEV_HOST}${css_path}") && [ "$code" = "200" ] && break
+            code=$(curl -sL -o /tmp/site.css -w "%{http_code}" "https://${WORKERS_DEV_HOST}${css_path}") && [ "$code" = "200" ] && break
             echo "asset attempt $i: HTTP $code — retrying"; sleep 5
           done
           [ "$code" = "200" ] || { echo "FAIL: stylesheet asset returned $code"; exit 1; }
