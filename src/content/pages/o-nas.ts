@@ -75,7 +75,7 @@ export const ABOUT: Page = {
       kind: "prose",
       h: "Kako delamo",
       p: [
-        "Pred vsako dostavo pride nekdo od nas na lokacijo. Ta brezplačen obisk je razlog, da " +
+        "Pred dostavo pride nekdo od nas na lokacijo. Ta brezplačen obisk je razlog, da " +
           "se dostave ne ponesrečijo: težave s prehodom, nosilnostjo terase ali premajhnim " +
           "odklopnikom se pokažejo prej, kot pride tovornjak.",
         "Za priklop dobite pisna navodila za svojega električarja — presek vodnika, odklopnik " +

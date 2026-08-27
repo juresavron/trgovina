@@ -134,6 +134,32 @@ export function nextStep(a: FinderAnswers): FinderStep | null {
 }
 
 /**
+ * The answers minus the LAST one given, or null at the start.
+ *
+ * Derived by replaying the tree rather than by knowing its shape: walk from
+ * empty, applying whichever parameter the tree asks for next, and the answer
+ * applied last is the one a "back" link removes. A branch added to nextStep()
+ * therefore gets a correct back link for free, and cannot drift from one.
+ */
+export function previousAnswers(a: FinderAnswers): FinderAnswers | null {
+  const order: (keyof FinderAnswers)[] = [];
+  let seen: FinderAnswers = {};
+  for (;;) {
+    const step = nextStep(seen);
+    if (!step) break;
+    const key = step.param as keyof FinderAnswers;
+    const value = a[key];
+    if (!value) break;
+    order.push(key);
+    seen = { ...seen, [key]: value };
+  }
+  if (order.length === 0) return null;
+  const back: Record<string, string> = {};
+  for (const key of order.slice(0, -1)) back[key] = a[key]!;
+  return back as FinderAnswers;
+}
+
+/**
  * The verdict for a complete answer set. Callers guard with nextStep() ===
  * null; given an incomplete set this still answers sensibly rather than
  * throwing, because a visitor can hand-edit a URL.

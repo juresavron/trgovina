@@ -89,8 +89,9 @@ export const TERMS: Page = {
       kind: "prose",
       h: "Cene",
       p: [
-        "Cene modelov na spletni strani so v evrih in vključujejo DDV. Vključujejo tudi ogled " +
-          "lokacije pred dostavo ter zagon, umeritev in predajo; dostava z ekipo in opremo za " +
+        "Cene modelov na spletni strani so v evrih in vključujejo DDV. Vključujejo zagon, " +
+          "umeritev in predajo; ogled lokacije opravimo brezplačno že pred ponudbo in ni " +
+          "zaračunan v ceni. Dostava z ekipo in opremo za " +
           "prenos se obračuna po ponudbi, ker je odvisna od lokacije in dostopa. Cene ne " +
           "vključujejo priprave podlage, gradbenih del in elektroinštalacije na strani kupca.",
         "Vse stroške, ki jih kupec plača, in njihovo višino navedemo v pisni ponudbi, preden " +
@@ -144,7 +145,7 @@ export const TERMS: Page = {
       kind: "prose",
       h: "Reševanje sporov",
       p: [
-        "Reklamacijo najprej naslovite na nas — večina zadev se reši v enem klicu. Če se ne " +
+        "Reklamacijo najprej naslovite na nas. Če se ne " +
           "dogovorimo, o sporu odloča sodišče, določeno z zakonom; kot potrošnik lahko tožbo " +
           "vložite tudi pri sodišču v kraju svojega stalnega prebivališča.",
         "Skladno z zakonom, ki ureja izvensodno reševanje potrošniških sporov, izjavljamo, da " +

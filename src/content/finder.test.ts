@@ -88,3 +88,35 @@ describe("the finder route", () => {
     expect(paths.filter((p) => p === "/izbira").length).toBe(1);
   });
 });
+
+describe("stepping back", () => {
+  it("removes one answer at a time, in tree order, and stops at the start", async () => {
+    const { previousAnswers } = await import("./finder");
+    // Relaxation branch, fully answered: back → drop prostor, then osebe,
+    // then namen, then null.
+    const full = { namen: "sprostitev", osebe: "druzina", prostor: "vec" };
+    const one = previousAnswers(full)!;
+    expect(one).toEqual({ namen: "sprostitev", osebe: "druzina" });
+    const two = previousAnswers(one)!;
+    expect(two).toEqual({ namen: "sprostitev" });
+    expect(previousAnswers(two)).toEqual({});
+    expect(previousAnswers({})).toBeNull();
+  });
+
+  it("follows the swimming branch rather than the parameter list's order", async () => {
+    const { previousAnswers } = await import("./finder");
+    // masaza is the swimming branch's second question; osebe/prostor are not
+    // on that path at all and must not be treated as later answers.
+    expect(previousAnswers({ namen: "plavanje", masaza: "najvec" })).toEqual({
+      namen: "plavanje",
+    });
+  });
+
+  it("ignores answers the tree never asked for", async () => {
+    const { previousAnswers } = await import("./finder");
+    // A hand-edited URL carrying an off-branch parameter: the walk stops at
+    // the first unanswered step, so the stray value cannot become "the last
+    // answer" and send the visitor somewhere they never were.
+    expect(previousAnswers({ namen: "plavanje", prostor: "vec" })).toEqual({});
+  });
+});

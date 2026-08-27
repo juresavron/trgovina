@@ -52,8 +52,10 @@ export const COOKIES: Page = {
         "Ob obisku te strani se v vaš brskalnik ne shrani noben piškotek. Ne merimo obiska, " +
           "ne uporabljamo oglaševalskih sledilnikov in ne vgrajujemo vsebin, ki bi vas " +
           "spremljale na drugih straneh.",
-        "Pisave, slog in slike se naložijo z našega strežnika, ne s tujih. Zato ob obisku ne " +
-          "nastane nobena zahteva do tretjega ponudnika, ki bi lahko zabeležil vaš naslov IP.",
+        "Pisave, slog in slike se naložijo z našega strežnika, ne s tujih. Zato vaš " +
+          "brskalnik ob obisku ne pošlje nobene zahteve tretjemu ponudniku, ki bi lahko " +
+          "zabeležil vaš naslov IP. Vaš naslov IP obdela le ponudnik gostovanja te " +
+          "strani, kot piše v izjavi o zasebnosti.",
         "Ker piškotkov ni, tudi soglasja ni treba dajati in ni česa preklicati. Če bomo kdaj " +
           "uvedli merjenje obiska, bomo pred tem zaprosili za privolitev in to stran ustrezno " +
           "spremenili.",
