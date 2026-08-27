@@ -265,6 +265,28 @@ export const STUDIO_PAGE_CSS = `
   :root[data-theme="studio"] .st-page-rail {
     margin-block-start: clamp(40px, 4.4vw, 72px);
   }
+  /* THE 404 AND THE PLACEHOLDER ROUTES STILL WEAR THE KERNEL'S CARD, and its
+   * one button is .btn-fill: the accent colour with the accent's own
+   * foreground on it. On this shop's aqua that measures 3.51:1 — a fail of
+   * WCAG 1.4.3 at a 15px label — and it is the ONLY control a lost visitor
+   * has on the page. Found by scripts/audit-site.mjs the first time a route
+   * in routeSlugs had no synchronous handler and fell through to the 404.
+   *
+   * Studio's primary control is an ink fill everywhere else — the product
+   * page's buy button, the chrome's icon buttons — so the placeholder takes
+   * the same one. 16:1, and the one button on the site that did not look like
+   * this theme now does. */
+  :root[data-theme="studio"] .placeholder .btn-fill {
+    background: var(--ink-invert);
+    color: var(--on-invert);
+    border-color: var(--ink-invert);
+  }
+  :root[data-theme="studio"] .placeholder .btn-fill:hover {
+    filter: none;
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+
   /* THE MEASURE LIVES HERE. Every block is running text until it says it is
    * not: a paragraph, a numbered procedure, a question and its answer all
    * read at 31rem, which is the width the note at the top of this file
@@ -669,6 +691,40 @@ export const STUDIO_PAGE_CSS = `
     line-height: var(--lh-body);
     color: var(--ink-body);
   }
+  /* The configuration an enquiry arrived with. Reads as a receipt: quiet
+   * label, full-ink value, one row per choice, hairline between. Not the
+   * .st-page-facts device — that one is page reference material at the wide
+   * measure, and this is a short list about the visitor's own session. */
+  :root[data-theme="studio"] .st-page-chosen {
+    margin: clamp(14px, 1.4vw, 22px) 0 clamp(22px, 2.2vw, 34px);
+    padding: 0;
+    max-inline-size: 34rem;
+  }
+  :root[data-theme="studio"] .st-page-chosen-r {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding-block: clamp(8px, 0.8vw, 12px);
+    border-block-end: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-page-chosen-r dt {
+    flex: 0 0 auto;
+    min-inline-size: 12rem;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-page-chosen-r dd {
+    flex: 1 1 12rem;
+    margin: 0;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink);
+  }
   :root[data-theme="studio"] .st-page-about strong {
     font-weight: var(--w-body-med);
     color: var(--ink);
@@ -1051,10 +1107,25 @@ function contactActions(ctx: RenderCtx): string {
     const subject = ctx.about
       ? "Povpraševanje — " + ctx.about.title
       : "Povpraševanje";
+    // AND THE CONFIGURATION AS THE OPENING OF THE MESSAGE.
+    //
+    // The subject line alone was right while the product page could not take
+    // a choice. It can now, and an enquiry that names the model but not the
+    // colour, the connection or the extras sends the visitor back to remember
+    // them — in a mail client, where they can no longer see the page. Every
+    // line here is a pair of strings from this repository (see RenderCtx.
+    // chosen), so nothing a visitor typed reaches the mail body either.
+    const lines = (ctx.chosen ?? []).map(([k, v]) => k + ": " + v);
+    const body =
+      lines.length > 0
+        ? "Zanima me naslednja konfiguracija:\n\n" + lines.join("\n") + "\n\n"
+        : "";
     acts.push(
       '<a class="st-page-act' + (acts.length === 0 ? " st-page-act--lead" : "") +
         '" href="mailto:' + esc(c.email) + "?subject=" +
-        encodeURIComponent(subject) + '">Pišite nam</a>',
+        encodeURIComponent(subject) +
+        (body ? "&body=" + encodeURIComponent(body) : "") +
+        '">Pišite nam</a>',
     );
   }
   return acts.length === 0 ? "" : '<div class="st-page-acts">' + acts.join("") + "</div>";
@@ -1081,6 +1152,25 @@ function contact(ctx: RenderCtx, h?: string, id?: string): string {
     (ctx.about
       ? '<p class="st-page-about">Povpraševanje za <strong>' +
         esc(ctx.about.title) + "</strong> · " + esc(ctx.about.price) + "</p>"
+      : "") +
+    // WHAT THEY CHOSE, SAID BACK BEFORE THEY WRITE.
+    //
+    // Same reason the model's name is above it: a visitor who spent five
+    // minutes picking a colour and a connection, pressed the one button on
+    // the page and landed somewhere that shows no trace of any of it has to
+    // decide whether the form worked. A definition list rather than a
+    // sentence, because it is data — and it is the same list the mail body
+    // carries, so the two cannot disagree.
+    ((ctx.chosen ?? []).length > 0
+      ? '<dl class="st-page-chosen">' +
+        (ctx.chosen ?? [])
+          .map(
+            ([k, v]) =>
+              '<div class="st-page-chosen-r"><dt>' + esc(k) + "</dt>" +
+              "<dd>" + esc(v) + "</dd></div>",
+          )
+          .join("") +
+        "</dl>"
       : "") +
     contactActions(ctx) +
     facts(

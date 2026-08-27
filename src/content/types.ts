@@ -167,8 +167,16 @@ export interface PdpContent {
    * and always renders first.
    */
   panels?: [string, string][];
-  /** Finish names offered. Names rather than swatches; see catalog/pola.ts. */
+  /** Shell finish names offered. Names rather than swatches; see catalog/pola.ts. */
   finishes?: string[];
+  /**
+   * Cabinet panel finishes — the PS skirt, not the shell.
+   *
+   * A separate list because it is a separate decision, and because it used to
+   * be reachable only as prose inside a collapsed panel. A buyer choosing a
+   * colour is choosing two.
+   */
+  cabinetFinishes?: string[];
   /**
    * The model's own photography, in gallery order. Absent where a model has
    * none — the gallery then falls back to the shop's drawing, which is the

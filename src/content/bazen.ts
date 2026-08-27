@@ -424,6 +424,7 @@ function pdpFor(m: PolaModel): PdpContent {
       ],
     ],
     finishes: [...SHELL_FINISHES],
+    cabinetFinishes: [...CABINET_FINISHES],
     ...(photosFor(m).length ? { photos: photosFor(m) } : {}),
     // Every figure on this page is a provisional conversion of the supplier's
     // cost until COST_INPUTS is set. The page shows them; the structured data
@@ -558,6 +559,14 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ],
     ],
     finishes: [...SHELL_FINISHES],
+    // ⚠️ NO CABINET LIST FOR A SWIM SPA, DELIBERATELY. catalog/swimspa.ts says
+    // nothing about colours at all — the supplier's swim-spa sheets carry no
+    // finish page — so the shell list above is already an inheritance from the
+    // hot tubs rather than a fact about these models. Adding a second borrowed
+    // list would double an assumption rather than state a fact, and the buy
+    // column now renders these as a CHOICE the buyer makes: offering six
+    // cabinet colours nobody has confirmed for a swim spa is the kind of claim
+    // that becomes an argument at delivery. Ask the supplier, then fill it in.
     ...(swimPhotosFor(m).length ? { photos: swimPhotosFor(m) } : {}),
     pricesProvisional: !catalogPricingReady(),
   };
@@ -571,6 +580,41 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
  * actually chooses, so they get the full grid, their own H1 and their own
  * meta description — "masažni bazen" and "swim spa" are different queries
  * with different intent and one URL cannot rank honestly for both.
+ *
+ * ⚠️ AN `intro` IS THE ONLY PROSE THESE BANDS HAVE, AND IT ALSO CARRIES
+ * /trgovina. The hub renders exactly three strings of its own — hubIntro and
+ * these two intros — and nothing else on it is a sentence: the grid is names,
+ * spec lines and prices. So an intro that says "akrilni bazeni od 195 do 230
+ * cm" leaves the hub with no answer to the question it exists to answer,
+ * which is not "what do you sell" but "which of these is mine". Each one
+ * therefore walks its own ladder, model by model, on the axes the catalogue
+ * actually holds.
+ *
+ * EVERY FIGURE IS THE CATALOGUE'S. Hot tubs, from OFFERED_MODELS: 1,95/2,10/
+ * 2,30 m square, 82 cm shell height on the 195 and 88 on the other two, 5·2 /
+ * 6·1 / 5·2 seats and loungers, 35/37/50 jets, 1/1/2 jet pumps at 3 HP,
+ * 100 sf filtration and a 3 kW heater throughout, 1.500/1.870/2.210 kg
+ * filled. Swim spas, from OFFERED_SWIMSPAS: 4,50/5,80/5,80 m long, 3/7/7
+ * seats, 4/38/94 jets, 3/3/5 jet pumps at 3 HP, 5.750/8.490/7.360 kg filled.
+ *
+ * ⚠️ TWO TRAPS IN THAT LIST, BOTH OF WHICH THE OLD COPY FELL INTO.
+ *
+ * BIGGER IS NOT MORE PEOPLE. The 210 seats six and the 230 seats five — see
+ * the note on OFFERED_MODELS — so the largest hot tub is sold here on room
+ * and loungers, never on capacity. Nor is heavier more jets: the 94-jet SWIM
+ * 580 MAXI is 7.360 kg filled and the 38-jet SWIM 580 HIDRO is 8.490.
+ *
+ * AND THE FAMILY MAY NOT BE SOLD ON A COUNTER-CURRENT JET. This intro used to
+ * open "Bazeni od 450 do 580 cm, v katerih se plava na mestu" — a promise
+ * made for all three, while the SWIM 450's sheet lists no swim jet at all.
+ * The claim is now derived from swimSpaFamilyHasSwimJets(), exactly as the
+ * category card's meta line already derives it, so it cannot outlive a model
+ * joining the range without one.
+ *
+ * The hot tub intro also dropped "izoliran pokrov", which it stated as
+ * standard equipment. The thermal cover is a priced Addon on every model in
+ * catalog/pola.ts, and the product pages moved it into `addons` for that
+ * reason; a listing page may not hand it back as included.
  */
 const collections: Collection[] = [
   {
@@ -578,9 +622,17 @@ const collections: Collection[] = [
     navLabel: "Masažni bazeni",
     h1: "Masažni bazeni",
     intro:
-      "Akrilni masažni bazeni od 195 do 230 cm, za pet ali šest oseb. " +
-      "Vsak model ima ogrevanje, filtracijo in izoliran pokrov. Na teraso ga " +
-      "pripeljemo, priklopimo in zaženemo.",
+      "Trije modeli, ki se ne razlikujejo samo po velikosti. BAZEN 195 meri " +
+      "1,95 × 1,95 m in je edini, ki se umesti tja, kamor druga dva ne gresta: " +
+      "pet mest, od tega dva ležalnika, 35 šob, ena črpalka 3 KM in 1.500 " +
+      "kilogramov, ko je poln. BAZEN 210 meri 2,10 × 2,10 m in sprejme največ " +
+      "ljudi — šest mest z enim ležalnikom in 37 šob, napolnjen 1.870 " +
+      "kilogramov. BAZEN 230 meri 2,30 × 2,30 m in ni bazen za več ljudi, " +
+      "ampak za več prostora: pet mest z dvema ležalnikoma, 50 šob, dve " +
+      "črpalki 3 KM in 2.210 kilogramov. Školjka je pri najmanjšem visoka 82 " +
+      "cm, pri drugih dveh 88. Ogrevanje 3 kW, filtracijo 100 sf in krmilnik " +
+      "Balboa imajo vsi trije; na teraso jih pripeljemo, priklopimo in " +
+      "zaženemo.",
     metaDescription:
       "Masažni bazeni za 5 ali 6 oseb, od 195 do 230 cm. Akrilna školjka, " +
       "35–50 šob, ogrevanje in filtracija. Dostava, priklop in zagon po vsej Sloveniji.",
@@ -591,9 +643,21 @@ const collections: Collection[] = [
     navLabel: "Swim spa",
     h1: "Swim spa bazeni",
     intro:
-      "Bazeni od 450 do 580 cm, v katerih se plava na mestu. Daljša školjka " +
-      "pomeni pravo plavanje, ne le močnejšega toka — in ob njem sedežni del " +
-      "za sprostitev po treningu.",
+      "Tri školjke, pri katerih je prva številka dolžina — od nje je odvisno, " +
+      "koliko plavanja je v bazenu in koliko vrta potrebujete zanj. SWIM 450 " +
+      "meri 4,50 × 2,28 m in je vstopni model: najkrajša školjka v ponudbi, " +
+      "tri mesta, štiri šobe in 5.750 kilogramov, ko je polna. Modela 580 sta " +
+      "dolga 5,80 m in imata sedem mest z enim ležalnikom. SWIM 580 HIDRO ima " +
+      "38 šob in tri črpalke 3 KM, napolnjen tehta 8.490 kilogramov; SWIM 580 " +
+      "MAXI ima 94 šob — največ v vsej ponudbi — in pet črpalk 3 KM, " +
+      "napolnjen pa je lažji, 7.360 kilogramov. " +
+      (swimSpaFamilyHasSwimJets()
+        ? "Tok za plavanje na mestu ustvarijo protitočne šobe, ki jih ima vsak " +
+          "od treh modelov. "
+        : "Tok za plavanje na mestu ustvarijo protitočne šobe; koliko jih ima " +
+          "posamezen model, piše v njegovi specifikaciji. ") +
+      "Swim spa praviloma stoji na betonski plošči in ne na terasi — dostop " +
+      "in prostor za dvig preverimo na lokaciji pred potrditvijo termina.",
     metaDescription:
       "Swim spa bazeni od 450 do 580 cm za plavanje na mestu in sprostitev. " +
       "Akrilna školjka, ogrevanje in filtracija, dostava in zagon po Sloveniji.",
@@ -712,9 +776,15 @@ export const bazenContent: ShopContent = {
     "Masažni bazeni od 195 do 230 cm in swim spa bazeni od 450 do 580 cm. " +
     "Mere, specifikacije in cene, z dostavo, priklopom in zagonom po Sloveniji.",
   hubIntro:
-    "Dve družini bazenov. Masažni bazeni za pet ali šest oseb, od 195 do 230 cm, " +
-    "in swim spa bazeni za plavanje na mestu, od 450 do 580 cm. Vsak model " +
-    "pripeljemo, priklopimo in zaženemo.",
+    "Najprej se odločite med dvema stvarema, ki nista različici iste. Masažni bazen je " +
+    "kvadratna školjka od 195 do 230 cm, v kateri se sedi in leži; napolnjen tehta od " +
+    "1.500 do 2.210 kilogramov in gre praviloma na teraso. Swim spa bazen je podolgovata " +
+    "školjka od 450 do 580 cm, narejena za plavanje in sprostitev; napolnjen tehta od " +
+    "5.750 do 8.490 kilogramov in praviloma stoji na betonski plošči, ne na terasi. " +
+    "Razlika torej ni v velikosti iste stvari, ampak v tem, kaj v bazenu počnete — od " +
+    "tega pa je odvisno vse drugo: podlaga, dostop, priprava priklopa in cena dostave. " +
+    "Spodaj sta obe družini, vsaka s tremi modeli, in pri vsaki piše, po čem se modeli " +
+    "med seboj razlikujejo. Vsakega pripeljemo, priklopimo in zaženemo.",
   pdp: pdpFor(flagship),
   // Both families' pages. The router matches any slug in here, so the swim
   // spa cards link at real pages rather than at a 404.

@@ -194,7 +194,10 @@ function addons(root){
     var extra = 0;
     boxes.forEach(function(b){
       if (!b.checked) return;
-      var v = parseInt(b.value, 10);
+      /* data-price, not value: the box lives inside the enquiry form now and
+         its value is the option's NAME, which is what has to reach the shop's
+         inbox. The price moved to a data attribute the same day. */
+      var v = parseInt(b.getAttribute("data-price") || "", 10);
       if (isFinite(v)) extra += v;
     });
     totals.forEach(function(t){
@@ -228,8 +231,44 @@ function navCurrent(){
   });
 }
 
+/* ---- what the sticky bar says you chose ---------------------------------
+   The bar carries the model, a configuration line and the price. The
+   configuration line was server-rendered once, from content, and then sat
+   there while the visitor changed every control above it — so a page whose
+   colour row now takes a choice would have shown the buyer one colour in the
+   bar and a different one selected in the column.
+
+   It follows the radio groups instead. The colour leads, because it is the
+   choice a buyer is most often mid-way through; the rest follow in the order
+   the column presents them. Falls back to whatever the server rendered if
+   there are no groups at all, so a shop with no configurator is unaffected.
+
+   Names are read from the checked input's own value, which the renderer wrote
+   from the model's own option list — nothing here reads the URL. */
+function barConfig(){
+  var bar = document.querySelector(".st-pdp-sum-cfg");
+  var form = document.querySelector(".st-pdp-form");
+  if (!bar || !form) return;
+  var groups = [].slice.call(form.querySelectorAll("[role=radiogroup]"));
+  if (!groups.length) return;
+  var fallback = bar.textContent;
+
+  function sync(){
+    var parts = [];
+    groups.forEach(function(g){
+      var on = g.querySelector("input:checked");
+      if (on && on.value) parts.push(on.value);
+    });
+    bar.textContent = parts.length ? parts.join(" · ") : fallback;
+  }
+
+  form.addEventListener("change", sync);
+  sync();
+}
+
 function init(){
   navCurrent();
+  barConfig();
   [].forEach.call(document.querySelectorAll("[data-st-slider]"), slider);
   [].forEach.call(document.querySelectorAll("[data-st-count]"), counter);
   [].forEach.call(document.querySelectorAll("[data-st-addons]"), addons);

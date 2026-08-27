@@ -53,6 +53,16 @@ async function bundle(entry) {
 const { handleRequest } = await bundle("src/worker.ts");
 const { SHOPS } = await bundle("src/tenants/index.ts");
 const { CONTENT } = await bundle("src/content/index.ts");
+// ⚠️ THE BLOG IS NOT SERVED BY handleRequest. Posts are rows read at request
+// time, so /blog lives behind the async layer beside /admin and /media — and
+// a route table derived from routeSlugs (which now carries it) would drive it
+// through the synchronous path and measure the 404 instead. That is not
+// hypothetical: it is how this audit first reported the blog as failing
+// contrast, when what it had actually found was a real AA failure on the 404
+// page's own button. blogIndexDoc renders the page a visitor sees before
+// anything is published, which is a real state with real chrome and real
+// contrast.
+const { blogIndexDoc } = await bundle("src/blog/routes.ts");
 
 const OUT = process.env.AUDIT_DIR || "/tmp/site-audit";
 const PORT = Number(process.env.AUDIT_PORT || 8890);
@@ -95,7 +105,13 @@ if (existsSync("public")) cpSync("public", OUT, { recursive: true });
 
 const docs = {};
 const statuses = {};
+const BLOG = SHOPS["bazen"].routeSlugs["/blog"];
 for (const path of PAGES) {
+  if (path === BLOG) {
+    statuses[path] = 200;
+    docs[path] = blogIndexDoc(SHOPS["bazen"], CONTENT["bazen"], [], true);
+    continue;
+  }
   const res = handleRequest(new Request(HOST + path + "?shop=bazen"));
   statuses[path] = res.status;
   docs[path] = await res.text();

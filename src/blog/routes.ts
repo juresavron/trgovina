@@ -25,6 +25,8 @@
  */
 
 import { resolveShop, isDevHost } from "../tenants";
+import type { ShopConfig } from "../tenants/types";
+import type { ShopContent } from "../content/types";
 import { CONTENT } from "../content";
 import {
   articleJsonLd,
@@ -48,6 +50,43 @@ const LEAD =
 const META =
   "Nasveti o masažnih bazenih in swim spa bazenih: izbira velikosti, priprava " +
   "podlage in priklopa, poraba, vzdrževanje in dostava po Sloveniji.";
+
+/**
+ * The blog index as a whole document.
+ *
+ * ⚠️ EXPORTED SO THE AUDITS CAN SEE THIS PAGE. scripts/audit-site.mjs and
+ * audit-seo.mjs derive their route list from routeSlugs and drive it through
+ * the SYNCHRONOUS handleRequest, which by construction cannot serve a page
+ * that needs a database — so the day /blog joined routeSlugs both audits
+ * started measuring the 404 instead, and reported its contrast failure as the
+ * blog's. (That failure was real and is fixed; see .placeholder .btn-fill in
+ * themes/studio/page.ts. Finding it this way is the argument for not simply
+ * excluding the route.)
+ *
+ * Given an empty list this renders the page a visitor sees before anything is
+ * published, which is a real state of a real page: its head, its chrome, its
+ * measure and its contrast are all exactly what a post list would carry. The
+ * audits pass [] and get honest coverage of everything except the cards.
+ */
+export function blogIndexDoc(
+  shop: ShopConfig,
+  content: ShopContent,
+  posts: readonly PostCard[],
+  noindex: boolean,
+): string {
+  return renderDocument({
+    shop,
+    content,
+    theme: shop.design.theme,
+    path: shop.routeSlugs["/blog"],
+    title: H1 + " — " + shop.keyword.plural + " | " + shop.name,
+    description: META,
+    noindex,
+    q: "",
+    bodyHtml: renderBlogIndex(shop, content, "", H1, LEAD, posts),
+    jsonLd: [organizationJsonLd(shop), breadcrumbJsonLd(shop, [{ name: H1 }])],
+  });
+}
 
 function html(body: string, status: number, extra: Record<string, string>): Response {
   return new Response(body, {
@@ -136,22 +175,7 @@ export async function handlePosts(request: Request, env: Env): Promise<Response 
     } catch (err) {
       console.error(err);
     }
-    const doc = renderDocument({
-      shop,
-      content,
-      theme: shop.design.theme,
-      path: base,
-      title: H1 + " — " + shop.keyword.plural + " | " + shop.name,
-      description: META,
-      noindex: dev,
-      q: "",
-      bodyHtml: renderBlogIndex(shop, content, "", H1, LEAD, cards),
-      jsonLd: [
-        organizationJsonLd(shop),
-        breadcrumbJsonLd(shop, [{ name: H1 }]),
-      ],
-    });
-    return html(doc, 200, baseHeaders);
+    return html(blogIndexDoc(shop, content, cards, dev), 200, baseHeaders);
   }
 
   /* ---- one post ------------------------------------------------------- */

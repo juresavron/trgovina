@@ -711,23 +711,68 @@ export const STUDIO_PDP_CSS = `
     display: flex; flex-direction: column;
     gap: clamp(9px, 0.8vw, 16px);
   }
-  /* Checkbox row: square box + the BODY rung (§4.13 says 19px, but that is the
-   * screenshot pass — these labels are wrapping product copy, so body at 16px
-   * is the rung that fits what they are). Not a control — no cursor change, no
-   * hover state: it states the configuration, it does not offer it.
-   * The unselected rung is --ink-mute (4.6:1 on the white page ground, the
-   * lowest rung that still clears AA); the chosen row goes to full --ink. */
+  /* ⚠️ THESE ARE CONTROLS NOW, AND THE NOTE HERE USED TO SAY THEY WERE NOT.
+   *
+   * It said: "Not a control — no cursor change, no hover state: it states the
+   * configuration, it does not offer it." That was true and it was the whole
+   * problem. A page selling a EUR 2,400-8,400 object showed the buyer which
+   * connection, which service level and which of ten shell colours it had
+   * been configured with, and gave them no way to change any of it — the note
+   * under the block told them to telephone. Every visitor who tried to press
+   * one learned the page was decoration.
+   *
+   * So each row is a real radio, clipped to a pixel behind its label exactly
+   * as .st-pdp-ao-in is: the label is the 44px target, the keyboard gets the
+   * group's arrow-key behaviour for free, and the whole column is one GET form
+   * whose submit is the enquiry button. Nothing is ordered — this shop takes
+   * orders by telephone and e-mail — but what the buyer chose travels to
+   * /kontakt with them instead of having to be remembered.
+   *
+   * The input is the row's PREVIOUS SIBLING rather than a child, so the
+   * checked state reaches the label with a plain + selector. :has() would read
+   * better and is not needed for anything here.
+   *
+   * Body rung at 16px rather than §4.13's 19: these labels wrap product copy.
+   * Unselected is --ink-mute (4.6:1 on white, the lowest rung that clears AA);
+   * the chosen row goes to full --ink. */
+  :root[data-theme="studio"] .st-pdp-opts li,
+  :root[data-theme="studio"] .st-pdp-pills li { position: relative; }
+  :root[data-theme="studio"] .st-pdp-radio {
+    position: absolute;
+    inline-size: 1px; block-size: 1px;
+    margin: 0; padding: 0; border: 0;
+    clip-path: inset(50%);
+    overflow: hidden; white-space: nowrap;
+  }
   :root[data-theme="studio"] .st-pdp-opt {
     /* Containing block for the row's visually-hidden "izbrano" text. */
     position: relative;
     display: flex; align-items: flex-start;
     gap: clamp(9px, 0.8vw, 16px);
+    min-block-size: 44px;
+    cursor: pointer;
     font-family: var(--f-body);
     font-size: var(--t-body);
     font-weight: var(--w-body);
     letter-spacing: var(--ls-body);
     line-height: var(--lh-body);
     color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-pdp-opt:hover .st-pdp-box {
+    border-color: var(--ink-invert);
+  }
+  :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-opt {
+    color: var(--ink);
+    font-weight: var(--w-body-med);
+  }
+  :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-opt .st-pdp-box {
+    background: var(--ink-invert);
+    border-color: var(--ink-invert);
+  }
+  :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-opt .st-pdp-box svg { opacity: 1; }
+  :root[data-theme="studio"] .st-pdp-radio:focus-visible + .st-pdp-opt .st-pdp-box {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
   }
   /* SQUARE, and sharp (--r-ctrl): §9 keeps round for pills and arrows. */
   :root[data-theme="studio"] .st-pdp-box {
@@ -746,18 +791,6 @@ export const STUDIO_PDP_CSS = `
     inline-size: 68%; block-size: 68%;
     opacity: 0;
   }
-  /* The chosen state, driven purely by the data attribute the renderer emits.
-   * The body rung is 400, so the escalation is to --w-body-med — the ramp's own
-   * second prose weight, not a heavier one invented for the state. */
-  :root[data-theme="studio"] .st-pdp-opt[data-on] {
-    color: var(--ink);
-    font-weight: var(--w-body-med);
-  }
-  :root[data-theme="studio"] .st-pdp-opt[data-on] .st-pdp-box {
-    background: var(--ink-invert);
-    border-color: var(--ink-invert);
-  }
-  :root[data-theme="studio"] .st-pdp-opt[data-on] .st-pdp-box svg { opacity: 1; }
 
   /* Pill row — the sidebar's "availability as outlined round pills". */
   :root[data-theme="studio"] .st-pdp-pills {
@@ -770,29 +803,36 @@ export const STUDIO_PDP_CSS = `
    * carrying prices ("Za 4 osebe — 1.990 €"), and caps would push them past
    * two-per-row at 390px. One line by construction (PILL_MAX_CHARS), so it
    * takes the tight label leading. */
-  /* A TAG, NOT A BUTTON — and it has to look like one.
+  /* ⚠️ A BUTTON NOW, AND THE NOTE HERE ARGUED IT MUST NOT BE ONE.
    *
-   * These are ten finish NAMES, listed as reference: nothing on this page can
-   * take a colour choice (the note under the configuration says so, and the
-   * panel below narrows the ten to the seven a given model offers). Outlined
-   * pills on a white ground are this theme's control language — the marquee's
-   * pause toggle and the grid tile's CTA are built exactly that way — so ten
-   * of them, stacked directly above two columns of REAL checkboxes, read as
-   * ten broken controls. A visitor clicks one, nothing happens, and the page
-   * has taught them the form is unreliable.
+   * That argument was: these are finish NAMES listed as reference, nothing on
+   * this page can take a colour choice, so outlined pills — this theme's
+   * control language — would read as ten broken controls, a visitor would
+   * press one and learn the form is unreliable.
    *
-   * Flat fill, no border: the ordinary web convention for a tag, and in this
-   * theme's own vocabulary the one shape that is never a control. --ink-body
-   * rather than --ink-mute because the ground moved: mute on the panel grey
-   * measures 4.54:1, which passes 4.5 by four hundredths at label size, and a
-   * finish name is product information rather than furniture. Body ink on the
-   * same ground is 14.1:1. */
+   * Every step of it was right about a page that could not take the choice.
+   * The fix was never to make the colours look less pressable; it was to let
+   * the page take a colour. It does now, so the pills go back to the theme's
+   * control language: outlined on a white ground, like the marquee's pause
+   * toggle and the grid tile's CTA, with a hover, a focus ring and a 44px
+   * target.
+   *
+   * WHAT WE STILL DO NOT DO IS DRAW A SWATCH. The finishes are marbled
+   * acrylics — "Silver white marble", "Ocean Wave" — that no hex value
+   * describes, and nobody has photographed them (catalog/pola.ts says so and
+   * says what to ask the supplier for). A circle of invented colour beside a
+   * name is a picture of goods nobody has seen, on a page where the buyer is
+   * deciding what their terrace will look like. The names are real; the note
+   * under the group says where the shades can actually be seen. */
   :root[data-theme="studio"] .st-pdp-pill {
     position: relative;
     display: inline-flex; align-items: center;
+    min-block-size: 44px;
     padding: clamp(8px, 0.6vw, 12px) clamp(13px, 1.2vw, 24px);
+    border: 1px solid var(--line-strong);
     border-radius: var(--r-pill);
-    background: var(--bg-alt);
+    background: var(--surface);
+    cursor: pointer;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -800,14 +840,39 @@ export const STUDIO_PDP_CSS = `
     line-height: var(--lh-label-tight);
     color: var(--ink-body);
   }
+  :root[data-theme="studio"] .st-pdp-pill:hover { border-color: var(--ink-invert); }
   /* Chosen = inverted fill. In a monochrome theme the only louder state than
    * a black hairline is a black ground (§4.7 uses the same escalation). No
    * weight change: the label rung is already 500 and the ramp's next weight up
    * is display-only, so the fill carries the state on its own. */
-  :root[data-theme="studio"] .st-pdp-pill[data-on] {
+  :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-pill {
     background: var(--ink-invert);
     border-color: var(--ink-invert);
     color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-pdp-radio:focus-visible + .st-pdp-pill {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+  }
+  /* Where the shades can be seen, since no swatch is drawn. Sits under the
+   * colour groups only. */
+  :root[data-theme="studio"] .st-pdp-swatch-note {
+    margin-top: clamp(10px, 0.9vw, 16px);
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-mute);
+    max-inline-size: 46ch;
+  }
+  /* The buy column IS a form. No box of its own — it is a grouping, not a
+   * panel — but it owns the column's flow so the fieldsets inside it inherit
+   * the same rhythm they had when they were siblings. */
+  :root[data-theme="studio"] .st-pdp-form {
+    display: block;
+    margin: 0;
+    border: 0;
+    padding: 0;
+    min-inline-size: 0;
   }
 
   /* Honesty line under the configurator: says the selection is fixed and
@@ -1993,39 +2058,63 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   const provisional = d.pricesProvisional === true;
   const art = artOf(ctx);
 
+  // ---- the configurator, as controls ------------------------------------
+  //
+  // ⚠️ THESE USED TO BE INERT. Every group rendered a list showing what the
+  // page had been configured with, and the note beneath told the visitor to
+  // telephone if they wanted anything else. See the stylesheet's own note on
+  // .st-pdp-opt, which argued at length that the rows must not LOOK like
+  // controls — correct, given they were not, and the wrong problem to solve.
+  //
+  // A group is a radio group. The whole column is one GET form whose submit is
+  // the enquiry button, so the choices arrive at /kontakt as query parameters,
+  // are matched back against this model's own option lists there, and are
+  // printed for the visitor and put in the mail subject. NOTHING IS ORDERED:
+  // shop.ordersOnline is false and the cart page says so. What changed is that
+  // the buyer no longer has to remember what they picked.
+  //
+  // ⚠️ THE PARAMETER NAMES ARE POSITIONAL ("cfg0", "cfg1") AND THE VALUES ARE
+  // MATCHED, NOT ECHOED. Same doctrine as ?model=: a string off the wire never
+  // becomes page text. The contact page keeps a submitted value only if it is
+  // one of the strings this model actually offers, so an invented parameter
+  // renders nothing at all.
+  /** One radio group, drawn as pills or as checkbox-style rows. */
+  const group = (
+    label: string,
+    name: string,
+    options: readonly string[],
+    selected: number,
+    idBase: string,
+  ): string => {
+    if (options.length === 0) return "";
+    const labelId = idBase + "-h";
+    const pills = usesPills(options);
+    const rows = options
+      .map((o, i) => {
+        const id = idBase + "-" + String(i);
+        const input =
+          '<input class="st-pdp-radio" type="radio" id="' + id + '" name="' + esc(name) +
+          '" value="' + esc(o) + '"' + (i === selected ? " checked" : "") + ">";
+        return pills
+          ? "<li>" + input +
+            '<label class="st-pdp-pill" for="' + id + '">' + esc(o) + "</label></li>"
+          : "<li>" + input +
+            '<label class="st-pdp-opt" for="' + id + '">' +
+            '<span class="st-pdp-box">' + CHECK + "</span>" +
+            "<span>" + esc(o) + "</span></label></li>";
+      })
+      .join("");
+    return (
+      '<div><h2 class="st-pdp-glabel" id="' + labelId + '">' + esc(label) + "</h2>" +
+      '<ul class="' + (pills ? "st-pdp-pills" : "st-pdp-opts") +
+      '" role="radiogroup" aria-labelledby="' + labelId + '">' + rows + "</ul></div>"
+    );
+  };
+
   const cfg = d.cfg
-    .map((g, gi) => {
-      const [label, options, selected] = g;
-      // A group with no options would render a label and a hairline over
-      // nothing; drop it rather than draw an empty control surface.
-      if (options.length === 0) return "";
-      const id = "st-pdp-g" + String(gi + 1);
-      const chosen = (i: number): string =>
-        i === selected ? '<span class="st-pdp-vh"> — izbrano</span>' : "";
-
-      const body = usesPills(options)
-        ? '<ul class="st-pdp-pills" aria-labelledby="' + id + '">' +
-          options
-            .map(
-              (o, i) =>
-                '<li class="st-pdp-pill"' + (i === selected ? " data-on" : "") + ">" +
-                esc(o) + chosen(i) + "</li>",
-            )
-            .join("") +
-          "</ul>"
-        : '<ul class="st-pdp-opts" aria-labelledby="' + id + '">' +
-          options
-            .map(
-              (o, i) =>
-                '<li class="st-pdp-opt"' + (i === selected ? " data-on" : "") + ">" +
-                '<span class="st-pdp-box">' + CHECK + "</span>" +
-                "<span>" + esc(o) + chosen(i) + "</span></li>",
-            )
-            .join("") +
-          "</ul>";
-
-      return '<div><h2 class="st-pdp-glabel" id="' + id + '">' + esc(label) + "</h2>" + body + "</div>";
-    })
+    // A group with no options would render a label and a hairline over
+    // nothing; drop it rather than draw an empty control surface.
+    .map((g, gi) => group(g[0], "cfg" + String(gi), g[1], g[2], "st-pdp-g" + String(gi)))
     .join("");
 
   // Add-ons. Real controls, unlike the configurator above: each one is a
@@ -2057,9 +2146,15 @@ export function renderStudioPdp(ctx: RenderCtx): string {
             const id = "st-ao-" + String(rowNo.n);
             return (
               '<li><label class="st-pdp-ao-lab" for="' + id + '">' +
+              // ⚠️ THE VALUE IS THE LABEL AND THE PRICE IS A DATA ATTRIBUTE,
+              // which is the other way round from how this started. The box
+              // is now inside the enquiry form, so what it submits has to be
+              // something the shop can read in an e-mail — "Termo pokrov",
+              // not "12900". behaviour.ts reads data-price for the total.
               '<input class="st-pdp-ao-in" type="checkbox" id="' + id + '"' +
-              ' name="' + esc(x.key) + '" data-st-addon' +
-              ' value="' + String(x.priceCents) + '">' +
+              ' name="oprema" data-st-addon' +
+              ' data-price="' + String(x.priceCents) + '"' +
+              ' value="' + esc(x.label) + '">' +
               '<span class="st-pdp-ao-box">' + CHECK + "</span>" +
               '<span class="st-pdp-ao-name">' + esc(x.label) +
               (x.qty ? ' <span class="st-pdp-ao-qty">' + esc(x.qty) + "</span>" : "") +
@@ -2141,16 +2236,33 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       .join("") +
     "</div>";
 
-  // Finish names, not swatches — see catalog/pola.ts for why inventing a hex
-  // for "Ocean Wave" would be a picture of the goods nobody has seen.
-  const finishes = (d.finishes ?? []).length
-    ? '<div class="st-pdp-finish"><h2 class="st-pdp-glabel" id="st-pdp-fin">Barve školjke</h2>' +
-      '<ul class="st-pdp-pills" aria-labelledby="st-pdp-fin">' +
-      (d.finishes ?? [])
-        .map((f) => '<li class="st-pdp-pill">' + esc(f) + "</li>")
-        .join("") +
-      "</ul></div>"
-    : "";
+  // ---- colour ------------------------------------------------------------
+  //
+  // The shell finish and the cabinet panel, both as real choices. The shell
+  // list was a row of ten unselectable tags until now — the one decision a
+  // buyer most wants to make about a EUR 2,400-8,400 object on their terrace,
+  // rendered as reference material.
+  //
+  // ⚠️ NAMES, NOT SWATCHES, AND THAT PART DOES NOT CHANGE. The finishes are
+  // marbled acrylics that no hex value describes and that nobody has
+  // photographed (catalog/pola.ts records what to ask the supplier for). A
+  // drawn circle would be a picture of goods nobody has seen. The note says
+  // where the shades can be seen instead, and it says the same thing the
+  // panel below has always said: only seven of the ten apply to a given
+  // model, and which seven is confirmed on order.
+  const swatchNote =
+    '<p class="st-pdp-swatch-note">Odtenkov ne slikamo — akril je marmoriran ' +
+    "in fotografija ga ne pokaže pošteno. Vzorčnik pošljemo na zahtevo, v " +
+    "salonu pa jih vidite v živo. Vsak model je na voljo v sedmih barvah " +
+    "školjke; katerih sedmih, potrdimo ob naročilu.</p>";
+  const finishes =
+    (d.finishes ?? []).length || (d.cabinetFinishes ?? []).length
+      ? '<div class="st-pdp-finish">' +
+        group("Barva školjke", "barva", d.finishes ?? [], 0, "st-pdp-fin") +
+        group("Barva obloge", "obloga", d.cabinetFinishes ?? [], 0, "st-pdp-cab") +
+        swatchNote +
+        "</div>"
+      : "";
 
   // Quantity and the cart. The stepper is a real number input inside a real
   // form that GETs the cart route with what was chosen — there is no cart yet,
@@ -2172,17 +2284,18 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   // in the words the cart page uses, so the click is not a surprise either.
   // Flip ordersOnline and the cart controls return with no other change.
   const buy = ctx.shop.ordersOnline
-    ? '<form class="st-pdp-buyrow" method="get" action="' +
-      esc(ctx.shop.routeSlugs["/cart"]) + '">' +
-      '<input type="hidden" name="model" value="' + esc(d.slug) + '">' +
+    ? // The quantity and the add button. NOT its own <form> any more — the
+      // whole column is one, so a nested form would be invalid HTML and the
+      // configuration above it would never reach the cart.
+      '<div class="st-pdp-buyrow">' +
       '<span class="st-pdp-qty">' +
       '<label class="st-pdp-vh" for="st-pdp-q">Količina</label>' +
       '<input id="st-pdp-q" name="qty" type="number" value="1" min="1" max="9" step="1" inputmode="numeric">' +
       "</span>" +
       '<button class="st-pdp-add" type="submit">' + esc(d.bar[3]) + "</button>" +
-      "</form>"
+      "</div>"
     : '<div class="st-pdp-buyrow">' +
-      // THE MODEL TRAVELS WITH THE ENQUIRY.
+      // THE MODEL AND THE CONFIGURATION TRAVEL WITH THE ENQUIRY.
       //
       // Without it the visitor arrives at /kontakt having just spent five
       // minutes choosing between three shells, and has to name the one they
@@ -2191,12 +2304,18 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       // contact page (never echoed as text), and becomes the subject line of
       // the message. The canonical link is built from the path alone, so a
       // parameter here creates no second indexable URL.
-      '<a class="st-pdp-add" href="' +
-      esc(ctx.shop.routeSlugs["/contact"] + ctx.q) +
-      (ctx.q ? "&" : "?") + "model=" + encodeURIComponent(d.slug) +
-      '">Povprašajte za ponudbo</a>' +
+      //
+      // ⚠️ IT IS A SUBMIT BUTTON NOW, NOT A LINK. It used to be an anchor
+      // carrying one hand-built query parameter, which was all there was to
+      // carry: everything else on the page was inert. The column is a GET form
+      // now, so the browser assembles the query out of the controls the
+      // visitor actually touched — the connection, the service level, both
+      // colours and every ticked extra — and the button's whole job is to
+      // submit it. Same destination, same method, more of what was chosen.
+      '<button class="st-pdp-add" type="submit">Povprašajte za ponudbo</button>' +
       "</div>" +
-      '<p class="st-pdp-chan">Naročila sprejemamo po telefonu in e-pošti.</p>';
+      '<p class="st-pdp-chan">Naročila sprejemamo po telefonu in e-pošti. ' +
+      "Vašo izbiro pripnemo k povpraševanju.</p>";
 
   const freight = d.freight
     .map(
@@ -2278,6 +2397,25 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     // those ten are actually available per model, which makes the row
     // reference rather than a step in the decision. Moved below the promises,
     // the button lands at 598-652 and is clear of the bar at every height.
+    // ⚠️ THE COLUMN IS ONE FORM, FROM THE BUTTON DOWN TO THE LAST EXTRA.
+    //
+    // The button is ABOVE the controls it submits, which is deliberate and
+    // costs nothing: a form's controls are collected wherever they sit, and
+    // the visual QA measured the CTA landing twelve pixels under the sticky
+    // bar when the colour row was above it. So the order stays price →
+    // standfirst → button → promises → colour → configuration → extras, and
+    // pressing the button at the top submits everything below it.
+    //
+    // GET, not POST: the destination is a page that shows the enquiry back to
+    // the visitor, so it must be reloadable, linkable and back-button safe.
+    // Nothing here changes state.
+    '<form class="st-pdp-form" method="get" action="' +
+    esc(
+      ctx.shop.ordersOnline
+        ? ctx.shop.routeSlugs["/cart"]
+        : ctx.shop.routeSlugs["/contact"],
+    ) + '">' +
+    '<input type="hidden" name="model" value="' + esc(d.slug) + '">' +
     buy +
     assure +
     finishes +
@@ -2290,15 +2428,23 @@ export function renderStudioPdp(ctx: RenderCtx): string {
         // visitor is most likely to act on it: they have just read that the
         // combination they want needs a call. Without a number the sentence
         // says to write instead, which is the channel that actually works.
-        '<p class="st-pdp-cfg-note">Prikazana je izbrana konfiguracija. ' +
+        // ⚠️ THIS SENTENCE USED TO SAY THE OPPOSITE. It read "Prikazana je
+        // izbrana konfiguracija" and then told the visitor to telephone for
+        // any other combination, because the rows above it could not be
+        // pressed. They can now, so it says what the choice is FOR — this
+        // shop takes orders by telephone and e-mail, and the honest promise
+        // is that the selection reaches the enquiry rather than a basket.
+        '<p class="st-pdp-cfg-note">Izbrano pripnemo k povpraševanju, ' +
+        "da vam pripravimo ponudbo prav za to kombinacijo. " +
         (isSetPhone(ctx.phoneDisplay)
-          ? 'Za drugo kombinacijo nas, prosimo, pokličite na <a href="' +
+          ? 'Lahko nas tudi pokličete na <a href="' +
             esc(ctx.phoneHref) + '">' + esc(ctx.phoneDisplay) + "</a>."
-          : 'Za drugo kombinacijo nam, prosimo, <a href="' +
-            esc(ctx.shop.routeSlugs["/contact"] + ctx.q) + '">pišite</a>.') +
+          : 'Lahko nam tudi <a href="' +
+            esc(ctx.shop.routeSlugs["/contact"] + ctx.q) + '">pišete</a>.') +
         "</p>"
       : "") +
     addons +
+    "</form>" +
     '<section class="st-pdp-freight" aria-labelledby="st-pdp-fh">' +
     '<h2 class="st-pdp-glabel" id="st-pdp-fh">Dostava in montaža</h2>' +
     '<dl class="st-pdp-frows">' + freight + "</dl>" +

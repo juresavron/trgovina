@@ -36,6 +36,20 @@ export interface RenderCtx {
    * arrive with a subject line instead of "(no subject)".
    */
   about?: PdpContent;
+  /**
+   * What the visitor configured before pressing "Povprašajte za ponudbo".
+   *
+   * ⚠️ MATCHED, NOT ECHOED — the same doctrine `about` follows. The product
+   * page's buy column is a GET form, so its radio groups and its extras
+   * arrive here as query parameters; the router keeps a submitted value ONLY
+   * if it is one of the strings the named model actually offers, and drops
+   * everything else without a trace. A parameter somebody typed can therefore
+   * never become page text, and an enquiry can never carry a colour the shop
+   * does not sell.
+   *
+   * Pairs of [what was chosen, the choice], in the column's own order.
+   */
+  chosen?: readonly (readonly [string, string])[];
 }
 
 /* Product art — duotone scenes; colors ride the theme CSS vars. Redrawn

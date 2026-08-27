@@ -33,6 +33,9 @@ async function bundle(entry, tag) {
 const { handleRequest } = await bundle("src/worker.ts", "worker");
 const { SHOPS } = await bundle("src/tenants/index.ts", "shops");
 const { CONTENT } = await bundle("src/content/index.ts", "content");
+// See the note in audit-site.mjs: /blog is served by the async layer because
+// posts are rows, so the synchronous handler would hand this audit a 404.
+const { blogIndexDoc } = await bundle("src/blog/routes.ts", "blog");
 
 const SHOP = SHOPS["bazen"];
 const C = CONTENT["bazen"];
@@ -55,7 +58,12 @@ function routes() {
   return [...r].filter((p) => p && p.startsWith("/"));
 }
 
+const BLOG = SHOP.routeSlugs["/blog"];
 const get = async (path) => {
+  if (path === BLOG) {
+    const html = blogIndexDoc(SHOP, C, [], true);
+    return { status: 200, headers: new Headers(), html };
+  }
   const res = handleRequest(
     new Request(HOST + path + (path.includes("?") ? "&" : "?") + "shop=bazen", {
       headers: { host: "trgovina.workers.dev" },

@@ -453,11 +453,17 @@ export function renderContentPage(
    * undefined, so an unknown parameter simply renders the ordinary page.
    */
   about?: PdpContent,
+  /** What that model was configured with, already matched — see chosenParams. */
+  chosen?: readonly (readonly [string, string])[],
 ): string {
   // Spread rather than assign, because exactOptionalPropertyTypes draws a
   // distinction between "absent" and "present and undefined" — and `about`
   // being absent is the ordinary case.
-  const ctx: RenderCtx = { ...buildCtx(shop, content, q), ...(about ? { about } : {}) };
+  const ctx: RenderCtx = {
+    ...buildCtx(shop, content, q),
+    ...(about ? { about } : {}),
+    ...(chosen && chosen.length > 0 ? { chosen } : {}),
+  };
   return renderStudioHeader(ctx) + renderStudioPage(ctx, page) + renderStudioFooter(ctx);
 }
 
