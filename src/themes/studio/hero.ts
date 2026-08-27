@@ -46,8 +46,7 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { discWatermark } from "./icons";
-import { SHOP_HERO, decorativeImg, productImg } from "./media";
-import { OWN_MEDIA, type OwnPhoto } from "./own-media";
+import { SHOP_HERO, decorativeImg } from "./media";
 import { productArt } from "./product-art";
 
 export const STUDIO_HERO_CSS = `
@@ -89,88 +88,6 @@ export const STUDIO_HERO_CSS = `
     position: absolute; inset: 0; z-index: 0;
     inline-size: 100%; block-size: 100%;
     object-fit: cover;
-  }
-
-  /* ---- the hero built on the shop's OWN photograph ---------------------
-   *
-   * A studio shot is not a weaker hero than a garden scene, it is a different
-   * one, and the difference is cropping. A scene survives object-fit: cover —
-   * it is mostly ground and sky and losing a third of it costs little. A
-   * product on a plain sweep does not: the page opened on half a tub and a
-   * lawn, because cover took a 2:1 bite out of a picture whose whole subject
-   * sat in the middle.
-   *
-   * So the photograph gets a STAGE rather than the whole frame: contained,
-   * never cropped, on the section's dark ground, with the type beside it at
-   * the width where there is room for two columns and above it where there is
-   * not. The arch is the reference theme's own device for exactly this
-   * situation — a cut-out product needs a shape behind it or it floats.
-   */
-  :root[data-theme="studio"] .st-hero--own { background: var(--ink); }
-  /* The veil exists to hold type off a photograph. There is no photograph
-   * under the type here, so it would only be dimming a flat ground. */
-  :root[data-theme="studio"] .st-hero--own .st-hero-veil { display: none; }
-
-  :root[data-theme="studio"] .st-hero-stage {
-    position: relative; z-index: 1;
-    display: grid; place-items: center;
-    padding-block: calc(var(--chrome-h) + clamp(24px, 3vw, 56px)) 0;
-    padding-inline: var(--studio-gutter);
-  }
-  /* The arch: a ground for the cut-out, and the one warm note on a dark
-   * page. Radius at the top only — a full oval reads as a bubble, a flat top
-   * reads as a card, and neither says "object on a plinth". */
-  :root[data-theme="studio"] .st-hero-own {
-    inline-size: min(100%, 34rem);
-    block-size: auto;
-    aspect-ratio: 4 / 5;
-    object-fit: contain;
-    /* ⚠️ NEARLY WHITE, NOT THE WARM STONE THE REFERENCE USES. Its cut-out is
-     * an orange chair on a beige sweep and the two agree. Every photograph
-     * this shop owns is a white acrylic shell shot on a WHITE ground, so a
-     * stone arch behind one prints the photograph's own background as a pale
-     * rectangle sitting inside the arch — measured on the render before this
-     * line changed. The gradient stays, quietly, so the shape still reads as
-     * lit from above rather than as a flat cut. */
-    background: linear-gradient(180deg, #fbfaf8 0%, #f4f2ee 64%, #eae7e1 100%);
-    border-start-start-radius: 50% 34%;
-    border-start-end-radius: 50% 34%;
-    border-end-start-radius: var(--r-media);
-    border-end-end-radius: var(--r-media);
-    padding: clamp(18px, 2.4vw, 40px);
-  }
-
-  @media (min-width: 1000px) {
-    /* Two columns: the object on the left, the sentence that sells it on the
-     * right, sharing one optical centre line. Below this width they stack,
-     * which is the order a phone wants anyway — see the thing, read the line. */
-    :root[data-theme="studio"] .st-hero--own {
-      display: grid;
-      /* Not two equal halves. The object is the larger element and the
-       * sentence beside it is short, so equal columns pushed them to opposite
-       * edges with a void down the middle — measured at 280px of nothing
-       * between the arch and the pill. */
-      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-      align-items: center;
-      column-gap: clamp(32px, 3vw, 56px);
-      max-inline-size: calc(var(--studio-container) + 2 * var(--studio-gutter));
-      margin-inline: auto;
-    }
-    :root[data-theme="studio"] .st-hero--own .st-hero-stage {
-      padding-block: 0;
-      justify-self: end;
-    }
-    :root[data-theme="studio"] .st-hero--own .st-hero-foot {
-      position: static;
-      /* align-self: end is what pins the foot to the bottom of a full-bleed
-       * hero. Here it has an object beside it to agree with, and type that
-       * hangs 200px below the thing it describes reads as two designs. */
-      align-self: center;
-      justify-self: start;
-      padding: 0;
-      max-inline-size: 26rem;
-    }
-    :root[data-theme="studio"] .st-hero-own { inline-size: min(100%, 27rem); }
   }
   /* The veil — THREE bands, not one ramp, and the reason is measurement.
    *
@@ -868,39 +785,6 @@ function compareAt(d: RenderCtx["content"]["pdp"]): string | null {
  *    same furniture bundle: fine as atmosphere, and labelled so it cannot be
  *    read as the product.
  */
-/**
- * The photograph the hero opens on, chosen from the shop's own product set.
- *
- * ⚠️ THE SHOP HAS NO LIFESTYLE PHOTOGRAPHY, and that is the fact this function
- * exists to face. All 47 pictures are studio shots on a plain ground: 16
- * interiors, 13 side views, 7 from above, and a handful of close-ups. There is
- * no "tub installed on a terrace with a house behind it", which is the shot a
- * garden hero needs — so the garden hero was a stock image, and when it was
- * put through the upscaler it came back as a garden nobody had ever stood in.
- *
- * A studio shot is not a weaker hero, it is a different one: it wants to be
- * shown WHOLE against a dark ground rather than cropped to fill a frame. So
- * the picture is chosen for atmosphere rather than for sorting first — the one
- * lit at dusk if the set has one, then a side view (the shape reads at a
- * glance), then whatever the model leads with.
- *
- * The shot key travels in own-media.ts because the panel now classifies every
- * upload; on a set that has not been classified yet this falls through to the
- * lead photograph, which is the behaviour the hero had before.
- */
-export function heroPhoto(ctx: RenderCtx): OwnPhoto | undefined {
-  const sets = Object.entries(OWN_MEDIA)
-    .filter(([k]) => k.startsWith(ctx.shop.key + "/"))
-    .map(([, v]) => v);
-  if (sets.length === 0) return undefined;
-  const all = sets.flat();
-  return (
-    all.find((p) => p.shot === "lit") ??
-    all.find((p) => p.shot === "side") ??
-    all[0]
-  );
-}
-
 export function renderStudioHero(ctx: RenderCtx): string {
   const c = ctx.content;
   // The shop's own photograph, or NOTHING. There used to be a fallback to a
@@ -912,27 +796,14 @@ export function renderStudioHero(ctx: RenderCtx): string {
   // With no photograph the veil paints on the section's own dark ground and
   // the wordmark carries the frame alone, which is a legitimate thing for
   // this theme to do — it is a typographic design first.
-  // THE SHOP'S OWN PRODUCT PHOTOGRAPH, shown whole, on the section's dark
-  // ground — see heroPhoto for why this shop's pictures want that rather than
-  // a full-bleed crop. SHOP_HERO (the uploaded banner) is no longer consulted:
-  // a scene photograph the shop did not take is exactly what this replaced.
-  const own = heroPhoto(ctx);
-  const photo = own ? undefined : SHOP_HERO[ctx.shop.key];
+  const photo = SHOP_HERO[ctx.shop.key];
 
   // Uppercase through the shop's own locale: Slovenian casing is not the
   // default one, and a wordmark is the last place to get a letter wrong.
   const mark = ctx.shop.wordmark.join(" ").toLocaleUpperCase(ctx.shop.locale.intl);
 
   return (
-    '<section class="st-hero' + (own ? " st-hero--own" : "") + '">' +
-    // Shown WHOLE. object-fit: contain and its own column, because a studio
-    // shot cropped to fill a 2:1 band loses the thing it is a photograph of —
-    // which is what the page was doing: half a tub and a lot of grass.
-    (own
-      ? '<div class="st-hero-stage">' +
-        productImg(own, "st-hero-own", "(max-width: 999px) 92vw, 46vw", own.alt, true) +
-        "</div>"
-      : "") +
+    '<section class="st-hero">' +
     // The LCP element. Eager and high priority: it is the largest thing on the
     // page and the one the score is measured against, so a lazy hint here
     // would be actively wrong.
