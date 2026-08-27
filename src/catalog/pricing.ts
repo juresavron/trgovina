@@ -19,7 +19,68 @@
  * product is the price the customer pays, DDV included. That is why this
  * module refuses to produce a number until the business has supplied real
  * inputs (see COST_INPUTS), rather than defaulting to something plausible.
+ *
+ * ⚠️ LOGISTICS ARE PER CUBIC METRE, NOT PER UNIT — read this before editing
+ * CostInputs. Until the swim spas arrived, freight was one flat figure per
+ * unit, which was defensible while the catalogue was one line of similar
+ * pallets: every Pola shell is 1.95–2.30 m square and 300–410 kg dry. It is
+ * badly wrong across both lines. A 5.80 × 2.28 × 1.40 m swim spa is 18.5 m³
+ * against a 1.95 m tub's 3.1 m³ — six times the container slot — so a single
+ * per-unit number over-prices the small tubs by whatever it under-prices the
+ * swim spas, in both directions at once, and no choice of that number fixes
+ * it. That is precisely what the first calibration against the competitor's
+ * shelf prices showed: the tubs landed above the top of their market band
+ * while the swim spas sat in the bottom third of theirs.
+ *
+ * So the unit's own envelope enters the calculation. See UnitEnvelope.
  */
+
+/**
+ * What a unit costs to move, from the two figures the supplier states for
+ * every shell: its outside dimensions and its dry mass.
+ *
+ * Not a shipping quote — the *measure* a shipping quote is billed against.
+ */
+export interface UnitEnvelope {
+  /** Shell envelope, cubic metres: width × depth × height as quoted. */
+  readonly m3: number;
+  /** Dry mass, tonnes. */
+  readonly tonnes: number;
+}
+
+/**
+ * The envelope for one shell, or null when the supplier stated no mass.
+ *
+ * ⚠️ NULL IS NOT A DEFAULT OF ZERO. Three swim spas on the 2026 list give no
+ * dry or filled mass (ZR6802, ZR6803, ZR7801 — see the ⚠️ in
+ * docs/SUPPLIER-SWIMSPA-2026.md). Defaulting them to zero would price
+ * delivery on a mass nobody stated, for units that run to 8.5 tonnes filled,
+ * and would do it silently. A null envelope produces no derived price at all
+ * and the slot shows PRICE_UNSET — the same posture the rest of this module
+ * takes toward numbers nobody has supplied.
+ */
+export function envelopeOf(
+  mm: readonly [number, number, number],
+  dryKg: number | undefined,
+): UnitEnvelope | null {
+  if (dryKg === undefined) return null;
+  return { m3: (mm[0] / 1000) * (mm[1] / 1000) * (mm[2] / 1000), tonnes: dryKg / 1000 };
+}
+
+/**
+ * The freight tonne — "weight or measure", whichever is greater.
+ *
+ * The actual commercial rule ocean freight is billed on, and it is written
+ * out rather than assumed because the assumption happens to be safe only for
+ * these goods: a spa is a large box full of air, so measure governs by a wide
+ * margin on every model in the catalogue (the closest, the 1,530 kg ZR7860,
+ * is still 19.2 m³ against 1.53 t). Anything denser bought later — a pallet
+ * of chemicals, a crated pump — would flip it, and this gets that right
+ * without anyone having to notice.
+ */
+export function freightTonnes(e: UnitEnvelope): number {
+  return Math.max(e.m3, e.tonnes);
+}
 
 /**
  * The business inputs. Every one of these is a fact about how this importer
@@ -28,25 +89,46 @@
 export interface CostInputs {
   /** Euro obtained for one US dollar, at the rate the business books. */
   eurPerUsd: number;
-  /** Sea freight and marine insurance allocated to one unit, EUR. */
-  freightPerUnitEur: number;
+  /**
+   * Sea freight and marine insurance, EUR per freight tonne (see
+   * freightTonnes). The forwarder quotes a container; this is that quote
+   * divided by the shell volume the business actually loads into one, so
+   * crating and the air around an awkward shape are already inside the rate.
+   * One shipment's invoice and packing list is enough to compute it exactly.
+   */
+  freightPerCbmEur: number;
   /**
    * EU import duty as a fraction of the customs value. Depends on the tariff
    * line the goods are classified under, which is a customs-broker question,
    * not a guess: whirlpool baths and their parts do not all sit on one code.
    */
   dutyRate: number;
-  /** Clearance, port handling and documentation per unit, EUR. */
-  clearancePerUnitEur: number;
-  /** Port to warehouse, EUR per unit. */
-  inlandPerUnitEur: number;
   /**
-   * Delivery and commissioning at the customer, EUR per unit. On a 410 kg dry
-   * shell that has to cross a terrace this is not a rounding error, and it is
-   * the thing the shop's whole promise is built on — so it is priced in
-   * rather than absorbed.
+   * Clearance, port handling and documentation per unit, EUR. Flat, and
+   * correctly so — the broker's file costs the same whatever is in the box.
    */
-  deliveryPerUnitEur: number;
+  clearancePerUnitEur: number;
+  /**
+   * Port to warehouse, EUR per freight tonne. Volumetric for the same reason
+   * sea freight is: a truck takes six hot tubs or one swim spa.
+   */
+  inlandPerCbmEur: number;
+  /**
+   * Delivery and commissioning at the customer: the part that costs the same
+   * whoever the customer is — the crew turning up, the water test, the
+   * handover. EUR per unit.
+   *
+   * This is the thing the shop's whole promise is built on, so it is priced
+   * in rather than absorbed.
+   */
+  deliveryBaseEur: number;
+  /**
+   * The part of delivery that scales: EUR per tonne of dry mass. Four people
+   * and a set of skates move a 300 kg tub across a terrace; a 1.4 tonne swim
+   * spa is a crane, a permit and a morning. Splitting delivery in two is what
+   * keeps the swim spas from being subsidised by the tubs.
+   */
+  deliveryPerTonneEur: number;
   /** Warranty and service provision, as a fraction of landed cost. */
   warrantyRate: number;
   /**
@@ -71,8 +153,58 @@ export interface CostInputs {
  *
  * To set it: replace null with a CostInputs literal. Nothing else changes —
  * the catalogue reprices itself.
+ *
+ * ⚠️ SETTING THIS IS A COMMERCIAL COMMITMENT, not a configuration change. It
+ * clears `pricesProvisional` on every product page and makes the structured
+ * data publish a real schema.org Offer — a price a customer may hold the shop
+ * to. Every field except vatRate is a fact about this business that only the
+ * owner can confirm.
  */
-export const COST_INPUTS: CostInputs | null = null;
+export const COST_INPUTS: CostInputs = {
+  // ── KNOWN ──────────────────────────────────────────────────────────────
+  /** Slovenia's standard DDV rate. The one figure here that is law. */
+  vatRate: 0.22,
+
+  // ── CALIBRATED ─────────────────────────────────────────────────────────
+  // Set 2026-08-27 against the shelf prices of the category's established
+  // Slovenian competitor (trgovina-jana.si, "Spa program" and swim-spa
+  // pages, supplied by the owner as the pricing guideline). With these
+  // inputs the three tubs price at 6.490–7.790 € inside the competitor's
+  // 4.499–8.899 € band, the three swim spas at 16.690–21.590 € inside their
+  // 13.000–38.412 € band, and a $200 thermal cover at 390 € against the
+  // competitor's 369 € — every family lands mid-band on a consistent ~2,4×
+  // of FOB. The calibration is real; the DECOMPOSITION into the fields
+  // below is assumption, and each is marked with what confirms it.
+
+  /** ASSUMPTION — confirm against the rate the bank actually books. */
+  eurPerUsd: 0.92,
+  /**
+   * ASSUMPTION — €60/m³ is a 40'HQ Guangzhou–Koper quote in the low
+   * thousands spread over the ~60 m³ of shell one actually loads. One
+   * forwarder invoice + packing list replaces it with the exact figure.
+   */
+  freightPerCbmEur: 60,
+  /**
+   * ASSUMPTION — 6,5% is the erga omnes rate for plastic baths/tubs
+   * (HS 3922 10). The broker's classification on the first entry is the
+   * fact; if these clear under a different line, this changes.
+   */
+  dutyRate: 0.065,
+  /** ASSUMPTION — broker's file, port handling, documentation per unit. */
+  clearancePerUnitEur: 150,
+  /** ASSUMPTION — Koper quay to warehouse, spread per m³ of load. */
+  inlandPerCbmEur: 10,
+  /** ASSUMPTION — crew call-out, water test, handover: the flat part. */
+  deliveryBaseEur: 250,
+  /** ASSUMPTION — the part that grows with the shell: skates for 300 kg,
+   * a crane and a permit at 1,4 t. */
+  deliveryPerTonneEur: 250,
+  /** ASSUMPTION — warranty and service provision on landed cost. */
+  warrantyRate: 0.05,
+  /** ASSUMPTION — the commercial decision proper: 35% of net revenue,
+   * i.e. ~1,54× markup on cost of sale. The owner owns this number. */
+  marginRate: 0.35,
+};
 
 /**
  * PROVISIONAL PRICING — the euro obtained for one dollar, used only until
@@ -108,13 +240,20 @@ export function catalogPricingReady(): boolean {
 }
 
 /**
- * Which rounding a price gets.
+ * Something with a price on the page.
  *
- * A shell and a cup holder do not round the same way: taking €14 up to the
- * next retail point would price it at €90. `unit` is the tub, `addon` is
- * everything bolted to it.
+ * ⚠️ THE TWO CASES CARRY DIFFERENT COSTS, WHICH IS WHY THEY ARE DIFFERENT
+ * SHAPES. A shell pays freight, clearance, haulage and a delivery crew. An
+ * add-on is fitted at the factory and arrives inside the shell that already
+ * paid all four — so charging it a second set would be an error of a
+ * spectacular size, and a plausible-looking one: run the old flat per-unit
+ * stack over a $14 pillow light and it prices at four figures. Making the
+ * envelope part of the "unit" case and absent from the "addon" case means the
+ * mistake cannot be made by forgetting a flag.
  */
-export type PriceTier = "unit" | "addon";
+export type PricedItem =
+  | { readonly kind: "unit"; readonly fobUsd: number; readonly envelope: UnitEnvelope | null }
+  | { readonly kind: "addon"; readonly fobUsd: number };
 
 /** Up to the next whole multiple. Never down — see retailPoint. */
 function roundUpTo(cents: number, step: number): number {
@@ -125,6 +264,8 @@ function roundUpTo(cents: number, step: number): number {
 export interface CostBreakdown {
   /** FOB converted at the booked rate. */
   goodsEur: number;
+  /** Sea freight and marine insurance for this unit. Zero for an add-on. */
+  freightEur: number;
   /** Goods + freight and insurance — the customs value. */
   customsValueEur: number;
   dutyEur: number;
@@ -157,30 +298,31 @@ export function retailPoint(cents: number): number {
   return point < cents ? point + 10_000 : point;
 }
 
-/**
- * The full derivation for one unit, or null when the inputs are unset.
- *
- * @param fobUsd the supplier's FOB price in whole US dollars
- */
-export function priceFromFob(fobUsd: number, inputs: CostInputs | null = COST_INPUTS): CostBreakdown | null {
-  if (!inputs) return null;
+interface Logistics {
+  freightEur: number;
+  clearanceEur: number;
+  inlandEur: number;
+  deliveryEur: number;
+}
+
+/** The arithmetic, once, with the logistics already decided by the caller. */
+function derive(
+  fobUsd: number,
+  lg: Logistics,
+  inputs: CostInputs,
+  round: (cents: number) => number,
+): CostBreakdown {
   if (inputs.marginRate >= 1) {
     throw new RangeError("marginRate is a fraction of the selling price and must be below 1");
   }
 
-  const eur = (n: number) => Math.round(n * 100);
-
-  const goodsEur = eur(fobUsd * inputs.eurPerUsd);
-  const freightEur = eur(inputs.freightPerUnitEur);
-  const customsValueEur = goodsEur + freightEur;
+  const goodsEur = Math.round(fobUsd * inputs.eurPerUsd * 100);
+  const customsValueEur = goodsEur + lg.freightEur;
   const dutyEur = Math.round(customsValueEur * inputs.dutyRate);
-  const clearanceEur = eur(inputs.clearancePerUnitEur);
-  const inlandEur = eur(inputs.inlandPerUnitEur);
-  const landedEur = customsValueEur + dutyEur + clearanceEur + inlandEur;
+  const landedEur = customsValueEur + dutyEur + lg.clearanceEur + lg.inlandEur;
 
   const warrantyEur = Math.round(landedEur * inputs.warrantyRate);
-  const deliveryEur = eur(inputs.deliveryPerUnitEur);
-  const costOfSaleEur = landedEur + warrantyEur + deliveryEur;
+  const costOfSaleEur = landedEur + warrantyEur + lg.deliveryEur;
 
   const netEur = Math.round(costOfSaleEur / (1 - inputs.marginRate));
   const vatEur = Math.round(netEur * inputs.vatRate);
@@ -188,40 +330,60 @@ export function priceFromFob(fobUsd: number, inputs: CostInputs | null = COST_IN
 
   return {
     goodsEur,
+    freightEur: lg.freightEur,
     customsValueEur,
     dutyEur,
-    clearanceEur,
-    inlandEur,
+    clearanceEur: lg.clearanceEur,
+    inlandEur: lg.inlandEur,
     landedEur,
     warrantyEur,
-    deliveryEur,
+    deliveryEur: lg.deliveryEur,
     costOfSaleEur,
     netEur,
     vatEur,
     grossEur,
-    displayEur: retailPoint(grossEur),
+    displayEur: round(grossEur),
   };
 }
 
 /**
- * A price as Slovenian retail writes it: "6.990 €" — full stop for thousands,
- * a non-breaking space before the sign so it never wraps onto its own line.
- *
- * Whole euro only. These are four- and five-figure goods; printing
- * "6.990,00 €" adds two digits nobody reads and makes the number harder to
- * scan down a row of cards.
- *
- * Grouped by hand rather than through Intl, deliberately. CLDR gives `sl` a
- * minimum grouping of two digits, so `Intl.NumberFormat("sl-SI").format(6990)`
- * returns "6990" — correct for prose, wrong for a price tag, and wrong against
- * every other price already written in this repo. Doing it here also makes the
- * output identical in the Workers runtime, in vitest, and on a build machine
- * with a trimmed ICU, which a locale-dependent format is not.
+ * The full derivation for one item, or null when it cannot be priced —
+ * because the inputs are unset, or because a shell states no dry mass.
  */
-export function formatEur(cents: number): string {
-  const whole = Math.round(cents / 100);
-  const digits = String(Math.abs(whole)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return (whole < 0 ? "\u2212" : "") + digits + "\u00a0€";
+export function breakdownFor(
+  item: PricedItem,
+  inputs: CostInputs | null = COST_INPUTS,
+): CostBreakdown | null {
+  if (!inputs) return null;
+
+  if (item.kind === "addon") {
+    // Goods, its share of duty, warranty and margin. No freight line, no
+    // second clearance file, no second delivery crew: it travels bolted into
+    // a shell that has already paid for all three.
+    return derive(
+      item.fobUsd,
+      { freightEur: 0, clearanceEur: 0, inlandEur: 0, deliveryEur: 0 },
+      inputs,
+      (cents) => roundUpTo(cents, 500),
+    );
+  }
+
+  if (!item.envelope) return null;
+  const ft = freightTonnes(item.envelope);
+  const eur = (n: number) => Math.round(n * 100);
+  return derive(
+    item.fobUsd,
+    {
+      freightEur: eur(ft * inputs.freightPerCbmEur),
+      clearanceEur: eur(inputs.clearancePerUnitEur),
+      inlandEur: eur(ft * inputs.inlandPerCbmEur),
+      deliveryEur: eur(
+        inputs.deliveryBaseEur + item.envelope.tonnes * inputs.deliveryPerTonneEur,
+      ),
+    },
+    inputs,
+    retailPoint,
+  );
 }
 
 /**
@@ -244,15 +406,21 @@ export const PRICE_UNSET = "—";
  * prints 2.420 € beside a total built from a different figure is worse than
  * a page with no total.
  */
-export function displayPriceCents(fobUsd: number, tier: PriceTier = "unit"): number {
-  const derived = priceFromFob(fobUsd);
-  if (derived) {
-    return tier === "unit" ? derived.displayEur : roundUpTo(derived.grossEur, 500);
-  }
+export function displayPriceCents(item: PricedItem): number {
+  const derived = breakdownFor(item);
+  if (derived) return derived.displayEur;
+  // ⚠️ A SHELL WITH NO STATED MASS FALLS TO THE DASH, not to cost basis. Once
+  // COST_INPUTS is set the shop is selling; showing a cost-basis figure for
+  // the one model whose envelope is incomplete would put a number a third
+  // under the others on a live page.
+  if (COST_INPUTS !== null) return 0;
   if (PROVISIONAL_EUR_PER_USD === null) return 0;
   // Ten euro for a tub, one for an add-on: enough to look tidy, not enough to
   // look chosen.
-  return roundUpTo(Math.round(fobUsd * PROVISIONAL_EUR_PER_USD * 100), tier === "unit" ? 1000 : 100);
+  return roundUpTo(
+    Math.round(item.fobUsd * PROVISIONAL_EUR_PER_USD * 100),
+    item.kind === "unit" ? 1000 : 100,
+  );
 }
 
 /**
@@ -260,7 +428,28 @@ export function displayPriceCents(fobUsd: number, tier: PriceTier = "unit"): num
  * provisional conversion while they do not, and the dash when neither is
  * available.
  */
-export function displayPrice(fobUsd: number, tier: PriceTier = "unit"): string {
-  const cents = displayPriceCents(fobUsd, tier);
+export function displayPrice(item: PricedItem): string {
+  const cents = displayPriceCents(item);
   return cents > 0 ? formatEur(cents) : PRICE_UNSET;
+}
+
+/**
+ * A price as Slovenian retail writes it: "6.990 €" — full stop for thousands,
+ * a non-breaking space before the sign so it never wraps onto its own line.
+ *
+ * Whole euro only. These are four- and five-figure goods; printing
+ * "6.990,00 €" adds two digits nobody reads and makes the number harder to
+ * scan down a row of cards.
+ *
+ * Grouped by hand rather than through Intl, deliberately. CLDR gives `sl` a
+ * minimum grouping of two digits, so `Intl.NumberFormat("sl-SI").format(6990)`
+ * returns "6990" — correct for prose, wrong for a price tag, and wrong against
+ * every other price already written in this repo. Doing it here also makes the
+ * output identical in the Workers runtime, in vitest, and on a build machine
+ * with a trimmed ICU, which a locale-dependent format is not.
+ */
+export function formatEur(cents: number): string {
+  const whole = Math.round(cents / 100);
+  const digits = String(Math.abs(whole)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return (whole < 0 ? "\u2212" : "") + digits + "\u00a0€";
 }

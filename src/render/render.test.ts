@@ -3,6 +3,7 @@ import { SHOPS } from "../tenants";
 import { CONTENT } from "../content";
 import { THEME_CATALOG } from "../themes/catalog";
 import { handleRequest } from "../worker";
+import { catalogPricingReady } from "../catalog/pricing";
 
 /**
  * The shop's production host, read from the config rather than typed here.
@@ -95,10 +96,18 @@ describe("QA host (workers.dev)", () => {
     const path = shop.routeSlugs["/product"] + "/" + CONTENT.bazen!.pdp.slug;
     const body = await text(get(path));
     expect(body).toContain('"@type":"Product"');
-    // No Offer at all while COST_INPUTS is null: a Product carrying a price
-    // nobody set is a structured-data claim about money, which is the
-    // category of error that earns a manual action.
-    expect(body).not.toContain('"@type":"Offer"');
+    if (catalogPricingReady()) {
+      // A real Offer, and only from the same cents the page itself shows —
+      // one source, so the schema and the visible price cannot disagree.
+      expect(body).toContain('"@type":"Offer"');
+      expect(body).toContain('"priceCurrency":"EUR"');
+      expect(body).toContain('"price":"' + (CONTENT.bazen!.pdp.priceCents / 100).toFixed(2) + '"');
+    } else {
+      // No Offer at all while COST_INPUTS is null: a Product carrying a price
+      // nobody set is a structured-data claim about money, which is the
+      // category of error that earns a manual action.
+      expect(body).not.toContain('"@type":"Offer"');
+    }
     expect(body).not.toContain("AggregateRating");
     expect(body).not.toContain('"@type":"Review"');
   });

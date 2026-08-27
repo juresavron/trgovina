@@ -21,7 +21,7 @@
  * freight class, separate buying question. See docs/SUPPLIER-SWIMSPA-2026.md.
  */
 
-import { displayPrice, displayPriceCents, priceFromFob } from "./pricing";
+import { displayPrice, displayPriceCents, envelopeOf } from "./pricing";
 
 /**
  * An option the supplier prices separately from the shell.
@@ -545,7 +545,7 @@ export function metaLine(m: PolaModel): string {
 
 /** The display price for a model, or the unset dash. */
 export function modelPrice(m: PolaModel): string {
-  return displayPrice(m.fobUsd);
+  return displayPrice({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
 }
 
 /**
@@ -553,12 +553,12 @@ export function modelPrice(m: PolaModel): string {
  * €14 pillow light taken up to a shell's retail point would be priced at €90.
  */
 export function addonPrice(x: Addon): string {
-  return displayPrice(x.fobUsd, "addon");
+  return displayPrice({ kind: "addon", fobUsd: x.fobUsd });
 }
 
 /** The same figure as a number, for the buy bar's total. 0 when unpriced. */
 export function addonPriceCents(x: Addon): number {
-  return displayPriceCents(x.fobUsd, "addon");
+  return displayPriceCents({ kind: "addon", fobUsd: x.fobUsd });
 }
 
 /**
@@ -570,5 +570,5 @@ export function addonPriceCents(x: Addon): number {
  * reasoning that already keeps Review schema off these pages.
  */
 export function modelPriceCents(m: PolaModel): number {
-  return displayPriceCents(m.fobUsd);
+  return displayPriceCents({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
 }

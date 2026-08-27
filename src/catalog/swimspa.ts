@@ -38,7 +38,7 @@
  */
 
 import { type Addon, ADDON_GROUP_ORDER } from "./pola";
-import { displayPrice, displayPriceCents } from "./pricing";
+import { displayPrice, displayPriceCents, envelopeOf } from "./pricing";
 
 export { ADDON_GROUP_ORDER };
 
@@ -629,10 +629,10 @@ export function metaLine(m: SwimSpaModel): string {
 
 /** The display price for a model, or the unset dash. */
 export function modelPrice(m: SwimSpaModel): string {
-  return displayPrice(m.fobUsd);
+  return displayPrice({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
 }
 
 /** The gross price in cents for schema.org, or 0 when the inputs are unset. */
 export function modelPriceCents(m: SwimSpaModel): number {
-  return displayPriceCents(m.fobUsd);
+  return displayPriceCents({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
 }

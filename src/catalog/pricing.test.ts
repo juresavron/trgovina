@@ -5,10 +5,13 @@ import {
   PROVISIONAL_EUR_PER_USD,
   displayPriceCents,
   catalogPricingReady,
+  envelopeOf,
   formatEur,
-  priceFromFob,
+  freightTonnes,
+  breakdownFor,
   retailPoint,
   type CostInputs,
+  type UnitEnvelope,
 } from "./pricing";
 import { POLA_MODELS, modelPrice, modelPriceCents } from "./pola";
 import { SHOPS } from "../tenants";
@@ -32,20 +35,34 @@ async function renderHome(key: string): Promise<string> {
  */
 const SAMPLE: CostInputs = {
   eurPerUsd: 0.9,
-  freightPerUnitEur: 400,
+  freightPerCbmEur: 100,
   dutyRate: 0.05,
   clearancePerUnitEur: 60,
-  inlandPerUnitEur: 90,
-  deliveryPerUnitEur: 250,
+  inlandPerCbmEur: 10,
+  deliveryBaseEur: 250,
+  deliveryPerTonneEur: 200,
   warrantyRate: 0.04,
   marginRate: 0.35,
   vatRate: 0.22,
 };
 
+/** A worked envelope to match: 4.0 m³, 400 kg — measure governs. */
+const BOX: UnitEnvelope = { m3: 4, tonnes: 0.4 };
+const unit = (fobUsd: number, envelope: UnitEnvelope | null = BOX) =>
+  ({ kind: "unit", fobUsd, envelope }) as const;
+
 describe("the landed-cost calculation", () => {
-  it("produces no DERIVED price until the business supplies inputs", () => {
-    expect(priceFromFob(3000)).toBeNull();
-    expect(catalogPricingReady()).toBe(false);
+  it("derives prices exactly when the business has supplied inputs", () => {
+    // Both states of one contract: no inputs, no number — real inputs, a
+    // real number. The gate below asks the same question.
+    if (COST_INPUTS === null) {
+      expect(breakdownFor(unit(3000))).toBeNull();
+      expect(catalogPricingReady()).toBe(false);
+    } else {
+      expect(breakdownFor(unit(3000))).not.toBeNull();
+      expect(catalogPricingReady()).toBe(true);
+    }
+    expect(breakdownFor(unit(3000), null)).toBeNull();
   });
 
   /**
@@ -55,6 +72,19 @@ describe("the landed-cost calculation", () => {
    * `catalogPricingReady()` true — that is what the launch gate asks.
    */
   it("shows provisional prices without ever claiming they are retail", () => {
+    if (COST_INPUTS !== null) {
+      // Derived pricing is on; the provisional path is dormant. What must
+      // still hold: every model prices on a retail point, well above its
+      // cost-basis conversion — a derived price below the old provisional
+      // figure would mean the calculation lost money by arithmetic.
+      for (const m of POLA_MODELS) {
+        const cents = modelPriceCents(m);
+        expect(cents, m.code).toBeGreaterThan(0);
+        expect(cents % 10_000, m.code + " derived price is on a retail point").toBe(9_000);
+        expect(cents).toBeGreaterThan(m.fobUsd * COST_INPUTS.eurPerUsd * 100);
+      }
+      return;
+    }
     if (PROVISIONAL_EUR_PER_USD === null) {
       expect(modelPrice(POLA_MODELS[0]!)).toBe(PRICE_UNSET);
       return;
@@ -81,16 +111,18 @@ describe("the landed-cost calculation", () => {
       ...POLA_MODELS.flatMap((m) => m.addons.map((x) => x.fobUsd)),
     );
     expect(cheapest).toBeLessThan(20);
-    const asAddon = displayPriceCents(cheapest, "addon");
-    const asUnit = displayPriceCents(cheapest, "unit");
+    const asAddon = displayPriceCents({ kind: "addon", fobUsd: cheapest });
+    const asUnit = displayPriceCents(unit(cheapest, BOX));
     expect(asAddon).toBeLessThan(asUnit);
-    // Within a euro of the converted figure, rather than rounded to a shell.
-    expect(asAddon).toBeLessThanOrEqual(Math.ceil(cheapest * 1.0) * 100);
+    // Whatever the pricing state, a sub-$20 option must stay a two-figure
+    // price: goods, duty, warranty and margin — never a shell's logistics.
+    expect(asAddon).toBeLessThanOrEqual(100 * 100);
   });
 
   it("adds up: every intermediate is the sum of its parts", () => {
-    const p = priceFromFob(3000, SAMPLE)!;
+    const p = breakdownFor(unit(3000), SAMPLE)!;
     expect(p.goodsEur).toBe(270_000); // $3000 × 0.9 = €2700
+    // 4 m³ × €100 = €400 of freight on the customs value.
     expect(p.customsValueEur).toBe(p.goodsEur + 40_000);
     expect(p.dutyEur).toBe(Math.round(p.customsValueEur * 0.05));
     expect(p.landedEur).toBe(p.customsValueEur + p.dutyEur + p.clearanceEur + p.inlandEur);
@@ -104,13 +136,51 @@ describe("the landed-cost calculation", () => {
    * conflating them is how a catalogue ends up priced a thousand euro light.
    */
   it("treats marginRate as a share of net revenue, not a markup on cost", () => {
-    const p = priceFromFob(3000, SAMPLE)!;
+    const p = breakdownFor(unit(3000), SAMPLE)!;
     expect(p.netEur - p.costOfSaleEur).toBeCloseTo(p.netEur * 0.35, -1);
     expect(p.netEur / p.costOfSaleEur).toBeCloseTo(1 / 0.65, 3);
   });
 
   it("rejects a margin that cannot be a share of the selling price", () => {
-    expect(() => priceFromFob(3000, { ...SAMPLE, marginRate: 1 })).toThrow(RangeError);
+    expect(() => breakdownFor(unit(3000), { ...SAMPLE, marginRate: 1 })).toThrow(RangeError);
+  });
+
+  /**
+   * The reason freight went volumetric: a 5.8 m swim spa occupies six times
+   * the container slot of a 1.95 m tub, so at the same FOB it must land
+   * dearer — a flat per-unit figure cannot say that.
+   */
+  it("lands a bigger box dearer than a smaller one at the same FOB", () => {
+    const tub = breakdownFor(unit(3000, envelopeOf([1950, 1950, 820], 300)), SAMPLE)!;
+    const swim = breakdownFor(unit(3000, envelopeOf([5800, 2280, 1400], 1430)), SAMPLE)!;
+    expect(swim.freightEur).toBeGreaterThan(tub.freightEur * 4);
+    expect(swim.deliveryEur).toBeGreaterThan(tub.deliveryEur);
+    expect(swim.displayEur).toBeGreaterThan(tub.displayEur);
+  });
+
+  /**
+   * An add-on arrives inside the shell that already paid freight, clearance
+   * and the crew — the old flat stack run over a $14 pillow light priced it
+   * at four figures.
+   */
+  it("charges an add-on no second set of logistics", () => {
+    const p = breakdownFor({ kind: "addon", fobUsd: 85 }, SAMPLE)!;
+    expect(p.freightEur).toBe(0);
+    expect(p.clearanceEur).toBe(0);
+    expect(p.inlandEur).toBe(0);
+    expect(p.deliveryEur).toBe(0);
+  });
+
+  it("refuses to price a shell whose mass the supplier never stated", () => {
+    // ZR6802, ZR6803 and ZR7801 state no dry mass. Estimating one to fill a
+    // price would sell delivery against a figure nobody stands behind.
+    expect(envelopeOf([5000, 2240, 1370], undefined)).toBeNull();
+    expect(breakdownFor(unit(7160, null), SAMPLE)).toBeNull();
+  });
+
+  it("bills freight by weight or measure, whichever is greater", () => {
+    expect(freightTonnes({ m3: 4, tonnes: 0.4 })).toBe(4);
+    expect(freightTonnes({ m3: 0.5, tonnes: 1.2 })).toBe(1.2);
   });
 
   /**
