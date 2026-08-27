@@ -56,7 +56,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import { OWN_PHOTOS, decorativeImg, pick } from "./media";
+import { OWN_PHOTOS, decorativeImg, sitePhoto } from "./media";
 
 export const STUDIO_CLOSING_CSS = `
   /* ---- Geometry the source measures that tokens.ts does not carry ---- */
@@ -539,15 +539,22 @@ export function renderStudioSocial(ctx: RenderCtx): string {
   // the pool grows or shrinks. A hand-picked scatter of offsets would lose
   // that guarantee the day the pool count changes.
   //
-  // WHY 25–30 and not 0–5: the other OWN_PHOTOS slots on this page hold
-  // offsets 2 and 13 (editorial tiles), 5 (hero), 7 and 11 (statement), 9
-  // (editorial room) and 17 + review-index (testimonial discs, two reviews
-  // today). The old 0–5 run collided with 2 and 5, so the strip re-ran the
-  // hero's photograph and the "why us" band's — the same picture twice on
-  // one page reads as a stocking error. 25–30 clears every taken offset and
-  // leaves 19–24 free as growth room for the testimonial run above it.
-  const group = [25, 26, 27, 28, 29, 30]
-    .map((i) => pick(OWN_PHOTOS, ctx.shop.key, i))
+  // ⚠️ THE RUN AND ITS COLLISION LIST NOW LIVE IN admin/site-images.ts, WHERE
+  // THEY ARE CHECKED. This comment used to name the taken offsets in prose —
+  // "2 and 13 (editorial tiles), 5 (hero), 7 and 11 (statement)" — and the
+  // statement band moved to 23 and 25 without anybody updating it. The strip's
+  // first tile and the story band's large frame then both resolved offset 25:
+  // the same photograph twice on one page, which is the precise fault the
+  // list was written to prevent. A prose list of numbers cannot hold across
+  // edits; a test can, and site-images.test.ts is it.
+  // ⚠️ SIX NAMED SLOTS NOW. The run of consecutive offsets below stays as each
+  // slot's FALLBACK (admin/site-images.ts), and the note above is why the run
+  // is consecutive rather than scattered — that argument still governs what a
+  // slot falls back to when nobody has uploaded to it. What it no longer
+  // governs is what the strip SHOWS: this is the shop's own gallery band, and
+  // which six pictures are in it is the owner's call.
+  const group = ["galerija-1", "galerija-2", "galerija-3", "galerija-4", "galerija-5", "galerija-6"]
+    .map((slot) => sitePhoto(slot))
     .map(
       (m) =>
         // The wrapper is the tile — ground, radius and the trailing margin the

@@ -1304,9 +1304,12 @@ export const STUDIO_EDITORIAL_CSS = `
  *
  * `offset` keeps two tiles in one band off the same picture.
  */
-function tileShot(ctx: RenderCtx, offset: number, cls: string, sizes: string): string {
+function tileShot(ctx: RenderCtx, slot: string, cls: string, sizes: string): string {
   if (OWN_PHOTOS.length > 0) {
-    return decorativeImg(pick(OWN_PHOTOS, ctx.shop.key, offset), cls, sizes);
+    // A NAMED SLOT, not an offset — see sitePhoto. The offset each of these
+    // used is kept as its fallback in admin/site-images.ts, so the band paints
+    // exactly what it painted before until somebody uploads.
+    return decorativeImg(sitePhoto(slot), cls, sizes);
   }
   return (
     '<span class="st-imp-mass" aria-hidden="true"></span>' +
@@ -1353,7 +1356,7 @@ export function renderStudioImpact(ctx: RenderCtx): string {
 
   const quiet =
     '<div class="st-imp-tile st-imp-quiet">' +
-    tileShot(ctx, 13, "st-imp-photo", "(max-width: 860px) 92vw, 30vw") +
+    tileShot(ctx, "zakaj-mi-2", "st-imp-photo", "(max-width: 860px) 92vw, 30vw") +
     (label
       ? '<div class="st-imp-label"><h3 class="st-imp-t">' + esc(label[0]) + "</h3>" +
         '<p class="st-imp-p">' + esc(label[1]) + "</p></div>"
@@ -1374,7 +1377,7 @@ export function renderStudioImpact(ctx: RenderCtx): string {
   // so no photograph repeats because of it.
   const hero =
     '<div class="st-imp-tile st-imp-hero">' +
-    tileShot(ctx, 31, "st-imp-photo", "(max-width: 860px) 92vw, 38vw") +
+    tileShot(ctx, "zakaj-mi-3", "st-imp-photo", "(max-width: 860px) 92vw, 38vw") +
     "</div>";
 
   // §4.9's third tile carried a borrowed room interior with the stat over it.
