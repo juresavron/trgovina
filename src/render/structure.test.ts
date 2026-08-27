@@ -40,6 +40,44 @@ function audit(html: string): string[] {
     if (re.test(text)) problems.push("internal identifier in visible copy: " + token);
   }
 
+  // ⚠️ NO UNTRANSLATED ENGLISH IN VISIBLE COPY.
+  //
+  // The shop is Slovenian and every word on it is written in Slovenian —
+  // except two categories that are not translation failures, listed below.
+  // The cabinet colours were: six plain English colour words ("Light Grey",
+  // "Gold brown") rendered as a colour picker on a Slovenian product page,
+  // reported by the owner and fixed in catalog/pola.ts. Nothing found them
+  // before that, because English on a Slovenian page looks like content.
+  //
+  // The allowlist is deliberately a list of PROPER NAMES rather than a
+  // language rule, so a new English word fails here and has to be argued for
+  // by adding it — which is the point. Two things are on it:
+  //
+  //   * the acrylic manufacturer's shell-finish names, which identify a
+  //     particular marbled sheet on an order and which nothing here knows the
+  //     colour of (see CABINET_FINISHES for the full argument);
+  //   * "swim spa", which is the Slovenian trade term for the product — it is
+  //     what the category is called here, in the nav and in the collection.
+  const ALLOWED = new Set([
+    "midnight", "canyon", "silver", "white", "marble", "oyster", "opal",
+    "gypsum", "ocean", "wave", "mediterranean", "sunset", "odyssey",
+    "swim", "spa",
+  ]);
+  const ENGLISH =
+    /\b(the|and|with|for|from|your|our|this|that|have|will|colour|color|white|black|grey|gray|brown|gold|silver|light|dark|blue|green|red|marble|wave|ocean|sunset|midnight|canyon|opal|oyster|gypsum|mediterranean|odyssey|delivery|price|contact|about|home|search|cart|checkout|submit|close|open|next|page|swim|spa)\b/gi;
+  {
+    const text = body
+      .replace(/<script[\s\S]*?<\/script>/g, " ")
+      .replace(/<style[\s\S]*?<\/style>/g, " ")
+      .replace(/<[^>]*>/g, " ");
+    const found = new Set<string>();
+    for (const m of text.matchAll(ENGLISH)) {
+      const w = m[0].toLowerCase();
+      if (!ALLOWED.has(w)) found.add(m[0]);
+    }
+    for (const w of found) problems.push("untranslated English in visible copy: " + w);
+  }
+
   // Exactly one h1, and no skipped level. Heading structure IS the document
   // outline a screen-reader user navigates by.
   const levels = [...body.matchAll(/<h([1-6])\b/g)].map((m) => Number(m[1]));
