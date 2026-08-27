@@ -93,7 +93,6 @@ export const ABOUT: Page = {
           "deset minut na teden in to je vse, kar bazen zahteva od vas.",
       ],
     },
-    { kind: "figure", slot: "o-nas-2" },
     {
       kind: "facts",
       h: "Kaj pogledamo ob ogledu lokacije",
@@ -120,6 +119,7 @@ export const ABOUT: Page = {
         ],
       ],
     },
+    { kind: "figure", slot: "o-nas-2" },
     {
       kind: "prose",
       h: "Kaj pomeni servisna zgodovina",
@@ -156,8 +156,11 @@ export const ABOUT: Page = {
         ],
       ],
     },
-    { kind: "imprint" },
-    { kind: "contact", h: "Kje nas dobite" },
+    { kind: "imprint", h: "Podatki o podjetju" },
+    // omitAddress, same reasoning salon.ts spells out: the seat in Koper is
+    // an office, not a place to visit, and the imprint above already states
+    // it as Sedež — under "kje nas dobite" it read as an invitation.
+    { kind: "contact", h: "Kako nas dobite", omitAddress: true },
     {
       kind: "cta",
       h: "Poglejte ponudbo",

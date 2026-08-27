@@ -83,10 +83,15 @@ export const WITHDRAWAL: Page = {
           // until the goods are back — UNLESS the trader has offered to
           // collect them, which is exactly what the step above promises.
           // Claiming both was asserting a right the offer had signed away.
+          // ⚠️ NO "dražja oblika dostave" CARVE-OUT. Art. 13(2) CRD lets a trader
+          // keep the difference over its LEAST EXPENSIVE STANDARD delivery —
+          // a baseline this shop does not have, because delivery is quoted
+          // per address in the written offer. A deduction measured against a
+          // tier that does not exist is indeterminate against the consumer,
+          // so the refund covers the delivery cost actually paid, full stop.
           "Najkasneje v 14 dneh od prejema obvestila o odstopu, z istim plačilnim sredstvom, " +
             "kot ste plačali, in brez dodatnih stroškov za vas. Vrnemo tudi stroške dostave, " +
-            "ki ste jih plačali; če ste izbrali dražjo obliko dostave od naše običajne, " +
-            "razlike ne vrnemo.",
+            "ki ste jih plačali.",
         ],
       ],
     },
@@ -110,7 +115,7 @@ export const WITHDRAWAL: Page = {
       kind: "facts",
       h: "Obrazec za odstop",
       rows: [
-        ["Naslovnik", "Prodajalec, naveden med podatki o podjetju spodaj"],
+        ["Naslovnik", "Prodajalec, naveden med podatki o prodajalcu spodaj"],
         ["Izjava", "S tem sporočam, da odstopam od pogodbe za nakup naslednjega blaga"],
         ["Navedite", "Naročeno dne / prejeto dne · Ime in priimek potrošnika · Naslov potrošnika"],
         ["Podpis", "Podpis potrošnika (samo, če se obrazec pošlje na papirju) in datum"],

@@ -73,7 +73,7 @@ export const DELIVERY: Page = {
           "lokacijo, povemo ob ogledu.",
         "Električni priklop po navodilih, ki jih dobite v drugem koraku, in dostop do vode za " +
           "prvo polnjenje. Priprava podlage in elektroinštalacija sta na vaši strani; " +
-            "kaj točno je treba pripraviti, poveste po ogledu.",
+            "kaj točno je treba pripraviti, povemo po ogledu.",
       ],
     },
     {

@@ -50,10 +50,51 @@ describe("parseSource", () => {
     ]);
   });
 
-  it("drops a question nobody answered", () => {
+  it("returns a question nobody answered as visible prose, never as Q&A", () => {
     // An empty answer would go into the FAQ structured data, which is a
-    // violation rather than an ugly page.
-    expect(parseSource("V: Brez odgovora")).toEqual([]);
+    // violation rather than an ugly page — but silently DELETING the writer's
+    // question broke the module's own promise that they see their text on the
+    // page. It comes back as the prose it will read as, marker included, for
+    // the writer to answer or remove.
+    expect(parseSource("V: Brez odgovora")).toEqual([
+      { kind: "prose", p: ["V: Brez odgovora"] },
+    ]);
+  });
+
+  it("continues an answer across a second O: line and a bare wrap", () => {
+    // Both used to fall through to prose: the split block published "O: …",
+    // marker included, as the page's first paragraph, and the FAQ structured
+    // data carried only the first physical line as the answer.
+    expect(parseSource("V: Koliko?\nO: Prvi del.\nO: Drugi del.")).toEqual([
+      { kind: "qa", items: [["Koliko?", "Prvi del. Drugi del."]] },
+    ]);
+    expect(parseSource("V: q1\nO: a1 prvi del\nin drugi del\nV: q2\nO: a2")).toEqual([
+      {
+        kind: "qa",
+        items: [
+          ["q1", "a1 prvi del in drugi del"],
+          ["q2", "a2"],
+        ],
+      },
+    ]);
+    // A BLANK line ends the continuation — a deliberately separated
+    // paragraph must not be glued into the answer above it.
+    expect(parseSource("V: q\nO: a\n\nNov odstavek.")).toEqual([
+      { kind: "qa", items: [["q", "a"]] },
+      { kind: "prose", p: ["Nov odstavek."] },
+    ]);
+  });
+
+  it("does not read an en dash as a bullet", () => {
+    expect(parseSource("– kot pomišljaj – se besedilo nadaljuje")).toEqual([
+      { kind: "prose", p: ["– kot pomišljaj – se besedilo nadaljuje"] },
+    ]);
+  });
+
+  it("accepts the enquiry deep link with a query", () => {
+    expect(parseSource("-> /kontakt?model=veliki-230 Povprašajte")).toEqual([
+      { kind: "links", items: [["Povprašajte", "/kontakt?model=veliki-230"]] },
+    ]);
   });
 
   it("does not read a sentence starting with V as a question", () => {
@@ -157,8 +198,15 @@ describe("excerptFrom", () => {
     expect(out).not.toMatch(/bese…$/);
   });
 
-  it("is empty when there is no prose to take", () => {
-    expect(excerptFrom("- samo alineja")).toBe("");
+  it("falls back to the first list item or Q&A pair when there is no prose", () => {
+    // Prose-only scanning gave every all-list and all-Q&A post the blog's one
+    // generic meta description; the first block with text now describes it.
+    expect(excerptFrom("- samo alineja")).toBe("samo alineja");
+    expect(excerptFrom("V: Koliko?\nO: Toliko.")).toBe("Koliko? Toliko.");
+  });
+
+  it("describes a list-opening post by its opening, not its middle", () => {
+    expect(excerptFrom("- prva\n- druga\n\nNato odstavek.")).toBe("prva");
   });
 });
 

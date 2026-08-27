@@ -119,4 +119,44 @@ describe("stepping back", () => {
     // answer" and send the visitor somewhere they never were.
     expect(previousAnswers({ namen: "plavanje", prostor: "vec" })).toEqual({});
   });
+
+  it("terminates on a value the step does not offer", async () => {
+    // ⚠️ REGRESSION: ?namen=x once looped forever — nextStep re-asks "namen"
+    // for an unrecognised value, the replay re-applied "x", and the walk
+    // never advanced; a visitor could kill the isolate from the address bar.
+    // The walk now ends at the first value the step's choices do not list.
+    const { previousAnswers, walk } = await import("./finder");
+    expect(previousAnswers({ namen: "x" })).toBeNull();
+    expect(previousAnswers({ namen: "sprostitev", osebe: "x" }))
+      .toEqual({});
+    expect(walk({ namen: "plavanje", masaza: "x" }).seen).toEqual({ namen: "plavanje" });
+  });
+});
+
+describe("a malformed finder URL", () => {
+  const get = (path: string) =>
+    handleRequest(
+      new Request("https://trgovina.worldfans.workers.dev" + path, {
+        headers: { host: "trgovina.worldfans.workers.dev" },
+      }),
+    );
+
+  it("renders the entry question, with its catalogue, for nonsense answers", async () => {
+    for (const u of ["/izbira?namen=x", "/izbira?osebe=druzina", "/izbira?namen=sprostitev&osebe=x"]) {
+      const r = get(u);
+      expect(r.status).toBe(200);
+      const html = await r.text();
+      // A stray or nonsense param must not hide the entry state: the lead,
+      // the six-model catalogue and the trust notes are the page's whole
+      // crawlable value, and `answered` once counted raw query entries.
+      const entry = u === "/izbira?namen=sprostitev&osebe=x";
+      if (!entry) {
+        expect(html).toContain("Kaj naj bazen zna?");
+        expect(html).toContain("preskočite vprašanja");
+      } else {
+        // Valid namen survives; only the nonsense osebe is dropped.
+        expect(html).toContain("Koliko vas bo v njem?");
+      }
+    }
+  });
 });

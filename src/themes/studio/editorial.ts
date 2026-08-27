@@ -210,6 +210,21 @@ export const STUDIO_EDITORIAL_CSS = `
     color: var(--ink-mute);
     text-wrap: balance;
   }
+  :root[data-theme="studio"] .st-imp-more {
+    margin: 14px 0 0;
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+  }
+  :root[data-theme="studio"] .st-imp-more a {
+    color: var(--ink);
+    text-underline-offset: 3px;
+    /* A lone link is a target, not a word in a sentence: the padding grows
+     * the hit area past the 24px floor and the negative margin hands the
+     * space back to the layout. */
+    display: inline-block;
+    padding-block: 12px;
+    margin-block: -12px;
+  }
   /* One claim, one line: breaks belong at the separators only. inline-block,
    * NOT white-space: nowrap — a chip that fits its line wraps as one unit
    * either way, but when a claim alone is wider than a very narrow viewport
@@ -1277,12 +1292,13 @@ function tileCaption(ctx: RenderCtx, fallback: string): string {
 export function renderStudioImpact(ctx: RenderCtx): string {
   const steps = ctx.content.moat.steps;
   const label = steps[0];
-  // The LAST stat, not the first: the stat row a screen below opens with
-  // stats[0], and the tile showing the same figure made the home page repeat
-  // itself within one scroll. The last stat is the delivery-mass figure —
-  // which is also the claim this whole band argues ("Premaknemo ga mi"), so
-  // the tile now evidences its own band instead of echoing the next one.
-  const stat = ctx.content.stats[ctx.content.stats.length - 1] ?? ctx.content.stats[0];
+  // stats[1], and the reason is what the NEXT band shows: the stats row
+  // prints ALL FOUR figures, so any figure here repeats — the choice is only
+  // which repetition sits closest. The last stat is the row's neighbouring
+  // cell (back-to-back with this tile); the second — the jet count — is the
+  // one figure whose row-mate sits farthest from the tile, and it evidences
+  // the same band ("zakaj pri nas") from the product side.
+  const stat = ctx.content.stats[1] ?? ctx.content.stats[0];
   // Three short proof points read as one muted line under the head; more than
   // three and the 21px sub starts competing with the tiles. Each claim is its
   // own inline-block chip so the line breaks only at the gaps BETWEEN chips
@@ -1369,6 +1385,10 @@ export function renderStudioImpact(ctx: RenderCtx): string {
     '<div class="st-imp-head">' +
     '<h2 class="st-imp-h">Zakaj kupci izberejo ' + esc(ctx.shop.keyword.accusative) + "</h2>" +
     (sub ? '<p class="st-imp-sub">' + sub + "</p>" : "") +
+    // The band made three claims about delivery and service and offered no
+    // way to read more — /dostava-in-montaza is where all three live.
+    '<p class="st-imp-more"><a href="' + esc(ctx.shop.routeSlugs["/delivery"] + ctx.q) +
+    '">Kako potekata dostava in zagon</a></p>' +
     "</div>" +
     '<div class="st-imp-row">' + quiet + hero + room + "</div>" +
     "</div></section>"
@@ -1606,7 +1626,9 @@ export function renderStudioGuides(ctx: RenderCtx): string {
           decorativeImg(
             sitePhoto("vodnik-" + String(i + 1)),
             "st-gd-img",
-            "(max-width: 809px) 92vw, 30vw",
+            // 860, the row's own stacking breakpoint (.st-gd-row) — 809 told
+            // the browser 30vw exactly where the card is 92vw.
+            "(max-width: 860px) 92vw, 30vw",
           ) +
           // ONE scrim. There were two identical spans here, which quietly
           // doubled the gradient and made the declared stops a fiction; the

@@ -333,7 +333,7 @@ const PAGE_IMAGES: readonly SiteImage[] = [
     key: "site/o-nas-2.webp",
     group: PAGES,
     label: "O nas — druga slika",
-    note: "Slika med odstavki na strani »O nas«, pod »Kako delamo«. Široka " +
+    note: "Slika na strani »O nas«, pod tabelo »Kaj pogledamo ob ogledu lokacije«. Široka " +
       "(razmerje 5 : 2), najbolje 1800 × 720 px." + HOME_NOTE_TAIL,
     fallbackOffset: 27,
     ratio: [5, 2],
@@ -343,7 +343,7 @@ const PAGE_IMAGES: readonly SiteImage[] = [
     key: "site/ogled-lokacije.webp",
     group: PAGES,
     label: "Ogled lokacije — slika",
-    note: "Slika na strani »Ogled lokacije«, pod koraki. Široka (razmerje " +
+    note: "Slika na strani »Ogled lokacije«, pod »Kaj pripravite za ogled«. Široka (razmerje " +
       "5 : 2), najbolje 1800 × 720 px." + HOME_NOTE_TAIL,
     fallbackOffset: 29,
     ratio: [5, 2],

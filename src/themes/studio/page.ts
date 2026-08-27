@@ -315,7 +315,10 @@ export const STUDIO_PAGE_CSS = `
    * arrive (CLS 0 whatever the file), cover crops from the centre, and the
    * radius is the card radius the rest of the theme uses on media. Wider than
    * tall on every tier — an editorial pause between sections, not a poster —
-   * and a touch taller on phones, where 5:2 of a 92vw column is a letterbox. */
+   * and a touch taller on phones, where 5:2 of a 92vw column is a letterbox.
+   * --r-media, the radius every other photograph in the theme wears; --r-lg
+   * stood here briefly and gave these four bands corners five times rounder
+   * than any image on the site (it is the PANEL radius — see .st-page-cta). */
   :root[data-theme="studio"] .st-page-fig {
     margin: 0;
   }
@@ -323,7 +326,7 @@ export const STUDIO_PAGE_CSS = `
     inline-size: 100%;
     aspect-ratio: 5 / 2;
     object-fit: cover;
-    border-radius: var(--r-lg);
+    border-radius: var(--r-media);
     display: block;
   }
   @media (max-width: 809px) {
@@ -1171,7 +1174,7 @@ function list(b: Extract<Block, { kind: "list" }>, id?: string): string {
  * A <nav> with an accessible name, so a screen reader can skip the row in one
  * move and knows what it is skipping.
  */
-function links(b: Extract<Block, { kind: "links" }>, id?: string): string {
+function links(ctx: RenderCtx, b: Extract<Block, { kind: "links" }>, id?: string): string {
   if (b.items.length === 0) return "";
   const head = b.h ?? "Oglejte si";
   const hid = (id ?? "st-links") + "-h";
@@ -1186,7 +1189,9 @@ function links(b: Extract<Block, { kind: "links" }>, id?: string): string {
     b.items
       .map(
         ([label, href]) =>
-          '<li><a href="' + esc(href) + '">' + esc(label) + "</a></li>",
+          // ctx.q, like cta() and onward(): the QA/theme override query
+          // was dropped through every link of a links block.
+          '<li><a href="' + esc(href) + esc(ctx.q) + '">' + esc(label) + "</a></li>",
       )
       .join("") +
     "</ul></nav>"
@@ -1447,7 +1452,11 @@ function isWide(b: Block): boolean {
 function figure(b: Extract<Block, { kind: "figure" }>): string {
   return (
     '<figure class="st-page-fig">' +
-    // The band is ~880px in the solo column; on the railed grid narrower.
+    // NOTE the sizes hint is currently INERT: sitePhoto() carries no width
+    // ladder, so decorativeImg emits neither srcset nor sizes and every
+    // device gets the one stored file (capped at 1920 by the panel). Kept
+    // for the day the slot is re-uploaded through /admin, which writes the
+    // ladder and makes it live.
     decorativeImg(
       sitePhoto(b.slot),
       "st-page-fig-img",
@@ -1469,7 +1478,7 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
         : b.kind === "list"
           ? list(b, id)
           : b.kind === "links"
-            ? links(b, id)
+            ? links(ctx, b, id)
             : b.kind === "compare"
               ? compare(b, id)
               : b.kind === "qa"

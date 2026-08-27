@@ -221,9 +221,13 @@ export function handleRequest(request: Request): Response {
   const theme: ThemeKey = shop.design.theme;
   const q = "";
 
-  // Canonicalization: lowercase path, no trailing slash (root excepted).
+  // Canonicalization: lowercase path, collapsed slashes, no trailing slash
+  // (root excepted). Interior runs too — "//trgovina" 404'd where one 308
+  // was the honest answer, and a doubled slash is the classic pasted-URL
+  // artefact.
   let path = url.pathname;
-  const canonicalPath = (path === "/" ? "/" : path.replace(/\/+$/, "")).toLowerCase() || "/";
+  const canonicalPath =
+    (path === "/" ? "/" : path.replace(/\/{2,}/g, "/").replace(/\/+$/, "")).toLowerCase() || "/";
   if (canonicalPath !== path) {
     // Response.redirect() cannot carry headers, and a 308 is heuristically
     // cacheable by shared caches — so the redirect states its own policy
@@ -231,7 +235,7 @@ export function handleRequest(request: Request): Response {
     return new Response(null, {
       status: 308,
       headers: {
-        location: url.origin + canonicalPath + (q || url.search ? url.search : ""),
+        location: url.origin + canonicalPath + url.search,
         ...(dev
           ? { "x-robots-tag": "noindex, nofollow", "cache-control": "no-store" }
           : { "cache-control": "public, max-age=0, s-maxage=300" }),
@@ -620,9 +624,18 @@ export default {
       return handleRequest(request);
     } catch (err) {
       console.error(err);
+      // The one response built outside handleRequest still states the same
+      // policy as every response inside it: never cached, never indexed,
+      // never re-interpreted. A 500 with no cache-control is a 500 a shared
+      // cache may keep.
       return new Response("Napaka na strežniku.", {
         status: 500,
-        headers: { "content-type": "text/plain; charset=utf-8" },
+        headers: {
+          "content-type": "text/plain; charset=utf-8",
+          "cache-control": "no-store",
+          "x-robots-tag": "noindex",
+          "x-content-type-options": "nosniff",
+        },
       });
     }
   },

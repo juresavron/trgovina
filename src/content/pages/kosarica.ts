@@ -57,6 +57,11 @@ export const CHECKOUT: Page = {
     "Spletno plačilo še ni vzpostavljeno. Naročilo sklenemo s pisno ponudbo po telefonu ali " +
     "e-pošti — v njej so končna cena z DDV, obseg montaže in rok.",
   noindex: true,
+  // legal: the page states HOW A CONTRACT FORMS, which is a statement of
+  // rights and obligations like any in pogoji.ts — it belongs under the same
+  // identity gate, and a page describing the seller's offer should name the
+  // seller (the imprint below).
+  legal: true,
   blocks: [
     {
       kind: "steps",
@@ -80,12 +85,13 @@ export const CHECKOUT: Page = {
       ],
     },
     { kind: "contact", h: "Kako naročite" },
+    { kind: "imprint", h: "Prodajalec" },
     {
       kind: "cta",
-      h: "Nazaj v trgovino",
-      p: "Modeli, mere in specifikacije.",
-      label: "V trgovino",
-      href: "/trgovina",
+      h: "Celotni pogoji",
+      p: "Kako nastane pogodba, kaj cena vključuje in vaše pravice pri odstopu.",
+      label: "Pogoji poslovanja",
+      href: "/pogoji-poslovanja",
     },
   ],
 };

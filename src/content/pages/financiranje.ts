@@ -56,9 +56,14 @@ export const FINANCING: Page = {
             "zagon. Ta znesek je podlaga za izračun obrokov.",
         ],
         [
-          "Pripravimo izračun",
-          "Za izbrani znesek in želeno dobo odplačevanja dobite konkreten izračun obroka, " +
-            "skupaj z vsemi stroški financiranja.",
+          "Izračun pri ponudniku",
+          // The page's own thesis — we price the tub, they price the money —
+          // and step 2 promised the opposite: that WE produce the instalment
+          // and every financing cost. The facts table below puts obrok,
+          // obrestna mera and EOM with the lender, where consumer-credit law
+          // puts them; this step now says who computes what.
+          "Znesek iz ponudbe posredujemo ponudniku financiranja; za želeno dobo " +
+            "odplačevanja pri njem dobite izračun obroka z vsemi stroški financiranja.",
         ],
         [
           "Odobritev",
@@ -118,9 +123,10 @@ export const FINANCING: Page = {
       kind: "prose",
       h: "Kaj vse plača lastnik",
       p: [
-        "Obrok ni celoten strošek nakupa. Poleg cene modela s konfiguracijo sta tu še dostava, " +
+        "Obrok ni celoten strošek nakupa. Poleg cene modela s konfiguracijo so tu še dostava, " +
           "ki je odvisna od naslova in dostopa, ter priprava podlage in elektroinštalacija na " +
-          "vaši strani — teh dveh v ceni bazena ni. Obroke je zato smiselno računati od zneska " +
+          "vaši strani — dostava se obračuna po ponudbi, priprava podlage in elektroinštalacija " +
+          "pa v ceni bazena nista. Obroke je zato smiselno računati od zneska " +
           "v pisni ponudbi in ne od cene, zapisane ob modelu.",
         "Potem so tu stroški obratovanja: elektrika za ogrevanje in filtracijo, sredstva za " +
           "vodo in filtri. Koliko to znese, je odvisno od temperature, ki jo držite, pogostosti " +
@@ -171,7 +177,7 @@ export const FINANCING: Page = {
     {
       kind: "cta",
       h: "Želite izračun?",
-      p: "Povejte model in želeno dobo odplačevanja, izračun pripravimo mi.",
+      p: "Povejte model in želeno dobo odplačevanja; posredujemo vam izračun ponudnika financiranja.",
       label: "Kontakt",
       href: "/kontakt",
     },

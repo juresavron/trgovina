@@ -62,7 +62,10 @@ export type PostCard = Pick<
 >;
 
 const HEADING = /^##\s+(.+)$/;
-const BULLET = /^[-*•–]\s+(.+)$/;
+// No en dash in the bullet class: "– kot pomišljaj –" opens ordinary prose
+// far more often than a list, and a one-item list out of a paragraph's first
+// line is the wrong reading of both.
+const BULLET = /^[-*•]\s+(.+)$/;
 const ASK = /^[VQ]:\s*(.+)$/;
 const ANSWER = /^[OA]:\s*(.+)$/;
 const LINK = /^->\s*(\S+)\s+(.+)$/;
@@ -84,7 +87,14 @@ const LINK = /^->\s*(\S+)\s+(.+)$/;
  * rather than losing it silently.
  */
 export function isInternalPath(href: string): boolean {
-  return /^\/[a-z0-9/-]*$/.test(href) && !href.startsWith("//") && !href.includes("..");
+  // The optional query tail is the enquiry deep link ("/kontakt?model=x") —
+  // the same URL the finder's own result card emits. Letters, digits, =, &,
+  // _ and - only: no colon survives anywhere, so no scheme ever does.
+  return (
+    /^\/[a-z0-9/-]*(\?[a-z0-9=&_-]*)?$/.test(href) &&
+    !href.startsWith("//") &&
+    !href.includes("..")
+  );
 }
 
 /**
@@ -133,10 +143,22 @@ export function parseSource(src: string): Block[] {
     } else if (mode === "qa") {
       // A question nobody answered is not a Q&A entry, and emitting one would
       // put an empty answer into the FAQ structured data — which is a
-      // structured-data violation, not just an ugly page.
+      // structured-data violation, not just an ugly page. But DELETED is not
+      // the answer either: the module's own contract is that the writer sees
+      // their text on the page rather than losing it silently, so the
+      // unanswered question comes back as the prose it will read as — marker
+      // and all — for the writer to answer or remove.
       const answered = pairs.filter(([, a]) => a !== "");
+      const unanswered = pairs.filter(([, a]) => a === "").map(([q]) => "V: " + q);
       if (answered.length > 0) out.push({ kind: "qa", ...head, items: answered });
-      else {
+      if (unanswered.length > 0) {
+        out.push({
+          kind: "prose",
+          ...(answered.length === 0 ? head : {}),
+          p: unanswered,
+        });
+      }
+      if (answered.length === 0 && unanswered.length === 0) {
         paragraphs = [];
         items = [];
         pairs = [];
@@ -168,12 +190,20 @@ export function parseSource(src: string): Block[] {
     }
   };
 
+  // Whether at least one blank line stood between this line and the last
+  // content line — the continuation rules below must not glue a NEW
+  // paragraph the writer separated deliberately onto a Q&A answer.
+  let afterBlank = false;
+  let sawBlank = false;
   for (const raw of src.split(/\r?\n/)) {
     const line = raw.trim();
     if (line === "") {
       endParagraph();
+      sawBlank = true;
       continue;
     }
+    afterBlank = sawBlank;
+    sawBlank = false;
 
     const h = HEADING.exec(line);
     if (h) {
@@ -186,6 +216,13 @@ export function parseSource(src: string): Block[] {
     const a = ANSWER.exec(line);
     if (a && mode === "qa" && pairs.length > 0 && pairs[pairs.length - 1]![1] === "") {
       pairs[pairs.length - 1]![1] = a[1]!.trim();
+      continue;
+    }
+    // A SECOND "O:" line — an answer written in two marked parts. It used to
+    // fall through to prose, splitting the block and publishing "O: …",
+    // marker included, as the page's first paragraph and meta description.
+    if (a && mode === "qa" && !afterBlank && pairs.length > 0) {
+      pairs[pairs.length - 1]![1] += " " + a[1]!.trim();
       continue;
     }
 
@@ -219,6 +256,15 @@ export function parseSource(src: string): Block[] {
       continue;
     }
 
+    // An unmarked line straight under an answered "O:" is the answer's own
+    // wrap, not a new paragraph: flushing here split one Q&A block into two
+    // accordions with a loose paragraph between them, and the FAQ structured
+    // data published only the first physical line as the answer.
+    if (mode === "qa" && !afterBlank && pairs.length > 0 && pairs[pairs.length - 1]![1] !== "") {
+      pairs[pairs.length - 1]![1] += " " + line;
+      continue;
+    }
+
     if (mode !== "prose") {
       flush();
       mode = "prose";
@@ -241,10 +287,18 @@ export function parseSource(src: string): Block[] {
  * "## Zakaj".
  */
 export function excerptFrom(src: string, max = 155): string {
-  const first = parseSource(src).find(
-    (b): b is Extract<Block, { kind: "prose" }> => b.kind === "prose" && b.p.length > 0,
-  );
-  const text = first?.p[0] ?? "";
+  // The first block that HAS text, whatever its kind. Prose-only scanning
+  // described a list-opening post by its middle paragraph, and a post that
+  // was all list or all Q&A by the blog's one generic fallback line — the
+  // same description on every such post.
+  let text = "";
+  for (const b of parseSource(src)) {
+    if (b.kind === "prose" && b.p.length > 0) text = b.p[0]!;
+    else if (b.kind === "list" && b.items.length > 0) text = b.items[0]!;
+    else if (b.kind === "qa" && b.items.length > 0)
+      text = b.items[0]![0] + " " + b.items[0]![1];
+    if (text) break;
+  }
   if (text.length <= max) return text;
   const cut = text.slice(0, max);
   const space = cut.lastIndexOf(" ");
