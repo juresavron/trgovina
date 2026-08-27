@@ -68,13 +68,19 @@ code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 /* ---- chrome ---------------------------------------------------------- */
 
 .bar{position:sticky;top:0;z-index:9;background:var(--ink);color:#fff}
+/* The account and the sign-out travel together: on a narrow panel they drop
+   to a second line as a pair rather than the brand wrapping mid-phrase, which
+   is what "Nadzorna / plošča" was doing at 390. */
 .bar .in{max-width:1060px;margin:0 auto;padding:9px 20px;min-height:58px;
-  display:flex;align-items:center;gap:14px}
-.home{display:inline-flex;align-items:center;gap:10px;color:#fff;
-  text-decoration:none;font-weight:600;letter-spacing:.005em}
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px}
+/* 44px because it is a target like any other (WCAG 2.2 SC 2.5.8) — it was
+   23px tall, the only control in the panel under the floor. */
+.home{display:inline-flex;align-items:center;gap:10px;min-height:44px;
+  color:#fff;text-decoration:none;font-weight:600;letter-spacing:.005em;
+  white-space:nowrap}
 .mark{width:22px;height:22px;display:block;flex:none}
-.sp{margin-left:auto}
-.who{color:var(--on-dark-mute);font-size:13px;max-width:22ch;
+.acct{display:flex;align-items:center;gap:12px;margin-left:auto;min-width:0}
+.who{color:var(--on-dark-mute);font-size:13px;max-width:26ch;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .out{font:inherit;font-size:14px;min-height:36px;padding:7px 13px;cursor:pointer;
   background:transparent;color:#fff;border:1px solid var(--on-dark-mute);
@@ -92,10 +98,13 @@ h2{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
 .lede{color:var(--mute);margin:7px 0 0;max-width:60ch}
 /* A section heading with a control on its line. The h2's own margins move to
    the row, so the heading keeps its rhythm whether the control is there or
-   not — and it is only there when the model has photographs to clear. */
-.head-row{display:flex;align-items:center;justify-content:space-between;
-  gap:16px;flex-wrap:wrap;margin:38px 0 12px}
-.head-row h2{margin:0}
+   not — and it is only there when the model has photographs to clear.
+   ⚠️ NOT space-between: with two controls that put one of them in the middle
+   of the row, reading as an accident rather than as a pair. The heading takes
+   the slack and the controls stay together at the end. */
+.head-row{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;
+  margin:38px 0 12px}
+.head-row h2{margin:0 auto 0 0}
 .clear-all,.arrange{margin:0}
 /* Both controls share the heading's line; on a narrow panel they wrap
    together rather than one dropping below the other. */
@@ -110,7 +119,14 @@ h2{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
 .card{background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-card);padding:18px}
 .muted{color:var(--mute);font-size:13px}
-.hint{color:var(--mute);font-size:13px;line-height:1.45;margin:7px 0 0}
+/* ⚠️ EVERY RUNNING PARAGRAPH IS CAPPED, and measured rather than guessed at.
+   The panel's column is 1020px wide; a 13px hint spanning it runs to 120–125
+   characters a line, which is half again the 85 an eye tracks back from
+   reliably. 56ch lands them at 65–75. The cap is on the paragraph and not on
+   the column because the CARDS want the full width — a photograph row uses
+   every pixel of it. */
+.hint{color:var(--mute);font-size:13px;line-height:1.45;margin:7px 0 0;
+  max-width:56ch}
 
 .note{display:block;padding:12px 14px;margin:0 0 20px;font-size:14px;
   border:1px solid;border-radius:var(--r-ctrl)}
@@ -265,7 +281,16 @@ function doc(title: string, body: string): string {
  *   how you notice you are on a colleague's session before you delete their
  *   photographs.
  */
-function shell(title: string, body: string, who: string): string {
+/*
+ * ⚠️ EXPORTED SO A SECOND ADMIN PAGE CAN WEAR THE SAME CHROME.
+ *
+ * The blog editor lives in its own module — this file is already long and a
+ * post editor has nothing to do with photographs — but it must not draw its
+ * own bar, its own logout button and its own account label. Two admin pages
+ * whose chrome disagrees is how an operator stops trusting which session they
+ * are in, which is the exact thing the account label was added to prevent.
+ */
+export function shell(title: string, body: string, who: string): string {
   return doc(
     title,
     '<header class="bar"><div class="in">' +
