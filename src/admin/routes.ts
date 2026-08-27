@@ -607,6 +607,8 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         "/media/" + slot.key + "?v=" + String(Date.now()),
         n,
         admin.email,
+        slot.ratio,
+        slot.maxWidth,
       ),
     );
   }
