@@ -913,6 +913,52 @@ export const bazenContent: ShopContent = {
       anchorLabel: "Trije modeli",
     },
   ],
+  // ⚠️ EVERY FIGURE BELOW IS THE CATALOGUE'S, and the three that carry the
+  // argument are the ones the hub's own grid prints: 5·2 seats on the 230
+  // against 6·1 on the smaller 210, 94 jets at 7.360 kg against 38 at 8.490,
+  // and jetPumps' horsepower, which is 3 on all six models while the COUNT
+  // runs 1, 1, 2, 3, 3, 5. Nothing here is a manufacturer claim about
+  // performance — a pump count and a jet count are facts, and the sentence
+  // joining them says only that the first bounds the second.
+  //
+  // The price paragraph is a VERBATIM restatement of pogoji.ts's "Cene"
+  // section, deliberately: the price composition previously differed between
+  // the terms and the product pages, which is a misleading price indication
+  // whichever version is right. A third surface is a third chance to drift,
+  // so this one repeats the words rather than paraphrasing them.
+  hubOutro: [
+    {
+      h: "Kako brati te številke",
+      p: [
+        "Število šob ni ocena kakovosti. Šobo je treba pognati, in to delajo črpalke: pri " +
+          "vseh šestih modelih so 3 KM, razlikuje pa se, koliko jih je — od ene do petih. " +
+          "Zato ob številu šob poglejte število črpalk, saj to pove, koliko šob dela pod " +
+          "polnim pritiskom hkrati.",
+        "Število mest tudi ni isto kot velikost. BAZEN 230 je večji od BAZEN 210 in ima eno " +
+          "mesto manj, ker ima dva ležalnika namesto enega — ležalnik zasede prostor dveh " +
+          "sedežev. Če radi ležite, je manj mest pravzaprav tisto, kar iščete.",
+        "Teža, ki šteje, je teža napolnjenega bazena, ne praznega. Prazen model je nekaj " +
+          "sto kilogramov in ga je mogoče prestaviti; poln je od 1.500 do 8.490 kilogramov " +
+          "in to je številka, proti kateri mora zdržati podlaga. Največji swim spa v ponudbi " +
+          "tudi ni tisti z največ šobami: SWIM 580 MAXI ima 94 šob pri 7.360 kilogramih, " +
+          "SWIM 580 HIDRO pa 38 pri 8.490.",
+      ],
+    },
+    {
+      h: "Kaj sledi, ko model izberete",
+      p: [
+        "Vrstni red je obrnjen od pričakovanega: najprej prostor, dostop in podlaga, šele " +
+          "nato konfiguracija. Zato pridemo na vaš naslov pogledat, kam bi bazen postavili, " +
+          "preden karkoli kupite — ogled je brezplačen po vsej Sloveniji in vas k ničemur ne " +
+          "zavezuje. Če se izkaže, da izbrani model pri vas ni izvedljiv, vam to povemo.",
+        "Cene modelov na tej strani so v evrih in vključujejo DDV. Vključujejo zagon, " +
+          "umeritev in predajo; ogled lokacije ni zaračunan v ceni. Dostava z ekipo in " +
+          "opremo za prenos se obračuna po ponudbi, ker je odvisna od lokacije in dostopa. " +
+          "Cene ne vključujejo priprave podlage, gradbenih del in elektroinštalacije na " +
+          "strani kupca.",
+      ],
+    },
+  ],
   pdp: pdpFor(flagship),
   // Both families' pages. The router matches any slug in here, so the swim
   // spa cards link at real pages rather than at a 404.

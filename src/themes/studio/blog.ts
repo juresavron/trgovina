@@ -124,6 +124,23 @@ export const STUDIO_BLOG_CSS = `
     color: var(--ink-body);
     max-inline-size: 34rem;
   }
+  :root[data-theme="studio"] .st-blog-empty a {
+    color: var(--ink);
+    text-underline-offset: 3px;
+  }
+  /* The index's standing note, above the cards. */
+  :root[data-theme="studio"] .st-blog-note {
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+    max-inline-size: 34rem;
+    margin: 0 0 clamp(28px, 3vw, 44px);
+  }
+  :root[data-theme="studio"] .st-blog-note a {
+    color: var(--ink);
+    text-underline-offset: 3px;
+  }
 
   /* ---- one post ------------------------------------------------------- */
 
@@ -257,9 +274,38 @@ export function renderStudioBlogIndex(
 ): string {
   const body =
     posts.length === 0
-      ? '<p class="st-blog-empty">Prvi zapis pripravljamo. Do takrat vam na vsako ' +
-        "vprašanje odgovorimo po telefonu ali e-pošti.</p>"
-      : '<ul class="st-blog-list">' +
+      ? // ⚠️ THE EMPTY STATE IS NOT ONLY THE PRE-LAUNCH STATE. The index is
+        // rendered from the database, and blog/routes.ts deliberately serves
+        // an empty list rather than a 500 when that database is unreachable —
+        // so this is also what a reader sees during an outage. A single
+        // apologetic sentence turns that minute into a dead end for both the
+        // reader and the crawler, which is why the paragraph carries the
+        // pages that answer the same questions and do not need a database.
+        '<p class="st-blog-empty">Prvi zapis pripravljamo. Do takrat vam na vsako ' +
+        "vprašanje odgovorimo po telefonu ali e-pošti — v " +
+        '<a href="' + esc(ctx.shop.routeSlugs["/guides"] + ctx.q) + '">vodnikih</a> ' +
+        "pa je že zdaj zapisano, kaj je treba pripraviti pred dostavo, kako " +
+        "poteka priklop in koliko prostora model zares potrebuje. Če se " +
+        "odločate med masažnim bazenom in swim spa bazenom, je to razloženo v " +
+        '<a href="' + esc(ctx.shop.routeSlugs["/compare"] + ctx.q) + '">primerjavi</a>; ' +
+        'cel katalog s cenami je v <a href="' +
+        esc(ctx.shop.routeSlugs["/products"] + ctx.q) + '">trgovini</a>.</p>'
+      : // A POST INDEX IS A NAVIGATION PAGE, and left as a bare list of cards
+        // it is also the site's only indexable page that says nothing in its
+        // own voice — the reader gets three headlines and no idea what the
+        // series is for or where else the same questions are answered. This
+        // paragraph is standing copy rather than per-post copy for exactly
+        // that reason: it must not need editing when a post is added.
+        '<p class="st-blog-note">Vsak zapis odgovarja na eno vprašanje, ki se ' +
+        "pri nakupu res pojavi, in se drži številk iz specifikacij — mer, " +
+        "teže, števila mest in šob — namesto vtisov. Kjer odgovora ni, to " +
+        "piše; porabe elektrike na primer ne navajamo, ker je odvisna od " +
+        "temperature, uporabe, pokrova in vremena." +
+        ' Praktični del pred dostavo je zbran v <a href="' +
+        esc(ctx.shop.routeSlugs["/guides"] + ctx.q) + '">vodnikih</a>, ' +
+        'odločitev med družinama pa v <a href="' +
+        esc(ctx.shop.routeSlugs["/compare"] + ctx.q) + '">primerjavi</a>.</p>' +
+        '<ul class="st-blog-list">' +
         posts.map((p, i) => card(ctx, base, p, i === 0)).join("") +
         "</ul>";
   return (

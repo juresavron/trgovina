@@ -134,6 +134,36 @@ for (const p of productPaths) {
 const file = (p) => (p === "/" ? "index" : p.replace(/[^a-z0-9]+/gi, "_")) + ".html";
 for (const [p, html] of Object.entries(docs)) writeFileSync(join(OUT, file(p)), html);
 
+// ⚠️ THE STYLESHEET AND THE SCRIPT, WRITTEN OUT AS FILES — and this audit was
+// silently useless without them.
+//
+// The theme used to be inlined into every document, so a page written to disk
+// was self-contained and this harness needed nothing else. It is now served
+// from a content-addressed file (see render/assets.ts), and nothing here was
+// taught to emit it: every document asked for /assets/site-<hash>.css, the
+// static server 404'd it, and Chromium rendered 26 UNSTYLED pages.
+//
+// The audit did not fail — it reported. Every page "overflowed horizontally
+// on mobile" (unstyled block layout on a 390px viewport) and every anchor was
+// a "small target" at 17px tall (line-height of unstyled inline text). Ten
+// errors and 1.4k warnings, none of them about the site. That is worse than a
+// crash: a red audit nobody can act on is a check that has stopped checking.
+//
+// The paths are read out of the rendered HTML rather than imported, so they
+// cannot drift from what the documents actually request, and the bytes come
+// from handleRequest — the same route a browser hits in production.
+const assetPaths = new Set();
+for (const html of Object.values(docs))
+  for (const m of html.matchAll(/\/assets\/site-[0-9a-f]{8}\.(?:css|js)/g))
+    assetPaths.add(m[0]);
+if (assetPaths.size === 0) throw new Error("no /assets/ reference in any document — has the asset path changed?");
+mkdirSync(join(OUT, "assets"), { recursive: true });
+for (const a of assetPaths) {
+  const res = handleRequest(new Request(HOST + a));
+  if (res.status !== 200) throw new Error("worker did not serve " + a + " (" + res.status + ")");
+  writeFileSync(join(OUT, a.replace(/^\//, "")), await res.text());
+}
+
 /* stand-in media, shaped like the bucket's real contents */
 const wanted = new Set();
 for (const html of Object.values(docs))
@@ -214,7 +244,24 @@ const browser = await chromium.launch({
   args: ["--no-sandbox"],
 });
 for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile", { width: 390, height: 844 }]]) {
-  const page = await browser.newPage({ viewport: size });
+  // ⚠️ reducedMotion IS WHAT MAKES THE CONTRAST PASS MEANINGFUL, not a
+  // courtesy. The theme's reveals are SCROLL-DRIVEN (animation-timeline:
+  // view() — see themes/studio/effects.ts), so an element's opacity and
+  // transform are a function of where the page is scrolled. The contrast
+  // pass screenshots an element twice, and Playwright scrolls it into view
+  // for each shot; land on a different scroll offset the second time and the
+  // element resolves at a different opacity, so EVERY pixel differs between
+  // the two shots and the glyph diff degenerates into "the whole box".
+  //
+  // That is not theoretical. It reported SPAN.st-gd-chip at 2.75:1 and
+  // SPAN.st-gd-t at 1.00:1 on the home page — both false. Measured with the
+  // diff actually isolating glyphs, the same chip is 15.52:1. Two ERRORs
+  // about a card that is perfectly legible.
+  //
+  // The theme resolves every effect to its END state under reduced motion
+  // (opacity 1, transform none), which is both stable across screenshots and
+  // the state a reader ends up looking at. So this measures the resting page.
+  const page = await browser.newPage({ viewport: size, reducedMotion: "reduce" });
   // CUMULATIVE LAYOUT SHIFT, MEASURED RATHER THAN GUESSED.
   //
   // The SEO audit used to warn about every <img> with no width/height on the
@@ -272,6 +319,24 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
         // small target — the label is. Checking the input would report the
         // marquee pause control as 13x13 while its label measures 80x44.
         if (el.tagName === "INPUT" && el.id && document.querySelector('label[for="' + el.id + '"]')) continue;
+        // ⚠️ WCAG 2.5.8 EXEMPTS A LINK INSIDE A SENTENCE, and without that
+        // exemption this check reports every prose link on the site. The
+        // criterion's own wording: the target is excused when it "is in a
+        // sentence or its size is otherwise constrained by the line-height of
+        // non-target text" — because the fix would be to break the sentence,
+        // which serves nobody.
+        //
+        // The test is structural rather than by class: an inline anchor whose
+        // parent also holds real text around it IS in a sentence. A link that
+        // is the sole content of its parent is not, and stays reportable —
+        // that is the button-shaped one where 24px actually applies.
+        if (el.tagName === "A" && getComputedStyle(el).display.startsWith("inline")) {
+          const parent = el.parentElement;
+          const around = parent
+            ? [...parent.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim().length > 1)
+            : false;
+          if (around) continue;
+        }
         if (b.height < 24 || b.width < 24) out.smallTargets.push(el.tagName + "." + String(el.className).split(" ")[0] + " " + Math.round(b.width) + "x" + Math.round(b.height));
         const name = (el.textContent || "").trim() || el.getAttribute("aria-label") || el.getAttribute("title") || "";
         if (el.tagName === "A" && !name) out.emptyLinks.push(el.getAttribute("href") || "?");
@@ -407,24 +472,48 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
     // average would happily pass a heading lying across a window.
     if (suspects.length) {
       const lin = (c) => { const x = c / 255; return x <= 0.04045 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
-      const shots = new Map();
-      for (const sus of suspects) {
-        if (sus.tag === null) continue;
-        try { shots.set(sus.tag, await page.locator("[data-audit=\"" + sus.tag + "\"]").first().screenshot({ timeout: 4000 })); }
-        catch { /* element vanished or is unscreenshotable; skipped below */ }
-      }
-      await page.addStyleTag({ content: "[data-audit]{color:transparent !important}" });
+      // ⚠️ THE TWO SHOTS OF ONE ELEMENT ARE TAKEN BACK TO BACK, and the pair
+      // must not be split into an all-inked pass and an all-bare pass.
+      //
+      // Screenshotting scrolls the element into view. Shoot everything, then
+      // re-shoot everything, and each element is photographed from a
+      // DIFFERENT scroll offset the second time — which matters here because
+      // the page reacts to scroll: the chrome changes state at the top, and
+      // reveals are scroll-driven. The two shots then differ in every pixel
+      // and the glyph diff degenerates.
+      //
+      // Fourteen elements on the home page landed there, all of them header
+      // chrome (the skip link, the wordmark, every nav item), plus the guide
+      // cards further down. Back to back the second screenshot finds the
+      // element already in view, so nothing scrolls and the only difference
+      // between the frames is the ink.
+      //
+      // The transparency is set INLINE on the one element rather than through
+      // a document-wide [data-audit] rule, for the same reason: a rule that
+      // blanks every suspect at once only works if every bare shot is taken
+      // after it, which is the very ordering this replaces.
       for (const sus of suspects) {
         if (sus.tag === null) {
           add("ERROR", route, "contrast", label + ": " + sus.label + " " + sus.exact.toFixed(2) +
             ":1 (needs " + sus.floor + ") at " + sus.px + "px");
           continue;
         }
-        const inked = shots.get(sus.tag);
-        if (!inked) continue;
-        let bare;
-        try { bare = await page.locator("[data-audit=\"" + sus.tag + "\"]").first().screenshot({ timeout: 4000 }); }
-        catch { continue; }
+        const sel = "[data-audit=\"" + sus.tag + "\"]";
+        let inked, bare;
+        try {
+          const loc = page.locator(sel).first();
+          inked = await loc.screenshot({ timeout: 4000 });
+          await page.evaluate((q) => {
+            const el = document.querySelector(q);
+            if (el) { el.dataset.auditInk = el.style.color; el.style.setProperty("color", "transparent", "important"); }
+          }, sel);
+          bare = await loc.screenshot({ timeout: 4000 });
+          await page.evaluate((q) => {
+            const el = document.querySelector(q);
+            if (el) { el.style.color = el.dataset.auditInk || ""; delete el.dataset.auditInk; }
+          }, sel);
+        } catch { continue; }
+        if (!inked || !bare) continue;
         const A = await sharp(inked).raw().toBuffer({ resolveWithObject: true });
         const B = await sharp(bare).raw().toBuffer({ resolveWithObject: true });
         if (A.info.width !== B.info.width || A.info.height !== B.info.height) continue;
@@ -442,6 +531,23 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
         // Too few glyph pixels to be sure what we measured — say nothing
         // rather than guess. An element behind an overlay lands here.
         if (glyphPixels < 12) continue;
+        // AND TOO MANY IS THE SAME PROBLEM WEARING THE OTHER HAT. Glyphs
+        // never cover their whole box — a line of text is mostly the space
+        // between letters. When the diff claims they do, the two screenshots
+        // disagree everywhere, which means the element MOVED or re-rendered
+        // between them, not that it is all ink. Whatever the brightest
+        // "glyph" pixel is then, it is not the ground under a letter.
+        //
+        // reducedMotion above removes the cause; this is the backstop, and it
+        // says "could not measure" rather than inventing a ratio. A real
+        // failure that only ever lands here is a real gap in the audit, so it
+        // is reported as a WARNING instead of being swallowed silently.
+        const boxPixels = (A.data.length / ch) | 0;
+        if (glyphPixels > boxPixels * 0.9) {
+          add("WARN", route, "contrast-unmeasured", label + ": " + sus.label +
+            " moved between samples — contrast not verified");
+          continue;
+        }
         const ratio = (Math.max(sus.fgLum, against) + 0.05) / (Math.min(sus.fgLum, against) + 0.05);
         if (ratio < sus.floor)
           add("ERROR", route, "contrast", label + ": " + sus.label + " " + ratio.toFixed(2) +

@@ -285,6 +285,31 @@ export interface ShopContent {
     /** The anchor's link text — "Trije modeli". */
     readonly anchorLabel: string;
   }[];
+  /**
+   * The hub's closing prose, under the family bands.
+   *
+   * WHY A HUB NEEDS ONE. Everything above it is a decision device: a lede,
+   * two cards and two grids of names, spec lines and prices. That answers
+   * "which family" and "which model", and answers nothing about HOW TO READ
+   * what it just showed — which on this catalogue is a real gap, because the
+   * two numbers a visitor instinctively ranks on (jets, seats) are the two
+   * that mislead here. The 230 is bigger than the 210 and seats one fewer;
+   * the 94-jet swim spa is lighter than the 38-jet one. A hub that shows
+   * those figures and says nothing about them is inviting the wrong choice.
+   *
+   * It is also the page's only running copy. /trgovina is the category page
+   * for the shop's primary keyword and it went out with 281 words, nearly all
+   * of them product names and figures.
+   *
+   * ⚠️ NOT A SECOND COPY OF THE COLLECTION INTROS. Those walk the models one
+   * by one and live on the family pages; repeating them here is the exact
+   * duplication that got `intro` removed from the bands. This says what the
+   * grid cannot: how to read it, and what happens after you have chosen.
+   */
+  hubOutro?: readonly {
+    readonly h: string;
+    readonly p: readonly string[];
+  }[];
   moat: {
     h2: string;
     steps: [string, string][];

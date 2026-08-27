@@ -178,6 +178,113 @@ export const STUDIO_FINDER_CSS = `
     border-color: var(--ink-invert);
     color: var(--on-invert);
   }
+
+  /* The way past the quiz. Deliberately QUIETER than the questions above it:
+   * the same hairline rows, but smaller type and muted until hover, so the
+   * page still reads as one primary path with an exit rather than two
+   * competing offers. */
+  :root[data-theme="studio"] .st-fnd-skip {
+    margin-block-start: clamp(48px, 6vw, 80px);
+    padding-block-start: clamp(28px, 3vw, 40px);
+    border-block-start: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-fnd-skip h2 {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: 0 0 10px;
+  }
+  :root[data-theme="studio"] .st-fnd-skip > p {
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+    margin: 0 0 20px;
+    max-inline-size: 34rem;
+  }
+  :root[data-theme="studio"] .st-fnd-list {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    border-block-start: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-fnd-list li {
+    border-block-end: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-fnd-list a {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 2px;
+    text-decoration: none;
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-fnd-list a > span:first-child {
+    display: grid;
+    gap: 2px;
+    min-inline-size: 0;
+  }
+  :root[data-theme="studio"] .st-fnd-list b {
+    font-weight: var(--w-body-med);
+    font-size: var(--t-body);
+  }
+  :root[data-theme="studio"] .st-fnd-list b + span {
+    color: var(--ink-mute);
+    font-size: var(--t-body);
+  }
+  :root[data-theme="studio"] .st-fnd-list a:hover b,
+  :root[data-theme="studio"] .st-fnd-list a:focus-visible b {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-fnd-list .st-fnd-go {
+    color: var(--ink-mute);
+    transition: transform 0.3s ease-out, color 0.3s ease-out;
+  }
+  :root[data-theme="studio"] .st-fnd-list a:hover .st-fnd-go,
+  :root[data-theme="studio"] .st-fnd-list a:focus-visible .st-fnd-go {
+    transform: translateX(3px);
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-fnd-more {
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-mute);
+    margin: 0;
+    max-inline-size: 34rem;
+  }
+  :root[data-theme="studio"] .st-fnd-more a { color: var(--ink); }
+  :root[data-theme="studio"] .st-fnd-note-h {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    margin: clamp(28px, 3vw, 40px) 0 10px;
+  }
+  :root[data-theme="studio"] .st-fnd-note {
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+    margin: 0 0 12px;
+    max-inline-size: 34rem;
+  }
+  :root[data-theme="studio"] .st-fnd-note:last-child { margin-block-end: 0; }
+  :root[data-theme="studio"] .st-fnd-note a {
+    color: var(--ink);
+    text-underline-offset: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-fnd-list .st-fnd-go { transition: none; }
+    :root[data-theme="studio"] .st-fnd-list a:hover .st-fnd-go,
+    :root[data-theme="studio"] .st-fnd-list a:focus-visible .st-fnd-go {
+      transform: none;
+    }
+  }
 `;
 
 /** An answer set as a URL, with no trailing "?" on the empty one. */
@@ -199,7 +306,13 @@ function progress(a: FinderAnswers): string {
   return "Vprašanje " + Math.min(answered + 1, depth) + " od " + depth;
 }
 
-function stepHtml(base: string, a: FinderAnswers, step: FinderStep): string {
+function stepHtml(
+  shop: ShopConfig,
+  content: ShopContent,
+  a: FinderAnswers,
+  step: FinderStep,
+): string {
+  const base = shop.routeSlugs["/finder"];
   const params = new URLSearchParams();
   let answered = 0;
   for (const [k, v] of Object.entries(a)) {
@@ -239,7 +352,80 @@ function stepHtml(base: string, a: FinderAnswers, step: FinderStep): string {
     (back
       ? '<a class="st-fnd-back" href="' + esc(href(base, back)) +
         '">← Prejšnje vprašanje</a>'
-      : "")
+      : "") +
+    // THE WAY PAST THE QUIZ, on the first question only. Two visitors arrive
+    // here and only one of them wants to be asked anything: the other already
+    // knows the models and is looking for the list. Question two and three are
+    // mid-flow and this would be an interruption, so it is shown once.
+    //
+    // It also settles what the SEO audit called a dead end. Every other route
+    // on this site hands a crawler somewhere to go next; the entry question
+    // handed it two links back to itself, so the finder sat outside the link
+    // graph despite being in the sitemap. These are real product links, and
+    // the figures beside them are the catalogue's own.
+    (answered === 0 ? skipHtml(shop, content) : "")
+  );
+}
+
+/**
+ * The catalogue, restated as links for whoever does not want three questions.
+ *
+ * ⚠️ FIGURES COME FROM THE PDP'S OWN BAR — the same line printed on the
+ * model's page — so this block cannot drift from the specification a visitor
+ * checks it against.
+ */
+function skipHtml(shop: ShopConfig, content: ShopContent): string {
+  const pdps = content.pdps ?? [content.pdp];
+  const productBase = shop.routeSlugs["/product"] + "/";
+  return (
+    '<div class="st-fnd-skip">' +
+    "<h2>Ali pa kar preskočite vprašanja</h2>" +
+    "<p>Vseh " + pdps.length + " modelov v ponudbi, z merami in ceno na strani " +
+    "vsakega. Vprašanja zgoraj so bližnjica, ne pogoj — če veste, kaj iščete, " +
+    "pojdite naravnost na model.</p>" +
+    '<ul class="st-fnd-list">' +
+    pdps
+      .map(
+        (d) =>
+          '<li><a href="' + esc(productBase + d.slug) + '">' +
+          "<span><b>" + esc(d.title) + "</b><span>" + esc(d.bar[1]) + "</span></span>" +
+          '<span class="st-fnd-go" aria-hidden="true">→</span></a></li>',
+      )
+      .join("") +
+    "</ul>" +
+    '<p class="st-fnd-more">Za odločitev med masažnim bazenom in swim spa ' +
+    'bazenom je <a href="' + esc(shop.routeSlugs["/compare"]) + '">primerjava</a> ' +
+    'krajša pot kot ta vprašalnik; cel katalog s cenami je v <a href="' +
+    esc(shop.routeSlugs["/products"]) + '">trgovini</a>, ' +
+    'kaj je pred dostavo treba pripraviti pa piše v <a href="' +
+    esc(shop.routeSlugs["/guides"]) + '">vodnikih</a>.</p>' +
+    // WHAT THE TOOL IS AND IS NOT, said before it is used rather than after.
+    // A recommender that does not explain itself is asking to be read as a
+    // sales funnel — and this one has an honest answer, because it maps a
+    // six-model catalogue exactly rather than scoring it: every verdict is
+    // derived from figures already published on the model's own page, which
+    // is why a visitor can check one against the other.
+    '<h2 class="st-fnd-note-h">Na čem temelji predlog</h2>' +
+    '<p class="st-fnd-note">Vprašanja zožijo izbiro na podlagi tega, kar o modelih ' +
+    "piše v specifikaciji: mere školjke, število mest in ležalnikov, število šob in " +
+    "črpalk. Ponudba šteje šest modelov, zato preslikave ni treba ocenjevati — " +
+    "vsak odgovor vodi do modela, ki tem merilom ustreza, in ob predlogu piše, " +
+    "zakaj prav ta. Vsako številko lahko preverite na strani modela.</p>" +
+    '<p class="st-fnd-note">Ničesar ne vpišete in ničesar ne shranimo: odgovori ' +
+    "potujejo v naslovni vrstici, zato lahko povezavo do predloga tudi shranite ali " +
+    "pošljete naprej. Predlog tudi ni ponudba — ali model pri vas gre skozi in ali " +
+    "podlaga zdrži, se pokaže šele na " +
+    '<a href="' + esc(shop.routeSlugs["/showroom"]) + '">ogledu lokacije</a>, ' +
+    "ki je brezplačen in ga opravimo pred ponudbo.</p>" +
+    // NO BUDGET QUESTION, and the omission is deliberate enough to say out
+    // loud: a quiz that asks what you can spend and then recommends up to it
+    // is doing something other than matching a catalogue. The price is on
+    // every model's page either way, so the question would buy nothing.
+    '<p class="st-fnd-note">Vprašanja o proračunu namenoma ni. Cena vsakega ' +
+    "modela je napisana na njegovi strani in je za vse obiskovalce enaka, " +
+    'načini plačila pa so opisani v <a href="' +
+    esc(shop.routeSlugs["/financing"]) + '">financiranju</a>.</p>' +
+    "</div>"
   );
 }
 
@@ -301,7 +487,7 @@ export function renderStudioFinder(
   const shop = ctx.shop;
   const content = ctx.content;
   const step = nextStep(a);
-  const inner = step ? stepHtml(shop.routeSlugs["/finder"], a, step) : resultHtml(shop, content, a);
+  const inner = step ? stepHtml(shop, content, a, step) : resultHtml(shop, content, a);
   return (
     renderStudioHeader(ctx) +
     '<main><section class="st-fnd"><div class="st-fnd-in">' +

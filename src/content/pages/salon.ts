@@ -34,7 +34,6 @@ import type { Page } from "../pages";
 export const SHOWROOM: Page = {
   key: "/showroom",
   h1: "Brezplačen ogled lokacije",
-  seoTitle: "Ogled lokacije pred nakupom masažnega bazena",
   lead:
     "Preden karkoli kupite, pridemo pogledat, kam bi bazen postavili. Ogled je brezplačen " +
     "in vas k ničemur ne zavezuje.",
