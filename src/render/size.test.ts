@@ -58,12 +58,16 @@ describe("the inlined stylesheet stays within budget", () => {
   });
 
   it("still emits the rules that matter after minification", async () => {
+    // BASE_CSS IS the wire artifact now — the page links it as a file
+    // (render/assets.ts) — so the assertions read it directly, and the
+    // request below only proves the page actually references it.
     const res = handleRequest(
       new Request("https://trgovina.workers.dev/?shop=savna&theme=studio", {
         headers: { host: "trgovina.workers.dev" },
       }),
     );
-    const html = await res.text();
+    expect(await res.text()).toMatch(/href="\/assets\/site-[0-9a-f]+\.css"/);
+    const html = BASE_CSS;
     // A minifier that eats a space inside calc() breaks the declaration
     // silently, so assert both operator shapes that depend on one: a
     // subtraction and an addition.

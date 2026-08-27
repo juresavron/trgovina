@@ -94,6 +94,11 @@ export const bazen: ShopConfig = {
     // terms, the withdrawal notice and the privacy notice all identify the
     // company by it, so it is this string a customer would sue.
     legalName: "Mediašped d.o.o.",
+    // ⚠️ BOTH UNSET — owner to supply from the AJPES extract, same launch
+    // item as the VAT id below. Placeholders follow the same convention the
+    // footer and the launch gate already read.
+    regNumber: "0000000000",
+    register: "",
     // STILL MISSING, and the launch gate is still closed because of it:
     // ZGD-1 and ZEPT require the VAT number and the registered address on a
     // company's web pages, and the withdrawal notice needs an address to

@@ -203,9 +203,16 @@ jobs:
           # request the vendoring existed to remove, and the page would still
           # look correct.
           grep -q "/fonts/chivo-500-latin.woff2" /tmp/home.html
-          grep -q "@font-face" /tmp/home.html
+          # THE STYLESHEET IS A FILE NOW (render/assets.ts): the page links
+          # /assets/site-<hash>.css instead of inlining 142 kB, so the font
+          # and rule assertions read the asset the page actually references.
+          css_path=$(grep -o '/assets/site-[0-9a-f]*\.css' /tmp/home.html | head -1)
+          [ -n "$css_path" ] || { echo "FAIL: page links no stylesheet asset"; exit 1; }
+          code=$(curl -s -o /tmp/site.css -w "%{http_code}" "https://${WORKERS_DEV_HOST}${css_path}")
+          [ "$code" = "200" ] || { echo "FAIL: stylesheet asset returned $code"; exit 1; }
+          grep -q "@font-face" /tmp/site.css
           for origin in "fonts.googleapis.com" "fonts.gstatic.com" "fontshare"; do
-            if grep -qF "$origin" /tmp/home.html; then
+            if grep -qF "$origin" /tmp/home.html || grep -qF "$origin" /tmp/site.css; then
               echo "FAIL: third-party font origin '$origin' is back in the shipped page"; exit 1
             fi
           done
@@ -217,7 +224,7 @@ jobs:
           # coverage could not be proven; if either name reappears, so has the
           # bug that put čšž at risk.
           for dead in "Clash Display" "Satoshi"; do
-            if grep -qF "$dead" /tmp/home.html; then
+            if grep -qF "$dead" /tmp/home.html || grep -qF "$dead" /tmp/site.css; then
               echo "FAIL: unverified face '$dead' is in the shipped page"; exit 1
             fi
           done
@@ -226,8 +233,8 @@ jobs:
           grep -q "montaža" /tmp/home.html
 
           # CSS comments are stripped before the wire. They were 43% of the
-          # sheet, and this stylesheet is inlined into every document head.
-          if grep -qF "/*" /tmp/home.html; then
+          # sheet — now a cacheable file, still worth not shipping.
+          if grep -qF "/*" /tmp/site.css; then
             echo "FAIL: CSS comments are reaching the wire"; exit 1
           fi
 

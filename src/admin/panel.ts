@@ -635,12 +635,12 @@ export function photoCount(n: number): string {
   // The teens are the exception that has to be tested FIRST: 11 to 14 all take
   // the genitive plural even though they end in 1, 2, 3 and 4. Everything else
   // follows the last digit, so 21 is a singular and 22 a dual.
-  const teen = n % 100;
-  if (teen >= 11 && teen <= 14) return n + " fotografij";
-  const unit = n % 10;
-  if (unit === 1) return n + " fotografija";
-  if (unit === 2) return n + " fotografiji";
-  if (unit === 3 || unit === 4) return n + " fotografije";
+  // Last two digits, matched exactly: 22 and 94 are compounds and take the
+  // genitive plural — a units-digit rule would print "22 fotografiji".
+  const t = n % 100;
+  if (t === 1) return n + " fotografija";
+  if (t === 2) return n + " fotografiji";
+  if (t === 3 || t === 4) return n + " fotografije";
   return n + " fotografij";
 }
 

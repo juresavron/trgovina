@@ -39,6 +39,11 @@ export function sitemapPaths(shop: ShopConfig, content: ShopContent): string[] {
     ...((content.collections ?? []).length > 0 ? [shop.routeSlugs["/products"]] : []),
     ...(content.collections ?? []).map((c) => c.path),
     ...(content.pdps ?? [content.pdp]).map((d) => shop.routeSlugs["/product"] + "/" + d.slug),
+    // The blog index, unconditionally. The async layer replaces this sitemap
+    // with one that also lists the posts — but that branch returns null when
+    // the database is unreachable or before the first post exists, and the
+    // index is an indexable page linked from every footer in either state.
+    shop.routeSlugs["/blog"],
     ...PAGES.filter((p) => !p.noindex)
       .map((p) => shop.routeSlugs[p.key as keyof typeof shop.routeSlugs])
       .filter((slug): slug is string => typeof slug === "string" && slug !== ""),

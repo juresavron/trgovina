@@ -20,6 +20,7 @@ import {
 } from "../catalog/swimspa";
 import type { PolaModel } from "../catalog/pola";
 import { catalogPricingReady } from "../catalog/pricing";
+import { filterAreaText } from "../catalog/count";
 import {
   CABINET_FINISHES,
   OFFERED_MODELS,
@@ -215,7 +216,11 @@ const swimSpas: ProductCard[] = OFFERED_SWIMSPAS.map((m) => ({
   desc:
     "Akrilna školjka " +
     swimFootprint(m) +
-    (m.swimJets > 0 ? " s protitočno šobo, " : ", ") +
+    (m.swimJets === 1
+      ? " s protitočno šobo, "
+      : m.swimJets > 1
+        ? " s protitočnimi šobami, "
+        : ", ") +
     counted(m.jets, MASSAGE_JETS) +
     ", " +
     swimSeating(m) +
@@ -340,6 +345,8 @@ const flagship = OFFERED_MODELS.find((m) => m.code === "ZR801")!;
 function pdpFor(m: PolaModel): PdpContent {
   return {
     slug: m.slug,
+    code: m.code,
+    family: "masažni bazen",
     eyebrow: m.tier ?? (m.lounges === 2 ? "Dva ležalnika" : "Ležalnik in pet sedežev"),
     title: m.name,
     sub:
@@ -383,8 +390,17 @@ function pdpFor(m: PolaModel): PdpContent {
       ["Šobe", String(m.jets)],
       ["Črpalke", m.jetPumps[0] + " × " + m.jetPumps[1] + " KM + obtočna 0,35 KM"],
       ["Krmilnik", "Balboa BP200 G2+ · " + m.topside + " · grelec 3 kW"],
-      ["Filter", m.filterSf + " sf"],
-      ["Školjka", "ameriški akril, 7 barv · izolacija 2 cm"],
+      // Square metres first: the supplier states square feet, the buyer
+      // thinks in m², and "100 sf" was the one unit on the page that was
+      // neither Slovenian nor translated.
+      ["Filter", filterAreaText(m.filterSf)],
+      // The colour count is the PICKER'S list, not a typed number: the price
+      // list's standard line says "7 shell colours" while the supplier's own
+      // chart names ten, and the page offering ten swatches beside a spec row
+      // claiming seven contradicted itself. One source now feeds both; which
+      // count the supplier really honours is an open question for them, and
+      // resolving it means editing SHELL_FINISHES, not this row.
+      ["Školjka", "ameriški akril, " + SHELL_FINISHES.length + " barv · izolacija 2 cm"],
       ["Mere", footprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
       ["Teža", m.dryKg + " kg prazen · " + m.filledKg + " kg poln"],
       ["Priklop", "220 V / 380 V"],
@@ -483,6 +499,8 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
   const swimJets = m.swimJets > 0 ? m.swimJets + " protitočne šobe, " : "";
   return {
     slug: m.slug,
+    code: m.code,
+    family: "swim spa",
     eyebrow: m.tier ?? "Swim spa",
     title: m.name,
     sub:
@@ -520,7 +538,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
           m.circPumps[0] + " × " + String(m.circPumps[1]).replace(".", ",") + " KM",
       ],
       ["Krmilnik", "Balboa · " + m.topside + " · grelec 3 kW"],
-      ["Filtracija", m.skimmers + " × " + m.filterSf + " sf"],
+      ["Filtracija", m.skimmers + " × " + filterAreaText(m.filterSf)],
       ["Školjka", "ameriški akril · izolacija 2 cm"],
       ["Mere", swimFootprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
       // Omitted entirely where the supplier states no mass. A dash would read
@@ -650,7 +668,7 @@ const collections: Collection[] = [
       "kilogramov. BAZEN 230 meri 2,30 × 2,30 m in ni bazen za več ljudi, " +
       "ampak za več prostora: pet mest z dvema ležalnikoma, 50 šob, dve " +
       "črpalki 3 KM in 2.210 kilogramov. Školjka je pri najmanjšem visoka 82 " +
-      "cm, pri drugih dveh 88. Ogrevanje 3 kW, filtracijo 100 sf in krmilnik " +
+      "cm, pri drugih dveh 88. Ogrevanje 3 kW, filter z 9,3 m² površine in krmilnik " +
       "Balboa imajo vsi trije; na teraso jih pripeljemo, priklopimo in " +
       "zaženemo.",
     metaDescription:
@@ -693,9 +711,10 @@ export const bazenContent: ShopContent = {
   artKey: "pool",
   kicker: "Masažni bazen · Slovenija",
   h1: "Masažni bazen za pet ali šest oseb.",
-  // No price in the hero copy while COST_INPUTS is unset. Naming a figure
-  // here and a dash on the cards would be worse than naming neither, and a
-  // price in an h1's sub is the one a customer remembers.
+  // No price in the hero copy even now that COST_INPUTS is set. A figure in
+  // an h1's sub is the one a customer remembers, and it would go stale the
+  // day the inputs move — the cards and the PDPs derive theirs and this line
+  // would not.
   sub: "Trije modeli — mali, srednji in veliki, od 195 do 230 cm. Akrilna školjka, od petintrideset do petdeset šob, ogrevanje in filtracija. Na teraso ga pripeljemo, priklopimo in zaženemo — vi pripravite kopalke.",
   cta: "Izberite svoj bazen",
   metaDescription:

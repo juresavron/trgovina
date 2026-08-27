@@ -1364,14 +1364,18 @@ export const STUDIO_PDP_CSS = `
     margin-inline: auto;
     padding: var(--studio-rhythm) var(--studio-gutter) 0;
   }
+  /* The same rung as "Primerjajte modele" (.st-cmp-h): both are secondary
+   * section heads over supporting material, and this one was set centred at
+   * the full h2 display rung — home-page-band volume over three slim cards,
+   * shouting over the h2s of the page's own content. One kind of section,
+   * one rung, one alignment. */
   :root[data-theme="studio"] .st-also-h {
-    margin: 0 0 clamp(26px, 2.6vw, 52px);
-    text-align: center;
+    margin: 0 0 var(--gap-md);
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: var(--t-h2);
-    letter-spacing: var(--ls-h2);
-    line-height: var(--lh-h2);
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
     color: var(--ink);
   }
   /* The ruled row of §4.4: no gaps, a ring on each cell, overlapping edges
@@ -2145,7 +2149,11 @@ function alsoLike(ctx: RenderCtx): string {
           esc(base + m.slug + ctx.q) + '">' +
           '<span class="st-also-frame">' + shot(ctx, i, m.photos?.[0]) + "</span>" +
           '<span class="st-also-name">' + esc(m.title) + "</span>" +
-          '<span class="st-also-price">' + esc(m.price) + "</span>" +
+          '<span class="st-also-price">' + esc(m.price) +
+          // The same qualifier every other price on the site carries. These
+          // were the last prices before the footer and the only bare ones.
+          (m.price.includes("€") ? ' <span class="st-vat">z DDV</span>' : "") +
+          "</span>" +
           "</a></li>",
       )
       .join("") +

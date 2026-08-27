@@ -73,12 +73,12 @@ function notice(n?: { kind: "ok" | "err"; text: string }): string {
 /** "3 mnenja" — the four Slovenian forms, as everywhere else in this panel. */
 export function reviewCount(n: number): string {
   if (n === 0) return "ni mnenj";
-  const teen = n % 100;
-  if (teen >= 11 && teen <= 14) return n + " mnenj";
-  const unit = n % 10;
-  if (unit === 1) return n + " mnenje";
-  if (unit === 2) return n + " mnenji";
-  if (unit === 3 || unit === 4) return n + " mnenja";
+  // Last two digits, matched exactly: 22 and 94 are compounds and take the
+  // genitive plural — a units-digit rule would print "22 mnenji".
+  const t = n % 100;
+  if (t === 1) return n + " mnenje";
+  if (t === 2) return n + " mnenji";
+  if (t === 3 || t === 4) return n + " mnenja";
   return n + " mnenj";
 }
 

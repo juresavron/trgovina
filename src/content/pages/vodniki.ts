@@ -53,7 +53,9 @@ export const GUIDES: Page = {
     },
     {
       kind: "prose",
-      h: "Koliko stane masažni bazen: nakup in obratovanje",
+      // The site's only three-line h2 stair-stepped 20/12/14 characters at
+      // every width. The dropped subtitle is the first sentence's job anyway.
+      h: "Koliko stane masažni bazen",
       p: [
         "Nakupna cena modela je na strani vsakega modela; ogled lokacije, zagon in predaja so " +
           "vključeni, dostavo pa obračunamo po ponudbi, ker je odvisna od lokacije in dostopa. " +

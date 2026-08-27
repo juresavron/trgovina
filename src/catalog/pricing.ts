@@ -143,24 +143,19 @@ export interface CostInputs {
 }
 
 /**
- * THE INPUTS ARE NOT SET YET.
+ * THE INPUTS ARE SET — CALIBRATED, NOT CONFIRMED. Every field below except
+ * vatRate is marked ASSUMPTION in place, with the document that replaces it
+ * (a forwarder invoice, the broker's tariff classification, the owner's own
+ * margin decision). The catalogue now renders these as final selling prices
+ * and the structured data publishes real Offers, so the owner's sign-off on
+ * this block is a launch item alongside the VAT number.
  *
- * `null` is deliberate and load-bearing: a placeholder set of plausible
- * numbers would render prices that look finished, and a price that looks
- * finished gets quoted. `catalogPricingReady()` is asserted against every
- * live shop in the launch gate, so a shop carrying derived prices cannot go
- * `live: true` while this is null.
- *
- * To set it: replace null with a CostInputs literal. Nothing else changes —
- * the catalogue reprices itself.
- *
- * ⚠️ SETTING THIS IS A COMMERCIAL COMMITMENT, not a configuration change. It
- * clears `pricesProvisional` on every product page and makes the structured
- * data publish a real schema.org Offer — a price a customer may hold the shop
- * to. Every field except vatRate is a fact about this business that only the
- * owner can confirm.
+ * To reprice: edit the literal. Nothing else changes — the catalogue
+ * reprices itself. To go back to dashes, set the export to null: the type
+ * still admits it, `catalogPricingReady()` reports false again, and the
+ * launch gate closes exactly as it did before 2026-08-27.
  */
-export const COST_INPUTS: CostInputs = {
+export const COST_INPUTS: CostInputs | null = {
   // ── KNOWN ──────────────────────────────────────────────────────────────
   /** Slovenia's standard DDV rate. The one figure here that is law. */
   vatRate: 0.22,

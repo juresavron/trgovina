@@ -143,6 +143,21 @@ export interface PdpPhoto {
 export interface PdpContent {
   /** URL segment under routeSlugs["/product"] ('quattro' → /savna/quattro). */
   slug: string;
+  /**
+   * The supplier's model code — ZR805, ZR7807. The identity an order, a
+   * warranty claim and a spare part are matched on, and therefore the `sku`
+   * the Product schema publishes: a merchant surface that reconciles feeds
+   * against order exports needs the code the back office actually uses.
+   */
+  code: string;
+  /**
+   * The family keyword this page competes for — "masažni bazen" or
+   * "swim spa". The <title> used to stamp every product with the SHOP's
+   * primary keyword, which titled all three swim spas "SWIM 450 — masažni
+   * bazen": the collection pages hold the two families apart as different
+   * queries, and the product titles were merging them back together.
+   */
+  family: string;
   eyebrow: string;
   title: string;
   sub: string;

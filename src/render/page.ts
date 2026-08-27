@@ -10,7 +10,7 @@ import { STUDIO_PRELOAD } from "../themes/studio/fonts";
 import { THEME_CATALOG, type ThemeKey } from "../themes/catalog";
 import { MAX_SECTIONS_PER_PAGE } from "../themes/shared/sections";
 import { SHOPS } from "../tenants";
-import { BASE_CSS } from "./css";
+import { CSS_PATH, JS_PATH } from "./assets";
 import {
   esc,
   renderFooter,
@@ -30,7 +30,6 @@ import {
   renderStudioSection,
   renderStudioShopHub,
   renderStudioClosing,
-  STUDIO_JS,
 } from "../themes/studio";
 
 /**
@@ -96,6 +95,12 @@ export interface PageOptions {
    * with a wordmark on it.
    */
   image?: string;
+  /**
+   * og:type for the share card — "product" on the six model pages, the
+   * default "website" everywhere else. Meta's ingestion reads it; nothing
+   * else does, which is why it is one string and not a taxonomy.
+   */
+  ogType?: "website" | "product";
 }
 
 export function renderDocument(o: PageOptions): string {
@@ -121,7 +126,7 @@ export function renderDocument(o: PageOptions): string {
     (o.noindex ? '<meta name="robots" content="noindex, nofollow">' : "") +
     '<link rel="canonical" href="' + esc(canonical) + '">' +
     '<link rel="alternate" hreflang="' + esc(s.locale.hreflang) + '" href="' + esc(canonical) + '">' +
-    '<meta property="og:type" content="website">' +
+    '<meta property="og:type" content="' + (o.ogType ?? "website") + '">' +
     '<meta property="og:site_name" content="' + esc(s.name) + '">' +
     '<meta property="og:title" content="' + esc(o.title) + '">' +
     '<meta property="og:description" content="' + esc(o.description) + '">' +
@@ -160,15 +165,21 @@ export function renderDocument(o: PageOptions): string {
     // colour above a black header. It now matches the bar it sits against.
     '<meta name="theme-color" content="' + esc(s.design.themeColor) + '">' +
     fontLinks(o.theme) +
-    "<style>" + BASE_CSS + "</style>" +
+    // A FILE, NOT AN INLINE BLOCK. The stylesheet was 72–89% of every page's
+    // bytes and re-shipped on every navigation; as a content-addressed file
+    // it downloads once per deploy and the second page a visitor opens is a
+    // tenth the transfer. A <link> in <head> blocks render exactly as the
+    // inline block did, so nothing flashes unstyled. See render/assets.ts.
+    '<link rel="stylesheet" href="' + CSS_PATH + '">' +
     jsonLd +
     "</head><body>" +
     o.bodyHtml +
     // A module script is deferred by definition, so it neither blocks parsing
-    // nor paint. Inlined rather than fetched: it is under 4 KB, and a second
-    // request would cost more than the bytes. Only studio needs it — the other
-    // themes have no device that requires script.
-    (o.theme === "studio" ? '<script type="module">' + STUDIO_JS + "</script>" : "") +
+    // nor paint. Fetched now rather than inlined: with the stylesheet moved
+    // to a file the script was the last per-page copy of shared bytes, and
+    // the same immutable cache that pays for the CSS pays for it. Only studio
+    // needs it — the other themes have no device that requires script.
+    (o.theme === "studio" ? '<script type="module" src="' + JS_PATH + '"></script>' : "") +
     "</body></html>"
   );
 }
@@ -227,8 +238,17 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
     "@type": "Product",
     name: pdp.title,
     description: pdp.sub,
+    sku: pdp.code,
     brand: { "@type": "Brand", name: s.name },
   };
+  // The model's own photography, absolute. Google will not show a product
+  // rich result without an image, so an Offer with no image is markup doing
+  // half its job — and the photos are already on the page. Only the model's
+  // own: where a model has none, the gallery shows the shop's drawing, and
+  // publishing THAT as product imagery would claim a picture of the product.
+  if (pdp.photos && pdp.photos.length > 0) {
+    product["image"] = pdp.photos.slice(0, 6).map((ph) => s.siteUrl + ph.src);
+  }
   // No Offer without a price somebody actually set. Two ways that fails:
   // priceCents is 0 (no price at all), or the page's prices are a provisional
   // conversion of cost rather than a selling price (src/catalog/pricing.ts).
@@ -242,7 +262,13 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
       url: s.siteUrl + s.routeSlugs["/product"] + "/" + pdp.slug,
       priceCurrency: s.currency,
       price: (pdp.priceCents / 100).toFixed(2),
-      availability: "https://schema.org/PreOrder",
+      // Derived from the live flag, because the hardcoded value it replaces
+      // would have outlived its own truth: PreOrder is honest exactly while
+      // the shop is pre-launch ("na voljo ob zagonu trgovine" on the page),
+      // and on launch day every product would still have asserted it until
+      // somebody remembered this line. The flip that opens the shop is the
+      // flip that changes the claim.
+      availability: s.live ? "https://schema.org/InStock" : "https://schema.org/PreOrder",
       itemCondition: "https://schema.org/NewCondition",
     };
   }
@@ -544,6 +570,11 @@ export function renderPlaceholder(
   title: string,
   q: string,
   theme: ThemeKey,
+  // ⚠️ The default is for routes that genuinely are unbuilt. The 404 passes
+  // its own sentence, because "Stran je v pripravi" about a mistyped URL is
+  // a promise the page will exist — a claim that was false on every unknown
+  // path the site answered.
+  body = "Stran je v pripravi. Medtem si oglejte ponudbo ali nas pokličite.",
 ): string {
   const ctx = buildCtx(shop, content, q);
   const head = theme === "studio" ? renderStudioHeader(ctx) : renderHeader(ctx);
@@ -553,7 +584,7 @@ export function renderPlaceholder(
     '<main><section class="act"><div class="wrap placeholder"><div>' +
     '<p class="eyebrow">' + esc(shop.name) + "</p>" +
     '<h1 class="display" style="margin-top:14px">' + esc(title) + "</h1>" +
-    "<p>Stran je v pripravi. Medtem si oglejte ponudbo ali nas pokličite.</p>" +
+    "<p>" + esc(body) + "</p>" +
     '<a class="btn btn-fill" href="/' + q + '">Na začetno stran</a>' +
     "</div></div></section></main>" +
     foot

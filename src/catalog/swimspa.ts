@@ -33,12 +33,14 @@
  * the catalogue was one line of similar pallets. Applied across both lines it
  * would under-price the swim spas by whatever a 5.8 m unit costs to ship over
  * a 2 m one, and over-price the hot tubs by the same error in the other
- * direction. catalogPricingReady() is still false, so nothing ships wrong
+ * direction. That freight model is now per cubic metre (see pricing.ts), so
+ * nothing ships wrong
  * today — this is a note for whoever fills the inputs in.
  */
 
 import { type Addon, ADDON_GROUP_ORDER } from "./pola";
 import { displayPrice, displayPriceCents, envelopeOf } from "./pricing";
+import { jetsText, filterAreaText } from "./count";
 
 export { ADDON_GROUP_ORDER };
 
@@ -600,9 +602,15 @@ export function swimSpaBySlug(slug: string): SwimSpaModel | undefined {
 }
 
 /** Metres, as Slovenian writes them: "5,80 × 2,28 m". */
+/**
+ * The dimension is one token: NBSP around the multiply sign and before the
+ * unit, so "1,95 × 1,95 m" can never split across lines — at 390px the card
+ * meta wrapped it to "1,95 ×" / "1,95 m", the classic spec-line typo. The
+ * meta line still breaks freely at its middot separators.
+ */
 export function footprint(m: SwimSpaModel): string {
   const s = (mm: number) => (mm / 1000).toFixed(2).replace(".", ",");
-  return s(m.mm[0]) + " × " + s(m.mm[1]) + " m";
+  return s(m.mm[0]) + "\u00a0×\u00a0" + s(m.mm[1]) + "\u00a0m";
 }
 
 /**
@@ -624,7 +632,9 @@ export function seating(m: SwimSpaModel): string {
  * The hot tub's line leads with seating for the mirror-image reason.
  */
 export function metaLine(m: SwimSpaModel): string {
-  return footprint(m) + " · " + seating(m) + " · " + m.jets + " šob";
+  // jetsText, never `jets + " šob"`: SWIM 450 has four jets, and four takes
+  // the third form — the raw concatenation shipped "4 šob" on three pages.
+  return footprint(m) + " · " + seating(m) + " · " + jetsText(m.jets);
 }
 
 /** The display price for a model, or the unset dash. */

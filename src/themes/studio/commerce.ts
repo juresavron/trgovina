@@ -1570,6 +1570,11 @@ export const STUDIO_COMMERCE_CSS = `
   :root[data-theme="studio"] .st-cmp-model a {
     color: var(--ink);
     text-decoration: none;
+    /* 44px target on one line of table header: padding grows the hit area,
+     * the negative margin hands the pixels back to the row height. */
+    display: inline-block;
+    padding-block: 10px;
+    margin-block: -10px;
   }
   :root[data-theme="studio"] .st-cmp-model a:hover,
   :root[data-theme="studio"] .st-cmp-model a:focus-visible {
@@ -1942,7 +1947,11 @@ export function renderStudioProducts(ctx: RenderCtx): string {
   return (
     '<section class="st-shop" id="izbor"><div class="st-shop-in">' +
     '<div class="st-shop-head"><div class="st-shop-title">' +
-    '<p class="st-eyebrow">Najbolje prodajano</p>' +
+    // "Izbrani modeli", NOT "Najbolje prodajano": a best-seller claim is a
+    // statement about sales data, and this shop has none yet — asserting one
+    // is a misleading practice under UCPD Art. 6 / ZVPot-1, the same doctrine
+    // that keeps invented reviews off the page.
+    '<p class="st-eyebrow">Izbrani modeli</p>' +
     // The heading is the shop's own hand-written CTA line, not a templated
     // sentence: four shops on this baseline must not share a visible line.
     '<h2 class="st-sec-h">' + esc(ctx.content.cta) + "</h2>" +
@@ -2111,7 +2120,9 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
         '<span class="st-cat-body">' +
         '<span class="st-cat-name">' + esc(c.name) + "</span>" +
         '<span class="st-cat-meta">' + esc(c.meta) + "</span>" +
-        '<span class="st-cat-price">' + esc(c.price) + "</span>" +
+        '<span class="st-cat-price">' + esc(c.price) +
+        (c.price.includes("€") ? ' <span class="st-vat">z DDV</span>' : "") +
+        "</span>" +
         "</span></a></li>"
       );
     })
@@ -2333,11 +2344,15 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
         (c) =>
           '<section class="st-shop" id="' + esc(c.path.replace(/^\//, "")) + '">' +
           '<div class="st-shop-in">' +
+          // No c.intro here — the hub used to print each collection's full
+          // nine-line intro beside its band heading, and the SAME paragraph
+          // again one click later as the collection page's own opening. The
+          // hubChoice cards above already say what holds the families apart;
+          // the model-by-model walk belongs to the page that owns the family.
           '<div class="st-shop-head">' +
           '<div class="st-shop-title">' +
           '<h2 class="st-sec-h">' + esc(c.h1) + "</h2>" +
           "</div>" +
-          '<p class="st-shop-intro">' + esc(c.intro) + "</p>" +
           "</div>" +
           '<div class="st-grid">' + productCards(ctx, c.products) + "</div>" +
           '<p class="st-shop-more"><a class="st-btn-line" href="' +

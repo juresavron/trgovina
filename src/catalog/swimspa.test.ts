@@ -185,10 +185,13 @@ describe("swim spa catalogue", () => {
 
   it("renders Slovenian number and grammar forms", () => {
     const m = SWIMSPA_MODELS.find((x) => x.code === "ZR7807")!;
-    expect(footprint(m)).toBe("5,80 × 2,24 m");
+    // NBSP-joined: the dimension is one unbreakable token (see footprint).
+    expect(footprint(m)).toBe("5,80\u00a0×\u00a02,24\u00a0m");
     expect(seating(m)).toBe("7 oseb · 1 ležalnik");
     // The card leads with LENGTH, because that is what this category is
     // bought on — the hot tub's line leads with seating.
-    expect(metaLine(m).startsWith("5,80 × 2,24 m")).toBe(true);
+    expect(metaLine(m).startsWith("5,80\u00a0×\u00a02,24\u00a0m")).toBe(true);
+    // 94 jets: genitive plural. The four-form trap is SWIM 450's "4 šobe".
+    expect(metaLine(m).endsWith("94 šob")).toBe(true);
   });
 });

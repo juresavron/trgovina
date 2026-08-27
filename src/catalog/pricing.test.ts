@@ -392,7 +392,12 @@ describe("a live shop can identify itself", () => {
     // test. So this asserts the gate OPENS, not only that it closes.
     expect(
       legalPagesReady(
-        { legalName: "Masažni Bazen d.o.o.", vatId: "SI12345678" },
+        {
+          legalName: "Masažni Bazen d.o.o.",
+          vatId: "SI12345678",
+          regNumber: "1234567000",
+          register: "Okrožno sodišče v Ljubljani",
+        },
         {
           phone: "+386 41 234 567",
           address: { street: "Dunajska cesta 100", zip: "1000", city: "Ljubljana" },
@@ -404,7 +409,12 @@ describe("a live shop can identify itself", () => {
     // And it still closes on each field individually, so a single forgotten
     // value cannot slip through behind five filled-in ones.
     const real = {
-      company: { legalName: "Masažni Bazen d.o.o.", vatId: "SI12345678" },
+      company: {
+        legalName: "Masažni Bazen d.o.o.",
+        vatId: "SI12345678",
+        regNumber: "1234567000",
+        register: "Okrožno sodišče v Ljubljani",
+      },
       contact: {
         phone: "+386 41 234 567",
         address: { street: "Dunajska cesta 100", zip: "1000", city: "Ljubljana" },
@@ -413,6 +423,8 @@ describe("a live shop can identify itself", () => {
     const blanks: [string, typeof real][] = [
       ["legalName", { ...real, company: { ...real.company, legalName: "TODO d.o.o." } }],
       ["vatId", { ...real, company: { ...real.company, vatId: "SI00000000" } }],
+      ["regNumber", { ...real, company: { ...real.company, regNumber: "0000000000" } }],
+      ["register", { ...real, company: { ...real.company, register: "" } }],
       ["phone", { ...real, contact: { ...real.contact, phone: "+386 00 000 000" } }],
       ["street", { ...real, contact: { ...real.contact, address: { ...real.contact.address, street: "TODO" } } }],
       ["zip", { ...real, contact: { ...real.contact, address: { ...real.contact.address, zip: "0000" } } }],

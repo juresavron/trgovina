@@ -18,13 +18,22 @@ describe("counting photographs", () => {
     expect(photoCount(11)).toBe("11 fotografij");
   });
 
-  /** The form follows the last two digits, not the first: 22 is a dual. */
-  it("counts by the last two digits", () => {
-    expect(photoCount(21)).toBe("21 fotografija");
-    expect(photoCount(22)).toBe("22 fotografiji");
-    expect(photoCount(24)).toBe("24 fotografije");
+  /**
+   * Compounds take the GENITIVE PLURAL. This test used to assert
+   * "21 fotografija" and "22 fotografiji" — enaindvajset and dvaindvajset
+   * end in -dvajset, so they count like every other 5+ numeral; nobody has
+   * ever said "enaindvajset fotografija". The special forms return only when
+   * the numeral ends in the WORD ena/dve/tri/štiri: sto ena fotografija,
+   * sto dve fotografiji.
+   */
+  it("counts compound numerals in the genitive plural", () => {
+    expect(photoCount(21)).toBe("21 fotografij");
+    expect(photoCount(22)).toBe("22 fotografij");
+    expect(photoCount(24)).toBe("24 fotografij");
     expect(photoCount(25)).toBe("25 fotografij");
     expect(photoCount(101)).toBe("101 fotografija");
+    expect(photoCount(102)).toBe("102 fotografiji");
+    expect(photoCount(103)).toBe("103 fotografije");
   });
 
   it("says none rather than zero", () => {
@@ -206,7 +215,7 @@ describe("clearing a model's photographs", () => {
     expect(form(page(5))).toContain("5 fotografij");
     // The case a naive last-digit rule gets wrong.
     expect(form(page(12))).toContain("12 fotografij");
-    expect(form(page(21))).toContain("21 fotografija");
+    expect(form(page(21))).toContain("21 fotografij");
   });
 
   it("survives a model name that would break the confirmation", () => {
