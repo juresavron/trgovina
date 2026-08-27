@@ -151,3 +151,92 @@ describe("an enhanced photograph says so", () => {
     expect(html).toContain("širine: 480, 800, 1200, 1600, 2048");
   });
 });
+
+/**
+ * Clearing a model is one click, and one click is exactly the risk.
+ *
+ * Replacing a set of photographs meant deleting them one at a time — nine
+ * confirmations and nine page loads deep — so this exists. It is also the only
+ * control in the panel that destroys work no re-upload of a single file can
+ * restore, which is why every assertion here is about the guards rather than
+ * about the button.
+ */
+describe("clearing a model's photographs", () => {
+  const rows = (n: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      id: "i" + i, url: "bazen/x/a" + i + ".webp", alt: "opis", sort: i,
+      widths: [], enhanced: false,
+    }));
+  const page = (n: number, name = "SWIM 580 HIDRO") =>
+    modelPage("bazen", "swim-580-hidro", name, rows(n), undefined, "a@b.c", true, true);
+  const form = (html: string) => /<form class="clear-all"[\s\S]*?<\/form>/.exec(html)?.[0] ?? "";
+
+  it("is not offered when there is nothing to delete", () => {
+    // A destructive control on an empty list is a control whose only possible
+    // outcome is an accident.
+    expect(page(0)).not.toContain("Izbriši vse");
+    expect(form(page(0))).toBe("");
+  });
+
+  it("is offered as soon as there is", () => {
+    expect(page(1)).toContain("Izbriši vse");
+    expect(form(page(1))).toContain('action="/admin/bazen/swim-580-hidro/delete-all"');
+    expect(form(page(1))).toContain("method=\"post\"");
+  });
+
+  it("carries the count, so the server can refuse a stale tab", () => {
+    // The handler re-reads the set and does nothing if it has changed. Without
+    // this field it would have nothing to compare against.
+    expect(form(page(7))).toContain('name="count" value="7"');
+  });
+
+  it("names the model and the number rather than asking 'are you sure?'", () => {
+    // The muscle memory that dismisses a generic dialog is the memory this
+    // has to interrupt, so the text has to say what will be lost.
+    const f = form(page(3));
+    expect(f).toContain("SWIM 580 HIDRO");
+    expect(f).toContain("3 fotografije");
+    expect(f).toContain("ni mogoče razveljaviti");
+  });
+
+  it("counts in Slovenian, teens included", () => {
+    expect(form(page(1))).toContain("1 fotografija");
+    expect(form(page(2))).toContain("2 fotografiji");
+    expect(form(page(4))).toContain("4 fotografije");
+    expect(form(page(5))).toContain("5 fotografij");
+    // The case a naive last-digit rule gets wrong.
+    expect(form(page(12))).toContain("12 fotografij");
+    expect(form(page(21))).toContain("21 fotografija");
+  });
+
+  it("survives a model name that would break the confirmation", () => {
+    // esc() does not escape the apostrophe, so a hand-built single-quoted JS
+    // literal ends early on any name containing one; a backslash would open an
+    // escape sequence. JSON.stringify handles both, and esc() then makes the
+    // result safe as an attribute value.
+    const f = form(page(1, "Bazen d'Or"));
+    expect(f).toContain("Bazen d'Or");
+    // The attribute is double-quoted, so an unescaped quote inside it would
+    // end the attribute and put script-ish text into the tag.
+    expect(f).toContain('onsubmit="return confirm(');
+    const back = form(page(1, 'A\\B "X"'));
+    expect(back).toContain("A\\\\B");
+    // The real property: the attribute is delimited by double quotes, so its
+    // VALUE must contain none. A raw one would end the attribute early and
+    // spill the rest of the message into the tag as attributes.
+    const attr = /onsubmit="([^"]*)"/.exec(back)?.[1] ?? "";
+    expect(attr).toContain("confirm(&quot;");
+    expect(attr).toContain("&quot;)");
+    expect(attr.includes('"')).toBe(false);
+    // And the whole attribute was captured, not truncated at a stray quote.
+    expect(attr).toContain("razveljaviti");
+  });
+
+  it("leaves the per-photograph delete alone", () => {
+    // Clearing everything is an addition, not a replacement: removing one
+    // photograph is still the common case.
+    const html = page(3);
+    expect(html).toContain("/delete\"");
+    expect(html).toContain("Izbriši</button>");
+  });
+});

@@ -457,6 +457,39 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     return seeOther("/admin/" + shop + "/" + slug + "?m=saved");
   }
 
+  // CLEARING A MODEL, WHICH IS THE SAME WORK AS DELETE ONE AND A DIFFERENT RISK.
+  //
+  // Deleting nine photographs one at a time is nine confirmations and nine
+  // page loads, so an operator replacing a set does it with the browser's back
+  // button and a lot of patience. That is the case this exists for.
+  //
+  // It is also the only irreversible button in the panel that cannot be undone
+  // by re-uploading one file, so the confirmation names the model and the
+  // count rather than asking "are you sure?" — and the COUNT IS RE-READ HERE
+  // rather than trusted from the form, so a stale tab cannot be talked into
+  // clearing a set that has changed since it was rendered.
+  //
+  // Objects are removed per row through storedPaths, exactly as the single
+  // delete does, so a row whose ladder was written before the widest rung
+  // moved to the bare path is handled by the one function that knows the rule.
+  if (action === "delete-all" && request.method === "POST") {
+    const form = await request.formData();
+    const rows = await listMedia(api, productId);
+    // The form carries what the page showed. If the set changed underneath —
+    // another tab, another person, an upload finishing — do nothing and say
+    // so, because "delete everything" is the wrong thing to guess at.
+    const claimed = Number(form.get("count") ?? -1);
+    if (rows.length === 0) return seeOther("/admin/" + shop + "/" + slug + "?m=deleted-none");
+    if (claimed !== rows.length) {
+      return seeOther("/admin/" + shop + "/" + slug + "?e=stale");
+    }
+    for (const row of rows) {
+      await deleteMedia(api, row.id);
+      for (const path of storedPaths(row.url, row.widths)) await deleteObject(api, path);
+    }
+    return seeOther("/admin/" + shop + "/" + slug + "?m=cleared");
+  }
+
   if (action === "delete" && request.method === "POST") {
     const form = await request.formData();
     const id = String(form.get("id") ?? "");
@@ -516,12 +549,19 @@ const ERRORS: Record<string, string> = {
   // reaches here.
   type: "Slika ni bila pretvorjena v WebP. To se zgodi le, če je JavaScript " +
     "izklopljen — vklopite ga in poskusite znova.",
+  // The page said one thing and the database said another, so nothing was
+  // deleted. The operator gets to look before deciding again.
+  stale: "Seznam fotografij se je med tem spremenil, zato ni bilo nič " +
+    "izbrisano. Osvežite stran in poskusite znova.",
 };
 
 const NOTICES: Record<string, string> = {
   saved: "Shranjeno.",
   deleted: "Fotografija je izbrisana.",
   uploaded: "Fotografija je naložena.",
+  cleared: "Vse fotografije tega modela so izbrisane.",
+  // Not an error: the operator asked for an empty set and the set is empty.
+  "deleted-none": "Ta model ni imel fotografij.",
 };
 
 /** "bazen/slug/uuid.webp" + 800 → "bazen/slug/uuid-800.webp" */

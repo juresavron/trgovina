@@ -89,6 +89,13 @@ h1{font-size:clamp(21px,2.2vw,27px);line-height:1.22;letter-spacing:-.012em;
 h2{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
   color:var(--mute);margin:38px 0 12px}
 .lede{color:var(--mute);margin:7px 0 0;max-width:60ch}
+/* A section heading with a control on its line. The h2's own margins move to
+   the row, so the heading keeps its rhythm whether the control is there or
+   not — and it is only there when the model has photographs to clear. */
+.head-row{display:flex;align-items:center;justify-content:space-between;
+  gap:16px;flex-wrap:wrap;margin:38px 0 12px}
+.head-row h2{margin:0}
+.clear-all{margin:0}
 .head{margin:0 0 24px}
 .back{display:inline-flex;align-items:center;gap:7px;min-height:24px;
   padding:4px 0;margin:0 0 14px;color:var(--mute);text-decoration:none;font-size:14px}
@@ -618,7 +625,42 @@ export function modelPage(
 
       "</div></form>" +
 
-      "<h2>Fotografije</h2>" +
+      '<div class="head-row"><h2>Fotografije</h2>' +
+      // ONE CLICK TO CLEAR A MODEL, and a confirmation that says what it will
+      // cost rather than "are you sure?".
+      //
+      // Replacing a set meant deleting nine photographs one at a time, nine
+      // confirmations and nine page loads deep. This is that, once.
+      //
+      // ⚠️ IT ONLY EXISTS WHEN THERE IS SOMETHING TO DELETE. A destructive
+      // control on an empty list is a control whose only possible outcome is
+      // an accident.
+      //
+      // The count travels with the form so the server can refuse a stale tab:
+      // see the delete-all handler, which re-reads the set and does nothing if
+      // it has changed. And the confirmation names the model and the number,
+      // because the muscle memory that clears a dialog reading "Are you sure?"
+      // is exactly the memory this needs to interrupt.
+      (media.length === 0
+        ? ""
+        : '<form class="clear-all" method="post" action="' + esc(base) + '/delete-all" ' +
+          // ⚠️ JSON.stringify, NOT hand-rolled quoting. The message is a JS
+          // string literal inside an HTML attribute, so it has to survive two
+          // parsers. esc() escapes < > & and the double quote — but NOT the
+          // apostrophe, so a single-quoted literal built by hand ends early on
+          // any name containing one, and a backslash would start an escape
+          // sequence nobody intended. JSON.stringify produces a correct
+          // double-quoted literal for all of it, including the line breaks,
+          // and esc() then makes it safe as an attribute value.
+          "onsubmit=\"return confirm(" +
+          esc(JSON.stringify(
+            "Izbrišem VSE fotografije modela " + name + " (" + photoCount(media.length) + ")?" +
+            "\n\nTega ni mogoče razveljaviti.",
+          )) + ")\">" +
+          '<input type="hidden" name="count" value="' + String(media.length) + '">' +
+          '<button class="btn btn--danger btn--sm" type="submit">Izbriši vse</button>' +
+          "</form>") +
+      "</div>" +
       // ⚠️ SAY WHEN THIS REACHES THE SHOP, because it is not now.
       //
       // The storefront renders a generated index rather than querying the
