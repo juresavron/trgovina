@@ -52,6 +52,7 @@ import {
 } from "./panel";
 import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn } from "./auth";
 import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
+import { assignSlots, classify, slotOptions } from "./assign";
 import { enhance, enhanceAvailable } from "./enhance";
 import { describe, describeAvailable } from "./describe";
 import { arrange } from "./shots";
@@ -151,6 +152,13 @@ const PRIVATE = {
 
 function page(body: string, status = 200, extra: Record<string, string> = {}): Response {
   return new Response(body, { status, headers: { ...PRIVATE, ...extra } });
+}
+
+function json(v: unknown, status = 200): Response {
+  return new Response(JSON.stringify(v), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+  });
 }
 
 function seeOther(location: string, extra: Record<string, string> = {}): Response {
@@ -412,6 +420,47 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     return new Response(done.bytes, {
       status: 200,
       headers: { "content-type": done.mime, "cache-control": "no-store" },
+    });
+  }
+
+  // --- smart sorting: which slot does each dropped picture belong to ---
+  //
+  // The batch in one request, because the ASSIGNMENT is a property of the
+  // batch: two garden shots classified separately would both claim the hero,
+  // and only the round that sees both can give the second one its second
+  // choice. Classification itself is per image (the model sees one picture
+  // at a time); assignSlots() then resolves the batch — see admin/assign.ts.
+  //
+  // The response tells the browser everything it needs to FINISH each file
+  // (the slot's crop ratio and width cap), so the client can reuse the same
+  // crop-and-convert pipeline the single-slot page runs, and the existing
+  // per-slot upload endpoint stays the only writer.
+  if (parts[1] === "site-sort" && request.method === "POST") {
+    const form = await request.formData();
+    const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
+    if (files.length === 0) return json({ error: "Ni slik." }, 400);
+    // A ceiling, said plainly: the site has seventeen slots, and a batch of
+    // fifty is either a mistake or the product catalogue, which has its own
+    // uploader.
+    if (files.length > 20) return json({ error: "Največ 20 slik naenkrat." }, 400);
+
+    const options = slotOptions();
+    const classified = [];
+    for (const f of files) {
+      classified.push(
+        await classify(env, await f.arrayBuffer(), f.type || "image/webp", options),
+      );
+    }
+    const assigned = assignSlots(classified, options);
+    return json({
+      items: assigned.map((a, i) => ({
+        i,
+        stem: a.slot ? stemOf(a.slot.key) : null,
+        label: a.slot ? a.slot.label : null,
+        ar: a.slot?.ratio ? a.slot.ratio[0] + ":" + a.slot.ratio[1] : null,
+        max: a.slot ? a.slot.maxWidth : null,
+        reason: a.reason,
+      })),
     });
   }
 
@@ -685,8 +734,17 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         return seeOther("/admin/site/" + stemOf(slot.key) + "?e=alt");
       }
       const bytes = await part.arrayBuffer();
+      // The smart uploader posts here too, once per assigned picture, and a
+      // fetch() caller cannot read an outcome out of a redirect — the 303
+      // resolves to the slot page at 200 whether the query said ?m= or ?e=.
+      // So a request that declares itself bulk gets statuses instead.
+      const bulk = form.get("bulk") === "1";
       // Same guarantee as every other upload: the bytes decide, not the label.
-      if (!isWebp(bytes)) return seeOther("/admin/site/" + stemOf(slot.key) + "?e=type");
+      if (!isWebp(bytes)) {
+        return bulk
+          ? new Response("Ni WebP.", { status: 415 })
+          : seeOther("/admin/site/" + stemOf(slot.key) + "?e=type");
+      }
       // FIXED KEY, overwritten in place — see site-images.ts on why it cannot
       // be content-addressed and why /media gives it a short cache instead.
       //
@@ -701,9 +759,13 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       try {
         await uploadObject(api, slot.key, bytes, "image/webp", true);
       } catch {
-        return seeOther("/admin/site/" + stemOf(slot.key) + "?e=store");
+        return bulk
+          ? new Response("Shramba ni sprejela slike.", { status: 502 })
+          : seeOther("/admin/site/" + stemOf(slot.key) + "?e=store");
       }
-      return seeOther("/admin/site/" + stemOf(slot.key) + "?m=uploaded");
+      return bulk
+        ? new Response(null, { status: 204 })
+        : seeOther("/admin/site/" + stemOf(slot.key) + "?m=uploaded");
     }
     if (parts[3]) return page(notFoundPage("Neznano dejanje.", admin.email), 404);
 
