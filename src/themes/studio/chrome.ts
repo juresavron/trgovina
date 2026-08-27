@@ -1398,6 +1398,14 @@ export const STUDIO_CHROME_CSS = `
    * button STAYS at every width: it is the only path to the enquiry, and the
    * rail has no contact route of its own. */
   @media (max-width: 620px) {
+    /* THE WHOLE MENU AT REST. Five destinations at the desktop gap measured
+     * 407px against a 390px phone's rail, so KONTAKT lived beyond the fade
+     * and DOSTAVA dissolved mid-word — a menu two of whose five entries need
+     * a swipe to discover. A tighter gap puts all five on a 390 at rest; the
+     * narrowest phones still scroll, and the edge fade still says so. */
+    :root[data-theme="studio"] .st-chrome-nav {
+      gap: clamp(24px, 6.5vw, var(--gap-lg));
+    }
     /* THE LOCKUP GOES TO TWO LINES, because one line was arithmetic that
      * could not come out. A shrink-only rule stood here with a comment
      * claiming three words at ~16px "need 210 and fit whole"; measured in

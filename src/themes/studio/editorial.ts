@@ -217,6 +217,13 @@ export const STUDIO_EDITORIAL_CSS = `
    * column. The joining dot is tied to the claim before it with a no-break
    * space in the markup, so a wrapped line never opens with a stray dot. */
   :root[data-theme="studio"] .st-imp-claim { display: inline-block; }
+  /* ≤620: the three claims become three quiet lines. All of them wrap at
+   * this width anyway, and wrapped chips with dots at their line ends read
+   * as punctuation nobody meant — stacked, the separator has no job. */
+  @media (max-width: 620px) {
+    :root[data-theme="studio"] .st-imp-claim { display: block; }
+    :root[data-theme="studio"] .st-imp-sep { display: none; }
+  }
 
   /* The measured asymmetry. The centre column is 1.22fr against 1fr siblings
    * AND taller (4/5 against 1/1), so with align-items:center it bleeds past
@@ -1283,7 +1290,10 @@ export function renderStudioImpact(ctx: RenderCtx): string {
       (t, i) =>
         '<span class="st-imp-claim">' +
         esc(t) +
-        (i < claims.length - 1 ? " ·" : "") +
+        // The dot is an ELEMENT so the phone tier can drop it: three wrapped
+        // chips each ending in " ·" read as stray punctuation at 390px, and
+        // a text-node dot cannot be styled away.
+        (i < claims.length - 1 ? '<span class="st-imp-sep"> ·</span>' : "") +
         "</span>",
     )
     .join(" ");
@@ -1560,7 +1570,12 @@ export function renderStudioGuides(ctx: RenderCtx): string {
     guides
       .map(
         (g, i) =>
-          '<a class="st-gd-card" href="' + href + '">' +
+          // The card is a door to THE guide — the fragment scrolls the
+          // guides page to its own section, with the offset the anchor
+          // system already pays for. Without it every card landed at the
+          // top of the page and the reader scrolled, looking for the title
+          // they had just clicked.
+          '<a class="st-gd-card" href="' + href + "#" + esc(g[2]) + '">' +
           // ⚠️ THE PHOTOGRAPH IS BACK, AND THE NOTE THAT REMOVED IT WAS RIGHT
           // AT THE TIME. It said: these were borrowed room interiors argued
           // for as atmosphere, the argument was fine and the render was a

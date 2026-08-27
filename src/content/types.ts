@@ -100,6 +100,13 @@ export interface UtilCard {
   h: string;
   p: string;
   cta: string;
+  /**
+   * Where the CTA goes. Without it the renderer used the flagship model's
+   * page for every utility tile — so "Naročite ogled" landed a visitor on a
+   * product page with no survey in sight, when the promise was a visit.
+   * A tile's action names its own destination.
+   */
+  href?: string;
 }
 
 /**
@@ -327,7 +334,14 @@ export interface ShopContent {
      */
     verified?: boolean;
   }[];
-  guides: [string, string][];
+  /**
+   * [chip, title, fragment] — the fragment is the guide's own section id on
+   * the guides page, so a card is a door to THE guide, not to the top of a
+   * page the reader then scrolls looking for it. Pinned by a structure test
+   * against the rendered guides page, because the id is derived from the
+   * heading and would silently drift the day someone rewords it.
+   */
+  guides: [string, string, string][];
   /** The flagship: the model the home page leads with. */
   pdp: PdpContent;
   /**

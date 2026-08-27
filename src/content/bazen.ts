@@ -403,6 +403,10 @@ function pdpFor(m: PolaModel): PdpContent {
       ["Školjka", "ameriški akril, " + SHELL_FINISHES.length + " barv · izolacija 2 cm"],
       ["Mere", footprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
       ["Teža", m.dryKg + " kg prazen · " + m.filledKg + " kg poln"],
+      // The supplier's own code, printed. It is what an order, a warranty
+      // claim and a spare part are matched on — a buyer quoting "ZR805" on
+      // the phone saves both sides the "the small one, the 195" dance.
+      ["Koda modela", m.code],
       ["Priklop", "220 V / 380 V"],
       ["Garancija", "2–5 let, odvisno od sklopa"],
     ],
@@ -548,6 +552,8 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
         : []),
       ["Priklop", "220 V / 380 V"],
       ["Garancija", "2–5 let, odvisno od sklopa"],
+      // The supplier's own code — same reason the tub spec prints it.
+      ["Koda modela", m.code],
     ],
     bar: [m.name, swimFootprint(m) + " · " + counted(m.jets, JETS_SHORT), swimModelPrice(m), "V košarico"],
     addons: m.addons.map((x) => ({
@@ -707,7 +713,11 @@ export const bazenContent: ShopContent = {
   // HOME is the wordmark, so the five slots are SHOP, ABOUT, BLOG, DELIVERY,
   // CONTACT. It was five pages about hot tubs with no route to the swim spas
   // at all.
-  nav: ["Trgovina", "O nas", "Vodniki", "Dostava in montaža", "Kontakt"],
+  // "Dostava", not "Dostava in montaža": the nav is a rail on a phone, and
+  // the three-word label was the one that dissolved into the edge fade with
+  // KONTAKT pushed off-screen entirely. The page's own h1 keeps the full
+  // name; a nav label is a handle, not a title.
+  nav: ["Trgovina", "O nas", "Vodniki", "Dostava", "Kontakt"],
   artKey: "pool",
   kicker: "Masažni bazen · Slovenija",
   h1: "Masažni bazen za pet ali šest oseb.",
@@ -786,6 +796,9 @@ export const bazenContent: ShopContent = {
       h: "Bo terasa zdržala?",
       p: "Napolnjen bazen tehta do 2.210 kg, swim spa še precej več. Pred dostavo brezplačno preverimo nosilnost, dostop in elektriko.",
       cta: "Naročite ogled →",
+      // The enquiry page, not the flagship model: the tile promises a site
+      // survey, and the survey is booked by writing or calling.
+      href: "/kontakt",
     },
   ],
   moat: {
@@ -829,10 +842,16 @@ export const bazenContent: ShopContent = {
   // not been paid yet, and a far better one than two strangers who do not
   // exist praising a product that does not either.
   reviews: GENERATED_REVIEWS["bazen"] ?? [],
+  // The fragments are the sections' derived ids on /vodniki — pinned by
+  // structure.test.ts, which renders that page and fails the moment a
+  // reworded heading changes an id out from under a card.
   guides: [
-    ["Vodnik za nakup", "Masažni bazen na terasi: kaj preveriti pred nakupom?"],
-    ["Cene 2026", "Koliko stane masažni bazen? Nakup in obratovanje."],
-    ["Pozimi", "Masažni bazen pozimi: stroški in nasveti."],
+    ["Vodnik za nakup", "Masažni bazen na terasi: kaj preveriti pred nakupom?",
+      "s1-masazni-bazen-na-terasi-kaj-preveriti-pr"],
+    ["Cene 2026", "Koliko stane masažni bazen? Nakup in obratovanje.",
+      "s2-koliko-stane-masazni-bazen"],
+    ["Pozimi", "Masažni bazen pozimi: stroški in nasveti.",
+      "s3-masazni-bazen-pozimi"],
   ],
   categories,
   collections,
