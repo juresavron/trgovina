@@ -1071,6 +1071,16 @@ export const STUDIO_EDITORIAL_CSS = `
    * all. The top 30% still ramps to nothing, so the picture is not a plate.
    * The chip keeps its own ground on top of this (see below); the "Preberite
    * vodnik" line sits in the near-opaque foot at ~0.90 and measures 5.6:1. */
+  /* The picture the scrim was built to sit on. Behind everything (z-index is
+   * the scrim's job), filling the square, cover — a guide card is atmosphere
+   * and a crop of a product shot is exactly right for it. */
+  :root[data-theme="studio"] .st-gd-img {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
   :root[data-theme="studio"] .st-gd-scrim {
     position: absolute;
     inset: auto 0 0 0;
@@ -1622,11 +1632,26 @@ export function renderStudioGuides(ctx: RenderCtx): string {
       .map(
         (g, i) =>
           '<a class="st-gd-card" href="' + href + '">' +
-          // No photograph. These were borrowed room interiors, argued for as
-          // atmosphere beside a buying guide. The argument was fine and the
-          // render was a furniture catalogue. The scrim below already carries
-          // the copy, so the card works as a coloured panel with a chip and a
-          // title — which is what a guide card is anyway.
+          // ⚠️ THE PHOTOGRAPH IS BACK, AND THE NOTE THAT REMOVED IT WAS RIGHT
+          // AT THE TIME. It said: these were borrowed room interiors argued
+          // for as atmosphere, the argument was fine and the render was a
+          // furniture catalogue, so the card works as a coloured panel.
+          //
+          // It works as a panel the way an empty frame works as a picture. The
+          // scrim below is a gradient built to carry white copy over a
+          // PHOTOGRAPH; with nothing behind it the card is a grey rectangle
+          // fading to black with a title at the bottom, and it was reported as
+          // exactly that — "images are missing".
+          //
+          // They are managed slots now, like every other picture on this page:
+          // the owner chooses them, and each falls back to one of the shop's
+          // own photographs until they do. Borrowed furniture is not what came
+          // back; the shop's own product photography is.
+          decorativeImg(
+            sitePhoto("vodnik-" + String(i + 1)),
+            "st-gd-img",
+            "(max-width: 809px) 92vw, 30vw",
+          ) +
           // ONE scrim. There were two identical spans here, which quietly
           // doubled the gradient and made the declared stops a fiction; the
           // stops in the stylesheet now carry the copy on their own.

@@ -60,6 +60,25 @@ function counted(n: number, forms: readonly [string, string, string, string]): s
 }
 
 const MASSAGE_JETS = ["masažna šoba", "masažni šobi", "masažne šobe", "masažnih šob"] as const;
+/**
+ * Every model the shop actually offers, both families, for the figures that
+ * describe the RANGE rather than one product.
+ *
+ * ⚠️ dryKg IS OPTIONAL ON A SWIM SPA — the catalogue omits it where the
+ * supplier's sheet states no mass, deliberately, because a dash reads as
+ * "none" and an estimate is a structural claim nobody made. So the mass
+ * figure below filters rather than assuming, and a model with no stated mass
+ * simply does not raise the maximum.
+ */
+const allOffered: readonly { mm: readonly number[]; jets: number; dryKg?: number }[] = [
+  ...OFFERED_MODELS,
+  ...OFFERED_SWIMSPAS,
+];
+
+/** The heaviest empty mass the supplier actually states, across both families. */
+const heaviestDryKg = Math.max(
+  ...allOffered.map((m) => m.dryKg).filter((kg): kg is number => typeof kg === "number"),
+);
 
 /**
  * The offer, built from the supplier catalogue rather than typed out.
@@ -688,11 +707,40 @@ export const bazenContent: ShopContent = {
   ],
   // Every figure here is the supplier's own — the previous set led with a
   // temperature the price list does not state.
+  // ⚠️ DERIVED, BECAUSE EVERY ONE OF THESE WAS WRONG.
+  //
+  // They were typed out when this shop sold three hot tubs, and they stayed
+  // typed out when it started selling six models across two families. The
+  // trust band on the home page — the one headed "Zakaj kupci izberejo
+  // masažni bazen" — has therefore been telling visitors:
+  //
+  //   "3 modeli, od 195 do 230 cm"   there are SIX, from 195 to 580 cm
+  //   "do 50 masažnih šob"           the SWIM 580 MAXI has 94
+  //   "410 kg prazen"                that is the biggest TUB; a swim spa
+  //                                  is 1.050 to 1.430 kg empty
+  //
+  // Three understatements of the shop's own range, in the band whose entire
+  // job is to be believed. It is the same fault the catalogue prose was
+  // audited for — a family-level claim made from one model's figure — and it
+  // survived here because a literal cannot go stale loudly.
+  //
+  // So they come from the catalogue now. A model added or removed moves these
+  // numbers with it, and there is nothing left to forget to update.
+  // ⚠️ THE VALUE LEADS WITH THE NUMBER, and that is a rendering contract, not
+  // a style. statValue only animates a figure it can parse off the FRONT of
+  // the string and only when it is 10 or more (see countable), so "do 1.430
+  // kg" is a dead stat where "1.430 kg" counts up. A first pass put the
+  // qualifier in the value and silently removed the only counter on the page;
+  // studio.test.ts caught it. The qualifier belongs in the label anyway —
+  // that is what the second half of the pair is for.
   stats: [
-    ["3 modeli", "od 195 do 230 cm"],
-    ["do 50", "masažnih šob"],
-    ["3 kW", "grelec, Balboa krmilnik"],
-    ["410 kg", "prazen — dostava z ekipo"],
+    [modelCount(allOffered.length), sizeSpan(allOffered.map((m) => m.mm[0]!))],
+    [String(Math.max(...allOffered.map((m) => m.jets))), "največ masažnih šob"],
+    ["3 kW", "grelec, krmilnik Balboa"],
+    [
+      String(heaviestDryKg).replace(/\B(?=(\d{3})+(?!\d))/, ".") + " kg",
+      "najtežji model, prazen — dostava z ekipo",
+    ],
   ],
   // THE HOME PAGE SHOWS A SELECTION, NOT THE CATALOGUE.
   //
@@ -729,7 +777,20 @@ export const bazenContent: ShopContent = {
       ["Priklop in zagon", "Napolnimo, zaženemo filtracijo in ogrevanje ter umerimo šobe."],
       ["Predaja", "Pokažemo vzdrževanje: 10 minut na teden, nič več."],
     ],
-    claim: ["Bazen tehta štiristo kilogramov. ", "Premaknemo ga mi."],
+    // ⚠️ "ŠTIRISTO KILOGRAMOV" WAS ONE MODEL'S FIGURE STANDING FOR SIX.
+    //
+    // 410 kg is the BAZEN 230 empty — the heaviest hot tub, and the lightest
+    // thing in this half of the catalogue. A swim spa is 1.050 to 1.430 kg
+    // before a drop of water goes in. So the page's one display sentence, the
+    // sentence the whole moat band exists to deliver, understated the problem
+    // it is claiming to solve by a factor of three.
+    //
+    // Understating your own difficulty is a strange way to build trust: the
+    // reader who has priced a crane knows the number is wrong, and the reader
+    // who has not is being told this is easier than it is. "Tudi tisoč
+    // štiristo" is the real range's top, spelled out because the ring device
+    // cuts this sentence and a numeral would be cut with it.
+    claim: ["Bazen tehta tudi tisoč štiristo kilogramov. ", "Premaknemo ga mi."],
   },
   // ⚠️ BOTH OF THESE ARE INVENTED, AND ARE FLAGGED AS SUCH.
   //

@@ -108,6 +108,7 @@ export interface SiteImage {
 const CHROME = "Slike strani";
 const HOME = "Domača stran";
 const GALLERY = "Galerija na dnu strani";
+const GUIDES = "Kartice vodnikov";
 
 const CHROME_IMAGES: readonly SiteImage[] = [
   {
@@ -260,6 +261,29 @@ const HOME_IMAGES: readonly SiteImage[] = [
  * resolved photographs are all distinct instead, so the next edit that
  * collides fails a test rather than shipping a duplicate.
  */
+/* ---- the buying-guide cards --------------------------------------------
+ *
+ * Three square cards under "Preden kupite masažni bazen". They had no picture
+ * at all: the scrim over them is a gradient built to carry white copy over a
+ * PHOTOGRAPH, and with nothing behind it the card rendered as a grey rectangle
+ * fading to black. Reported as "images are missing", which is what it looked
+ * like.
+ */
+const GUIDE_IMAGES: readonly SiteImage[] = [12, 14, 15].map(
+  (offset, i): SiteImage => ({
+    key: "site/vodnik-" + String(i + 1) + ".webp",
+    group: GUIDES,
+    label: "Vodnik — slika " + String(i + 1),
+    note: "Slika " + String(i + 1) + " od treh na karticah pod naslovom " +
+      "»Preden kupite masažni bazen«. Kvadrat, najbolje 1200 × 1200 px. " +
+      "Čez spodnjo tretjino gre temen preliv z naslovom, zato naj bo bazen " +
+      "v zgornjih dveh tretjinah." + HOME_NOTE_TAIL,
+    fallbackOffset: offset,
+    ratio: [1, 1],
+    maxWidth: 1200,
+  }),
+);
+
 const GALLERY_IMAGES: readonly SiteImage[] = [6, 7, 8, 9, 10, 11].map(
   (offset, i): SiteImage => ({
     key: "site/galerija-" + String(i + 1) + ".webp",
@@ -283,6 +307,7 @@ const GALLERY_IMAGES: readonly SiteImage[] = [6, 7, 8, 9, 10, 11].map(
 export const SITE_IMAGES: readonly SiteImage[] = [
   ...CHROME_IMAGES,
   ...HOME_IMAGES,
+  ...GUIDE_IMAGES,
   ...GALLERY_IMAGES,
 ];
 
