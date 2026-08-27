@@ -20,11 +20,30 @@ import type { Page } from "../pages";
  * sheet lists none, so "plavanje na mestu" is a per-model property here, not a
  * family promise — swimSpaFamilyHasSwimJets() returns false and this page has
  * to agree with it.
+ *
+ * THE WATER FIGURES ARE DERIVED, NOT NEW DATA: filledKg − dryKg, per offered
+ * model, which is the mass of the water and therefore its volume in litres to
+ * within the density of warm water. Hot tubs 1.200/1.500/1.800 kg, swim spas
+ * 4.700/6.100/7.060 kg. Nothing is rounded up and nothing is interpolated —
+ * both halves of every subtraction are the supplier's own figures, already
+ * printed in the table above as dry and filled mass.
+ *
+ * ⚠️ AND STILL NO CONSUMPTION FIGURE. Water volume is why a swim spa costs
+ * more to hold at temperature, and saying so is safe; saying HOW MUCH more is
+ * not, because it depends on the temperature held, the frequency of use, the
+ * cover and the weather. /ogled-lokacije says the same thing in the same
+ * words, and this page may not quietly become the one place a monthly number
+ * appears.
+ *
+ * SHELL HEIGHT is the last axis added, from mm[2]: 820/880/880 mm across the
+ * three hot tubs and 1.400/1.400/1.350 mm across the three swim spas. It is
+ * the difference between a tub you sit in and one you stand in, and it is the
+ * figure a raised terrace has to be planned around.
  */
 export const COMPARE: Page = {
   key: "/compare",
   h1: "Primerjava modelov",
-  seoTitle: "Swim spa ali masažni bazen? Primerjava",
+  seoTitle: "Swim spa ali masažni bazen?",
   lead:
     "Prva odločitev ni model, ampak vrsta bazena. Masažni bazen je za sedenje in sprostitev, " +
     "swim spa pa za plavanje — razlika je v dolžini, teži in tem, kaj zahtevata od prostora.",
@@ -44,6 +63,7 @@ export const COMPARE: Page = {
         ["Mere školjke", "195–230 cm, v kvadrat", "450–580 cm, v dolžino"],
         ["Namen", "Sedenje, masaža, sprostitev", "Daljša školjka za plavanje in sprostitev"],
         ["Prostor", "Gre na teraso", "Praviloma vrt in betonska plošča"],
+        ["Višina školjke", "82–88 cm", "135–140 cm"],
         ["Teža prazen", "300–410 kg", "1.050–1.430 kg"],
         ["Teža napolnjen", "1.500–2.210 kg", "5.750–8.490 kg"],
         ["Dostava", "Z ekipo in opremo za prenos", "Enako — in dostop je pogosto odločilen"],
@@ -63,6 +83,70 @@ export const COMPARE: Page = {
         "Protitočne šobe, ki ustvarijo tok za plavanje na mestu, niso enake pri vseh treh " +
           "modelih — koliko jih ima posamezen model, piše v njegovi specifikaciji. Preverite " +
           "jo, preden se odločite za plavanje na mestu.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Koliko vode boste greli",
+      p: [
+        "Razlika med prazno in napolnjeno težo je voda, in prav ta številka loči družini bolj " +
+          "kot dolžina školjke. Masažni bazen drži od 1.200 do 1.800 litrov, swim spa pa od " +
+          "4.700 do 7.060 — približno štirikrat toliko. Vse štiri številke so razlika med " +
+          "podatkoma, ki sta v tabeli zgoraj.",
+        "Posledica je preprosta in velja ne glede na tarifo: več vode se dlje greje in dražje " +
+          "drži na temperaturi. Koliko dražje, vam ne bomo napisali — poraba je odvisna od " +
+          "temperature, ki jo držite, pogostosti uporabe, kakovosti pokrova in vremena, zato " +
+          "mesečnega zneska ne navajamo nikjer na tej strani. Kdor swim spa izbira zaradi " +
+          "plavanja, naj to vseeno vzame v račun kot stalen strošek, ne kot enkratnega.",
+        "Ista številka odloča tudi pri menjavi vode in pri prvem polnjenju: 7.000 litrov je " +
+          "drugačen opravek kot 1.500 in traja dlje, kot večina pričakuje.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Globina in vstop",
+      p: [
+        "Masažni bazen je visok 82 do 88 centimetrov — vanj se stopi in sede. Swim spa je " +
+          "visok 135 do 140, kar je globina, v kateri odrasel človek stoji in plava. Razlika " +
+          "približno pol metra se na papirju bere kot podrobnost, na dvorišču pa določi, kako " +
+          "se v bazen sploh pride.",
+        "Če bazen stoji na terasi in ni vgreznjen, je rob toliko višji od tal. Stopnica je " +
+          "med opcijami na strani vsakega modela; ali jo pri vas potrebujete, je eno od " +
+          "vprašanj, na katera odgovorimo na ogledu, ker je odvisno od višine podlage.",
+      ],
+    },
+    {
+      kind: "qa",
+      h: "Kar nas pri tej odločitvi največkrat vprašajo",
+      items: [
+        [
+          "Ali gre swim spa na teraso?",
+          "Praviloma ne. Školjka je dolga 4,5 do 5,8 metra, široka 2,28 metra in napolnjena " +
+            "tehta od 5.750 do 8.490 kilogramov — to je obremenitev, ki jo lesena ali " +
+            "nadgrajena terasa redko prenese. Swim spa zato skoraj vedno stoji na betonski " +
+            "plošči na terenu. Masažni bazen je pri 1.500 do 2.210 kilogramih pogosto " +
+            "izvedljiv tudi na terasi, a to je treba pogledati na kraju samem, ne po telefonu.",
+        ],
+        [
+          "Se v masažnem bazenu da plavati?",
+          "Ne. Vsi trije modeli so kvadratni, od 1,95 do 2,30 metra stranice, in nobeden nima " +
+            "protitočnih šob. Za plavanje na mestu je swim spa, a tudi tam preverite " +
+            "specifikacijo posameznega modela — SWIM 450 protitočnih šob ne navaja.",
+        ],
+        [
+          "Kateri sprejme največ ljudi?",
+          "Med masažnimi bazeni BAZEN 210 s šestimi mesti, med swim spa bazeni SWIM 580 " +
+            "HIDRO in SWIM 580 MAXI s sedmimi. Število mest pa ni isto kot velikost školjke: " +
+            "BAZEN 230 je večji od BAZEN 210 in ima eno mesto manj, ker ima dva ležalnika " +
+            "namesto enega.",
+        ],
+        [
+          "Katera je najpogostejša napaka pri izbiri?",
+          "Izbrati po številu sedežev in šele nato pogledati, ali model pride do mesta " +
+            "postavitve in ali podlaga zdrži. Vrstni red je obraten: najprej prostor, dostop " +
+            "in podlaga, potem konfiguracija. Zato je ogled lokacije brezplačen in pred " +
+            "ponudbo.",
+        ],
       ],
     },
     {

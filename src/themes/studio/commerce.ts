@@ -1008,6 +1008,35 @@ export const STUDIO_COMMERCE_CSS = `
     margin: clamp(20px, 2vw, 36px) 0 0;
     text-align: center;
   }
+
+  /* The hub's closing prose. Set on the reading measure and separated from
+   * the last grid by a hairline, so it reads as the page's own voice rather
+   * than as a third product band. */
+  :root[data-theme="studio"] .st-hub-outro {
+    max-inline-size: 40rem;
+    margin-inline: auto;
+    padding-block-start: clamp(32px, 4vw, 56px);
+    border-block-start: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-hub-outro h2 {
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
+    color: var(--ink);
+    margin: clamp(28px, 3vw, 44px) 0 12px;
+    text-wrap: balance;
+  }
+  :root[data-theme="studio"] .st-hub-outro h2:first-child { margin-block-start: 0; }
+  :root[data-theme="studio"] .st-hub-outro p {
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+    margin: 0 0 14px;
+  }
+  :root[data-theme="studio"] .st-hub-outro p:last-child { margin-block-end: 0; }
   :root[data-theme="studio"] .st-btn-line {
     display: inline-flex;
     align-items: center;
@@ -2439,6 +2468,30 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
           esc(c.path + ctx.q) + '">Vsi modeli — ' + esc(c.navLabel) + "</a></p>" +
           "</div></section>",
       )
-      .join("")
+      .join("") +
+    hubOutro(ctx)
+  );
+}
+
+/**
+ * The hub's closing prose — see hubOutro in content/types.ts for why a page
+ * made of grids needs one. Set in the measure the rest of the site reads at
+ * rather than the grid's full width: this is the only running text on the
+ * page and it should look like text, not like another band.
+ */
+function hubOutro(ctx: RenderCtx): string {
+  const secs = ctx.content.hubOutro ?? [];
+  if (secs.length === 0) return "";
+  return (
+    '<section class="st-shop st-shop--outro"><div class="st-shop-in">' +
+    '<div class="st-hub-outro">' +
+    secs
+      .map(
+        (sec) =>
+          "<h2>" + esc(sec.h) + "</h2>" +
+          sec.p.map((t) => "<p>" + esc(t) + "</p>").join(""),
+      )
+      .join("") +
+    "</div></div></section>"
   );
 }

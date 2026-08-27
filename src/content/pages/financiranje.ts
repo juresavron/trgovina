@@ -27,7 +27,7 @@ import type { Page } from "../pages";
 export const FINANCING: Page = {
   key: "/financing",
   h1: "Financiranje",
-  seoTitle: "Masažni bazen na obroke — financiranje",
+  seoTitle: "Masažni bazen na obroke",
   lead:
     "Nakup je mogoče razdeliti na do 36 mesečnih obrokov. Izračun za vaš model in znesek " +
     "pripravimo ob ponudbi.",
