@@ -12,9 +12,9 @@
  *   * The order number sits beside the verified tick, because "reasonable
  *     steps to check" is the statutory test and the order number is what
  *     checking looks like. Tick without it and the save refuses the tick.
- *   * The page says, in the operator's language, that inventing a review is
- *     illegal. Not as a disclaimer at the bottom — beside the field where
- *     somebody would type one.
+ *   * The page used to carry a warning beside the body field naming Annex I
+ *     23b/23c; the operator asked for it to be removed. The mechanical
+ *     controls above are what actually hold the line, and they stayed.
  *
  * The panel has no "generate" and no suggestions. Every word here is
  * transcribed from something a customer actually sent.
@@ -49,12 +49,6 @@ select{font:inherit;min-height:44px;padding:10px 12px;color:var(--ink-body);back
 .tick input{width:18px;height:18px;flex:none;margin-top:3px;cursor:pointer}
 .tick span{font-weight:400;color:var(--ink-body)}
 .tick b{display:block;font-weight:600;color:var(--ink);margin-bottom:2px}
-/* The law note is not fine print. It sits beside the field somebody would
-   type an invented quote into, at reading size, in the ink the body uses. */
-.law{margin:16px 0 0;padding:12px 14px;background:var(--danger-wash);
-  border-left:2px solid var(--danger);border-radius:0 var(--r-ctrl) var(--r-ctrl) 0;
-  color:var(--ink-body);font-size:14px;line-height:1.6}
-.law b{color:var(--danger)}
 .acts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:22px;
   padding-top:20px;border-top:1px solid var(--line)}
 .acts .spacer{margin-left:auto}
@@ -164,12 +158,11 @@ export function reviewEditPage(
       '<textarea id="body" name="body" rows="5" maxlength="800" required ' +
       'placeholder="Besedilo, kot ga je napisal kupec.">' +
       esc(review?.body ?? "") + "</textarea>" +
-      // ⚠️ BESIDE THE FIELD, NOT IN A FOOTER.
-      '<p class="law"><b>Izmišljeno mnenje je prepovedano.</b> Objava mnenja, ' +
-      "ki ga ni napisal resničen kupec, je uvrščena na črno listo nepoštenih " +
-      "poslovnih praks (Priloga I, točki 23b in 23c, ZVPot-1) — brez presoje " +
-      "okoliščin. Sem sodi tudi trditev, da je mnenje od preverjenega kupca, " +
-      "če tega niste preverili. Prepišite le tisto, kar ste res prejeli.</p>" +
+      // The Annex I warning that stood beside this field was removed at the
+      // operator's request. The CONTROLS it explained all remain: the
+      // verified tick still refuses to save without an order number
+      // (admin/reviews.ts payload()), the chip still renders only from that
+      // tick, and the tick's own label below still states what it claims.
       "</div>" +
 
       '<div class="two" style="margin-top:16px">' +
