@@ -106,6 +106,7 @@ export interface SiteImage {
 }
 
 const CHROME = "Slike strani";
+const PAGES = "Vsebinske strani";
 const HOME = "Domača stran";
 const GALLERY = "Galerija na dnu strani";
 const GUIDES = "Kartice vodnikov";
@@ -304,11 +305,68 @@ const GALLERY_IMAGES: readonly SiteImage[] = [6, 7, 8, 9, 10, 11].map(
  * the hero and the two category cards a visitor meets before anything else —
  * then the pictures the home page composes with further down.
  */
+/* ---- the content pages' photograph bands --------------------------------
+ *
+ * The `figure` blocks on /o-nas, /ogled-lokacije and /dostava-in-montaza
+ * (see content/pages.ts). Same mechanism as everything above: a fixed stem
+ * the storefront names in code, a fallback into the shop's own photography
+ * until the owner uploads something better — a picture of the team, the van,
+ * a finished installation. The pages read correctly either way; these slots
+ * exist so that the day such a photograph exists it can go live without a
+ * deploy.
+ *
+ * ⚠️ OFFSETS MUST RESOLVE DISTINCT — site-images.test.ts holds the whole
+ * registry to that, because a prose list of taken numbers already went stale
+ * once (see the gallery note above). */
+const PAGE_IMAGES: readonly SiteImage[] = [
+  {
+    key: "site/o-nas-1.webp",
+    group: PAGES,
+    label: "O nas — prva slika",
+    note: "Slika med odstavki na strani »O nas«, pod »Kaj delamo«. Široka " +
+      "(razmerje 5 : 2), najbolje 1800 × 720 px." + HOME_NOTE_TAIL,
+    fallbackOffset: 17,
+    ratio: [5, 2],
+    maxWidth: 1920,
+  },
+  {
+    key: "site/o-nas-2.webp",
+    group: PAGES,
+    label: "O nas — druga slika",
+    note: "Slika med odstavki na strani »O nas«, pod »Kako delamo«. Široka " +
+      "(razmerje 5 : 2), najbolje 1800 × 720 px." + HOME_NOTE_TAIL,
+    fallbackOffset: 27,
+    ratio: [5, 2],
+    maxWidth: 1920,
+  },
+  {
+    key: "site/ogled-lokacije.webp",
+    group: PAGES,
+    label: "Ogled lokacije — slika",
+    note: "Slika na strani »Ogled lokacije«, pod koraki. Široka (razmerje " +
+      "5 : 2), najbolje 1800 × 720 px." + HOME_NOTE_TAIL,
+    fallbackOffset: 29,
+    ratio: [5, 2],
+    maxWidth: 1920,
+  },
+  {
+    key: "site/dostava.webp",
+    group: PAGES,
+    label: "Dostava — slika",
+    note: "Slika na strani »Dostava in montaža«. Široka (razmerje 5 : 2), " +
+      "najbolje 1800 × 720 px." + HOME_NOTE_TAIL,
+    fallbackOffset: 33,
+    ratio: [5, 2],
+    maxWidth: 1920,
+  },
+];
+
 export const SITE_IMAGES: readonly SiteImage[] = [
   ...CHROME_IMAGES,
   ...HOME_IMAGES,
   ...GUIDE_IMAGES,
   ...GALLERY_IMAGES,
+  ...PAGE_IMAGES,
 ];
 
 export function siteImageByKey(key: string): SiteImage | undefined {

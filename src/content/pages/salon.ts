@@ -83,6 +83,10 @@ export const SHOWROOM: Page = {
         ],
       ],
     },
+    // Operator-managed slot; falls back to the shop's own photography. See
+    // the figure note in content/pages.ts — and the page's own warning above:
+    // no caption, because a caption here would be one more promised sight.
+    { kind: "figure", slot: "ogled-lokacije" },
     {
       kind: "facts",
       h: "Kaj pripravite za ogled",

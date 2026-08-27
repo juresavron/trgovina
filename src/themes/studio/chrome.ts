@@ -721,6 +721,29 @@ export const STUDIO_CHROME_CSS = `
   }
   :root[data-theme="studio"] .st-chrome-tel .st-ico { inline-size: 16px; block-size: 16px; }
 
+  /* ≥1560: THE NUMBER JOINS THE BAR. Below 900 it earns its place because the
+   * two-row bar has a row to spend; on a wide desktop the single row has slack
+   * instead, and a shop selling by enquiry hides its phone number at exactly
+   * the widths where showing it costs nothing. The bar's template grows a
+   * fourth track (mark | nav | tel | actions): the two outer 1fr tracks keep
+   * the middle pair optically centred.
+   *
+   * 1560 IS ARITHMETIC, NOT TASTE — and it was 1360 for one audit run, which
+   * caught it. Measured at 1440: mark 338px + seven-item nav 818px (labels
+   * ~518 + six 50px gaps) + number ~180 + disc + three column gaps ≈ 1448px
+   * against a 1360px container — so the number sat ON "Kontakt" and the
+   * wordmark ran under "Trgovina", and the contrast gate read the collisions
+   * as 1.13:1 and 2.65:1. The pixel audit is the regression test for this
+   * block: the sum fits from a 1480px container up, so the number waits for
+   * 1560 of viewport. Between 901 and 1559 the footer states it on every
+   * page, and the PDP and contact page carry it above the fold. */
+  @media (min-width: 1560px) {
+    :root[data-theme="studio"] .st-chrome-bar {
+      grid-template-columns: 1fr auto auto 1fr;
+    }
+    :root[data-theme="studio"] .st-chrome-tel { display: inline-flex; }
+  }
+
   /* Skip link: off-screen until focused, then a white plate. Its corners are
    * --r-ctrl — 4px, the radius the transcribed source gives every control that
    * carries a word (§3), not the 0 an earlier reading had here; it is restated
@@ -1221,8 +1244,18 @@ export const STUDIO_CHROME_CSS = `
    * block padding halves for free; what does not scale is the 50px nav gap —
    * five items at 50px plus a wordmark and the icons stop fitting around
    * 1150px. 24px is the source's own next rung down and buys ~130px. */
-  @media (max-width: 1199px) {
+  /* ≤1359 (was ≤1199): the nav gap steps down to --gap-lg. The 50px gap is
+   * the transcribed source value for a FIVE-item menu; with seven items the
+   * arithmetic changes — labels ~518px + six 50px gaps + the 338px wordmark
+   * is 1244px, which fits a 1360px container and NOT the 1200–1324px band,
+   * where the mark ran under the first label. Six 24px gaps bring the row to
+   * 1088px, inside the container from 1200 of viewport up. The transcription
+   * fixed the gap for a menu it no longer describes; the target floor and
+   * now the fit are the two things that outrank it. */
+  @media (max-width: 1359px) {
     :root[data-theme="studio"] .st-chrome-nav { gap: var(--gap-lg); }
+  }
+  @media (max-width: 1199px) {
     /* The source's small header draws its icons at 34px. inset is (44 − 34) ÷ 2
      * so the target stays at --st-tap. Note what that costs: --chrome-pad-y is
      * 8px here, so the bar is 40px and a 44px target cannot fit inside it —
@@ -1544,16 +1577,21 @@ function markHtml(ctx: RenderCtx, key: string): string {
 export function renderStudioHeader(ctx: RenderCtx): string {
   const s = ctx.shop;
   const c = ctx.content;
+  // DISPLAY order, not tuple order — the tuple is append-only (types.ts).
+  // The sequence is the buying journey: catalogue, the two deciding tools,
+  // the reading, the logistics, the company, the act. Primerjava and the
+  // guided choice were in the footer only, which is where a visitor looks
+  // for them last: they are the two highest-intent destinations this site
+  // has, and the header is the one nav that is on screen at every scroll
+  // position. Seven items still fit the bar's ways of failing: the nav track
+  // is a fade-masked scroll rail wherever it runs out of room.
   const links = [
     ["/products", c.nav[0]],
-    // nav[1] is "O nas". It pointed at /compare, so the About link on every
-    // page of the site went to the model comparison instead. It stayed
-    // invisible because /o-nas was a stub until an hour ago: nothing in the
-    // chrome linked the About page at all, so there was no wrong destination
-    // to notice — only a right one that was missing.
-    ["/about", c.nav[1]],
+    ["/compare", c.nav[5]],
+    ["/finder", c.nav[6]],
     ["/guides", c.nav[2]],
     ["/delivery", c.nav[3]],
+    ["/about", c.nav[1]],
     ["/contact", c.nav[4]],
   ] as const;
 

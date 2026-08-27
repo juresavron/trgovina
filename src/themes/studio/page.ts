@@ -23,6 +23,7 @@
 import { esc, type RenderCtx } from "../../render/sections";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 import type { Block, Page } from "../../content/pages";
+import { decorativeImg, sitePhoto } from "./media";
 
 /* ------------------------------------------------------------------ CSS */
 
@@ -308,6 +309,34 @@ export const STUDIO_PAGE_CSS = `
   }
   :root[data-theme="studio"] .st-page-block--wide {
     max-inline-size: none;
+  }
+  /* ---- the photograph band (kind: "figure") ----
+   * The FRAME owns the shape: aspect-ratio reserves the box before any bytes
+   * arrive (CLS 0 whatever the file), cover crops from the centre, and the
+   * radius is the card radius the rest of the theme uses on media. Wider than
+   * tall on every tier — an editorial pause between sections, not a poster —
+   * and a touch taller on phones, where 5:2 of a 92vw column is a letterbox. */
+  :root[data-theme="studio"] .st-page-fig {
+    margin: 0;
+  }
+  :root[data-theme="studio"] .st-page-fig-img {
+    inline-size: 100%;
+    aspect-ratio: 5 / 2;
+    object-fit: cover;
+    border-radius: var(--r-lg);
+    display: block;
+  }
+  @media (max-width: 809px) {
+    :root[data-theme="studio"] .st-page-fig-img { aspect-ratio: 16 / 10; }
+  }
+  :root[data-theme="studio"] .st-page-fig-cap {
+    margin-block-start: 10px;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
   }
   :root[data-theme="studio"] .st-page-block + .st-page-block {
     margin-block-start: clamp(38px, 4vw, 64px);
@@ -1401,7 +1430,33 @@ function isWide(b: Block): boolean {
     b.kind === "compare" ||
     // A row of links is navigation laid out across the column, not a sentence
     // to read at the measure — same reason onward() spans the body.
-    b.kind === "links"
+    b.kind === "links" ||
+    // A photograph is a band, not a paragraph: at the reading measure it
+    // would be a small picture in a wide column, which is neither.
+    b.kind === "figure"
+  );
+}
+
+/**
+ * The photograph band. See the `figure` note in content/pages.ts: the slot is
+ * operator-managed (admin/site-images.ts), so the image is decorative — the
+ * page cannot know what the panel holds — and the frame reserves its own box
+ * with aspect-ratio, so a replacement of any shape cannot shift the text
+ * under a reader.
+ */
+function figure(b: Extract<Block, { kind: "figure" }>): string {
+  return (
+    '<figure class="st-page-fig">' +
+    // The band is ~880px in the solo column; on the railed grid narrower.
+    decorativeImg(
+      sitePhoto(b.slot),
+      "st-page-fig-img",
+      "(max-width: 809px) 92vw, 60vw",
+    ) +
+    (b.caption
+      ? '<figcaption class="st-page-fig-cap">' + esc(b.caption) + "</figcaption>"
+      : "") +
+    "</figure>"
   );
 }
 
@@ -1425,7 +1480,9 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
               ? contact(ctx, b.h, id, b.omitAddress === true)
               : b.kind === "imprint"
                 ? imprint(ctx, b.h, id)
-                : '<div class="st-page-cta">' +
+                : b.kind === "figure"
+                  ? figure(b)
+                  : '<div class="st-page-cta">' +
                   '<h2 class="st-page-cta-h">' + esc(b.h) + "</h2>" +
                   '<p class="st-page-cta-p">' + esc(b.p) + "</p>" +
                   '<a class="st-page-cta-a" href="' + esc(b.href) + esc(ctx.q) + '">' +

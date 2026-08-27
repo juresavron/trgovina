@@ -60,6 +60,8 @@ export const DELIVERY: Page = {
         ],
       ],
     },
+    // Operator-managed slot — see the figure note in content/pages.ts.
+    { kind: "figure", slot: "dostava" },
     {
       kind: "prose",
       h: "Kaj pripravite vi",

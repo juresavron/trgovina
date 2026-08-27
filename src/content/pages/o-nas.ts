@@ -57,6 +57,12 @@ export const ABOUT: Page = {
           "kako se vzdržuje. Kadar se kaj zatakne, ni nikogar, na kogar bi lahko pokazali.",
       ],
     },
+    // The photograph bands are SLOTS, not statements — see the figure note in
+    // content/pages.ts. Until the owner uploads something real (the team, the
+    // van, an installation) each falls back to the shop's own product
+    // photography, which is true by definition. No caption on any of them:
+    // a caption would be a claim about a picture this file cannot see.
+    { kind: "figure", slot: "o-nas-1" },
     {
       kind: "prose",
       h: "Zakaj šest modelov in ne petdeset",
@@ -87,6 +93,7 @@ export const ABOUT: Page = {
           "deset minut na teden in to je vse, kar bazen zahteva od vas.",
       ],
     },
+    { kind: "figure", slot: "o-nas-2" },
     {
       kind: "facts",
       h: "Kaj pogledamo ob ogledu lokacije",

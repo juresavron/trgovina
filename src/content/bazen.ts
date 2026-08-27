@@ -731,7 +731,10 @@ export const bazenContent: ShopContent = {
   // the three-word label was the one that dissolved into the edge fade with
   // KONTAKT pushed off-screen entirely. The page's own h1 keeps the full
   // name; a nav label is a handle, not a title.
-  nav: ["Trgovina", "O nas", "Vodniki", "Dostava", "Kontakt"],
+  // 5 and 6 are APPENDED — see the nav note in types.ts. "Kateri bazen?"
+  // over "Izbira": the nav is the one place a label has to work with no
+  // sentence around it, and the question names what the visitor gets.
+  nav: ["Trgovina", "O nas", "Vodniki", "Dostava", "Kontakt", "Primerjava", "Kateri bazen?"],
   artKey: "pool",
   kicker: "Masažni bazen · Slovenija",
   h1: "Masažni bazen za pet ali šest oseb.",
