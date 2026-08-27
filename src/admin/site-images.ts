@@ -28,6 +28,19 @@
  * new hero appears within minutes instead of never.
  */
 
+import { OWN_PHOTOS, pick } from "../themes/studio/media";
+
+const MEDIA_PREFIX = "/media/";
+
+/**
+ * The seed pick() was called with on the pages these slots replaced.
+ *
+ * It is the shop key, and there is one shop. Written down rather than passed
+ * in because a fallback that changed with the caller would resolve to a
+ * different photograph depending on who asked, which is not a fallback.
+ */
+const FALLBACK_SEED = "bazen";
+
 /** One managed slot: what the storefront asks for, and what to call it. */
 export interface SiteImage {
   /** The path under /media/ the storefront renders, and the bucket key. */
@@ -45,9 +58,20 @@ export interface SiteImage {
    * slot has been uploaded.
    */
   readonly legacy?: string;
+  /**
+   * The pick() offset this slot used BEFORE it was managed, if it had one.
+   *
+   * Three slots on the home page were filled by pick(OWN_PHOTOS, shop, n) —
+   * an offset into the shop's own photographs — so "the picture this slot used
+   * to show" is not a filename anybody wrote down; it is the result of that
+   * arithmetic against whatever the bucket holds today. Recording the OFFSET
+   * rather than a key keeps the fallback correct as the catalogue changes, and
+   * means the page renders exactly as it did until an upload replaces it.
+   */
+  readonly fallbackOffset?: number;
 }
 
-export const SITE_IMAGES: readonly SiteImage[] = [
+const CHROME_IMAGES: readonly SiteImage[] = [
   {
     key: "site/hero.webp",
     label: "Naslovna slika",
@@ -81,6 +105,61 @@ export const SITE_IMAGES: readonly SiteImage[] = [
   },
 ];
 
+/* ---- the pictures the home page composes with --------------------------
+ *
+ * ⚠️ THESE THREE WERE CHOSEN BY ARITHMETIC UNTIL NOW. The story band and the
+ * trust tile called pick(OWN_PHOTOS, shop, n) — a hash of the shop key plus an
+ * offset — so the large atmospheric frame under the model grid held whichever
+ * product photograph that landed on, and the only way to change it was to edit
+ * an offset in this repository and deploy. An owner could upload sixteen
+ * photographs and still not decide which one anchors their own front page.
+ *
+ * Naming them costs three cards in the panel and gives the owner the front
+ * page back. Each keeps its old offset as a FALLBACK, so nothing changes on
+ * the site until somebody uploads. */
+
+const HOME_NOTE_TAIL =
+  " Slika se obreže na sredino, zato naj bo bazen na sredini in ne ob robu.";
+
+const HOME_IMAGES: readonly SiteImage[] = [
+  {
+    key: "site/zgodba.webp",
+    label: "Zgodba — velika slika",
+    // Every note answers the two questions an operator actually has: WHERE
+    // does this appear, and WHAT SHAPE should the file be. A note that says
+    // "at least 2000 px" and nothing else is how the hero ended up with the
+    // tub off to one side — see the note on that slot.
+    note: "Velika slika v pasu »Naša zgodba« na domači strani, pod predstavitvijo " +
+      "modelov. Skoraj kvadratna (826 × 850), najbolje 1400 × 1440 px." +
+      HOME_NOTE_TAIL,
+    fallbackOffset: 25,
+  },
+  {
+    key: "site/zgodba-detajl.webp",
+    label: "Zgodba — mala slika",
+    // contain, not cover: this frame shows the picture WHOLE, so the advice
+    // is the opposite of every other slot and has to say so.
+    note: "Manjša slika levo od velike, v istem pasu. Pokončna (464 × 518), " +
+      "najbolje 930 × 1040 px. Ta se NE obreže — vidi se cela, zato je " +
+      "primerna za detajl ali izdelek na čisti podlagi.",
+    fallbackOffset: 23,
+  },
+  {
+    key: "site/zakaj-mi.webp",
+    label: "Zakaj mi — slika",
+    note: "Kvadratna slika v pasu s prednostmi na domači strani, ob številki. " +
+      "Kvadrat, najbolje 1200 × 1200 px." + HOME_NOTE_TAIL,
+    fallbackOffset: 22,
+  },
+];
+
+/**
+ * Every managed slot, in the order the panel lists them: the chrome first —
+ * the hero and the two category cards a visitor meets before anything else —
+ * then the pictures the home page composes with further down.
+ */
+export const SITE_IMAGES: readonly SiteImage[] = [...CHROME_IMAGES, ...HOME_IMAGES];
+
 export function siteImageByKey(key: string): SiteImage | undefined {
   return SITE_IMAGES.find((s) => s.key === key);
 }
@@ -105,11 +184,27 @@ export function stemOf(key: string): string {
 }
 
 /**
- * The legacy key a missing site image falls back to, or null.
+ * The key a missing site image falls back to, or null.
  *
- * Deliberately NOT a general rule: it answers only for the three keys named
- * above, so it cannot be talked into proxying anything else.
+ * Deliberately NOT a general rule: it answers only for the keys named above,
+ * so it cannot be talked into proxying anything else.
+ *
+ * Two shapes of answer, because the slots arrived two ways. The hero and the
+ * category cards name a FILE that was already in the bucket. The home-page
+ * slots name an OFFSET, because what they used to show was the result of
+ * pick(OWN_PHOTOS, shop, n) rather than a filename anybody chose — resolving
+ * it here means the page keeps rendering exactly what it rendered before,
+ * against whatever the bucket holds today, until an upload replaces it.
+ *
+ * "/media/<key>" is how OWN_MEDIA stores a path and the bucket key is what
+ * this has to return, so the prefix comes off. A photograph served from
+ * anywhere else could not be proxied and yields null rather than a guess.
  */
 export function legacyFallback(key: string): string | null {
-  return siteImageByKey(key)?.legacy ?? null;
+  const slot = siteImageByKey(key);
+  if (!slot) return null;
+  if (slot.legacy) return slot.legacy;
+  if (slot.fallbackOffset === undefined || OWN_PHOTOS.length === 0) return null;
+  const src = pick(OWN_PHOTOS, FALLBACK_SEED, slot.fallbackOffset).src;
+  return src.startsWith(MEDIA_PREFIX) ? src.slice(MEDIA_PREFIX.length) : null;
 }

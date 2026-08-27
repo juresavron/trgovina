@@ -63,7 +63,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import { OWN_PHOTOS, decorativeImg, pick } from "./media";
+import { OWN_PHOTOS, decorativeImg, sitePhoto } from "./media";
 import { statValue } from "./stat";
 
 /* ---- inline glyphs (§4.8) --------------------------------------------
@@ -780,14 +780,18 @@ export function renderStudioStatement(ctx: RenderCtx): string {
     "</div></div>" +
     '<div class="st-story">' +
     '<div class="st-story-lead">' +
-    // Small frame, offset 23: the clad side view — a product detail with its
-    // own tone, shown WHOLE via the frame's object-fit: contain plate. The
-    // offset choice and the page-wide collision list live in the doc comment
-    // above this function.
+    // ⚠️ THE OPERATOR CHOOSES THIS PICTURE NOW, not an offset into the
+    // photograph pool. It used to be pick(OWN_PHOTOS, shop, 23) — the clad
+    // side view, by arithmetic — and the panel now names the slot so the
+    // owner can put whatever belongs here. Until they upload, /media resolves
+    // that same offset as the fallback, so the band is unchanged today.
+    //
+    // Shown WHOLE via the frame's object-fit: contain plate, which is why the
+    // panel's note for this slot says the opposite of every other one.
     (OWN_PHOTOS.length > 0
       ? '<figure class="st-story-fig2"><div class="st-story-frame2">' +
         decorativeImg(
-          pick(OWN_PHOTOS, ctx.shop.key, 23),
+          sitePhoto("zgodba-detajl"),
           "st-story-photo",
           // ⚠️ THE FIXED TERM TRACKS THE CONTAINER, and the container moved.
           // 440px was 31% of the old 1360px band; the band is 1480 now, so
@@ -803,12 +807,13 @@ export function renderStudioStatement(ctx: RenderCtx): string {
     // figcaption first: the source puts this label ABOVE the frame.
     '<figcaption class="st-story-label">' + esc(ctx.shop.keyword.category) + "</figcaption>" +
     '<div class="st-story-frame">' +
-    // Large frame, offset 25: the dusk LED shot — the one genuinely
-    // atmospheric picture in the well, and the band's anchor. cover, so it
-    // fills the 826/850 block edge to edge.
+    // The band's anchor, and the largest editorial picture on the home page.
+    // It was offset 25 — the dusk LED shot, by arithmetic — and is now a named
+    // slot the owner fills; the same offset is its fallback until they do.
+    // cover, so it fills the 826/850 block edge to edge.
     (OWN_PHOTOS.length > 0
       ? decorativeImg(
-          pick(OWN_PHOTOS, ctx.shop.key, 25),
+          sitePhoto("zgodba"),
           "st-story-photo",
           // Same correction as its smaller sibling above: 47% of the 1480px
           // band is ~700px, not the 660 the old 1360 band gave.
