@@ -320,6 +320,57 @@ export const STUDIO_COMMERCE_CSS = `
   :root[data-theme="studio"] .st-shop-head {
     margin-bottom: clamp(var(--gap-lg), 2.8vw, var(--gap-xl));
   }
+  /* A HEADER THAT CARRIES AN INTRO IS TWO COLUMNS, NOT ONE STACK.
+   *
+   * The measures under it are both correct and were both being blamed for
+   * something neither of them did. .st-sec-h caps at 20ch because a heading
+   * set to the full band is a heading nobody can read the end of; .st-shop-
+   * intro caps at 62ch because that is the measure. Stacked and left-aligned
+   * inside a band that tokens.ts has just widened to 1560, though, the two
+   * correct measures composed into one wrong object: measured on
+   * /masazni-bazeni at 1920, an h1 667.4px wide over an intro 788.9px wide
+   * inside a 1560px band — the header covered 50.6% of the page it heads and
+   * the grid under it covered all of it. Stretching either measure to fill the
+   * band would fix the picture by breaking the typography.
+   *
+   * So the composition changes instead and the measures do not: the title
+   * block takes the left half, the intro takes the right, and the pair spans
+   * the band: 741.6 + 76.8 + 741.6 = 1560px at 1920, 651.2 + 58.4 + 651.2 =
+   * 1360 at 1440. Neither measure moved — the h1 still caps at its own 20ch
+   * (667.4px) inside the left half and simply stops there. flex-end because
+   * the two columns are read as one line: the intro's last line sits on the
+   * heading's baseline rather than floating beside its middle.
+   *
+   * The eyebrow and the heading are wrapped as ONE object in the markup for
+   * the same reason the util tile wraps its heading and paragraph (see
+   * productCards): three loose children can only be a stack or a row, and this
+   * head has to be a stack INSIDE a row. Doing it with row spans instead —
+   * grid, intro spanning both rows — misaligns the bottoms whenever the intro
+   * is the taller of the two, because grid splits that surplus evenly over
+   * every spanned track (the same mechanism editorial.ts's .st-tst-fig
+   * documents), and the hub's band heads carry no eyebrow at all.
+   *
+   * ≥1200 only: below that the band is not wide enough for two real measures
+   * side by side, and the stack is the right composition again. */
+  @media (min-width: 1200px) {
+    :root[data-theme="studio"] .st-shop-head:has(> .st-shop-intro) {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      column-gap: clamp(40px, 4vw, 96px);
+    }
+    :root[data-theme="studio"] .st-shop-head:has(> .st-shop-intro) > .st-shop-title,
+    :root[data-theme="studio"] .st-shop-head:has(> .st-shop-intro) > .st-shop-intro {
+      /* Equal halves, and from a zero basis so the split is the band's
+       * arithmetic rather than a race between two blocks' content widths. */
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    :root[data-theme="studio"] .st-shop-head:has(> .st-shop-intro) > .st-shop-intro {
+      /* Its top margin is the gap under a heading it no longer sits under. */
+      margin-block-start: 0;
+    }
+  }
   /* THE RULED TABLE. gap: 0 and padding: 1px on the container, a 1px ring
    * on every card: two neighbours' rings land on the same seam, the later one
    * paints over the earlier, and what survives is a single 1px rule. Nothing
@@ -333,6 +384,24 @@ export const STUDIO_COMMERCE_CSS = `
    * would sit a pixel past the section gutter on all four sides.
    *
    * Flex rather than grid — the header carries the count-by-count reasoning.
+   *
+   * THE BASIS IS A PERCENTAGE AND THE COLUMN COUNT IS A PROPERTY OF THE CARD
+   * COUNT, NOT OF THE WIDTH, and that is deliberate rather than left over.
+   * A width-driven basis is the obvious answer to "the table is three across
+   * at 1280 and still three across at 1920" and it is the wrong one, because
+   * this table has to SEAL: every line full, every cell the same width. Three
+   * columns seal 3, 6 and 9 cards; four seal 4 and 8. With a basis like
+   * min(380px, 33.3%) the count follows the band and the seal breaks wherever
+   * the two disagree — measured at 1920 with a synthetic five-card grid, four
+   * cards came out 389.5px and the fifth 1558px, one product four times its
+   * neighbour, which is the exact defect the util-tile rule below exists to
+   * prevent. So the count changes only where a count change still seals: see
+   * the 4n quantity query in the responsive block.
+   *
+   * What the widened container did give this table is width, and the cards
+   * take it: 399.3px at 1280, 452.7 at 1440 and 519.3 at 1920, where the old
+   * 1440 container stopped them at 452.7 on every screen above 1440.
+   *
    * 33.3%, not 33.3333%: three of them are 99.9% of the line, so no sub-pixel
    * rounding can ever push the third card onto a second line, and flex-grow
    * hands the leftover 0.1% straight back. Wrapped lines stretch their items
@@ -683,15 +752,29 @@ export const STUDIO_COMMERCE_CSS = `
     color: var(--ink);
   }
   /* The text block, so the tile composes as TWO objects on one line instead of
-   * three stacked down its left edge. flex: 0 1 auto — it takes the width its
-   * own copy needs (the paragraph's 34ch measure caps it) and space-between
-   * puts the CTA at the far edge, which is what spans the cell. When the cell
-   * is too narrow for both — the phone's single column, or a table that ever
-   * gives the tile one column — the CTA simply wraps beneath, which is the
-   * layout it had before, reached without a second set of rules to maintain. */
+   * three stacked down its left edge. space-between puts the CTA at the far
+   * edge, which is what spans the cell. When the cell is too narrow for both —
+   * the phone's single column, or a table that ever gives the tile one column
+   * — the CTA simply wraps beneath, which is the layout it had before, reached
+   * without a second set of rules to maintain.
+   *
+   * THE BASIS IS 60%, WHICH IS HOW THE COPY FOLLOWS THE TILE. It used to be
+   * flex: 0 1 auto, so the block took exactly the width its own paragraph's
+   * 34ch measure allowed and stopped: 432.6px of copy in a 905px tile at 1440
+   * and in a 1038.7px tile at 1920 — 47.8% and 41.6% of the cell, with the
+   * rest of it white space between a sentence and a button. Now the block
+   * grows: the control measures 190–219px at every width from 810 up, i.e.
+   * 22–32% of the tile's content box, so a 60% basis always leaves it room on
+   * the line, and flex-grow hands the copy every pixel the control does not
+   * take — 392.3px at 1024, 609.7px at 1440, 717.4px at 1920, which is 69% of
+   * the tile against the 41.6% it was. The basis governs the WRAP decision
+   * only; the grow governs the width, which is why the phone still stacks:
+   * 60% of a 298px tile plus the control does not fit one line, so the control
+   * drops beneath exactly as before. */
   :root[data-theme="studio"] .st-util-txt {
     display: flex; flex-direction: column;
     gap: clamp(8px, 0.8vw, 16px);
+    flex: 1 1 60%;
     min-width: 0;
   }
   /* The tile's heading takes the same rung as a product name — h6 — for the
@@ -713,7 +796,18 @@ export const STUDIO_COMMERCE_CSS = `
    * lead, the standfirst rung (20/16/18), not body: it introduces the tile
    * rather than being ordinary running copy. Lead is set in --w-body-med.
    * --ink-body on the panel grey is 14.5:1; the old --on-invert-mute was for
-   * the dark ground and would now be 2.5:1. */
+   * the dark ground and would now be 2.5:1.
+   *
+   * 62ch, not the 34ch it carried. 34ch was doing two jobs and only one of
+   * them was typography: it capped the paragraph AND, because the text block
+   * sized itself to its content, it decided how much of the tile the copy
+   * covered — 432.6px inside a 905px cell at 1440, 47.8% of the box it is the
+   * only content of. The block's own basis owns the second job now (see
+   * .st-util-txt), so this is a measure again and nothing else, and it is the
+   * measure .st-shop-intro already uses for prose at this rung — same face,
+   * same size, so the two paragraphs on the page cap at the same 788.9px.
+   * In practice the tile is narrower than that and the cell governs; the cap
+   * is the ceiling that stops a very wide tile from setting 90 characters. */
   :root[data-theme="studio"] .st-util-p {
     font-family: var(--f-body);
     font-size: var(--t-lead);
@@ -721,7 +815,7 @@ export const STUDIO_COMMERCE_CSS = `
     letter-spacing: var(--ls-body);
     line-height: var(--lh-lead);
     color: var(--ink-body);
-    max-width: 34ch;
+    max-width: 62ch;
   }
   /* Reads as a control, so it is SHARP (§9). Outlined at rest and filled on
    * hover, exactly as before — only the grounds are the other way up, so the
@@ -834,14 +928,38 @@ export const STUDIO_COMMERCE_CSS = `
     max-width: 24ch;
     margin-inline: 0;
   }
+  /* FLEX, NOT auto-fit GRID, AND THE DIFFERENCE IS TRACKS THAT DO NOT EXIST.
+   *
+   * repeat(auto-fit, minmax(min(100%, 340px), 1fr)) lays as many 340px tracks
+   * as the band will hold and collapses the ones no card lands in. Collapsed
+   * is not deleted: with two families in a 1560px band the row computed
+   * grid-template-columns: 764.6px 764.6px 0px 0px — two real columns and two
+   * phantoms, up from one phantom at 1440 and none at 1024, because the wider
+   * the container gets the more of them auto-fit invents. They cost no width
+   * (their gutters collapse too), so this was always cosmetic; what it cost
+   * was legibility of the computed style, and it will only get louder if the
+   * container widens again.
+   *
+   * A wrapping flex line reaches the identical geometry with nothing to
+   * collapse: a basis of 340px wraps at the same width the tracks did, and
+   * flex-grow divides the line between the cards that actually exist — 764.6px
+   * each at 1920, 668.5px at 1440, one per line below a ~746px viewport, all
+   * unchanged. The item is a grid of one so the card inside it still stretches
+   * to the full cell in both axes, which is what the li got for free as a grid
+   * item and what .st-cat-card's height: 100% is written against. */
   :root[data-theme="studio"] .st-cat-row {
     list-style: none;
     margin: 0 auto;
     padding-inline: var(--studio-gutter);
     max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: clamp(16px, 1.6vw, 32px);
+  }
+  :root[data-theme="studio"] .st-cat-item {
+    display: grid;
+    flex: 1 1 min(100%, 340px);
+    min-width: 0;
   }
   :root[data-theme="studio"] .st-cat-card {
     display: flex; flex-direction: column;
@@ -1390,13 +1508,52 @@ export const STUDIO_COMMERCE_CSS = `
    * phone tier's single column, and a browser without :has() simply keeps the
    * 3 + 1 — which is still a sealed table, just a less pleasant one.
    *
-   * It stands down when the last cell is a util tile, because the rule below
-   * settles that case better: 2×2 would make a PRODUCT cell half the table
-   * wide, which is the thing that rule exists to prevent. */
-  @media (min-width: 810px) {
+   * AND IT STOPS AT 1599, because above that the rule below does the same job
+   * without the compromise. Its premise is that three columns are all the band
+   * can hold, so the fourth card has nowhere to go but a line of its own; that
+   * stops being true at a 1600px viewport, and 2×2 there means two 779px cards
+   * per row — a product cell nearly two columns wide, which is what every
+   * other rule in this file forbids.
+   *
+   * It also stands down when the last cell is a util tile, because the rule
+   * further down settles that case better: 2×2 would make a PRODUCT cell half
+   * the table wide, for the same reason. */
+  @media (min-width: 810px) and (max-width: 1599px) {
     :root[data-theme="studio"] .st-grid:has(> .st-card:nth-child(4):last-child):not(:has(> .st-util:last-child)) > .st-card {
       flex-basis: 50%;
     }
+  }
+  /* FOUR COLUMNS, ON THE SCREENS THAT HAVE THEM AND THE COUNTS THAT SEAL.
+   *
+   * This is the answer to "the grid is frozen at three columns and the cards
+   * stopped growing at 1440". Half of that was the container and tokens.ts has
+   * fixed it — the cards now grow to 519.3px at 1920 instead of stopping at
+   * 452.7. The other half is the count, and the count cannot simply follow the
+   * width: a table that wraps four across when it holds five cards leaves the
+   * fifth alone on a line, and flex-grow blows it up to the full 1558px band
+   * beside four 389.5px siblings. So the trigger is BOTH conditions — a band
+   * wide enough, and a card count that a fourth column divides.
+   *
+   * 4n:last-child is the count test (4 cards, 8 cards, …) and it reads the
+   * grid rather than the page, so a family that grows a fourth model gets four
+   * across here instead of the 2×2 above, with no other rule to remember.
+   * 1600px is the width test, and it is where a quarter of the band (379.5px)
+   * first exceeds the narrowest cell the three-column table itself produces
+   * (372.7px, at a 1200px viewport) — so four across never yields a cell this
+   * theme has not already shipped, and every pixel above 1600 goes straight
+   * into them: 389.5px at 1920. Below 1600 the 2×2 rule owns the four-card
+   * case.
+   *
+   * 25%, not a length: four of them are the line exactly at any band width, so
+   * the seal is arithmetic rather than a threshold that has to be re-derived
+   * every time the container moves. The trailing-tile grid is excluded here as
+   * everywhere — see the next rule for why five cells only ever seal at 3. */
+  @media (min-width: 1600px) {
+    :root[data-theme="studio"] .st-grid:has(> .st-card:nth-child(4n):last-child):not(:has(> .st-util:last-child)) > .st-card {
+      flex-basis: 25%;
+    }
+  }
+  @media (min-width: 810px) {
     /* A PRODUCT CELL IS NEVER WIDER THAN A COLUMN. The trailing util tile
      * absorbs whatever the last line has left over.
      *
@@ -1421,7 +1578,20 @@ export const STUDIO_COMMERCE_CSS = `
      *
      * calc(100% / 3) rather than the 33.3% the basis uses elsewhere: with
      * flex-grow off, 33.3% would leave 0.1% of the line unpainted and the
-     * table's right-hand rule would sit a pixel and a half inside the gutter. */
+     * table's right-hand rule would sit a pixel and a half inside the gutter.
+     *
+     * THIS GRID STAYS AT THREE COLUMNS WHEREVER ANOTHER ONE GOES TO FOUR, and
+     * the reason is arithmetic rather than taste. The home grid is four
+     * products plus a tile two columns wide — six column-units. Six into three
+     * columns is two full rows (3, then 1 + tile); into four columns it is one
+     * row of four products and the tile alone on the next, which is the one
+     * arrangement this band must not have: the tile is a question asked BESIDE
+     * the goods, and a full-width strip under the table is a different device.
+     * Five cells into five columns is the only other seal, and at 1920 that is
+     * a 312px product cell — narrower than the same card at 1280, so a wider
+     * screen would be showing smaller products. The cards take the width the
+     * widened container gives them instead: 452.7px at 1440, 519.3px at 1920,
+     * with the tile at 1038.7px. */
     :root[data-theme="studio"] .st-grid:has(> .st-util:last-child) > .st-card {
       flex: 0 0 calc(100% / 3);
     }
@@ -1468,7 +1638,19 @@ function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto, artKey?: ArtKey): s
   if (photo) {
     return (
       '<span class="st-shot">' +
-      productImg(photo, "st-shot-img", "(max-width: 809px) 92vw, 372px", photo.alt) +
+      // TWO SLOTS, ONE HINT, so the term is the wider of them. This helper
+      // fills the grid card's plate AND the rail card's panel, and the plate
+      // is the larger: 375.3px at 1920 (a 519.3px card less its padding and
+      // the panel's mat) against the rail's 323.9px, which is capped by
+      // --studio-rail-card. 376px covers both with nothing to spare.
+      //
+      // The old 372px was the rail card's own width and happened to sit close
+      // enough while --studio-container was 1440 and the plate topped out at
+      // 326px. At 1560 it does not: the plate now paints 3.3px wider than the
+      // hint promised, and a hint that is short is the one direction that
+      // costs sharpness. Below 810 the grid is one column and the plate takes
+      // 84.2vw at its widest (a 809px viewport), so 92vw still covers it.
+      productImg(photo, "st-shot-img", "(max-width: 809px) 92vw, 376px", photo.alt) +
       "</span>"
     );
   }
@@ -1651,12 +1833,12 @@ export function renderStudioProducts(ctx: RenderCtx): string {
 
   return (
     '<section class="st-shop" id="izbor"><div class="st-shop-in">' +
-    '<div class="st-shop-head">' +
+    '<div class="st-shop-head"><div class="st-shop-title">' +
     '<p class="st-eyebrow">Najbolje prodajano</p>' +
     // The heading is the shop's own hand-written CTA line, not a templated
     // sentence: four shops on this baseline must not share a visible line.
     '<h2 class="st-sec-h">' + esc(ctx.content.cta) + "</h2>" +
-    "</div>" +
+    "</div></div>" +
     // The grid element is what carries the ruled table's 1px padding, so an
     // EMPTY one is not an empty box — it is a 2px grey hairline sitting under
     // the heading with nothing in it. The section itself still renders: the
@@ -1791,14 +1973,22 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
         ? productImg(
             c.photo,
             "st-cat-img",
-            // Measured against the layout, not guessed: at >=1200px the frame
-            // paints 632px wide (668.5px card minus its padding and border at
-            // 1440), so the old 560px would have picked a rung one size too
-            // soft once these photos get a srcset ladder through /admin. The
-            // 92vw phone term is sized for the WIDEST single-column case
-            // (~745px viewport, where the frame is ~90vw), not for a 390px
-            // phone — a sizes term must cover its whole media range.
-            "(max-width: 809px) 92vw, (max-width: 1199px) 46vw, 632px",
+            // Measured against the layout, not guessed, and EVERY term covers
+            // the whole of its own media range rather than one reference
+            // width. The fixed term is the widest the frame ever paints:
+            // 716.6px, at 1920 and above, where the band has stopped growing
+            // at --studio-container. It read 632px until now, which was the
+            // frame at 1440 and was right while the container was 1440 too —
+            // tokens.ts widened it to 1560 and the same frame went to 716.6,
+            // so the hint under-promised by 13% and would have picked a rung
+            // one size too soft on every large screen once these photos get a
+            // srcset ladder through /admin. (632px still describes 1440
+            // exactly; a term that only describes its narrowest case is the
+            // bug being fixed.) The 46vw term covers the tablet range's
+            // widest, 44.6vw at 1199, and the 92vw phone term is sized for the
+            // WIDEST single-column case — 89.8vw at a ~745px viewport, not the
+            // 80.5vw of a 390px phone.
+            "(max-width: 809px) 92vw, (max-width: 1199px) 46vw, 717px",
             c.photo.alt,
           )
         : art
@@ -1948,9 +2138,10 @@ export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
   const other = (ctx.content.collections ?? []).find((x) => x.path !== c.path);
   return (
     '<section class="st-shop" id="izbor"><div class="st-shop-in">' +
-    '<div class="st-shop-head">' +
+    '<div class="st-shop-head"><div class="st-shop-title">' +
     '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
     '<h1 class="st-sec-h">' + esc(c.h1) + "</h1>" +
+    "</div>" +
     '<p class="st-shop-intro">' + esc(c.intro) + "</p>" +
     "</div>" +
     (cards === "" ? "" : '<div class="st-grid">' + cards + "</div>") +
@@ -1979,9 +2170,10 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
   if (cols.length === 0) return "";
   return (
     '<section class="st-shop st-shop--title"><div class="st-shop-in">' +
-    '<div class="st-shop-head">' +
+    '<div class="st-shop-head"><div class="st-shop-title">' +
     '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
     '<h1 class="st-sec-h">Trgovina</h1>' +
+    "</div>" +
     // The hub's own sentence, not its meta description: a page that answers
     // "what do you sell?" has to answer it on the page, and this one opened
     // with the bare word and then a screen of white before the first band.
@@ -1995,7 +2187,9 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
           '<section class="st-shop" id="' + esc(c.path.replace(/^\//, "")) + '">' +
           '<div class="st-shop-in">' +
           '<div class="st-shop-head">' +
+          '<div class="st-shop-title">' +
           '<h2 class="st-sec-h">' + esc(c.h1) + "</h2>" +
+          "</div>" +
           '<p class="st-shop-intro">' + esc(c.intro) + "</p>" +
           "</div>" +
           '<div class="st-grid">' + productCards(ctx, c.products) + "</div>" +
