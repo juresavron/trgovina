@@ -47,6 +47,15 @@ export interface OwnPhoto {
   readonly h?: number;
   /** [file, intrinsic width] rungs, narrowest first. Empty without a ladder. */
   readonly widths: readonly (readonly [string, number])[];
+  /**
+   * Which KIND of photograph this is — see admin/shots.ts for the vocabulary.
+   *
+   * Here so a slot can ASK for the frame it needs instead of taking whatever
+   * sorted first. The hero wants the one atmospheric picture in a set; a
+   * comparison table wants the top-down diagram; they are not the same
+   * photograph and "photo[0]" cannot tell them apart.
+   */
+  readonly shot?: string;
 }
 
 export const OWN_MEDIA: Readonly<Record<string, readonly OwnPhoto[]>> = {
