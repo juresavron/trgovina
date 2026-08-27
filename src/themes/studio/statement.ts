@@ -454,7 +454,12 @@ export const STUDIO_STATEMENT_CSS = `
      * is relative to — so the unit resolves against lead-xl and not against
      * the root's 16px. */
     --studio-glyph: 1.333em;
-    max-width: 1015px;
+    /* ⚠️ MEASURED AGAINST A BAND THAT IS NO LONGER THAT WIDE. 1015px was set
+     * when the band was 1360 — 75% of it, which left a deliberate quarter of
+     * empty to the right of the statement. The band is 1480 now, so the same
+     * number leaves a third empty and the balance the figure was chosen for
+     * is gone. Kept at the same PROPORTION rather than the same pixels. */
+    max-width: 1105px;
     margin: 32px auto 0;
     font-family: var(--f-body);
     font-weight: var(--w-body-med);
@@ -784,7 +789,12 @@ export function renderStudioStatement(ctx: RenderCtx): string {
         decorativeImg(
           pick(OWN_PHOTOS, ctx.shop.key, 23),
           "st-story-photo",
-          "(max-width: 809px) 57vw, (max-width: 1439px) 31vw, 440px",
+          // ⚠️ THE FIXED TERM TRACKS THE CONTAINER, and the container moved.
+          // 440px was 31% of the old 1360px band; the band is 1480 now, so
+          // the slot paints ~476px and a browser told "440px" fetches a rung
+          // one step too small and prints it soft. sizes is a promise about
+          // layout, and a stale promise is worse than a vague one.
+          "(max-width: 809px) 57vw, (max-width: 1439px) 31vw, 480px",
         ) +
         "</div></figure>"
       : "") +
@@ -800,7 +810,9 @@ export function renderStudioStatement(ctx: RenderCtx): string {
       ? decorativeImg(
           pick(OWN_PHOTOS, ctx.shop.key, 25),
           "st-story-photo",
-          "(max-width: 809px) 92vw, (max-width: 1439px) 47vw, 660px",
+          // Same correction as its smaller sibling above: 47% of the 1480px
+          // band is ~700px, not the 660 the old 1360 band gave.
+          "(max-width: 809px) 92vw, (max-width: 1439px) 47vw, 700px",
         )
       : "") +
     "</div></figure></div></div></section>"
