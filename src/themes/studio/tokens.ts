@@ -311,4 +311,23 @@ export const STUDIO_TOKENS = `
       --t-lead: 18px;
     }
   }
+
+  /* ---- scroll reveal -----------------------------------------------------
+   * The hidden state exists ONLY under html[data-st-motion], and only the
+   * behaviour script sets that attribute — after checking prefers-reduced-
+   * motion and that IntersectionObserver exists. So a visitor with no JS, an
+   * old engine, or a motion preference never has content hidden from them:
+   * the worst failure mode of scroll reveals is a page whose sections simply
+   * never appear, and this gate makes that state unreachable. Transform and
+   * opacity only — nothing here can move layout, so it cannot cause CLS. */
+  html[data-st-motion] .st-rev {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  html[data-st-motion] .st-rev.is-in {
+    opacity: 1;
+    transform: none;
+    transition: opacity 0.55s ease-out, transform 0.55s ease-out;
+    transition-delay: calc(var(--rev-i, 0) * 70ms);
+  }
 `;

@@ -339,9 +339,64 @@ function lightbox(gallery){
   });
 }
 
+/* ---- scroll reveal ------------------------------------------------------
+   Cards and section heads rise 14px as they enter. The gate is the whole
+   design: html[data-st-motion] is set HERE, only when the reader has not
+   asked for reduced motion and the observer exists — the stylesheet's hidden
+   state hangs off that attribute, so no-JS, old-engine and reduced-motion
+   visitors read a page that was never hidden. Elements above the fold are
+   revealed before first paint (isIntersecting on the initial callback), and
+   each is unobserved once shown: a reveal is a greeting, not a loop. */
+function reveal(){
+  if (reduce && reduce.matches) return;
+  if (!("IntersectionObserver" in window)) return;
+  var els = document.querySelectorAll(
+    ".st-card, .st-cat-card, .st-gd-card, .st-imp-tile, .st-stat, " +
+    ".st-also-cell, .st-sec-h, .st-statement-h, .st-soc-card, .st-mem-in"
+  );
+  if (!els.length) return;
+  document.documentElement.setAttribute("data-st-motion", "");
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if (!en.isIntersecting) return;
+      en.target.classList.add("is-in");
+      io.unobserve(en.target);
+    });
+  }, { rootMargin: "0px 0px -8% 0px" });
+  [].forEach.call(els, function(el){
+    /* The stagger is per PARENT, so the third card of a row waits on the
+       first of ITS row, not on every card above it on the page. */
+    var i = 0, sib = el;
+    while ((sib = sib.previousElementSibling) && i < 3) {
+      if (sib.classList.contains("st-rev")) i++;
+    }
+    el.style.setProperty("--rev-i", String(i));
+    el.classList.add("st-rev");
+    io.observe(el);
+  });
+}
+
+/* The back-to-top disc: visible after roughly a screen of scroll, gone at
+   the top. A passive listener flipping one class — the CSS owns the fade,
+   and the kernel's reduced-motion strip removes that fade wholesale while
+   the disc itself stays functional: appearing is not motion. */
+function topDisc(){
+  var t = document.querySelector(".st-top");
+  if (!t) return;
+  var on = false;
+  function sync(){
+    var want = (window.scrollY || document.documentElement.scrollTop) > 600;
+    if (want !== on) { on = want; t.classList.toggle("is-on", want); }
+  }
+  addEventListener("scroll", sync, { passive: true });
+  sync();
+}
+
 function init(){
   navCurrent();
   barConfig();
+  reveal();
+  topDisc();
   [].forEach.call(document.querySelectorAll(".st-pdp-gallery"), lightbox);
   [].forEach.call(document.querySelectorAll("[data-st-slider]"), slider);
   [].forEach.call(document.querySelectorAll("[data-st-count]"), counter);

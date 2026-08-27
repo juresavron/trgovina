@@ -270,8 +270,11 @@ describe("no in-page link points at nothing", () => {
       const dead = [...html.matchAll(/href="#([^"]+)"/g)]
         .map((m) => m[1]!)
         // "#" alone and "#main" style skip targets are covered by ids too;
-        // anything genuinely empty is not a fragment link.
-        .filter((t) => t !== "" && !ids.has(t));
+        // anything genuinely empty is not a fragment link. "#top" is the
+        // HTML-spec special case — with no matching element it scrolls to
+        // the document start, which is exactly what the back-to-top disc
+        // uses it for — so it resolves by definition, not by id.
+        .filter((t) => t !== "" && t !== "top" && !ids.has(t));
       expect(dead, path + " has dead fragments: " + dead.join(", ")).toEqual([]);
     });
   }
