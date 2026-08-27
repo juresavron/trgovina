@@ -1020,6 +1020,36 @@ function list(b: Extract<Block, { kind: "list" }>, id?: string): string {
   );
 }
 
+/**
+ * A list of internal links.
+ *
+ * Wears the same clothes as onward() at the foot of every editorial page —
+ * same classes, same rule above it, same 24px targets — because it is the
+ * same device: a short row of places to go next. Reusing the class rather
+ * than declaring a second one keeps the two from drifting apart, and a reader
+ * meets one visual idea instead of two.
+ *
+ * A <nav> with an accessible name, so a screen reader can skip the row in one
+ * move and knows what it is skipping.
+ */
+function links(b: Extract<Block, { kind: "links" }>, id?: string): string {
+  if (b.items.length === 0) return "";
+  const head = b.h ?? "Oglejte si";
+  const hid = (id ?? "st-links") + "-h";
+  return (
+    '<nav class="st-page-onward" aria-labelledby="' + esc(hid) + '">' +
+    '<p class="st-page-onward-h" id="' + esc(hid) + '"' +
+    (id ? ' data-anchor="' + esc(id) + '"' : "") + ">" + esc(head) + "</p><ul>" +
+    b.items
+      .map(
+        ([label, href]) =>
+          '<li><a href="' + esc(href) + '">' + esc(label) + "</a></li>",
+      )
+      .join("") +
+    "</ul></nav>"
+  );
+}
+
 function qa(b: Extract<Block, { kind: "qa" }>, id?: string): string {
   return (
     h2(b.h, id) +
@@ -1208,7 +1238,12 @@ function imprint(ctx: RenderCtx, h?: string, id?: string): string {
  * one block on the page whose job is to be scanned rather than read.
  */
 function isWide(b: Block): boolean {
-  return b.kind === "facts" || b.kind === "contact" || b.kind === "imprint";
+  return (
+    b.kind === "facts" || b.kind === "contact" || b.kind === "imprint" ||
+    // A row of links is navigation laid out across the column, not a sentence
+    // to read at the measure — same reason onward() spans the body.
+    b.kind === "links"
+  );
 }
 
 function block(ctx: RenderCtx, b: Block, id?: string): string {
@@ -1219,7 +1254,9 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
         ? steps(b, id)
         : b.kind === "list"
           ? list(b, id)
-          : b.kind === "qa"
+          : b.kind === "links"
+            ? links(b, id)
+            : b.kind === "qa"
           ? qa(b, id)
           : b.kind === "facts"
             ? facts(b.h, b.rows, false, id)

@@ -154,7 +154,8 @@ const SYNTAX =
   "<code>- besedilo</code> naredi alinejo. " +
   "<code>V: vprašanje</code> in v naslednji vrstici <code>O: odgovor</code> " +
   "naredita vprašanje in odgovor — ta se Googlu pokaže kot razširjen rezultat. " +
-  "Vse drugo je navaden odstavek.</p>";
+  "<code>-&gt; /masazni-bazeni Ime povezave</code> naredi povezavo na stran " +
+  "te trgovine. Vse drugo je navaden odstavek.</p>";
 
 /**
  * The editor.

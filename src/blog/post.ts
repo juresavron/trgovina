@@ -25,6 +25,8 @@
  *   V: vprašanje   a question…
  *   O: odgovor     …and its answer; consecutive pairs are one Q&A block,
  *                  which is also what earns the post an FAQ rich result
+ *   -> /pot Ime    a link to one of this shop's own pages; consecutive ones
+ *                  are one row
  *   anything else  a paragraph; a blank line starts the next one
  *
  * Nothing here is required. A post that is five paragraphs of prose parses
@@ -63,6 +65,27 @@ const HEADING = /^##\s+(.+)$/;
 const BULLET = /^[-*•–]\s+(.+)$/;
 const ASK = /^[VQ]:\s*(.+)$/;
 const ANSWER = /^[OA]:\s*(.+)$/;
+const LINK = /^->\s*(\S+)\s+(.+)$/;
+
+/**
+ * Whether a post may link to this path.
+ *
+ * ⚠️ INTERNAL ABSOLUTE PATHS ONLY, AND THIS IS THE WHOLE GATE. Everything
+ * else in a post is escaped text, so this is the one place a post reaches the
+ * href of an anchor — which makes it the one place a taken admin account
+ * could publish an outbound link from the shop's own domain, or a javascript:
+ * URL into a page a customer trusts.
+ *
+ * One leading slash, then lowercase letters, digits, hyphen and slash. That
+ * refuses a scheme (no colon survives), refuses a host, and refuses the
+ * protocol-relative "//evil.example" that a naive startsWith("/") check lets
+ * straight through. A line whose target fails is not dropped — it renders as
+ * the paragraph it looks like, so the writer sees their own text on the page
+ * rather than losing it silently.
+ */
+export function isInternalPath(href: string): boolean {
+  return /^\/[a-z0-9/-]*$/.test(href) && !href.startsWith("//") && !href.includes("..");
+}
 
 /**
  * The operator's text, as blocks the theme can render.
@@ -76,11 +99,12 @@ const ANSWER = /^[OA]:\s*(.+)$/;
 export function parseSource(src: string): Block[] {
   const out: Block[] = [];
   let heading: string | undefined;
-  let mode: "none" | "prose" | "list" | "qa" = "none";
+  let mode: "none" | "prose" | "list" | "qa" | "links" = "none";
   let paragraphs: string[] = [];
   let current: string[] = [];
   let items: string[] = [];
   let pairs: [string, string][] = [];
+  let hrefs: [string, string][] = [];
 
   const endParagraph = (): void => {
     if (current.length > 0) {
@@ -104,6 +128,8 @@ export function parseSource(src: string): Block[] {
       out.push({ kind: "prose", ...head, p: paragraphs });
     } else if (mode === "list" && items.length > 0) {
       out.push({ kind: "list", ...head, items });
+    } else if (mode === "links" && hrefs.length > 0) {
+      out.push({ kind: "links", ...head, items: hrefs });
     } else if (mode === "qa") {
       // A question nobody answered is not a Q&A entry, and emitting one would
       // put an empty answer into the FAQ structured data — which is a
@@ -114,6 +140,7 @@ export function parseSource(src: string): Block[] {
         paragraphs = [];
         items = [];
         pairs = [];
+        hrefs = [];
         mode = "none";
         return;
       }
@@ -121,12 +148,14 @@ export function parseSource(src: string): Block[] {
       paragraphs = [];
       items = [];
       pairs = [];
+      hrefs = [];
       mode = "none";
       return; // heading stays pending
     }
     paragraphs = [];
     items = [];
     pairs = [];
+    hrefs = [];
     heading = undefined;
     mode = "none";
   };
@@ -167,6 +196,16 @@ export function parseSource(src: string): Block[] {
         mode = "qa";
       }
       pairs.push([q[1]!.trim(), ""]);
+      continue;
+    }
+
+    const l = LINK.exec(line);
+    if (l && isInternalPath(l[1]!)) {
+      if (mode !== "links") {
+        flush();
+        mode = "links";
+      }
+      hrefs.push([l[2]!.trim(), l[1]!]);
       continue;
     }
 
