@@ -741,6 +741,10 @@ export function siteImagePage(
   src: string,
   notice?: { kind: "ok" | "err"; text: string },
   who = "",
+  /** The frame's own shape, or undefined where it does not crop. */
+  ratio?: readonly [number, number],
+  /** The largest width worth storing — a cap, never a target to inflate to. */
+  maxWidth = 2048,
   // No enhance parameter. It used to take one and pass it to the form; a site
   // photograph is never redrawn now, so a caller handing this page the
   // upscaler's availability would be describing something that does not
@@ -778,7 +782,13 @@ export function siteImagePage(
       // reconstruction of that photograph is a picture of an installation
       // nobody built, presented as one. UCPD Article 6 is about exactly this
       // kind of assertion, and no amount of upscaling is worth it.
-      '/upload" enctype="multipart/form-data" id="up" data-mode="site">' +
+      '/upload" enctype="multipart/form-data" id="up" data-mode="site"' +
+      // THE SLOT'S OWN SHAPE, so the browser can crop to it before storing.
+      // Measured off the rendered page rather than guessed — see SiteImage.
+      // Absent on a frame that shows the picture whole (object-fit: contain),
+      // where a crop would throw away the sides for nothing.
+      (ratio ? ' data-ar="' + ratio[0] + ":" + ratio[1] + '"' : "") +
+      ' data-max="' + String(maxWidth) + '">' +
       '<div class="up">' +
       '<div class="drop" id="drop">' +
       '<img id="prev" alt="" width="400" height="300">' +
@@ -1318,6 +1328,41 @@ const UPLOAD_JS = `
     var c = document.createElement("canvas");
     c.width = w; c.height = h;
     c.getContext("2d").drawImage(bmp, 0, 0, w, h);
+    return encode(c);
+  }
+
+  /* THE SLOT'S OWN SHAPE, CUT FROM THE MIDDLE, then scaled to the slot's cap.
+     This is what "correct dimensions" means here: the hero frame is 16:9 and
+     the category cards are square, so a wide garden photograph dropped into a
+     square card was being centre-cropped by the BROWSER, on the visitor's
+     screen, out of a file that carried the whole width. Doing it here instead
+     means the operator sees in the panel exactly what the site will show, and
+     the bytes for the cropped-away sides are never stored or downloaded.
+
+     ⚠️ THE CAP IS A CEILING, NOT A TARGET. Math.min never inflates: a 1600 px
+     upload into a 3840 px slot is stored at 1600 and the status line says so.
+     Scaling it up in a canvas would add no detail, only bytes, and would make
+     the largest contentful paint on the page worse in order to fix a number.
+
+     No crop at all when the frame does not crop — the small story frame is
+     object-fit: contain and shows the picture whole. */
+  function drawSlot(bmp, ar, maxW){
+    var sw = bmp.width || bmp.naturalWidth, sh = bmp.height || bmp.naturalHeight;
+    var sx = 0, sy = 0, cw = sw, ch = sh;
+    if (ar > 0) {
+      if (sw / sh > ar) { cw = Math.round(sh * ar); sx = Math.round((sw - cw) / 2); }
+      else { ch = Math.round(sw / ar); sy = Math.round((sh - ch) / 2); }
+    }
+    var w = Math.min(cw, maxW), h = Math.max(1, Math.round(ch * (w / cw)));
+    var c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    c.getContext("2d").drawImage(bmp, sx, sy, cw, ch, 0, 0, w, h);
+    return encode(c).then(function(blob){
+      return { blob: blob, w: w, h: h, srcW: sw, srcH: sh };
+    });
+  }
+
+  function encode(c){
     return new Promise(function(res, rej){
       c.toBlob(function(blob){
         if (!blob) { rej(new Error("pretvorba ni uspela")); return; }
@@ -1333,6 +1378,16 @@ const UPLOAD_JS = `
     });
   }
 
+  /* The slot's shape as a number, and its ceiling. Absent attributes mean
+     "do not crop" and the old 2048 default, so a form that predates this
+     behaves exactly as it did. */
+  var slotAr = (function(){
+    var a = (form.getAttribute("data-ar") || "").split(":");
+    var w = parseFloat(a[0]), h = parseFloat(a[1]);
+    return (isFinite(w) && isFinite(h) && h > 0) ? w / h : 0;
+  })();
+  var slotMax = parseInt(form.getAttribute("data-max") || "", 10) || MAX_W;
+
   var doEnhance = form.getAttribute("data-enhance") === "on";
 
   /* Ask the Worker to redraw the picture at 2K, or hand back what we had.
@@ -1347,6 +1402,14 @@ const UPLOAD_JS = `
      shop was in. Counted here and reported when the run finishes. */
   var upscaled = 0;
   var hit = [];
+  /* What the site slot actually stored — set by drawSlot, read once when the
+     run finishes. Only ever one picture in site mode, so one variable.
+     shotWarn is separate rather than sniffed out of the sentence: the first
+     version tested the message for a word, and the moment a second wording
+     was added ("prenizka") the check stopped matching and the warning went
+     silent. A flag cannot drift from the thing it describes. */
+  var shot = "";
+  var shotWarn = false;
 
   function enhanced(f, i){
     if (!doEnhance) return Promise.resolve(f);
@@ -1382,8 +1445,30 @@ const UPLOAD_JS = `
     }).then(function(bmp){
       var srcW = bmp.width || bmp.naturalWidth;
       if (siteMode) {
-        var w = Math.min(srcW, MAX_W);
-        return draw(bmp, w).then(function(b){ return { widths: [w], blobs: [b], one: true }; });
+        return drawSlot(bmp, slotAr, slotMax).then(function(r){
+          /* WHAT WAS ACTUALLY STORED, AND WHY IT IS NOT BIGGER. An operator
+             who drops a 1600 px picture into the 3840 px hero slot has no way
+             of knowing it went in soft unless somebody says so, and the honest
+             fix is a bigger file rather than a canvas that pretends.
+
+             ⚠️ THE TWO REASONS ARE DIFFERENT AND THE MESSAGE HAS TO SAY WHICH.
+             A first version said "we recommend 3840 px wide" whenever the
+             result was under the cap — which told somebody who had just
+             uploaded a 6000 × 2000 photograph that their picture was too
+             narrow. It was not: it was too SHORT. Cropping 3:1 to 16:9 is
+             limited by the height, so 6000 px of width yields 3556. Telling
+             them to find a wider file is advice that cannot work. */
+          shot = r.w + " × " + r.h + " px";
+          shotWarn = r.w < slotMax;
+          if (r.w < slotMax) {
+            var needH = slotAr > 0 ? Math.round(slotMax / slotAr) : 0;
+            shot += r.srcW >= slotMax && needH > 0
+              ? " — slika je za ta okvir prenizka: pri tem razmerju bi za " +
+                slotMax + " px širine potrebovali " + needH + " px višine"
+              : " — za oster prikaz priporočamo sliko, široko " + slotMax + " px";
+          }
+          return { widths: [r.w], blobs: [r.blob], one: true };
+        });
       }
       var widths = LADDER.filter(function(w){ return w < srcW; });
       widths.push(srcW);
@@ -1454,6 +1539,16 @@ const UPLOAD_JS = `
         if (doEnhance && upscaled === 0) {
           say("Naloženo — nobene slike ni bilo mogoče izboljšati na 2K. " +
             "Naložene so takšne, kot ste jih izbrali.", "warn");
+          setTimeout(function(){ location.reload(); }, 5000);
+          return;
+        }
+        /* THE STORED SIZE, HELD LONG ENOUGH TO READ, and the same argument as
+           the branch above: the one moment the operator can learn that their
+           file went in smaller than the slot wants is now, and a reload two
+           seconds later takes the answer away with it. Only warns when the
+           picture is under the slot's ceiling; a clean upload just reloads. */
+        if (shotWarn) {
+          say("Naloženo — " + shot + ".", "warn");
           setTimeout(function(){ location.reload(); }, 5000);
           return;
         }

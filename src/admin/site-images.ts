@@ -41,6 +41,10 @@ const MEDIA_PREFIX = "/media/";
  */
 const FALLBACK_SEED = "bazen";
 
+/** Said on every slot the frame CROPS, because it is the one thing that bites. */
+const HOME_NOTE_TAIL =
+  " Sliko obrežemo na sredino, zato naj bo bazen na sredini in ne ob robu.";
+
 /** One managed slot: what the storefront asks for, and what to call it. */
 export interface SiteImage {
   /** The path under /media/ the storefront renders, and the bucket key. */
@@ -69,6 +73,34 @@ export interface SiteImage {
    * means the page renders exactly as it did until an upload replaces it.
    */
   readonly fallbackOffset?: number;
+  /**
+   * The shape the frame crops this picture to, as [w, h].
+   *
+   * ⚠️ MEASURED FROM THE RENDERED PAGE, not guessed. Every slot below carries
+   * the ratio its frame actually paints at, so the panel can crop an upload to
+   * exactly that before storing it — which is the difference between a
+   * storefront that centre-crops whatever it was given and one that shows the
+   * picture the operator saw in the panel.
+   *
+   * ABSENT WHERE THE FRAME DOES NOT CROP. The small story frame is
+   * object-fit: contain — it shows the picture whole — so cropping an upload
+   * for it would throw away the sides for nothing.
+   */
+  readonly ratio?: readonly [number, number];
+  /**
+   * The largest width worth storing, in pixels.
+   *
+   * Twice the CSS width the frame paints at, rounded up, so a 2× screen has
+   * every pixel it can use and nothing beyond it. The hero is the exception
+   * and gets 4K: it is the full viewport on a desktop, it is the largest
+   * contentful paint on the page the whole SEO strategy rests on, and it is
+   * the one picture where a visitor can see the difference.
+   *
+   * ⚠️ A CAP, NEVER A TARGET TO INFLATE TO. A smaller upload is stored at its
+   * own size and the panel says so; scaling 1600 px up to 3840 in a canvas
+   * adds no detail, only bytes, and makes the LCP worse to fix a number.
+   */
+  readonly maxWidth: number;
 }
 
 const CHROME_IMAGES: readonly SiteImage[] = [
@@ -90,18 +122,26 @@ const CHROME_IMAGES: readonly SiteImage[] = [
       "zaslon in se ob robovih obreže — na telefonu se vidi le sredinski " +
       "navpični pas — zato naj bo bazen na SREDINI slike in ne ob robu.",
     legacy: "hero.png",
+    ratio: [16, 9],
+    maxWidth: 3840,
   },
   {
     key: "site/kategorija-masazni-bazeni.webp",
     label: "Kategorija — masažni bazeni",
-    note: "Slika kartice za družino masažnih bazenov na domači strani.",
+    note: "Kvadratna slika kartice za družino masažnih bazenov na domači " +
+      "strani. Kvadrat, najbolje 1600 × 1600 px." + HOME_NOTE_TAIL,
     legacy: "Generated Image August 25, 2026 - 6_06PM Large.jpeg",
+    ratio: [1, 1],
+    maxWidth: 1600,
   },
   {
     key: "site/kategorija-swim-spa.webp",
     label: "Kategorija — swim spa",
-    note: "Slika kartice za družino swim spa bazenov na domači strani.",
+    note: "Kvadratna slika kartice za družino swim spa bazenov na domači " +
+      "strani. Kvadrat, najbolje 1600 × 1600 px." + HOME_NOTE_TAIL,
     legacy: "Generated Image August 25, 2026 - 6_26PM Large.jpeg",
+    ratio: [1, 1],
+    maxWidth: 1600,
   },
 ];
 
@@ -118,9 +158,6 @@ const CHROME_IMAGES: readonly SiteImage[] = [
  * page back. Each keeps its old offset as a FALLBACK, so nothing changes on
  * the site until somebody uploads. */
 
-const HOME_NOTE_TAIL =
-  " Slika se obreže na sredino, zato naj bo bazen na sredini in ne ob robu.";
-
 const HOME_IMAGES: readonly SiteImage[] = [
   {
     key: "site/zgodba.webp",
@@ -133,6 +170,8 @@ const HOME_IMAGES: readonly SiteImage[] = [
       "modelov. Skoraj kvadratna (826 × 850), najbolje 1400 × 1440 px." +
       HOME_NOTE_TAIL,
     fallbackOffset: 25,
+    ratio: [826, 850],
+    maxWidth: 1600,
   },
   {
     key: "site/zgodba-detajl.webp",
@@ -143,6 +182,8 @@ const HOME_IMAGES: readonly SiteImage[] = [
       "najbolje 930 × 1040 px. Ta se NE obreže — vidi se cela, zato je " +
       "primerna za detajl ali izdelek na čisti podlagi.",
     fallbackOffset: 23,
+    // No ratio: this frame is object-fit: contain and shows the picture whole.
+    maxWidth: 1200,
   },
   {
     key: "site/zakaj-mi.webp",
@@ -150,6 +191,8 @@ const HOME_IMAGES: readonly SiteImage[] = [
     note: "Kvadratna slika v pasu s prednostmi na domači strani, ob številki. " +
       "Kvadrat, najbolje 1200 × 1200 px." + HOME_NOTE_TAIL,
     fallbackOffset: 22,
+    ratio: [1, 1],
+    maxWidth: 1200,
   },
 ];
 
