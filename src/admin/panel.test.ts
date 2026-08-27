@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { indexPage, loginPage, modelPage, notFoundPage, photoCount } from "./panel";
+import { indexPage, loginPage, modelPage, notFoundPage, photoCount, siteImagePage } from "./panel";
 
 /**
  * Slovenian counts in four forms, and the panel got this wrong: everything
@@ -284,5 +284,53 @@ describe("sorting a gallery by what the pictures show", () => {
   it("is not offered on a model with no photographs", () => {
     const empty = modelPage("bazen", "x", "B", [], undefined, "a@b.c", true, true);
     expect(empty).not.toContain("Razvrsti z UI");
+  });
+});
+
+/**
+ * A photograph of a real garden is never redrawn.
+ *
+ * ⚠️ THE HERO CAME BACK AS A DIFFERENT SCENE. The upscaler REDRAWS a picture
+ * rather than sharpening it, which costs little on a product cut out against a
+ * plain sweep — the subject is isolated and there is not much to invent — and
+ * costs everything on a scene. The operator uploaded a wide shot of a tub in a
+ * garden and the shop showed a corner of a tub in a garden that was not the
+ * same garden.
+ *
+ * The second reason outranks the first: a shop's hero is a claim about what
+ * this looks like in a real garden, and a generated reconstruction is a
+ * picture of an installation nobody built, shown as one.
+ */
+describe("the site images are not put through the upscaler", () => {
+  const page = () =>
+    siteImagePage("hero", "Naslovna slika", "Velika slika.", "/media/site/hero.webp?v=1", undefined, "a@b.c");
+
+  it("does not switch the upscaler on for the form", () => {
+    // The browser reads this attribute and nothing else decides it, so the
+    // attribute IS the contract.
+    const form = /<form class="card"[^>]*>/.exec(page())?.[0] ?? "";
+    expect(form).toContain('data-mode="site"');
+    expect(form).not.toContain("data-enhance");
+  });
+
+  it("says the picture is uploaded as chosen", () => {
+    // ⚠️ ASSERTED ON THE CARD, NOT THE DOCUMENT. The uploader's own source is
+    // inlined into every admin page, and it carries a comment quoting the old
+    // promise verbatim — so a whole-document search finds the sentence in a
+    // code comment and calls a corrected page uncorrected. Same trap as
+    // searching a page for a class name that also appears in its stylesheet.
+    const card = /<form class="card"[\s\S]*?<\/form>/.exec(page())?.[0] ?? "";
+    expect(card).toContain("se ne obdeluje z umetno inteligenco");
+    // And no longer claims the opposite.
+    expect(card).not.toContain("samodejno izboljšajo na 2K");
+    expect(card).not.toContain("na novo nariše");
+  });
+
+  it("still redraws a PRODUCT photograph, where the operator asked for it", () => {
+    // The product form keeps it — the subject there is a cut-out, and the
+    // panel discloses what is happening on that page.
+    const rows = [{ id: "a", url: "a.webp", alt: "o", sort: 0, widths: [], enhanced: false, shot: null }];
+    const product = modelPage("bazen", "x", "B", rows, undefined, "a@b.c", true, true);
+    expect(product).toContain('data-enhance="on"');
   });
 });

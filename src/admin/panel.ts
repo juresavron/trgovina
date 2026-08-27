@@ -466,7 +466,10 @@ export function siteImagePage(
   src: string,
   notice?: { kind: "ok" | "err"; text: string },
   who = "",
-  enhance = false,
+  // No enhance parameter. It used to take one and pass it to the form; a site
+  // photograph is never redrawn now, so a caller handing this page the
+  // upscaler's availability would be describing something that does not
+  // happen. See the note on the form below.
 ): string {
   return shell(
     label,
@@ -486,8 +489,22 @@ export function siteImagePage(
 
       "<h2>Zamenjaj</h2>" +
       '<form class="card" method="post" action="/admin/site/' + esc(stem) +
-      '/upload" enctype="multipart/form-data" id="up" data-mode="site"' +
-      (enhance ? ' data-enhance="on"' : "") + ">" +
+      // ⚠️ NO data-enhance HERE, AND THAT IS THE POINT.
+      //
+      // The upscaler REDRAWS a picture, it does not sharpen one, and the
+      // difference does not matter much on a product cut out against a plain
+      // sweep — the subject is isolated and the model has little to invent.
+      // It matters entirely on a SCENE. The hero is a photograph of a real
+      // installation, chosen for how it is framed, and the model handed back
+      // a different scene: same tub, moved, cropped to a corner, from a
+      // garden that is no longer the same garden.
+      //
+      // There is a second reason, and it outranks the first. A shop's hero is
+      // a claim about what this looks like in a real garden. A generated
+      // reconstruction of that photograph is a picture of an installation
+      // nobody built, presented as one. UCPD Article 6 is about exactly this
+      // kind of assertion, and no amount of upscaling is worth it.
+      '/upload" enctype="multipart/form-data" id="up" data-mode="site">' +
       '<div class="up">' +
       '<div class="drop" id="drop">' +
       '<img id="prev" alt="" width="400" height="300">' +
@@ -514,11 +531,9 @@ export function siteImagePage(
       // picture is REDRAWN at 2K rather than sharpened, and an operator who
       // does not know that cannot judge whether the result still shows the
       // product they are selling.
-      (enhance
-        ? '<p class="note-ai">Slike se samodejno izboljšajo na 2K. ' +
-          "Sliko na novo nariše umetna inteligenca — po nalaganju jo poglejte, " +
-          "podrobnosti izdelka se lahko spremenijo.</p>"
-        : "") +
+      '<p class="note-ai">Ta slika se ne obdeluje z umetno inteligenco — ' +
+      "naložimo jo tako, kot ste jo izbrali, samo pretvorjeno v WebP. " +
+      "Priporočena širina 2000 px ali več.</p>" +
       '<progress id="pr" max="100" value="0" hidden></progress>' +
       '<p class="stline"><span class="muted" id="st"></span></p>' +
       '<p id="gowrap"><button class="btn" type="submit" id="go">Naloži</button></p>' +
