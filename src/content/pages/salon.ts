@@ -1,158 +1,169 @@
 import type { Page } from "../pages";
 
 /**
- * The showroom is a claim the site already makes in footNote — "Razstavni
- * bazen v Ljubljani". The page states that and renders the address from
- * ShopConfig, which is TODO today and therefore renders as visibly unset
- * rather than as an invented street.
+ * The free site visit — and the page that used to claim a showroom.
  *
- * ⚠️ WHAT THIS PAGE STILL DOES NOT KNOW, AND MAY NOT GUESS. The city is the
- * only thing anybody has written down about the showroom. The street, the
- * opening hours, which models stand on the floor, whether one of them is
- * filled and heated, and whether a swim spa is there at all are facts nobody
- * has supplied. Every one of them would send a person across the country to
- * look at something that is not there, so not one of them is stated here.
- * Where the page would need such a fact it asks the visitor to raise it when
- * booking — "povejte ob dogovoru za termin" — which is true, useful and
- * invents nothing.
+ * ⚠️ THERE IS NO SHOWROOM. THERE NEVER WAS. This page carried the headline
+ * "Razstavni salon v Ljubljani", the footer of every page carried "Razstavni
+ * bazen v Ljubljani — pridite ga pogledat v živo", and two FAQs answered "da,
+ * v Ljubljani". None of it was true: the shop has no display floor and no
+ * display tub anywhere. A claim that a person can drive somewhere and see the
+ * goods is a claim about the nature of the service under UCPD Article 6 as
+ * transposed in ZVPot-1 — and, long before the law, it is the promise whose
+ * breach a customer discovers by standing in the wrong city.
  *
- * So the page was lengthened along the axis that needs no showroom fact at
- * all: what a visit is FOR. Why a shell has to be sat in rather than read off
- * a drawing, what to measure before coming, and what a visit can settle and
- * what it cannot. The figures are the catalogue's own — 195–230 cm of
- * footprint and 82–88 cm of shell height from catalog/pola.ts, 1.500–2.210 kg
- * filled from the same file, 5.750–8.490 kg filled from catalog/swimspa.ts.
- * The counts of models are OFFERED_MODELS.length and OFFERED_SWIMSPAS.length.
+ * So the page was not softened; the premise was replaced. What the shop
+ * genuinely offers, and has promised on every other page since the beginning,
+ * is the OPPOSITE errand: we come to the customer, before they buy anything,
+ * and check the thing that actually decides the purchase — whether the tub
+ * fits, whether the path is wide enough, whether the base holds 2.210 kg.
+ * For a 400 kg object that is a better offer than a showroom, and it is real.
+ *
+ * ⚠️ WHAT THIS PAGE STILL MAY NOT SAY. Nobody has stated that a customer can
+ * see a unit anywhere — not at a partner, not at an installation, not on a
+ * video call. Every one of those would be an invented promise, and inventing
+ * one is exactly how the previous version of this page came to exist. What
+ * the site DOES already promise, and what this page therefore offers in place
+ * of a viewing, is the colour sample book sent on request (see the swatch
+ * note on the product pages) and the full published specification.
+ *
+ * The figures are the catalogue's own — 195–230 cm of footprint and 82–88 cm
+ * of shell height from catalog/pola.ts, 1.500–2.210 kg filled from the same
+ * file, 5.750–8.490 kg filled from catalog/swimspa.ts.
  */
 export const SHOWROOM: Page = {
   key: "/showroom",
-  h1: "Razstavni salon v Ljubljani",
+  h1: "Brezplačen ogled lokacije",
+  seoTitle: "Ogled lokacije pred nakupom masažnega bazena",
   lead:
-    "Bazen si je vredno ogledati v živo. Mere na papirju povedo malo o tem, kako globok je " +
-    "sedež, kam pridejo noge in kako velika je školjka v resnici.",
+    "Preden karkoli kupite, pridemo pogledat, kam bi bazen postavili. Ogled je brezplačen " +
+    "in vas k ničemur ne zavezuje.",
   metaDescription:
-    "Razstavni masažni bazen v Ljubljani — globino, sedeže in mere preverite v živo. " +
-    "Obisk po dogovoru, s svetovanjem za vašo lokacijo.",
+    "Brezplačen ogled lokacije po vsej Sloveniji: preverimo dostop, podlago in električni " +
+    "priklop, preden se odločite za model. Brez obveznosti.",
   blocks: [
     {
       kind: "prose",
-      h: "Zakaj bazen pogledati v živo",
+      h: "Zakaj ogled in ne razstavni salon",
       p: [
-        "Mere na papirju so natančne in vseeno prazne. Med školjko 195 × 195 cm in školjko " +
-          "230 × 230 cm je 35 centimetrov v vsako smer — na risbi je to skoraj nič, na terasi " +
-          "pa razlika med bazenom, ki se komaj umesti, in takim, okoli katerega se da hoditi.",
-        "Drugo je sedež. Podatek o višini školjke — od 82 do 88 centimetrov — pove, kako visoka " +
-          "je školjka, ne pa, kako globoko boste sedeli v njej. Kam vam seže voda in ali je " +
-          "ležalnik dovolj dolg za vašo postavo, se izve tako, da se vanj usedete. To vzame pol " +
-          "minute in odgovori na vprašanje, o katerem se sicer ugiba tedne.",
-        "Tretje je zvok. Črpalka pri polni moči ni tiha in kako glasno je to, si vsak " +
-          "predstavlja drugače. Če bazen ob vašem obisku deluje, ga poslušajte pri najvišji in " +
-          "ne pri najnižji stopnji.",
+        "Razstavnega salona nimamo in vam ga ne bomo obljubljali. Namesto da bi vi vozili k " +
+          "bazenu, pridemo mi k vam — in to je pri tem izdelku bolj uporabno, kot se sliši. " +
+          "V salonu bi videli, kako je školjka videti. Doma izveste tisto, kar odloča: ali " +
+          "bazen sploh pride do mesta postavitve in ali podlaga zdrži, ko je poln.",
+        "Napolnjen masažni bazen tehta od 1.500 do 2.210 kilogramov, napolnjen swim spa " +
+          "bazen od 5.750 do 8.490 kilogramov, in največji del te teže je voda. Ali to " +
+          "prenese vaša terasa, se po telefonu ne da presoditi in v nobenem salonu ne " +
+          "izve. Zato je ogled pri vas.",
+        "Ogled je brezplačen tudi, če se za nakup na koncu ne odločite. Če se izkaže, da " +
+          "model, ki ste ga izbrali, pri vas ni izvedljiv, vam to povemo — to je pogosto " +
+          "najkoristnejši izid obiska.",
       ],
     },
     {
-      kind: "prose",
-      h: "Obisk po dogovoru",
-      p: [
-        "Razstavni bazen je v Ljubljani. Za obisk se dogovorimo vnaprej po telefonu, da vas " +
-          "sprejme nekdo, ki zna odgovoriti na vprašanja o vaši konkretni lokaciji.",
-        "Prinesite mere prostora in fotografijo poti do njega. V pol ure se da razčistiti, " +
-          "kateri model je pri vas izvedljiv in kaj bi bilo treba pripraviti.",
-        "Ob dogovoru za termin povejte, kateri model vas zanima in kaj bi radi videli ali " +
-          "preizkusili. Kaj bo tisti dan na ogled in v kakšnem stanju, vam povemo vnaprej — to " +
-          "je odgovor, ki je bolj uporaben po telefonu kot pred vrati.",
-        "Ogled salona in ogled lokacije nista isto. V salonu se odločite za model; na vašem " +
-          "naslovu preverimo dostop, podlago in električni priklop. Slednji je ločen brezplačen " +
-          "obisk, ki ga opravimo pri vas pred dostavo.",
+      kind: "steps",
+      h: "Kako poteka",
+      items: [
+        [
+          "Pokličete ali pišete",
+          "Povejte naslov in kateri model vas zanima. Termin uskladimo po telefonu.",
+        ],
+        [
+          "Pridemo na vaš naslov",
+          "Izmerimo mesto postavitve in pot do njega, pogledamo podlago in električni priklop. " +
+            "Vzame približno pol ure.",
+        ],
+        [
+          "Poveste, kaj ste videli",
+          "Kateri modeli so pri vas izvedljivi, kaj bi bilo treba pripraviti in kje so ozka " +
+            "grla. Če je treba podlago ali elektriko urediti, poveste, kaj točno.",
+        ],
+        [
+          "Ponudba",
+          "Model in konfiguracija, dostava, priklop in zagon — vse v eni številki z DDV. " +
+            "Ogled je do tu brezplačen in brez obveznosti.",
+        ],
       ],
     },
     {
       kind: "facts",
-      h: "Kaj prinesti s seboj",
+      h: "Kaj pripravite za ogled",
       rows: [
         [
-          "Mere mesta postavitve",
-          "Širina in dolžina prostora, kamor bi bazen postavili, in kaj stoji ob njem — zid, " +
-            "ograja, streha, okno.",
+          "Mesto postavitve",
+          "Približna predstava, kam bi bazen postavili. Natančno izmerimo mi — pomembno je " +
+            "le, da se pogovarjava o istem kotu vrta.",
         ],
         [
-          "Najožje mesto na poti",
-          "Vrtna vrata, prehod med hišo in ograjo, ovinek na stopnišču. Meri se najožje mesto, " +
-            "ne najširše.",
-        ],
-        [
-          "Fotografije poti",
-          "Od mesta, kamor lahko pripelje tovornjak, do mesta postavitve. Nekaj posnetkov pove " +
-            "več kot dolg opis.",
+          "Dostop do dvorišča",
+          "Če je pot do hiše zaprta z zapornico, vrati na ključ ali dogovorom s sosedom, to " +
+            "povejte vnaprej — tovornjak na dan dostave to ugotovi prepozno.",
         ],
         [
           "Podlaga",
           "Kaj je pod predvidenim mestom: betonska plošča, tlakovci, lesena terasa ali teren. " +
-            "Pri terasi je pomembno, kako je zgrajena in na čem stoji.",
+            "Pri leseni terasi je koristno vedeti, kako je zgrajena in na čem stoji.",
         ],
         [
           "Elektrika",
-          "Kje je električna omarica, kako daleč je do mesta postavitve in kaj je vmes.",
+          "Kje je električna omarica. Razdaljo in pot izmerimo na kraju samem.",
         ],
         [
-          "Višinske razlike",
-          "Stopnice, škarpa, klančina. Vsaka višinska razlika na poti je vprašanje, kako bo " +
-            "bazen prišel do mesta.",
+          "Kdo je doma",
+          "Dobro je, če je prisoten nekdo, ki odloča o nakupu in pozna hišo — polovica " +
+            "vprašanj je o tem, kaj je pod tlakovci in kje teče kabel.",
         ],
       ],
     },
     {
       kind: "qa",
-      h: "Pogosta vprašanja o obisku",
+      h: "Pogosta vprašanja",
       items: [
         [
-          "Ali lahko pridem brez najave?",
-          "Bolje je, da se dogovorimo vnaprej. Termin pomeni, da si za vas nekdo vzame čas in " +
-            "da pride tisti, ki zna odgovoriti na vprašanja o vaši lokaciji.",
+          "Ali lahko bazen kje vidim v živo?",
+          "Razstavnega salona nimamo, zato vam bazena pred nakupom ne moremo pokazati v " +
+            "živo. Kar lahko: pošljemo vam vzorčnik barv školjke, na strani vsakega modela " +
+            "so vse mere, teže in specifikacije, na ogledu pa z merami v roki povemo, kako " +
+            "velik bo pri vas videti. Če je za vas ogled v živo pogoj za nakup, vam to " +
+            "povemo odkrito, namesto da bi vas vozili naokoli.",
         ],
         [
-          "Kateri modeli so v salonu?",
-          "Povejte ob dogovoru za termin, kateri model vas zanima, in vam povemo, kaj boste " +
-            "lahko videli. Ponudba obsega tri masažne bazene od 195 do 230 cm in tri swim spa " +
-            "bazene od 450 do 580 cm; swim spa je zaradi dolžine drugačen razstavni problem " +
-            "kot masažni bazen.",
+          "Koliko stane ogled?",
+          "Nič, po vsej Sloveniji, tudi če se za nakup ne odločite.",
         ],
         [
-          "Ali lahko bazen preizkusim?",
-          "Povejte vnaprej, kaj bi radi preizkusili — sedeti v suhi školjki je nekaj drugega " +
-            "kot slišati črpalko in čutiti šobe. Kaj bo ob vašem terminu mogoče, vam povemo " +
-            "pred prihodom.",
+          "Kako hitro lahko pridete?",
+          "Termin uskladimo po telefonu; odvisen je od naslova in od tega, kdaj ste doma. " +
+            "Ko se dogovorimo za dan, se ga držimo.",
         ],
         [
-          "Se v salonu dogovorimo tudi za ceno in dostavo?",
-          "Ceno modela v izbrani konfiguraciji in dostavo dobite v pisni ponudbi. Zaporedje je " +
-            "običajno tako: najprej model, nato ogled lokacije, nato ponudba z eno " +
-            "številko z DDV.",
+          "Ali me bo na ogledu kdo priganjal k nakupu?",
+          "Ne. Na ogledu merimo in odgovarjamo na vprašanja. Ponudbo dobite pisno po njem, " +
+            "da jo v miru preberete.",
         ],
       ],
     },
     {
       kind: "prose",
-      h: "Česa v salonu ni mogoče preveriti",
+      h: "Česa tudi ogled ne pove",
       p: [
-        "Dveh stvari v salonu ni mogoče izvedeti. Prvo je, koliko bo bazen porabil pri vas: poraba je " +
-          "odvisna od temperature, ki jo držite, pogostosti uporabe, kakovosti pokrova in " +
-          "zunanjih razmer, zato mesečnega zneska ne navajamo nikjer.",
-        "Drugo je, ali vaša podlaga zdrži. Napolnjen masažni bazen tehta od 1.500 do 2.210 " +
-          "kilogramov, napolnjen swim spa bazen od 5.750 do 8.490 kilogramov, in največji del " +
-          "te teže je voda. Tega po telefonu ni mogoče presoditi — zato je ogled lokacije " +
-          "ločen brezplačen obisk.",
+        "Ene stvari tudi na vašem naslovu ni mogoče izvedeti: koliko bo bazen porabil " +
+          "električne energije. Poraba je odvisna od temperature, ki jo držite, pogostosti " +
+          "uporabe, kakovosti pokrova in zunanjih razmer — zato mesečnega zneska ne " +
+          "navajamo nikjer na tej strani.",
+        "Prav tako na ogledu ne izvedete, kako bo bazen deloval pri polni moči. Črpalka " +
+          "pri najvišji stopnji ni tiha; kako glasno je to, si vsak predstavlja drugače. " +
+          "Ob predaji vam vse stopnje pokažemo in nastavimo — takrat je bazen vaš in " +
+          "poln, kar je edino stanje, v katerem se to res sliši.",
       ],
     },
-    // No Naslov row: the only address the config holds is the company seat
-    // in Koper, and printing it under this page's Ljubljana headline claimed
-    // it as the showroom's address. The visit is by appointment; the exact
-    // location comes with the appointment.
-    { kind: "contact", h: "Kontakt za dogovor", omitAddress: true },
+    // No Naslov row: the seat in Koper is an office, not a place to visit,
+    // and printing it here would rebuild the very expectation this page was
+    // rewritten to remove.
+    { kind: "contact", h: "Dogovor za ogled", omitAddress: true },
     {
       kind: "cta",
-      h: "Dogovorite se za termin",
-      p: "Pokličite in povejte, kdaj vam ustreza in kateri model vas zanima.",
+      h: "Naročite brezplačen ogled",
+      p: "Pokličite ali pišite — povejte naslov in kateri model vas zanima.",
       label: "Kontakt",
       href: "/kontakt",
     },

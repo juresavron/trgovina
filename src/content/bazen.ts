@@ -914,5 +914,8 @@ export const bazenContent: ShopContent = {
   // spa cards link at real pages rather than at a 404.
   pdps: [...OFFERED_MODELS.map(pdpFor), ...OFFERED_SWIMSPAS.map(pdpForSwim)],
   footNote:
-    "Specialist za masažne bazene v Sloveniji. Razstavni bazen v Ljubljani — pridite ga pogledat v živo.",
+    // The footer of EVERY page said "Razstavni bazen v Ljubljani — pridite ga
+    // pogledat v živo". There is no showroom; this now names the thing the
+    // shop really does, which is the same promise the moat band makes.
+    "Specialist za masažne bazene v Sloveniji. Dostava, priklop in zagon po vsej Sloveniji — z brezplačnim ogledom lokacije pred nakupom.",
 };

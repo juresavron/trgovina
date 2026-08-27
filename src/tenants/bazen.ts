@@ -133,7 +133,12 @@ export const bazen: ShopConfig = {
     // post; neither is what this is.
     "/blog": "/blog",
     "/delivery": "/dostava-in-montaza",
-    "/showroom": "/razstavni-salon",
+    // ⚠️ THE KEY SAYS SHOWROOM AND THE SHOP HAS NONE. The internal key is
+    // the network's route vocabulary and is not worth churning across six
+    // files on launch eve; what it POINTS AT is the free site visit, which
+    // is what this shop actually offers. See content/pages/salon.ts for why
+    // the showroom claim was removed rather than softened.
+    "/showroom": "/ogled-lokacije",
     "/financing": "/financiranje",
     "/about": "/o-nas",
     "/contact": "/kontakt",

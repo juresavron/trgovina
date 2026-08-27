@@ -2611,7 +2611,9 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<p class="st-pdp-swatch-note">Imena barv školjke so proizvajalčeva — ' +
     "takšna so tudi na njegovi barvni karti, zato jih ne prevajamo. " +
     "Odtenkov ne slikamo: akril je marmoriran in fotografija ga ne pokaže " +
-    "pošteno. Vzorčnik pošljemo na zahtevo, v salonu pa jih vidite v živo. " +
+    // "v salonu pa jih vidite v živo" — there is no salon. The sample book
+    // is the real offer, and now the only one made.
+    "pošteno. Vzorčnik pošljemo na zahtevo. " +
     "Vsak model je na voljo v sedmih barvah školjke; katerih sedmih, " +
     "potrdimo ob naročilu.</p>";
   const finishes =

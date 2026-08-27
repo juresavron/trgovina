@@ -1815,7 +1815,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     ] as const) +
     col("st-foot-c3", "Podjetje", [
       [s.routeSlugs["/about"], "O nas"],
-      [s.routeSlugs["/showroom"], "Razstavni salon"],
+      [s.routeSlugs["/showroom"], "Ogled lokacije"],
       [s.routeSlugs["/contact"], "Kontakt"],
     ] as const) +
     // Withdrawal sits SECOND, under the terms it belongs to: of the four, the

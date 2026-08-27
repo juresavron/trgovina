@@ -420,7 +420,7 @@ export function renderFooter(ctx: RenderCtx): string {
     col("Pomoč", [
       [s.routeSlugs["/delivery"], "Dostava in montaža"],
       [s.routeSlugs["/faq"], "Pogosta vprašanja"],
-      [s.routeSlugs["/showroom"], "Razstavni salon"],
+      [s.routeSlugs["/showroom"], "Ogled lokacije"],
       [s.routeSlugs["/contact"], "Kontakt"],
     ]) +
     col("Pravno", [
