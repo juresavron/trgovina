@@ -52,3 +52,50 @@ suite("deleting a stored object", () => {
     await expect(deleteObject(API, "a/b.webp")).rejects.toThrow(/500/);
   });
 });
+
+/**
+ * A fixed key has to be replaceable, and this is the header that does it.
+ *
+ * ⚠️ Supabase Storage's POST REFUSES A KEY IT ALREADY HOLDS — 400, "Duplicate".
+ * The hero image, the two category images and every other site image live at a
+ * fixed path by design, so "upload a new one" means "overwrite this one". It
+ * did not: the first upload succeeded and every one after it came back as a
+ * bare 500 saying "Napaka na strežniku", with nothing anywhere naming the real
+ * reason. The project's request log has it plainly — POST site/hero.webp 200,
+ * then 400 on the next attempt twenty-seven seconds later.
+ */
+suite("replacing an object that is already there", () => {
+  const seen: Record<string, string>[] = [];
+  function capture(status = 200) {
+    seen.length = 0;
+    vi.stubGlobal("fetch", async (_u: string, init: RequestInit) => {
+      seen.push((init.headers ?? {}) as Record<string, string>);
+      return new Response("{}", { status });
+    });
+  }
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("asks for an upsert only when the caller says the key is fixed", async () => {
+    const { uploadObject } = await import("./supabase");
+    const body = new Uint8Array([1, 2, 3]).buffer;
+
+    capture();
+    await uploadObject(API, "site/hero.webp", body, "image/webp", true);
+    expect(seen[0]!["x-upsert"]).toBe("true");
+
+    // A product photograph is written under a fresh UUID every time, so a
+    // collision would mean key generation had genuinely gone wrong. Upserting
+    // everywhere would hide that.
+    capture();
+    await uploadObject(API, "bazen/x/a--uuid.webp", body, "image/webp");
+    expect(seen[0]!["x-upsert"]).toBeUndefined();
+  });
+
+  it("still reports a real storage failure rather than swallowing it", async () => {
+    const { uploadObject } = await import("./supabase");
+    capture(403);
+    await expect(
+      uploadObject(API, "site/hero.webp", new Uint8Array([1]).buffer, "image/webp", true),
+    ).rejects.toThrow(/403/);
+  });
+});
