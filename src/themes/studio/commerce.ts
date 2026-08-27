@@ -337,9 +337,16 @@ export const STUDIO_COMMERCE_CSS = `
    * block takes the left half, the intro takes the right, and the pair spans
    * the band: 741.6 + 76.8 + 741.6 = 1560px at 1920, 651.2 + 58.4 + 651.2 =
    * 1360 at 1440. Neither measure moved — the h1 still caps at its own 20ch
-   * (667.4px) inside the left half and simply stops there. flex-end because
-   * the two columns are read as one line: the intro's last line sits on the
-   * heading's baseline rather than floating beside its middle.
+   * (667.4px) inside the left half and simply stops there.
+   *
+   * ⚠️ flex-start, AND IT WAS flex-end ONCE. Bottom-aligning the pair read
+   * well while every intro was three or four lines — the intro's last line
+   * sat on the heading's baseline. Then the hub's intro grew to nine lines
+   * and the composition inverted: a two-line title bottom-pinned against a
+   * nine-line column leaves the entire top-left of the page empty, and the
+   * screenshot that reported it showed exactly that — a blank quarter-screen
+   * above "Trgovina". Top-aligning holds for both shapes: a title reads as a
+   * title at the top of its column whatever stands beside it.
    *
    * The eyebrow and the heading are wrapped as ONE object in the markup for
    * the same reason the util tile wraps its heading and paragraph (see
@@ -356,7 +363,7 @@ export const STUDIO_COMMERCE_CSS = `
     :root[data-theme="studio"] .st-shop-head:has(> .st-shop-intro) {
       display: flex;
       flex-wrap: wrap;
-      align-items: flex-end;
+      align-items: flex-start;
       column-gap: clamp(40px, 4vw, 96px);
     }
     :root[data-theme="studio"] .st-shop-head:has(> .st-shop-intro) > .st-shop-title,
@@ -874,6 +881,107 @@ export const STUDIO_COMMERCE_CSS = `
     letter-spacing: var(--ls-body);
     line-height: var(--lh-lead);
     color: var(--ink-body);
+  }
+  /* ---- the hub's two-family decision ---------------------------------
+   *
+   * Two equal cards on the ruled-hairline vocabulary the rest of the shop
+   * already speaks — 1px line, flat ground, no shadow. The card is one link;
+   * the border is its hover affordance, so the whole surface answers the
+   * pointer the way .st-card's title does.
+   *
+   * Margin-top pairs it with the intro above (same rung as the intro's own
+   * top margin); the section's own bottom rhythm separates it from the first
+   * band, so nothing here pays that boundary twice. */
+  :root[data-theme="studio"] .st-hub-choice {
+    list-style: none;
+    /* The bottom rung exists because the title section pays no section
+     * rhythm of its own (padding-bottom: 0, see .st-shop--title): without
+     * it the first band's h2 stood 66px under the cards where the bands
+     * keep ~170px between themselves. Half a band's rhythm — the cards and
+     * the first band are one conversation, the bands are two. */
+    margin: clamp(24px, 2.4vw, 40px) 0 clamp(44px, 4.4vw, 80px);
+    padding: 0;
+    display: grid;
+    gap: clamp(12px, 1.2vw, 20px);
+  }
+  @media (min-width: 720px) {
+    :root[data-theme="studio"] .st-hub-choice {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  :root[data-theme="studio"] .st-hub-card-a {
+    display: flex;
+    flex-direction: column;
+    block-size: 100%;
+    padding: clamp(20px, 2vw, 32px);
+    border: var(--bw-line) solid var(--line-strong);
+    border-radius: var(--r-card);
+    text-decoration: none;
+    color: var(--ink);
+  }
+  @media (hover: hover) {
+    :root[data-theme="studio"] .st-hub-card-a { transition: border-color 0.2s ease; }
+    :root[data-theme="studio"] .st-hub-card-a:hover { border-color: var(--ink); }
+  }
+  :root[data-theme="studio"] .st-hub-card-a:focus-visible {
+    outline: 2px solid var(--ink);
+    outline-offset: 2px;
+  }
+  :root[data-theme="studio"] .st-hub-card-h {
+    margin: 0;
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
+  }
+  :root[data-theme="studio"] .st-hub-card-p {
+    margin: clamp(8px, 0.8vw, 12px) 0 0;
+    max-width: 46ch;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+  }
+  /* The fact rows: label left, value right, a hairline between rows — the
+   * same reading the PDP's spec list and the page template's facts block
+   * teach, so the card needs no legend. */
+  :root[data-theme="studio"] .st-hub-card-facts {
+    margin: clamp(16px, 1.6vw, 24px) 0 0;
+  }
+  :root[data-theme="studio"] .st-hub-card-facts > div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--gap-sm);
+    padding-block: clamp(8px, 0.8vw, 11px);
+    border-block-start: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-hub-card-facts dt {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-hub-card-facts dd {
+    margin: 0;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+    text-align: right;
+  }
+  /* The way down. Margin-top:auto is what makes the two cards' last lines
+   * level when one paragraph runs a line longer than the other. */
+  :root[data-theme="studio"] .st-hub-card-go {
+    margin-block-start: auto;
+    padding-block-start: clamp(14px, 1.4vw, 20px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
   }
   :root[data-theme="studio"] .st-shop-more {
     margin: clamp(20px, 2vw, 36px) 0 0;
@@ -2165,6 +2273,43 @@ export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
  * them. Each band shows the family's grid and then hands off, so the hub is
  * useful on its own and never a dead end.
  */
+/**
+ * The hub's opening decision as two cards — see hubChoice in content/types.ts
+ * for why this is structure and not the paragraph it replaced.
+ *
+ * A <ul> of links-with-facts, not headings: the families' h2s live on the
+ * bands below, and a second pair up here would give the document two "Masažni
+ * bazeni" headings four hundred pixels apart. The whole card is one anchor —
+ * the decision it presents ends in going to the band that answers it.
+ */
+function hubChoice(ctx: RenderCtx): string {
+  const cards = ctx.content.hubChoice ?? [];
+  if (cards.length === 0) return "";
+  return (
+    '<ul class="st-hub-choice">' +
+    cards
+      .map(
+        (c) =>
+          '<li class="st-hub-card">' +
+          '<a class="st-hub-card-a" href="' + esc(c.anchor) + '">' +
+          '<p class="st-hub-card-h">' + esc(c.label) + "</p>" +
+          '<p class="st-hub-card-p">' + esc(c.text) + "</p>" +
+          '<dl class="st-hub-card-facts">' +
+          c.facts
+            .map(
+              (f) =>
+                "<div><dt>" + esc(f[0]) + "</dt><dd>" + esc(f[1]) + "</dd></div>",
+            )
+            .join("") +
+          "</dl>" +
+          '<span class="st-hub-card-go">' + esc(c.anchorLabel) + " ↓</span>" +
+          "</a></li>",
+      )
+      .join("") +
+    "</ul>"
+  );
+}
+
 export function renderStudioShopHub(ctx: RenderCtx): string {
   const cols = ctx.content.collections ?? [];
   if (cols.length === 0) return "";
@@ -2180,7 +2325,9 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
     (ctx.content.hubIntro
       ? '<p class="st-shop-intro">' + esc(ctx.content.hubIntro) + "</p>"
       : "") +
-    "</div></div></section>" +
+    "</div>" +
+    hubChoice(ctx) +
+    "</div></section>" +
     cols
       .map(
         (c) =>

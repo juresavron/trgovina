@@ -241,6 +241,28 @@ export interface ShopContent {
    * where the reader has not arrived yet.
    */
   hubIntro?: string;
+  /**
+   * The hub's opening decision, as two cards under the intro: one per family,
+   * each with its definition, the three facts the choice actually turns on
+   * (size, filled mass, where it stands) and an anchor down to its band.
+   *
+   * Structured rather than prose because the decision is structurally a
+   * comparison: the same three axes, answered twice. As one paragraph this
+   * was nine lines in a half-width column — the tallest text block on the
+   * page, spent before the visitor had seen a single product.
+   */
+  hubChoice?: readonly {
+    /** Family name — "Masažni bazen". */
+    readonly label: string;
+    /** What it is, in one or two sentences. */
+    readonly text: string;
+    /** Label → value, e.g. ["Velikost", "195–230 cm"]. */
+    readonly facts: readonly (readonly [string, string])[];
+    /** Anchor of the family's band on the hub — "#masazni-bazeni". */
+    readonly anchor: string;
+    /** The anchor's link text — "Trije modeli". */
+    readonly anchorLabel: string;
+  }[];
   moat: {
     h2: string;
     steps: [string, string][];

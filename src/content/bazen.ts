@@ -822,16 +822,45 @@ export const bazenContent: ShopContent = {
   hubMetaDescription:
     "Masažni bazeni od 195 do 230 cm in swim spa bazeni od 450 do 580 cm. " +
     "Mere, specifikacije in cene, z dostavo, priklopom in zagonom po Sloveniji.",
+  // The lede states the decision; the two cards under it carry the facts the
+  // decision turns on. What used to be here — one nine-line paragraph doing
+  // both jobs — is the reason hubChoice exists; see its note in types.ts.
   hubIntro:
-    "Najprej se odločite med dvema stvarema, ki nista različici iste. Masažni bazen je " +
-    "kvadratna školjka od 195 do 230 cm, v kateri se sedi in leži; napolnjen tehta od " +
-    "1.500 do 2.210 kilogramov in gre praviloma na teraso. Swim spa bazen je podolgovata " +
-    "školjka od 450 do 580 cm, narejena za plavanje in sprostitev; napolnjen tehta od " +
-    "5.750 do 8.490 kilogramov in praviloma stoji na betonski plošči, ne na terasi. " +
-    "Razlika torej ni v velikosti iste stvari, ampak v tem, kaj v bazenu počnete — od " +
-    "tega pa je odvisno vse drugo: podlaga, dostop, priprava priklopa in cena dostave. " +
-    "Spodaj sta obe družini, vsaka s tremi modeli, in pri vsaki piše, po čem se modeli " +
-    "med seboj razlikujejo. Vsakega pripeljemo, priklopimo in zaženemo.",
+    "Najprej se odločite med dvema stvarema, ki nista različici iste. Razlika " +
+    "ni v velikosti, ampak v tem, kaj v bazenu počnete — od tega pa je odvisno " +
+    "vse drugo: podlaga, dostop, priprava priklopa in cena dostave. Vsakega " +
+    "pripeljemo, priklopimo in zaženemo.",
+  // EVERY FIGURE IS THE CATALOGUE'S — the same ranges the collection intros
+  // walk model by model: 195/210/230 cm square at 1.500–2.210 kg filled, and
+  // 450–580 cm long at 5.750–8.490 kg filled.
+  hubChoice: [
+    {
+      label: "Masažni bazen",
+      text:
+        "Kvadratna školjka, v kateri se sedi in leži — masaža, ne plavanje. " +
+        "Praviloma gre na teraso.",
+      facts: [
+        ["Velikost", "195–230 cm"],
+        ["Napolnjen tehta", "1.500–2.210 kg"],
+        ["Mesta", "5 ali 6 oseb"],
+      ],
+      anchor: "#masazni-bazeni",
+      anchorLabel: "Trije modeli",
+    },
+    {
+      label: "Swim spa bazen",
+      text:
+        "Podolgovata školjka, narejena za plavanje in sprostitev. Praviloma " +
+        "stoji na betonski plošči, ne na terasi.",
+      facts: [
+        ["Dolžina", "450–580 cm"],
+        ["Napolnjen tehta", "5.750–8.490 kg"],
+        ["Mesta", "3 do 7 oseb"],
+      ],
+      anchor: "#swim-spa",
+      anchorLabel: "Trije modeli",
+    },
+  ],
   pdp: pdpFor(flagship),
   // Both families' pages. The router matches any slug in here, so the swim
   // spa cards link at real pages rather than at a 404.
