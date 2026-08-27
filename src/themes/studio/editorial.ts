@@ -117,13 +117,32 @@ export const STUDIO_EDITORIAL_CSS = `
      * Stacked above the quote the medallion costs no width at all.
      *
      * --studio-tst-stage is the composition's own measure, DERIVED rather than
-     * picked: the reading measure the theme already uses for narrow prose, the
-     * medallion, and one --gap-2xl between them. Deriving it is what lets the
-     * quote column resolve to exactly --studio-read-narrow while the pair sits
-     * centred in the container, and what lets the prev/next controls sit under
-     * the medallion without a second, hand-tuned number to keep in sync. */
+     * picked: a reading measure, the medallion, and one --gap-2xl between
+     * them. Deriving it is what lets the quote column resolve to exactly that
+     * measure while the pair sits centred in the container, and what lets the
+     * prev/next controls sit under the medallion without a second, hand-tuned
+     * number to keep in sync.
+     *
+     * THE MEASURE IN IT IS THE WIDE ONE, --studio-read, NOT --studio-read-
+     * narrow. Built from the narrow measure the stage came to 620 + 64 + 300 =
+     * 984px, and once tokens.ts widened the container to 1560 that was an
+     * ISLAND: measured at 1920, a 984px stage inside a 1640px band left 328px
+     * of empty black on each side, 51.2% of the viewport for the one band
+     * whose whole content is a sentence and a picture. 863 + 64 + 300 = 1227px
+     * spends that back — 74.8% of the band, 328px of margin down to 206.5 —
+     * and it costs nothing at the widths where the band is the smaller of the
+     * two: up to a 1228px viewport min(100%, …) still hands the stage the
+     * whole band, exactly as before (1148px at 1228, 1186.2px at 1440).
+     *
+     * What it does cost is measure: 863px at --t-lead is about 80 characters,
+     * past the 45–75 that running text wants. That is the trade, made
+     * deliberately and only here — a testimonial is two lines read once, not a
+     * page of prose, and 863px is the theme's own wide reading measure rather
+     * than a number invented for this band. Below 1080px the stage collapses
+     * back to --studio-read-narrow alone (see the stacked tier), so the
+     * narrow measure still governs everywhere the row is a column. */
     --studio-tst-disc: clamp(160px, 18vw, 300px);
-    --studio-tst-stage: min(100%, calc(var(--studio-read-narrow) + var(--gap-2xl) + var(--studio-tst-disc)));
+    --studio-tst-stage: min(100%, calc(var(--studio-read) + var(--gap-2xl) + var(--studio-tst-disc)));
     /* The hairline the inverted band uses for its own frames and chips. --line
      * (#dfdfdf) is a white-ground value and glares here. */
     --studio-line-invert: color-mix(in srgb, var(--on-invert) 16%, transparent);
@@ -627,8 +646,10 @@ export const STUDIO_EDITORIAL_CSS = `
    * limb. Two named areas, two real columns, no ghost track.
    *
    * The columns are DERIVED from --studio-tst-stage, so 1fr resolves to
-   * exactly --studio-read-narrow and the gap is the token the stage was built
-   * from — change the stage and the row still adds up.
+   * exactly the reading measure the stage was built from (--studio-read,
+   * 863px, once the band is wide enough to pay for it) and the gap is the
+   * token the stage was built from — change the stage and the row still
+   * adds up.
    *
    * Named areas rather than source order, because <figcaption> must be a
    * direct child of <figure> to be its caption — it cannot live inside the
@@ -705,10 +726,14 @@ export const STUDIO_EDITORIAL_CSS = `
    * stays white.
    *
    * No max-width of its own any more: the grid column IS the measure. It
-   * resolves to --studio-read-narrow (620px) by construction, i.e. about 68
-   * characters at this size, and the old min(100%, max(18rem, 40vw)) would now
-   * fight it — at 1440 that formula gave 576px inside a 620px column, so the
-   * measure was set twice and neither number knew about the other. */
+   * resolves to --studio-read (863px, about 80 characters at this size) by
+   * construction wherever the band can pay for the whole stage, and to
+   * whatever the band leaves when it cannot; the old min(100%, max(18rem,
+   * 40vw)) would fight it — at 1440 that formula gave 576px inside a 620px
+   * column, so the measure was set twice and neither number knew about the
+   * other. Capping the text here instead would put the difference back into
+   * the row as a void between the sentence and the medallion, which is the
+   * hole the portrait left and the reason the stage exists. */
   :root[data-theme="studio"] .st-tst-q {
     max-width: 100%;
     margin: var(--gap-sm) 0 0;
@@ -1170,10 +1195,14 @@ export const STUDIO_EDITORIAL_CSS = `
    * also lazy and far below the fold, so what it costs is bytes a phone only
    * spends if the reader scrolls to it.
    *
-   * The stage collapses to the reading measure alone, which keeps the stacked
-   * block centred in the container instead of stranded against the left gutter
-   * at tablet widths, and keeps the medallion, the quote and the controls on
-   * one shared left edge. */
+   * The stage collapses to the NARROW reading measure alone — 620px, not the
+   * 863px the two-part row above is built from. A stacked column is running
+   * prose again, so it gets the measure prose wants; the wide one is the
+   * price the ROW pays for not being an island in a 1560px container, and a
+   * column pays nothing for it. It also keeps the stacked block centred in
+   * the container instead of stranded against the left gutter at tablet
+   * widths, and keeps the medallion, the quote and the controls on one
+   * shared left edge. */
   @media (max-width: 1080px) {
     :root[data-theme="studio"] {
       --studio-tst-stage: min(100%, var(--studio-read-narrow));
