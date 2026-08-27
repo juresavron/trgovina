@@ -27,6 +27,7 @@
  */
 
 import type { Env } from "./supabase";
+import { SHOT_KEYS, shotMenu } from "./shots";
 
 /**
  * The models that read the picture, in the order they are tried.
@@ -82,7 +83,15 @@ function prompt(subject: string): string {
     "ne navajaj znamk, mer, cen ali materialov; " +
     "ne uporabljaj oglaševalskih pridevnikov; " +
     "ne začni z besedami \"slika\", \"fotografija\" ali \"prikazuje\". " +
-    "Od 5 do 14 besed, ena vrstica, brez narekovajev in brez končnega pika."
+    "Od 5 do 14 besed, ena vrstica, brez narekovajev in brez končnega pika.\n\n" +
+    // The second question, in English, because its answer is an identifier
+    // rather than prose — see shots.ts on why the keys are not translated. A
+    // categorisation menu written in Slovenian invites the model to answer
+    // with a Slovenian word that is not one of the keys.
+    "Then classify the photograph into EXACTLY ONE of these categories, " +
+    "answering with the key only:\n" + shotMenu() + "\n" +
+    "If it fits more than one, choose the one listed first. If it fits none, " +
+    "answer \"other\"."
   );
 }
 
@@ -135,33 +144,80 @@ export function tidy(raw: string): string {
  * text in it, an answer that did not survive tidy(). The caller leaves the
  * field empty, which is what the panel did before.
  */
+export interface Described {
+  /** The alt text, already tidied. Never empty. */
+  readonly alt: string;
+  /** Which kind of shot this is, or null when the answer was not one. */
+  readonly shot: string | null;
+}
+
 export async function describe(
   env: Env,
   bytes: ArrayBuffer,
   mime: string,
   subject: string,
-): Promise<string | null> {
+): Promise<Described | null> {
   if (!describeAvailable(env)) return null;
 
   // The image is encoded once, however many models are tried.
-  const payload = JSON.stringify({
+  const image = base64(bytes);
+  const body = (schema: boolean) => JSON.stringify({
     contents: [
       {
         parts: [
           { text: prompt(subject) },
-          { inline_data: { mime_type: mime, data: base64(bytes) } },
+          { inline_data: { mime_type: mime, data: image } },
         ],
       },
     ],
     // Low temperature: this is a description, and the creative end of the
     // distribution is exactly where the invented details live.
-    generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
+    //
+    // responseSchema rather than "please answer in JSON". Asking a model for
+    // JSON in prose gets JSON most of the time and a fenced code block, or a
+    // sentence of preamble, the rest — and this answer now carries two fields
+    // that have to be told apart, so "most of the time" would mean galleries
+    // sorted by a value that is sometimes a category and sometimes an apology.
+    // Constrained decoding makes the shape the model's only option.
+    generationConfig: {
+      temperature: 0.2,
+      maxOutputTokens: 2048,
+      ...(schema
+        ? {
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "OBJECT",
+              properties: {
+                alt: { type: "STRING" },
+                shot: { type: "STRING", enum: [...SHOT_KEYS] },
+              },
+              required: ["alt", "shot"],
+            },
+          }
+        : {}),
+    },
   });
 
+  // ⚠️ THE SCHEMA IS AN IMPROVEMENT, NOT A REQUIREMENT, and this loop is why.
+  //
+  // Constrained decoding is what makes the category reliable, but it is a
+  // newer feature than some of the models in the fallback list, and a model
+  // that does not support it answers 400 rather than ignoring the field. Were
+  // that the only attempt, the day a model was renamed or retired would be the
+  // day every upload silently lost its DESCRIPTION as well as its category —
+  // trading the alt text, which works today and is the more valuable of the
+  // two, for the sorting, which is new.
+  //
+  // So: every model with the schema, then every model without. parse() reads a
+  // bare sentence as a description with no category, which is exactly the
+  // behaviour this function had before the category existed.
   const models = env.GEMINI_TEXT_MODEL ? [env.GEMINI_TEXT_MODEL] : MODELS;
-  for (const model of models) {
-    const out = await ask(env, model, payload);
-    if (out !== null) return out;
+  for (const schema of [true, false]) {
+    const payload = body(schema);
+    for (const model of models) {
+      const out = await ask(env, model, payload);
+      if (out !== null) return out;
+    }
   }
   return null;
 }
@@ -175,7 +231,7 @@ export async function describe(
  * question, and when the list runs out the field stays empty, which is the
  * state the form had before any of this existed.
  */
-async function ask(env: Env, model: string, payload: string): Promise<string | null> {
+async function ask(env: Env, model: string, payload: string): Promise<Described | null> {
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/" +
     encodeURIComponent(model) +
@@ -206,8 +262,38 @@ async function ask(env: Env, model: string, payload: string): Promise<string | n
   }
   const text = firstText(body);
   if (text === null) return null;
-  const out = tidy(text);
-  return out === "" ? null : out;
+  return parse(text);
+}
+
+/**
+ * The pair, out of whatever the model actually returned.
+ *
+ * responseSchema makes well-formed JSON overwhelmingly likely, not certain: a
+ * model that has been asked for JSON and hit its token ceiling returns a
+ * truncated object, and an older model in the fallback list may not honour the
+ * schema at all. So the shape is checked rather than assumed, and a plain
+ * sentence — what the previous version of this function returned — is still
+ * accepted as a description with no category. Losing the sorting is a much
+ * smaller failure than losing the alt text.
+ */
+export function parse(raw: string): Described | null {
+  const s = raw.trim();
+  const start = s.indexOf("{");
+  const end = s.lastIndexOf("}");
+  if (start >= 0 && end > start) {
+    try {
+      const o = JSON.parse(s.slice(start, end + 1)) as Record<string, unknown>;
+      const alt = tidy(typeof o["alt"] === "string" ? o["alt"] : "");
+      if (alt !== "") {
+        const k = typeof o["shot"] === "string" ? o["shot"].trim().toLowerCase() : "";
+        return { alt, shot: SHOT_KEYS.has(k) ? k : null };
+      }
+    } catch {
+      // Not JSON after all. Fall through and read it as a sentence.
+    }
+  }
+  const alt = tidy(s);
+  return alt === "" ? null : { alt, shot: null };
 }
 
 /**

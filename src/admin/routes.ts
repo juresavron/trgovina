@@ -32,6 +32,7 @@ import {
   BUCKET,
   deleteMedia,
   deleteObject,
+  downloadObject,
   ensureProduct,
   insertMedia,
   listMedia,
@@ -53,6 +54,7 @@ import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn } from "./auth
 import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
 import { enhance, enhanceAvailable } from "./enhance";
 import { describe, describeAvailable } from "./describe";
+import { arrange } from "./shots";
 
 /** Shops whose catalogue this panel can manage. */
 /**
@@ -472,6 +474,54 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // Objects are removed per row through storedPaths, exactly as the single
   // delete does, so a row whose ladder was written before the widest rung
   // moved to the bare path is handled by the one function that knows the rule.
+  // SORTING A GALLERY BY WHAT THE PICTURES ARE OF.
+  //
+  // Six pools, photographed the same way by the same supplier, and every
+  // gallery opened on a different kind of picture. This asks the model what
+  // each photograph IS — from the fixed list in shots.ts — and renumbers the
+  // set so every model opens on the same establishing shot.
+  //
+  // ⚠️ IN BATCHES, because a Worker has a subrequest budget and this spends
+  // three per photograph: read the file, ask the model, write the answer. A
+  // model with thirty photographs would blow it and fail having done nothing.
+  // So it classifies a few, reorders everything it knows about, and says how
+  // many are left — pressing it again continues. Partial progress is kept
+  // rather than rolled back, which is the whole reason it is safe to press
+  // twice.
+  //
+  // Already-classified photographs are skipped and never re-asked: the point
+  // is a stable order, and a category that changes each time it is looked at
+  // is not an order at all. Changing one is a job for the panel's own select.
+  if (action === "arrange" && request.method === "POST") {
+    if (!describeAvailable(env)) {
+      return seeOther("/admin/" + shop + "/" + slug + "?e=no-ai");
+    }
+    const rows = await listMedia(api, productId);
+    let looked = 0;
+    let left = 0;
+    for (const row of rows) {
+      if (row.shot) continue;
+      if (looked >= ARRANGE_BATCH) { left++; continue; }
+      const bytes = await downloadObject(api, previewPath(row.url, row.widths));
+      if (bytes === null) { left++; continue; }
+      looked++;
+      const seen = await describe(api.env, bytes, "image/webp", model.name);
+      if (seen?.shot) {
+        await updateMedia(api, row.id, { shot: seen.shot });
+        (row as { shot: string | null }).shot = seen.shot;
+      } else {
+        // Looked at and got nothing usable back. Counted as remaining rather
+        // than silently accepted, so the operator is not told the gallery is
+        // sorted when one picture was never placed.
+        left++;
+      }
+    }
+    for (const p of arrange(rows)) await updateMedia(api, p.id, { sort: p.sort });
+    return seeOther(
+      "/admin/" + shop + "/" + slug + (left > 0 ? "?m=arranged-partly" : "?m=arranged"),
+    );
+  }
+
   if (action === "delete-all" && request.method === "POST") {
     const form = await request.formData();
     const rows = await listMedia(api, productId);
@@ -520,7 +570,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       model.name,
       rows.map((r): MediaView => ({
         id: r.id, url: r.url, alt: r.alt, sort: r.sort,
-        widths: r.widths ?? [], enhanced: r.enhanced === true,
+        widths: r.widths ?? [], enhanced: r.enhanced === true, shot: r.shot ?? null,
       })),
       notice,
       admin.email,
@@ -553,6 +603,7 @@ const ERRORS: Record<string, string> = {
   // deleted. The operator gets to look before deciding again.
   stale: "Seznam fotografij se je med tem spremenil, zato ni bilo nič " +
     "izbrisano. Osvežite stran in poskusite znova.",
+  "no-ai": "Razvrščanje potrebuje GEMINI_API_KEY, ki ni nastavljen.",
 };
 
 const NOTICES: Record<string, string> = {
@@ -560,6 +611,11 @@ const NOTICES: Record<string, string> = {
   deleted: "Fotografija je izbrisana.",
   uploaded: "Fotografija je naložena.",
   cleared: "Vse fotografije tega modela so izbrisane.",
+  arranged: "Fotografije so razvrščene po vrsti posnetka.",
+  // Honest rather than tidy: some were placed, some were not, and pressing
+  // the button again continues where this left off.
+  "arranged-partly": "Del fotografij je razvrščen. Pritisnite »Razvrsti z UI« " +
+    "še enkrat, da se razvrstijo tudi ostale.",
   // Not an error: the operator asked for an empty set and the set is empty.
   "deleted-none": "Ta model ni imel fotografij.",
 };
@@ -568,6 +624,38 @@ const NOTICES: Record<string, string> = {
 export function widthPath(url: string, w: number): string {
   const dot = url.lastIndexOf(".");
   return dot < 0 ? url + "-" + w : url.slice(0, dot) + "-" + w + url.slice(dot);
+}
+
+/**
+ * Which stored file to show the model when classifying an existing photograph.
+ *
+ * The 800px rung, when there is one. Classifying does not need detail — the
+ * question is "is this the whole tub from above, or a close-up of a seat" —
+ * and the widest rung on a laddered upload is a 2K file of several hundred
+ * kilobytes. Reading thirty of those through a Worker to ask a yes-or-no-shaped
+ * question is bandwidth, CPU and Gemini tokens spent on pixels that change no
+ * answer.
+ *
+ * Falls back to the row's own url, which is right for every photograph that
+ * predates the ladder — those are single files and there is nothing else to
+ * fetch.
+ */
+/**
+ * How many photographs one press of "Razvrsti z UI" looks at.
+ *
+ * Three subrequests each — read, ask, write — against a Worker's budget, plus
+ * the renumbering writes afterwards. Six leaves comfortable room; the operator
+ * presses again for the rest, and the notice says so.
+ */
+const ARRANGE_BATCH = 6;
+
+export function previewPath(url: string, widths: readonly number[] | null | undefined): string {
+  const ladder = (widths ?? []).filter((w) => Number.isFinite(w) && w > 0);
+  const widest = ladder.length > 0 ? Math.max(...ladder) : 0;
+  // The widest rung lives at the bare path, so asking for a suffixed version
+  // of it would be asking for a file that was never written — the same trap
+  // that broke delete. Only a NARROWER rung has a suffix.
+  return ladder.includes(800) && widest !== 800 ? widthPath(url, 800) : url;
 }
 
 /**
@@ -734,9 +822,14 @@ async function upload(
   //
   // An operator-supplied alt still wins where one arrives, which keeps the
   // no-script form and any future edit path honest.
+  // ONE LOOK, TWO ANSWERS. The model is shown the photograph once and asked
+  // both what is in it and what kind of shot it is — see shots.ts. The second
+  // costs nothing extra and is what lets every model's gallery open on the
+  // same establishing picture.
   const given = String(form.get("alt") ?? "").trim();
-  const written_alt = given || (await describe(api.env, widest[1], "image/webp", name));
-  const alt = written_alt || standInAlt(name, form.get("n"));
+  const seen = given ? null : await describe(api.env, widest[1], "image/webp", name);
+  const alt = given || seen?.alt || standInAlt(name, form.get("n"));
+  const shot = seen?.shot ?? null;
 
   // THE STEM IS THE ALT TEXT, and it is here for image search: the filename
   // is one of the few signals Google has about what a picture shows, and a
@@ -764,7 +857,7 @@ async function upload(
   const enhanced = String(form.get("enhanced") ?? "") === "1";
 
   const rows = await listMedia(api, productId);
-  await insertMedia(api, productId, base, alt, rows.length, enhanced);
+  await insertMedia(api, productId, base, alt, rows.length, enhanced, shot);
   if (written.length > 1) await widthsFor(api, productId, base, written);
 
   return seeOther("/admin/" + shop + "/" + slug + "?m=uploaded");

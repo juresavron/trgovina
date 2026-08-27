@@ -118,6 +118,24 @@ export async function uploadObject(
   if (!res.ok) throw new Error("upload failed (" + res.status + "): " + (await res.text()).slice(0, 300));
 }
 
+/**
+ * The bytes of a stored object, or null.
+ *
+ * Read through the PUBLIC url rather than the authenticated one because that
+ * is the same path the storefront serves and therefore the same bytes; and
+ * null rather than a throw because every caller of this is doing something
+ * optional to a photograph that is already fine where it is.
+ */
+export async function downloadObject(api: Api, path: string): Promise<ArrayBuffer | null> {
+  try {
+    const res = await fetch(publicUrl(api, path));
+    if (!res.ok) return null;
+    return await res.arrayBuffer();
+  } catch {
+    return null;
+  }
+}
+
 export async function deleteObject(api: Api, path: string): Promise<void> {
   const res = await fetch(api.env.SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + path, {
     method: "DELETE",
@@ -178,6 +196,14 @@ export interface MediaRow {
    * browser that made the request knows, so only the browser can say.
    */
   enhanced: boolean;
+  /**
+   * Which kind of photograph this is — see admin/shots.ts for the list and,
+   * more to the point, for the ORDER, which is what galleries are sorted by.
+   *
+   * Null means nobody has classified it yet, which is not the same as "other"
+   * (looked at, fits none of the categories). Both sort last.
+   */
+  shot: string | null;
 }
 
 /**
@@ -219,7 +245,7 @@ export async function ensureProduct(
 export async function listMedia(api: Api, productId: string): Promise<MediaRow[]> {
   return (await rest(
     api,
-    "product_media?select=id,product_id,url,alt,sort,widths,enhanced&product_id=eq." +
+    "product_media?select=id,product_id,url,alt,sort,widths,enhanced,shot&product_id=eq." +
       encodeURIComponent(productId) + "&order=sort.asc",
   )) as MediaRow[];
 }
@@ -231,17 +257,18 @@ export async function insertMedia(
   alt: string,
   sort: number,
   enhanced = false,
+  shot: string | null = null,
 ): Promise<void> {
   await rest(api, "product_media", {
     method: "POST",
-    body: JSON.stringify({ product_id: productId, url, alt, sort, kind: "image", enhanced }),
+    body: JSON.stringify({ product_id: productId, url, alt, sort, kind: "image", enhanced, shot }),
   });
 }
 
 export async function updateMedia(
   api: Api,
   id: string,
-  patch: Partial<Pick<MediaRow, "alt" | "sort" | "widths" | "enhanced">>,
+  patch: Partial<Pick<MediaRow, "alt" | "sort" | "widths" | "enhanced" | "shot">>,
 ): Promise<void> {
   await rest(api, "product_media?id=eq." + encodeURIComponent(id), {
     method: "PATCH",

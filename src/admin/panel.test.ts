@@ -240,3 +240,49 @@ describe("clearing a model's photographs", () => {
     expect(html).toContain("Izbriši</button>");
   });
 });
+
+/**
+ * The gallery's order has a rule, so the panel says what it is.
+ *
+ * An order the operator cannot see the logic of reads as an arbitrary one, and
+ * the first thing they do with an arbitrary order is start renumbering by hand
+ * — which is precisely the work this was meant to remove.
+ */
+describe("sorting a gallery by what the pictures show", () => {
+  const rows = (shot: string | null) => [
+    { id: "a", url: "bazen/x/a.webp", alt: "opis", sort: 0, widths: [], enhanced: false, shot },
+  ];
+  const page = (shot: string | null, ai = true) =>
+    modelPage("bazen", "swim-580-hidro", "SWIM 580 HIDRO", rows(shot), undefined, "a@b.c", true, ai);
+
+  it("offers the control beside the photographs", () => {
+    expect(page("top")).toContain("Razvrsti z UI");
+    expect(page("top")).toContain('action="/admin/bazen/swim-580-hidro/arrange"');
+  });
+
+  it("names the kind of shot on each photograph", () => {
+    expect(page("top")).toContain("· Od zgoraj");
+    expect(page("jets")).toContain("· Šobe");
+  });
+
+  it("says nothing at all about one nobody has classified", () => {
+    // Different from "other", which is an answer. This is the absence of one,
+    // and inventing a label for it would be inventing the answer.
+    const html = page(null);
+    expect(html).toContain("ena širina");
+    expect(html).not.toContain("· Od zgoraj");
+    expect(html).not.toContain("· Drugo");
+  });
+
+  it("is disabled when there is no describer to do the sorting", () => {
+    // The whole feature is one Gemini call per photograph. Without a key the
+    // button could only ever fail, so it says so before it is pressed.
+    expect(page("top", false)).toContain("disabled>Razvrsti z UI");
+    expect(page("top", true)).toContain('type="submit">Razvrsti z UI');
+  });
+
+  it("is not offered on a model with no photographs", () => {
+    const empty = modelPage("bazen", "x", "B", [], undefined, "a@b.c", true, true);
+    expect(empty).not.toContain("Razvrsti z UI");
+  });
+});

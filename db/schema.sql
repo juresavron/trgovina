@@ -140,7 +140,24 @@ create table public.product_media (
   -- never photographed. Under UCPD Article 6 a shop should be able to say
   -- which of its product images are generative output rather than guess, and
   -- whoever edits this catalogue is entitled to the same answer.
-  enhanced boolean not null default false
+  enhanced boolean not null default false,
+  -- WHICH KIND OF PHOTOGRAPH THIS IS, so galleries can be matched across
+  -- models. Six pools shot the same way by the same supplier, and every
+  -- gallery opened on a different kind of picture — a top-down view on one, a
+  -- close-up of a jet on the next — so a customer comparing two of them had to
+  -- learn each gallery instead of comparing like with like.
+  --
+  -- The model that already looks at every photograph to write its description
+  -- is asked the second question in the same call, and the panel sorts by the
+  -- answer. src/admin/shots.ts holds the vocabulary AND the order; the order is
+  -- editorial and meant to be argued with, which is why it lives in code
+  -- rather than being spelled into this constraint.
+  --
+  -- NULL means not yet classified, which is NOT the same as 'other' (looked at,
+  -- fits none of the categories). Both sort last, so a photograph nobody has
+  -- classified never jumps to the front of a gallery for want of an answer.
+  shot text check (shot is null or shot in
+    ('top', 'side', 'lit', 'cover', 'interior', 'seat', 'jets', 'other'))
 );
 
 -- ---------------------------------------------------------------------------

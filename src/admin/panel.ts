@@ -24,6 +24,7 @@
 
 import { esc } from "../render/sections";
 import { brandMark } from "../themes/studio/brand";
+import { shotLabel } from "./shots";
 
 const CSS = `
 *,*::before,*::after{box-sizing:border-box}
@@ -95,7 +96,10 @@ h2{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
 .head-row{display:flex;align-items:center;justify-content:space-between;
   gap:16px;flex-wrap:wrap;margin:38px 0 12px}
 .head-row h2{margin:0}
-.clear-all{margin:0}
+.clear-all,.arrange{margin:0}
+/* Both controls share the heading's line; on a narrow panel they wrap
+   together rather than one dropping below the other. */
+.head-row form{display:inline-block}
 .head{margin:0 0 24px}
 .back{display:inline-flex;align-items:center;gap:7px;min-height:24px;
   padding:4px 0;margin:0 0 14px;color:var(--mute);text-decoration:none;font-size:14px}
@@ -534,6 +538,8 @@ export interface MediaView {
   widths: number[];
   /** True when the 2K upscaler redrew this image. Never inferred. */
   enhanced?: boolean;
+  /** Which kind of shot this is — see admin/shots.ts. "" = not classified. */
+  shot?: string | null;
 }
 
 export function modelPage(
@@ -643,7 +649,11 @@ export function modelPage(
       // is exactly the memory this needs to interrupt.
       (media.length === 0
         ? ""
-        : '<form class="clear-all" method="post" action="' + esc(base) + '/delete-all" ' +
+        : '<form class="arrange" method="post" action="' + esc(base) + '/arrange">' +
+          '<button class="btn btn--ghost btn--sm" type="submit"' +
+          (describe ? "" : " disabled") + ">Razvrsti z UI</button>" +
+          "</form>" +
+          '<form class="clear-all" method="post" action="' + esc(base) + '/delete-all" ' +
           // ⚠️ JSON.stringify, NOT hand-rolled quoting. The message is a JS
           // string literal inside an HTML attribute, so it has to survive two
           // parsers. esc() escapes < > & and the double quote — but NOT the
@@ -720,6 +730,9 @@ export function modelPage(
                 // this catalogue is entitled to know which those are without
                 // having to remember the day it was uploaded.
                 (m.enhanced ? " · 2K (obdelano z UI)" : "") +
+                // The kind of shot, because the gallery is sorted by it and an
+                // order whose rule is invisible reads as an arbitrary one.
+                (shotLabel(m.shot) ? " · " + esc(shotLabel(m.shot)) : "") +
                 "</p>" +
                 "</div></li>",
             )
