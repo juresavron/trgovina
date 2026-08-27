@@ -65,7 +65,12 @@ export const FINANCING: Page = {
           "Vlogo obravnava ponudnik financiranja. Odobritev ni samodejna in je odvisna od " +
             "njegove presoje.",
         ],
-        ["Dostava", "Po odobritvi se dogovorimo za termin ogleda in dostave kot pri vsakem drugem nakupu."],
+        [
+          "Ogled in dostava",
+          "Ogled lokacije opravimo pred ponudbo, tako kot pri vsakem drugem nakupu — " +
+            "financiranje na to zaporedje ne vpliva. Po odobritvi se dogovorimo le še " +
+            "za termin dostave.",
+        ],
       ],
     },
     {

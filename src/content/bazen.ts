@@ -427,7 +427,10 @@ function pdpFor(m: PolaModel): PdpContent {
     assure: [
       ["Dostava po vsej Sloveniji", "z ekipo in opremo za prenos"],
       ["14 dni za vračilo", "zakonska pravica ob nakupu na daljavo"],
-      ["Ogled pred dostavo", "brezplačno preverimo dostop in elektriko"],
+      // "pred dostavo" understated it: the visit happens before the OFFER,
+      // costs nothing, and binds the visitor to nothing — which is the whole
+      // reason it beats a showroom for a 400 kg object. See pages/salon.ts.
+      ["Brezplačen ogled lokacije", "pred nakupom, brez obveznosti"],
       ["Servis in rezervni deli", "lastna servisna mreža"],
     ],
     panels: [
@@ -444,7 +447,8 @@ function pdpFor(m: PolaModel): PdpContent {
         "Barve školjke in obloge",
         "Školjka: " + SHELL_FINISHES.join(" · ") +
           ". Obloga: " + CABINET_FINISHES.join(" · ") +
-          ". Vsak model je na voljo v sedmih barvah školjke — katerih sedmih, " +
+          ". Proizvajalčeva barvna karta našteva deset odtenkov, specifikacija modela " +
+          "pa sedem — kateri veljajo za vaš model, " +
           "potrdimo ob naročilu.",
       ],
       [
@@ -571,7 +575,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
     assure: [
       ["Dostava po vsej Sloveniji", "z ekipo in opremo za prenos"],
       ["14 dni za vračilo", "zakonska pravica ob nakupu na daljavo"],
-      ["Ogled pred dostavo", "preverimo dostop, podlago in nosilnost"],
+      ["Brezplačen ogled lokacije", "pred nakupom, brez obveznosti"],
       ["Servis in rezervni deli", "lastna servisna mreža"],
     ],
     panels: [
@@ -812,7 +816,7 @@ export const bazenContent: ShopContent = {
     },
   ],
   moat: {
-    h2: "Od terase do prve kopeli v enem dnevu.",
+    h2: "Od terase do prve kopeli — vse opravimo mi.",
     steps: [
       ["Ogled lokacije", "Preverimo dostop, podlago in električni priklop."],
       ["Priprava priklopa", "Navodila za vašega električarja ali izvedba z našim partnerjem."],

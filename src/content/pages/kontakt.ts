@@ -24,7 +24,8 @@ export const CONTACT: Page = {
   key: "/contact",
   h1: "Kontakt",
   lead:
-    "Pokličite ali pišite. Na vprašanja o merah, dostopu in priklopu odgovorimo takoj, " +
+    "Pokličite ali pišite. Na vprašanja o merah, dostopu in priklopu po telefonu " +
+    "odgovorimo sproti, na e-pošto v enem delovnem dnevu, " +
     "za ponudbo pa potrebujemo le naslov in nekaj fotografij prostora.",
   metaDescription:
     "Kontakt za masažne bazene in swim spa bazene — telefon, e-pošta in naslov. " +

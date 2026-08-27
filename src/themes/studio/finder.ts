@@ -16,6 +16,7 @@ import type { ShopConfig } from "../../tenants/types";
 import type { ShopContent, PdpContent } from "../../content/types";
 import {
   nextStep,
+  previousAnswers,
   recommend,
   type FinderAnswers,
   type FinderStep,
@@ -102,6 +103,14 @@ export const STUDIO_FINDER_CSS = `
     transform: translateX(6px);
     color: var(--ink);
   }
+  :root[data-theme="studio"] .st-fnd-visit {
+    margin: clamp(22px, 3vw, 34px) 0 0;
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+    max-inline-size: 34rem;
+  }
+  :root[data-theme="studio"] .st-fnd-visit a { color: var(--ink); text-underline-offset: 3px; }
   :root[data-theme="studio"] .st-fnd-back {
     display: inline-block;
     margin-top: clamp(22px, 3vw, 36px);
@@ -171,6 +180,14 @@ export const STUDIO_FINDER_CSS = `
   }
 `;
 
+/** An answer set as a URL, with no trailing "?" on the empty one. */
+function href(base: string, a: FinderAnswers): string {
+  const p = new URLSearchParams();
+  for (const [k, v] of Object.entries(a)) if (v) p.set(k, v);
+  const q = p.toString();
+  return q ? base + "?" + q : base;
+}
+
 /** "Vprašanje 2 od 3" — the relaxation branch is 3 deep, swimming 2. */
 function progress(a: FinderAnswers): string {
   const depth = a.namen === "plavanje" ? 2 : 3;
@@ -191,9 +208,18 @@ function stepHtml(base: string, a: FinderAnswers, step: FinderStep): string {
       answered++;
     }
   }
+  const back = previousAnswers(a);
   return (
     '<p class="st-fnd-eyebrow">' + esc(progress(a)) + "</p>" +
     "<h1>" + esc(step.question) + "</h1>" +
+    // The lead only on the FIRST question: it says what this is and what it
+    // costs the visitor. Repeating it above questions two and three would be
+    // explaining a thing already in progress.
+    (answered === 0
+      ? '<p class="st-fnd-lead">Tri vprašanja, pol minute — potem predlagamo ' +
+        "model iz naše ponudbe in povemo, zakaj prav tega. Ničesar ni treba " +
+        "vpisati.</p>"
+      : "") +
     '<ul class="st-fnd-opts">' +
     step.choices
       .map((c) => {
@@ -207,8 +233,12 @@ function stepHtml(base: string, a: FinderAnswers, step: FinderStep): string {
       })
       .join("") +
     "</ul>" +
-    (answered > 0
-      ? '<a class="st-fnd-back" href="' + esc(base) + '">Začnite znova</a>'
+    // ONE QUESTION BACK, not to the beginning. The browser's back button
+    // does this too, but a visitor who has answered two questions and wants
+    // to change the second should not have to trust that — or redo both.
+    (back
+      ? '<a class="st-fnd-back" href="' + esc(href(base, back)) +
+        '">← Prejšnje vprašanje</a>'
       : "")
   );
 }
@@ -245,7 +275,15 @@ function resultHtml(
       )
       .join("") +
     "</ul>" +
-    '<a class="st-fnd-back" href="' + esc(shop.routeSlugs["/finder"]) + '">Začnite znova</a>'
+    // THE VISIT, OFFERED HERE. A visitor who has just been handed a model is
+    // exactly the one whose next question is "but does it fit at my place?"
+    // — and the free site check is the shop's real differentiator, so the
+    // recommendation ends by naming it rather than by trailing off.
+    '<p class="st-fnd-visit">Niste prepričani, ali model pri vas gre skozi in ' +
+    'ali podlaga zdrži? <a href="' + esc(shop.routeSlugs["/showroom"]) +
+    '">Ogled lokacije je brezplačen</a> in vas k ničemur ne zavezuje.</p>' +
+    '<a class="st-fnd-back" href="' + esc(shop.routeSlugs["/finder"]) +
+    '">← Začnite znova</a>'
   );
 }
 

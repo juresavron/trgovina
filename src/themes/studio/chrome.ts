@@ -1805,6 +1805,11 @@ export function renderStudioFooter(ctx: RenderCtx): string {
       ...families,
       [s.routeSlugs["/products"], c.nav[0]] as const,
       [s.routeSlugs["/compare"], "Primerjava modelov"] as const,
+      // The guided choice, sitewide: it sits under Ponudba because it IS the
+      // offer, approached from the other end — the visitor who knows what
+      // they want reads the families, the one who does not answers three
+      // questions.
+      [s.routeSlugs["/finder"], "Izbira bazena"] as const,
     ]) +
     col("st-foot-c2", "Pomoč", [
       [s.routeSlugs["/delivery"], "Dostava in montaža"],

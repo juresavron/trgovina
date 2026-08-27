@@ -130,7 +130,9 @@ export const FAQ: Page = {
           "Ali lahko bazen vrnem?",
           "Kot potrošnik imate pri nakupu na daljavo 14 dni za odstop od pogodbe, brez " +
             "navedbe razloga. Ker je bazen težak in praviloma že priklopljen, ga ne vračate " +
-            "sami — odvoz izvedemo mi. Rok, postopek in stroški so opisani na strani o odstopu " +
+            "sami — odvoz izvedemo mi, neposredne stroške vračila pa nosi kupec in jih " +
+            "navedemo v pisni ponudbi, še preden pogodbo sklenete. Rok, postopek in stroški " +
+            "so opisani na strani o odstopu " +
             "od pogodbe.",
         ],
       ],
@@ -138,7 +140,8 @@ export const FAQ: Page = {
     {
       kind: "cta",
       h: "Vprašanja ni na seznamu?",
-      p: "Pokličite. Na vprašanja o dostopu, podlagi in priklopu odgovorimo takoj.",
+      p: "Pokličite. Na vprašanja o dostopu, podlagi in priklopu odgovorimo po telefonu " +
+        "sproti, na e-pošto pa v enem delovnem dnevu.",
       label: "Kontakt",
       href: "/kontakt",
     },
