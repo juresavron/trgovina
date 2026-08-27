@@ -232,16 +232,16 @@ function navCurrent(){
 }
 
 /* ---- what the sticky bar says you chose ---------------------------------
-   The bar carries the model, a configuration line and the price. The
-   configuration line was server-rendered once, from content, and then sat
-   there while the visitor changed every control above it — so a page whose
-   colour row now takes a choice would have shown the buyer one colour in the
-   bar and a different one selected in the column.
+   The bar carries the model, a spec line and the price. Now that the colours
+   are a real choice, a bar that keeps naming the model's dimensions while the
+   buyer has picked a finish is telling them the one thing they did not decide.
 
-   It follows the radio groups instead. The colour leads, because it is the
-   choice a buyer is most often mid-way through; the rest follow in the order
-   the column presents them. Falls back to whatever the server rendered if
-   there are no groups at all, so a shop with no configurator is unaffected.
+   APPENDED, NOT REPLACED, and only for the groups the renderer marks with
+   data-st-bar — the colours. Replacing the line lost "5,80 × 2,28 m · 38 šob"
+   and put 47 characters of nowrap into a row that already holds a name, a
+   price and a button; the connection and the service level are two lines of
+   the column the visitor is looking at, and the colour is the one choice they
+   cannot see once they have scrolled past it.
 
    Names are read from the checked input's own value, which the renderer wrote
    from the model's own option list — nothing here reads the URL. */
@@ -249,9 +249,9 @@ function barConfig(){
   var bar = document.querySelector(".st-pdp-sum-cfg");
   var form = document.querySelector(".st-pdp-form");
   if (!bar || !form) return;
-  var groups = [].slice.call(form.querySelectorAll("[role=radiogroup]"));
+  var groups = [].slice.call(form.querySelectorAll("[data-st-bar]"));
   if (!groups.length) return;
-  var fallback = bar.textContent;
+  var spec = bar.textContent;
 
   function sync(){
     var parts = [];
@@ -259,16 +259,90 @@ function barConfig(){
       var on = g.querySelector("input:checked");
       if (on && on.value) parts.push(on.value);
     });
-    bar.textContent = parts.length ? parts.join(" · ") : fallback;
+    bar.textContent = parts.length ? spec + " · " + parts.join(" · ") : spec;
   }
 
   form.addEventListener("change", sync);
   sync();
 }
 
+/* ---- the full-size viewer ----------------------------------------------
+   The gallery renders a <dialog> and a hidden chip per slide; this is what
+   makes them work, and the chip stays hidden if this never runs — nothing
+   that cannot work is ever offered.
+
+   Bail out entirely without showModal: a <dialog> without it is a block that
+   would sit open at the bottom of the page, which is worse than no viewer.
+
+   The picture is set on open rather than served with the page: pointing the
+   dialog's img at the first photograph would cost a second full-size download
+   of the LCP element on every product page for a view most visitors never
+   ask for. srcset comes across with it so the browser still picks a rung —
+   sizes becomes 100vw, because that is what the dialog is. */
+function lightbox(gallery){
+  var dlg = gallery.querySelector("[data-st-lightbox]");
+  if (!dlg || typeof dlg.showModal !== "function") return;
+  var img = null;
+  var opener = null;
+
+  function open(photo){
+    if (!photo) return;
+    /* Built on the first open, not shipped with the page — see LIGHTBOX in
+       pdp.ts. An empty <img> in the document is an element with no intrinsic
+       size, which is exactly what the structural audit refuses. */
+    if (!img) {
+      img = document.createElement("img");
+      img.className = "st-pdp-lb-img";
+      img.decoding = "async";
+      dlg.appendChild(img);
+    }
+    img.src = photo.currentSrc || photo.src;
+    if (photo.srcset) { img.srcset = photo.srcset; img.sizes = "100vw"; }
+    img.alt = photo.alt || "";
+    dlg.showModal();
+  }
+
+  [].forEach.call(gallery.querySelectorAll("[data-st-zoom]"), function(btn){
+    btn.hidden = false;
+    btn.addEventListener("click", function(){
+      opener = btn;
+      open(btn.parentElement.querySelector(".st-pdp-photo"));
+    });
+  });
+
+  /* The photograph is the target everyone actually aims at. On touch this
+     fires only for a tap that was not a drag, so it does not fight the
+     stage's own paging. */
+  [].forEach.call(gallery.querySelectorAll(".st-pdp-stage .st-pdp-photo"), function(photo){
+    photo.addEventListener("click", function(){
+      opener = photo.parentElement.querySelector("[data-st-zoom]");
+      open(photo);
+    });
+  });
+
+  var close = dlg.querySelector("[data-st-lb-close]");
+  if (close) close.addEventListener("click", function(){ dlg.close(); });
+
+  /* Clicking the ground around the picture closes it — the convention every
+     viewer keeps. The dialog's own box IS the ground, so the test is whether
+     the click landed on the element itself rather than on the picture. */
+  dlg.addEventListener("click", function(ev){
+    if (ev.target === dlg) dlg.close();
+  });
+
+  /* Escape closes natively; this is what returns focus to the control that
+     opened it, which the platform does not do. */
+  dlg.addEventListener("close", function(){
+    if (img) { img.removeAttribute("src"); img.removeAttribute("srcset"); }
+    if (opener && document.contains(opener)) opener.focus();
+    opener = null;
+  });
+}
+
 function init(){
   navCurrent();
   barConfig();
+  [].forEach.call(document.querySelectorAll(".st-pdp-gallery"), lightbox);
   [].forEach.call(document.querySelectorAll("[data-st-slider]"), slider);
   [].forEach.call(document.querySelectorAll("[data-st-count]"), counter);
   [].forEach.call(document.querySelectorAll("[data-st-addons]"), addons);

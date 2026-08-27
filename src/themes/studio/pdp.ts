@@ -255,8 +255,15 @@ export const STUDIO_PDP_CSS = `
       flex-direction: row;
       align-items: flex-start;
     }
+    /* ⚠️ 1.3, UP FROM 1.12. The picture is the reason somebody is on this page
+     * and it was getting 658px of a 1360px grid at 1440 while the buy column
+     * took 653 — an even split between a photograph of a EUR 8,000 object and
+     * a column of text. 1.3 puts the gallery at ~720 and the buy column at
+     * ~590, which is still 60-70 characters for the freight note and the
+     * standfirst (measured; the audit's measure check covers it) and is 62px
+     * more picture at every width above the single-column tier. */
     :root[data-theme="studio"] .st-pdp-gallery {
-      flex: 1.12 1 0;
+      flex: 1.3 1 0;
       min-inline-size: 0;
     }
     :root[data-theme="studio"] .st-pdp-buy { flex: 1 1 0; }
@@ -918,8 +925,32 @@ export const STUDIO_PDP_CSS = `
     --st-pdp-ar: 1;
     --st-pdp-strip: 0px;
   }
-  /* 5/2 — see .st-pdp-frame for the footprints this is the mean of. */
-  :root[data-theme="studio"] .st-pdp-gallery[data-art="swimspa"] { --st-pdp-ar: 2.5; }
+  /* ⚠️ 4/3, NOT THE 5/2 THIS USED TO CARRY — AND THE REASON IS THAT A FRAME
+   * FOLLOWS THE PHOTOGRAPHY, NOT THE PRODUCT'S FOOTPRINT.
+   *
+   * 5/2 was the mean of the two swim-spa footprints (5,80 × 2,24 and 5,80 ×
+   * 2,28) to within 2%, and .st-pdp-frame still explains why that beat a
+   * square for a SIDE ELEVATION. What it missed is that a gallery is not ten
+   * side elevations: this shop's own shot vocabulary is top, side, lit,
+   * cover, interior, seat and jets (admin/shots.ts), and only one of those
+   * seven is 2.5:1. Everything else — a top-down, a seat, a jet cluster — is
+   * roughly square, and a square photograph in a 2.5:1 frame is height-bound
+   * at 263px inside a 658px panel at 1440. That is what a swim spa's page
+   * looked like: a small picture floating in a wide white band, which is the
+   * report this fixes.
+   *
+   * 4/3 at the same column width paints a square shot at 494px — 88% bigger —
+   * and costs the side elevations a band of ground above and below rather
+   * than any picture at all: they are width-bound in both frames and render
+   * at exactly the same size either way. The trade is empty panel around the
+   * one shot that was already filling its frame, in exchange for nearly
+   * doubling the six that were not.
+   *
+   * The honest fix is a frame per PHOTOGRAPH, which needs each image's own
+   * dimensions — nothing stores them today (product_media carries the width
+   * ladder, not the intrinsic size). Worth doing; this is what the page can
+   * be without it. */
+  :root[data-theme="studio"] .st-pdp-gallery[data-art="swimspa"] { --st-pdp-ar: 4 / 3; }
   /* ONE thumb row plus the step above it — the exact height the strip has
    * while the gallery is pinned, because the pinned rule sizes each thumb to
    * its share of the row and it cannot wrap (see the min-height block above).
@@ -971,6 +1002,94 @@ export const STUDIO_PDP_CSS = `
     inline-size: 100%;
     block-size: 100%;
     object-fit: contain;
+  }
+
+  /* ---- the full-size viewer -------------------------------------------
+   *
+   * The chip sits in the frame's bottom-right, over the photograph's own
+   * ground. A white disc with a hairline rather than an ink one: these shots
+   * are products cut out on a pale ground, so an ink chip would be the
+   * loudest thing in the frame, and the control is an offer rather than an
+   * instruction. 44px, because it is a real target on a phone. */
+  :root[data-theme="studio"] .st-pdp-zoom {
+    position: absolute;
+    inset-block-end: clamp(8px, 0.8vw, 14px);
+    inset-inline-end: clamp(8px, 0.8vw, 14px);
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 44px;
+    block-size: 44px;
+    padding: 0;
+    border: var(--bw-line) solid var(--line-strong);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  :root[data-theme="studio"] .st-pdp-zoom:hover {
+    border-color: var(--ink-invert);
+    background: var(--ink-invert);
+    color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-pdp-zoom:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-pdp-zoom[hidden] { display: none; }
+  /* The photograph itself is a second, larger target for the same action —
+   * see behaviour.ts. The cursor is the only affordance it needs; the chip
+   * carries the accessible name and the keyboard route. */
+  :root[data-theme="studio"] .st-pdp-stage .st-pdp-photo { cursor: zoom-in; }
+
+  /* THE DIALOG FILLS THE VIEWPORT and paints its own ground, because the
+   * whole point is to take the photograph out of a 740px column and give it
+   * the screen. The UA's centring and its max sizes are all overridden: a
+   * dialog defaults to shrink-to-fit and would frame a 2,000px photograph in
+   * a box the size of its own margin. */
+  :root[data-theme="studio"] .st-pdp-lb {
+    inline-size: 100vw;
+    max-inline-size: 100vw;
+    block-size: 100svh;
+    max-block-size: 100svh;
+    margin: 0;
+    padding: clamp(16px, 3vw, 48px);
+    border: 0;
+    background: var(--surface);
+    overflow: hidden;
+  }
+  :root[data-theme="studio"] .st-pdp-lb::backdrop { background: rgb(0 0 0 / 0.72); }
+  :root[data-theme="studio"] .st-pdp-lb-img {
+    display: block;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: contain;
+  }
+  :root[data-theme="studio"] .st-pdp-lb-x {
+    position: absolute;
+    inset-block-start: clamp(10px, 1.4vw, 20px);
+    inset-inline-end: clamp(10px, 1.4vw, 20px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    inline-size: 48px;
+    block-size: 48px;
+    padding: 0;
+    border: var(--bw-line) solid var(--line-strong);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  :root[data-theme="studio"] .st-pdp-lb-x:hover {
+    background: var(--ink-invert);
+    border-color: var(--ink-invert);
+    color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-pdp-lb-x:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
   }
 
   /* ---- finishes, quantity, the cart ----------------------------------- */
@@ -1690,6 +1809,36 @@ export const STUDIO_PDP_CSS = `
     :root[data-theme="studio"] .st-pdp-sum-cfg { display: none; }
     :root[data-theme="studio"] .st-pdp-bar-in { gap: 10px; }
     :root[data-theme="studio"] .st-pdp-cta { padding-inline: 14px; }
+    /* ⚠️ THE BUDGET ABOVE DID NOT SURVIVE CONTACT WITH THE LONGEST NAME.
+     * It reserved ~113px for the name — "about fifteen characters before it
+     * ellipses" — and the visual sweep measured the box at 90px against a
+     * SWIM 580 HIDRO that needs 121, so the one label that is on screen at
+     * every scroll position read "SWIM 58…". Fifteen characters was the right
+     * budget and there were nine.
+     *
+     * So the row wraps instead of rationing: name and price on the first line,
+     * the CTA across the whole width of the second. The name gets the full
+     * 350px, the button becomes a full-width target rather than a 122px one,
+     * and nothing is dropped. Two rows is what the phone had room for all
+     * along. */
+    :root[data-theme="studio"] .st-pdp-bar-in { flex-wrap: wrap; row-gap: 8px; }
+    :root[data-theme="studio"] .st-pdp-sum { flex: 1 1 auto; }
+    :root[data-theme="studio"] .st-pdp-cta { flex: 1 0 100%; }
+    /* AND THE RESERVE FOLLOWS THE BAR, because that is the whole point of the
+     * token. --studio-pdp-bar-h is what scroll-padding-block-end reserves so
+     * an in-page anchor does not land underneath the band, and it is built
+     * from a ONE-ROW bar. Two rows and it is 37px short — which is not a
+     * theoretical anchor: every heading in the collapsible panels is one.
+     * The second row is the CTA's own 44px target and the 8px row gap; the
+     * first is the name and price line, which measures 32px at the label and
+     * h6 rungs this width uses. Measured against the live bar: 99px, and this
+     * calc gives 102 — over, which is the safe direction. */
+    :root[data-theme="studio"] {
+      --studio-pdp-bar-h: calc(
+        2 * var(--studio-pdp-bar-pad) + 2 * var(--studio-pdp-cta-pad)
+        + 2 * var(--bw-line) + 20px + 8px + 32px
+      );
+    }
     /* (No thumb override any more: the strip's own clamp already bottoms out
      * at the 8px this block used to restate.) */
   }
@@ -1982,21 +2131,58 @@ function alsoLike(ctx: RenderCtx): string {
  * The first frame is eager and high priority: it is the largest element above
  * the fold on this page and the one LCP is measured against.
  */
+/** A magnifier with a plus in it — "bigger", not "search". */
+const ZOOM_ICON =
+  '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" ' +
+  'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" ' +
+  'aria-hidden="true" focusable="false">' +
+  '<circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.4 15.4 21 21"/>' +
+  '<path d="M10.5 7.8v5.4M7.8 10.5h5.4"/></svg>';
+
+const CLOSE_ICON =
+  '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" ' +
+  'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" ' +
+  'aria-hidden="true" focusable="false">' +
+  '<path d="m6 6 12 12M18 6 6 18"/></svg>';
+
+/**
+ * The full-size viewer.
+ *
+ * A native <dialog>, so Escape closes it, focus is trapped for free, and the
+ * page behind it is inert — three things a div would have to reimplement and
+ * would get wrong. Closed by default in every browser that has it, and
+ * invisible in any that does not, so a page with no script renders nothing
+ * extra.
+ *
+ * ⚠️ THERE IS NO <img> HERE, AND THAT IS NOT AN OVERSIGHT. It had one, empty,
+ * waiting to be filled — and render/structure.test.ts refused it for having
+ * no width and height, which is the CLS guard every other picture on this
+ * site passes. The guard was right to ask and the answer is not to invent a
+ * size: the element has no natural one until it holds a photograph, and it
+ * holds one only when somebody asks for it. So behaviour.ts creates it on the
+ * first open. That also means a product page ships one fewer empty element,
+ * and never downloads a second full-size copy of its own LCP image for a view
+ * most visitors never open.
+ */
+const LIGHTBOX =
+  '<dialog class="st-pdp-lb" data-st-lightbox aria-label="Fotografija izdelka">' +
+  '<button class="st-pdp-lb-x" type="button" data-st-lb-close ' +
+  'aria-label="Zapri">' + CLOSE_ICON + "</button>" +
+  "</dialog>";
+
 function gallery(ctx: RenderCtx): string {
   const photos = ctx.pdp.photos ?? [];
   if (photos.length > 0) {
-    // WHAT THE STAGE ACTUALLY PAINTS, measured after the frame ratio and the
-    // sticky width cap landed — a hint has to describe the WIDEST case a
-    // width can produce, and that is now the swim spa's 5/2 frame rather than
-    // the square one: at 1920 a pool stage is 627px (the cap binds) while a
-    // swim spa stage is the full 789.7px column. Measured widest: 496px at
-    // 1024, 611 at 1280, 692.6 at 1440, 789.7 at 1920 — 48.5, 47.7, 48.1 and
-    // 41.1vw. So 49vw up to the point --studio-container caps the band
-    // (1560 + 2 × 40 = 1640px of viewport), and the fixed 790px above it,
-    // where the column stops growing. The old "46vw" was measured against a
-    // 1440-wide container and under-promised at every width above it.
+    // WHAT THE STAGE ACTUALLY PAINTS. A hint has to describe the WIDEST case a
+    // width can produce, which is the swim spa's frame — the square pool
+    // stage is capped by the height budget, the swim spa's is capped by the
+    // column. Re-measured after the frame went to 4/3 and the gallery column
+    // to flex 1.3: 531px at 1024, 741 at 1440, 836 at 1920 — 51.9, 51.5 and
+    // 43.5vw. So 52vw up to the point --studio-container caps the band
+    // (1560 + 2 × 40 = 1640px of viewport), and the fixed 836px above it,
+    // where the column stops growing.
     const sizes =
-      "(max-width: 1000px) 100vw, (max-width: 1639px) 49vw, 790px";
+      "(max-width: 1000px) 100vw, (max-width: 1639px) 52vw, 836px";
     const stage =
       '<div class="st-pdp-stage" data-st-scroll role="region" ' +
       'aria-label="Fotografije izdelka" tabindex="0">' +
@@ -2006,13 +2192,29 @@ function gallery(ctx: RenderCtx): string {
             '<figure class="st-pdp-frame" data-st-item id="st-pg-' +
             String(i + 1) + '" tabindex="-1">' +
             productImg(p, "st-pdp-photo", sizes, p.alt, i === 0) +
+            // THE CONTROL IS HIDDEN UNTIL SCRIPT REMOVES THE ATTRIBUTE, which
+            // is the same contract every other enhancement on this site keeps:
+            // nothing that cannot work is ever offered. A magnifier that does
+            // nothing is worse than no magnifier, and the picture is still
+            // reachable without it — the stage swipes and every thumb is a
+            // real link to a real slide.
+            //
+            // A CORNER CHIP RATHER THAN THE WHOLE FRAME. A button covering the
+            // slide would eat the touch drag that pages the stage, so the
+            // frame stays a figure and only this 44px target opens the view.
+            // The script also opens on a click of the photograph itself, which
+            // a tap-that-is-not-a-drag still produces.
+            '<button class="st-pdp-zoom" type="button" hidden data-st-zoom' +
+            ' aria-label="Povečaj fotografijo ' + String(i + 1) + '">' +
+            ZOOM_ICON + "</button>" +
             "</figure>",
         )
         .join("") +
       "</div>";
     // One photograph: a strip with a single thumb is a control that cannot
-    // choose anything, so it is not rendered at all.
-    if (photos.length < 2) return stage;
+    // choose anything, so it is not rendered at all. The viewer still is —
+    // one photograph is exactly as worth enlarging as ten.
+    if (photos.length < 2) return stage + LIGHTBOX;
     const thumbs = photos
       .map(
         (p, i) =>
@@ -2033,7 +2235,8 @@ function gallery(ctx: RenderCtx): string {
     return (
       stage +
       '<nav class="st-pdp-thumbs" aria-label="Izbira fotografije"' +
-      ' style="--st-pdp-n:' + String(photos.length) + '">' + thumbs + "</nav>"
+      ' style="--st-pdp-n:' + String(photos.length) + '">' + thumbs + "</nav>" +
+      LIGHTBOX
     );
   }
   return (
@@ -2085,6 +2288,20 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     options: readonly string[],
     selected: number,
     idBase: string,
+    /**
+     * Whether the sticky bar should report this group.
+     *
+     * Only the colours. The bar's second line is the model's own spec —
+     * "5,80 × 2,28 m · 38 šob" — and replacing it with every choice made the
+     * line "Ocean Wave · Moj električar (navodila) · Osnovni": 47 characters
+     * of nowrap in a row that already has a name, a price and a button. The
+     * colour is the choice a buyer wants confirmed at a glance and the one
+     * they cannot see anywhere else once they have scrolled past it; the
+     * connection and the service level are two lines of the column they are
+     * looking at. See barConfig() in behaviour.ts, which APPENDS rather than
+     * replaces.
+     */
+    inBar = false,
   ): string => {
     if (options.length === 0) return "";
     const labelId = idBase + "-h";
@@ -2107,7 +2324,8 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     return (
       '<div><h2 class="st-pdp-glabel" id="' + labelId + '">' + esc(label) + "</h2>" +
       '<ul class="' + (pills ? "st-pdp-pills" : "st-pdp-opts") +
-      '" role="radiogroup" aria-labelledby="' + labelId + '">' + rows + "</ul></div>"
+      '" role="radiogroup"' + (inBar ? " data-st-bar" : "") +
+      ' aria-labelledby="' + labelId + '">' + rows + "</ul></div>"
     );
   };
 
@@ -2258,8 +2476,8 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   const finishes =
     (d.finishes ?? []).length || (d.cabinetFinishes ?? []).length
       ? '<div class="st-pdp-finish">' +
-        group("Barva školjke", "barva", d.finishes ?? [], 0, "st-pdp-fin") +
-        group("Barva obloge", "obloga", d.cabinetFinishes ?? [], 0, "st-pdp-cab") +
+        group("Barva školjke", "barva", d.finishes ?? [], 0, "st-pdp-fin", true) +
+        group("Barva obloge", "obloga", d.cabinetFinishes ?? [], 0, "st-pdp-cab", true) +
         swatchNote +
         "</div>"
       : "";
