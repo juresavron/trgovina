@@ -1531,6 +1531,31 @@ export const STUDIO_COMMERCE_CSS = `
   /* A focusable scroll region draws a ring when it is tabbed to, and that ring
    * is the only thing telling a keyboard user the arrows will now move the
    * table. :focus-visible so a pointer click does not light it up. */
+  /* THE SCROLL EDGE, SAID VISUALLY. The mobile hint text says the table
+   * scrolls; the sheared last column said it too, by accident and mid-glyph.
+   * Same device as the chrome nav: a scroll-driven mask that fades whichever
+   * edge still has content past it, and is INACTIVE — no mask at all — the
+   * moment the table fits its port, which is why it needs no media query. */
+  @supports (animation-timeline: scroll()) {
+    :root[data-theme="studio"] .st-cmp-scroll {
+      animation: st-cmp-edges linear both;
+      animation-timeline: scroll(self inline);
+    }
+    @keyframes st-cmp-edges {
+      from {
+        -webkit-mask-image:
+          linear-gradient(to right, #000 0, #000 0, #000 calc(100% - 36px), transparent 100%);
+        mask-image:
+          linear-gradient(to right, #000 0, #000 0, #000 calc(100% - 36px), transparent 100%);
+      }
+      to {
+        -webkit-mask-image:
+          linear-gradient(to right, transparent 0, #000 36px, #000 100%, #000 100%);
+        mask-image:
+          linear-gradient(to right, transparent 0, #000 36px, #000 100%, #000 100%);
+      }
+    }
+  }
   :root[data-theme="studio"] .st-cmp-scroll:focus-visible {
     outline: 2px solid var(--acc);
     outline-offset: 3px;
@@ -1885,6 +1910,7 @@ function productCards(
   return items
     .map((p: ProductCard | UtilCard, i: number) => {
       if ("util" in p) {
+        const go = p.href ? p.href + ctx.q : href;
         return (
           // The heading and its paragraph are ONE object and the CTA is
           // another, so they are wrapped as two rather than left as three
@@ -1897,7 +1923,7 @@ function productCards(
           // to keep in step. A div rather than a span because <h3> and <p> are
           // flow content: an <a> in the grid inherits a flow context and may
           // carry them, a <span> may not.
-          '<a class="st-card st-util" href="' + esc(href) + '">' +
+          '<a class="st-card st-util" href="' + esc(go) + '">' +
           '<div class="st-util-txt">' +
           "<" + level + ' class="st-util-h">' + esc(p.h) + "</" + level + ">" +
           '<p class="st-util-p">' + esc(p.p) + "</p>" +

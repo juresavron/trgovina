@@ -312,7 +312,6 @@ export const STUDIO_PAGE_CSS = `
   :root[data-theme="studio"] .st-page-block + .st-page-block {
     margin-block-start: clamp(38px, 4vw, 64px);
   }
-  :root[data-theme="studio"] .st-page-onward[id],
   :root[data-theme="studio"] .st-page-h2 {
     font-family: var(--f-display);
     font-weight: var(--w-display);
@@ -321,26 +320,28 @@ export const STUDIO_PAGE_CSS = `
     line-height: var(--lh-h4);
     color: var(--ink);
     text-wrap: balance;
-    /* The bar is fixed, so an anchor jump lands the heading UNDER it. The
-     * chrome's own height plus a line of air is what the reader needs to see
-     * the heading they asked for rather than the paragraph after it. */
-    scroll-margin-top: calc(var(--chrome-h) + 24px);
   }
-  /* ⚠️ THE BAR IS NOT --chrome-h TALL ON A PHONE, so neither is the offset.
+  /* ⚠️ ONE ANCHOR OFFSET, ON THE SCROLLER, FOR EVERY TARGET ON THE PAGE.
    *
-   * --chrome-h is 56px: one 24px label line and its padding. At 900 and below
-   * the bar wraps to TWO rows and measures 104px, and it has never been
-   * --chrome-h — chrome.ts states that and reserves main's padding from the
-   * row tokens rather than from the derived height.
+   * It used to be per element: this heading carried a scroll-margin, the
+   * links nav grew one later, and everything else — #izbor, the skip link's
+   * target, a gallery slide — leaned on the kernel's flat 96px scroll-padding.
+   * The two mechanisms STACKED: a TOC jump landed 176px under the bar on
+   * desktop and 224px on a phone, honest but a third of a phone screen spent
+   * on air. And any NEW id was a gamble on which mechanism it happened to
+   * inherit.
    *
-   * The anchor offset was not restated, so following a link in the section
-   * index on a phone scrolled the heading to 80px and the bar covered it to
-   * 104: the reader landed on the paragraph AFTER the heading they asked for,
-   * which is the one failure an in-page index has to avoid. Same three tokens
-   * as chrome.ts's own reservation, so the two cannot drift. */
+   * scroll-padding on the root covers every anchor uniformly, so the kernel's
+   * flat figure is overridden rather than added to. Desktop: the bar plus a
+   * line of air. ≤900 the bar wraps to two rows and measures 104px, never
+   * --chrome-h — same three tokens as chrome.ts's own reservation, so the
+   * two cannot drift. */
+  :root[data-theme="studio"] {
+    scroll-padding-top: calc(var(--chrome-h) + 24px);
+  }
   @media (max-width: 900px) {
-    :root[data-theme="studio"] .st-page-h2 {
-      scroll-margin-top: calc(
+    :root[data-theme="studio"] {
+      scroll-padding-top: calc(
         var(--chrome-pad-y) + 2 * var(--st-tap) + var(--gap-xs) + 24px
       );
     }

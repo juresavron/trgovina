@@ -275,6 +275,30 @@ describe("no in-page link points at nothing", () => {
       expect(dead, path + " has dead fragments: " + dead.join(", ")).toEqual([]);
     });
   }
+
+  /**
+   * CROSS-PAGE fragments, which the sweep above cannot see: the home page's
+   * guide cards deep-link to sections ON /vodniki, and the id at the far end
+   * is DERIVED from the section's heading — reword the heading and the id
+   * changes out from under every card pointing at it, silently, the browser
+   * simply not moving. This renders both pages and holds them together.
+   */
+  it("lands every home guide card on a real section of the guides page", async () => {
+    const page = async (path: string) =>
+      await handleRequest(
+        new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
+          headers: { host: "trgovina.workers.dev" },
+        }),
+      ).text();
+    const home = await page("/");
+    const vodniki = await page("/vodniki");
+    const ids = new Set([...vodniki.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!));
+    const targets = [...home.matchAll(/href="\/vodniki#([^"]+)"/g)].map((m) => m[1]!);
+    expect(targets.length, "no guide card carries a fragment").toBeGreaterThan(0);
+    for (const t of targets) {
+      expect(ids.has(t), "guide card points at /vodniki#" + t + " which does not exist").toBe(true);
+    }
+  });
 });
 
 /**

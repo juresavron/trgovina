@@ -257,7 +257,7 @@ function guides(ctx: RenderCtx): string {
     ctx.content.guides
       .map(
         (g) =>
-          '<a class="guide" href="' + base + ctx.q + '"><span class="k">' + esc(g[0]) + "</span>" +
+          '<a class="guide" href="' + base + ctx.q + "#" + esc(g[2]) + '"><span class="k">' + esc(g[0]) + "</span>" +
           '<h3 class="display">' + esc(g[1]) + '</h3><span class="read">Preberite vodnik →</span></a>',
       )
       .join("") +
