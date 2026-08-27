@@ -396,6 +396,43 @@ export const STUDIO_PAGE_CSS = `
   :root[data-theme="studio"] .st-page-p + .st-page-p { margin-block-start: clamp(12px, 1.2vw, 20px); }
   :root[data-theme="studio"] .st-page-p a { color: var(--ink); text-underline-offset: 3px; }
 
+  /* A PLAIN BULLET LIST, and the UA defaults reset for the same reason the
+   * numbered steps below reset theirs: ul ships 40px of padding-inline-start
+   * and 1em of margin-block, which would push every list 40px inside the
+   * reading column and add an off-scale gap the block rhythm is supposed to
+   * own. The marker is drawn rather than inherited, so its colour and its
+   * distance from the text are ours: an em dash at the reading colour, which
+   * is what the rest of this theme uses to open a line.
+   *
+   * The marker sits OUTSIDE the text column and the text hangs — a wrapped
+   * second line lines up under the first word, not under the dash. That is
+   * what makes a list of sentences readable rather than a block of text with
+   * dashes scattered down its left edge. */
+  :root[data-theme="studio"] .st-page-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  :root[data-theme="studio"] .st-page-li {
+    position: relative;
+    padding-inline-start: 1.35em;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+  }
+  :root[data-theme="studio"] .st-page-li::before {
+    content: "—";
+    position: absolute;
+    inset-inline-start: 0;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-page-li + .st-page-li {
+    margin-block-start: clamp(8px, 0.9vw, 14px);
+  }
+
   /* Numbered steps. The counter is the content — "third of five" is what a
    * reader planning a delivery day needs — so it is a real ordered list.
    *
@@ -918,6 +955,15 @@ function steps(b: Extract<Block, { kind: "steps" }>, id?: string): string {
   );
 }
 
+function list(b: Extract<Block, { kind: "list" }>, id?: string): string {
+  return (
+    h2(b.h, id) +
+    '<ul class="st-page-list">' +
+    b.items.map((t) => '<li class="st-page-li">' + esc(t) + "</li>").join("") +
+    "</ul>"
+  );
+}
+
 function qa(b: Extract<Block, { kind: "qa" }>, id?: string): string {
   return (
     h2(b.h, id) +
@@ -1081,7 +1127,9 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
       ? prose(b, id)
       : b.kind === "steps"
         ? steps(b, id)
-        : b.kind === "qa"
+        : b.kind === "list"
+          ? list(b, id)
+          : b.kind === "qa"
           ? qa(b, id)
           : b.kind === "facts"
             ? facts(b.h, b.rows, false, id)
@@ -1154,6 +1202,25 @@ function onward(ctx: RenderCtx, page: Page): string {
       .join("") +
     "</ul></nav>"
   );
+}
+
+/**
+ * The block vocabulary, rendered without a page built around it.
+ *
+ * ⚠️ EXPORTED FOR THE BLOG, and for nothing else so far. A post is the same
+ * blocks under a different masthead — it has a date and a cover photograph
+ * and no table of contents — so themes/studio/blog.ts builds its own head and
+ * asks for the body here. The alternative was a second implementation of
+ * paragraphs, lists, questions and fact tables, which would have drifted from
+ * this one the first time either was touched, on a site whose editorial pages
+ * and whose posts are read one after the other.
+ *
+ * The ids are generated the same way, so an in-post anchor works the same as
+ * an in-page one.
+ */
+export function renderStudioBlocks(ctx: RenderCtx, blocks: readonly Block[]): string {
+  const ids = blocks.map((b, i) => ("h" in b && b.h ? sectionId(b.h, i) : ""));
+  return blocks.map((b, i) => block(ctx, b, ids[i] || undefined)).join("");
 }
 
 export function renderStudioPage(ctx: RenderCtx, page: Page): string {

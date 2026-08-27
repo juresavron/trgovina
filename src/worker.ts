@@ -32,7 +32,9 @@ import {
   itemListJsonLd,
   faqJsonLd,
 } from "./render/page";
+import { sitemapPaths, sitemapXml } from "./render/sitemap";
 import { handleAdmin, handleMedia } from "./admin/routes";
+import { handlePosts } from "./blog/routes";
 import type { Env } from "./admin/supabase";
 
 /**
@@ -166,23 +168,11 @@ export function handleRequest(request: Request): Response {
   // sitemap.xml — only for live shops on their real domain.
   if (path === "/sitemap.xml") {
     if (!shop.live || dev) return new Response("Not found", { status: 404 });
-    // Every model page, not just the flagship. A catalogue whose sitemap
-    // lists one of nine is a catalogue eight of whose pages are only
-    // discoverable by crawl.
-    const urls = [
-      "/",
-      // The shop hub and every collection. These are the pages built to rank —
-      // "masažni bazen" and "swim spa" are different queries — so leaving them
-      // out of the sitemap would hide the two most important URLs after home.
-      ...((content.collections ?? []).length > 0 ? [shop!.routeSlugs["/products"]] : []),
-      ...(content.collections ?? []).map((c) => c.path),
-      ...(content.pdps ?? [content.pdp]).map((d) => shop!.routeSlugs["/product"] + "/" + d.slug),
-    ];
-    const body =
-      '<?xml version="1.0" encoding="UTF-8"?>' +
-      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-      urls.map((u) => "<url><loc>" + shop!.siteUrl + u + "</loc></url>").join("") +
-      "</urlset>";
+    // ⚠️ THE PATHS AND THE XML LIVE IN render/sitemap.ts, because the blog
+    // builds this document too — it has to add the posts, and it cannot ask a
+    // synchronous renderer what has been published. Two implementations of
+    // "which pages does this shop have" is how one of them ends up stale.
+    const body = sitemapXml(shop, sitemapPaths(shop, content));
     return new Response(body, {
       headers: { "content-type": "application/xml; charset=utf-8", ...baseHeaders },
     });
@@ -451,6 +441,15 @@ export default {
       const path = new URL(request.url).pathname;
       if (path === "/admin" || path.startsWith("/admin/")) return await handleAdmin(request, env);
       if (path.startsWith("/media/")) return await handleMedia(request, env);
+      // THE BLOG IS THE ONE PART OF THE STOREFRONT THAT IS NOT IN THE BUNDLE.
+      //
+      // Posts are rows, read on the request, because publishing a post that
+      // appears at the next deploy is not publishing. handlePosts answers null
+      // for every path that is not its own — and for a request the storefront
+      // would have answered differently, a pre-live domain above all — so the
+      // line below cannot change any page that existed before it.
+      const post = await handlePosts(request, env);
+      if (post) return post;
       return handleRequest(request);
     } catch (err) {
       console.error(err);

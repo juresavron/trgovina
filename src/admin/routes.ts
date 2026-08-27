@@ -55,6 +55,17 @@ import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-ima
 import { enhance, enhanceAvailable } from "./enhance";
 import { describe, describeAvailable } from "./describe";
 import { arrange } from "./shots";
+import { blogEditPage, blogListPage } from "./blog-panel";
+import {
+  createPost,
+  deletePost,
+  freeSlug,
+  getById,
+  listAll,
+  setStatus,
+  updatePost,
+} from "../blog/store";
+import { excerptFrom } from "../blog/post";
 
 /** Shops whose catalogue this panel can manage. */
 /**
@@ -391,6 +402,159 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     });
   }
 
+  // --- the blog ---
+  //
+  // Before the model lookup for the same reason "site" is: "blog" is not a
+  // shop key. Everything here is one shop's — SHOP_KEY below — because the
+  // panel already only manages one; the shop id is passed to every store call
+  // rather than assumed inside it, so a second shop is a parameter and not a
+  // rewrite.
+  //
+  // ⚠️ THE WRITES GO THROUGH THE SIGNED-IN PERSON'S TOKEN like every other
+  // call in this file. There is no service key here either: `posts_admin_write`
+  // is what lets these succeed, and a bug that skipped the gate above would
+  // produce a request the database refuses rather than one it serves.
+  if (parts[1] === "blog") {
+    const shopKey = "bazen";
+    const notice = url.searchParams.get("m")
+      ? ({ kind: "ok", text: NOTICES[url.searchParams.get("m")!] ?? "Shranjeno." } as const)
+      : url.searchParams.get("e")
+        ? ({ kind: "err", text: ERRORS[url.searchParams.get("e")!] ?? "Ni uspelo." } as const)
+        : undefined;
+    const siteUrl = SHOPS[shopKey]?.siteUrl ?? "";
+
+    /** Title, excerpt and body off the form, with the excerpt derived if blank. */
+    const readForm = async (): Promise<{ title: string; excerpt: string; source: string } | null> => {
+      const form = await request.formData();
+      const title = String(form.get("title") ?? "").trim();
+      if (!title) return null;
+      const source = String(form.get("body") ?? "");
+      // A post with no summary still needs one: it is the card's standfirst
+      // and the meta description, and an empty description is a search result
+      // Google writes for you out of whatever it finds.
+      const excerpt = String(form.get("excerpt") ?? "").trim() || excerptFrom(source);
+      return { title, excerpt, source };
+    };
+
+    // The list.
+    if (parts.length === 2 && request.method === "GET") {
+      return page(blogListPage(await listAll(api, shopKey), admin.email, notice));
+    }
+
+    // A new one. GET draws the empty editor; POST creates a DRAFT and lands
+    // on its own page, so the operator is where the cover form and the
+    // publish button are.
+    if (parts[2] === "nov") {
+      if (request.method === "GET") return page(blogEditPage(null, admin.email, siteUrl, notice));
+      if (request.method === "POST") {
+        const fields = await readForm();
+        if (!fields) return seeOther("/admin/blog/nov?e=title");
+        const slug = await freeSlug(api, shopKey, slugStem(fields.title));
+        const made = await createPost(api, shopKey, { slug, ...fields });
+        return seeOther("/admin/blog/" + made.id + "?m=post-saved");
+      }
+    }
+
+    const id = parts[2] ?? "";
+    if (!id) return page(notFoundPage("Ta zapis ne obstaja.", admin.email), 404);
+    const post = await getById(api, shopKey, id);
+    if (!post) return page(notFoundPage("Ta zapis ne obstaja.", admin.email), 404);
+    const here = "/admin/blog/" + post.id;
+
+    // The editor.
+    if (parts.length === 3 && request.method === "GET") {
+      return page(blogEditPage(post, admin.email, siteUrl, notice));
+    }
+
+    // Save, and optionally publish or withdraw in the same press. One button
+    // rather than two pages: an operator who has just finished writing wants
+    // to publish what they wrote, not what was saved a moment ago.
+    if (parts.length === 3 && request.method === "POST") {
+      const form = await request.formData();
+      const title = String(form.get("title") ?? "").trim();
+      if (!title) return seeOther(here + "?e=title");
+      const source = String(form.get("body") ?? "");
+      const excerpt = String(form.get("excerpt") ?? "").trim() || excerptFrom(source);
+      // The slug FOLLOWS THE TITLE ONLY WHILE THE POST IS A DRAFT. Once it is
+      // published the URL is out in the world — in somebody's history, in a
+      // search index, in a message — and renaming it because a typo was fixed
+      // breaks every one of those links silently.
+      const slug =
+        post.status === "draft" && slugStem(title) !== post.slug
+          ? await freeSlug(api, shopKey, slugStem(title), post.id)
+          : post.slug;
+      try {
+        await updatePost(api, shopKey, post.id, { slug, title, excerpt, source });
+      } catch (err) {
+        console.error(err);
+        return seeOther(here + "?e=post");
+      }
+      const then = String(form.get("then") ?? "");
+      if (then === "publish") {
+        await setStatus(api, shopKey, post.id, "published", post.publishedAt === null);
+        return seeOther(here + "?m=post-published");
+      }
+      if (then === "unpublish") {
+        await setStatus(api, shopKey, post.id, "draft", false);
+        return seeOther(here + "?m=post-unpublished");
+      }
+      return seeOther(here + "?m=post-saved");
+    }
+
+    if (parts[3] === "delete" && request.method === "POST") {
+      await deletePost(api, shopKey, post.id);
+      return seeOther("/admin/blog?m=post-deleted");
+    }
+
+    // The cover. Stored under a content-addressed key so a replacement is a
+    // new URL and no cache anywhere serves the old picture — the reason the
+    // product photographs are addressed the same way, and the reason the site
+    // slots (which cannot be) get a short cache instead.
+    if (parts[3] === "cover" && request.method === "POST") {
+      const form = await request.formData();
+      const part = form.get("file");
+      const alt = String(form.get("alt") ?? "").trim();
+      if (!(part instanceof File) || part.size === 0) return seeOther(here + "?e=file");
+      const bytes = await part.arrayBuffer();
+      if (!isWebp(bytes)) return seeOther(here + "?e=type");
+      const key = "blog/" + post.slug + "--" + crypto.randomUUID() + ".webp";
+      try {
+        await uploadObject(api, key, bytes, "image/webp");
+      } catch (err) {
+        console.error(err);
+        return seeOther(here + "?e=store");
+      }
+      await updatePost(api, shopKey, post.id, {
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.excerpt,
+        source: post.source,
+        coverUrl: "/media/" + key,
+        coverAlt: alt || post.title,
+      });
+      return seeOther(here + "?m=cover-set");
+    }
+
+    if (parts[3] === "cover-clear" && request.method === "POST") {
+      // The row loses the picture; the object stays. A cover that has been
+      // published is in somebody's cache and in a share card, and the storage
+      // cost of a stray WebP is not worth a broken image on a link that was
+      // sent last week. Product photographs are deleted because they are
+      // MANAGED — there is a page listing them — and a blog cover is not.
+      await updatePost(api, shopKey, post.id, {
+        slug: post.slug,
+        title: post.title,
+        excerpt: post.excerpt,
+        source: post.source,
+        coverUrl: null,
+        coverAlt: "",
+      });
+      return seeOther(here + "?m=cover-cleared");
+    }
+
+    return page(notFoundPage("Neznano dejanje.", admin.email), 404);
+  }
+
   // --- one site image ---
   //
   // Before the model lookup, because "site" is not a shop key and would
@@ -618,6 +782,8 @@ const ERRORS: Record<string, string> = {
   "no-ai": "Razvrščanje potrebuje GEMINI_API_KEY, ki ni nastavljen.",
   store: "Slike ni bilo mogoče shraniti. Poskusite znova; če se ponovi, " +
     "je težava pri shrambi in ne pri vaši sliki.",
+  title: "Zapis potrebuje naslov.",
+  post: "Zapisa ni bilo mogoče shraniti. Poskusite znova.",
 };
 
 const NOTICES: Record<string, string> = {
@@ -632,6 +798,12 @@ const NOTICES: Record<string, string> = {
     "še enkrat, da se razvrstijo tudi ostale.",
   // Not an error: the operator asked for an empty set and the set is empty.
   "deleted-none": "Ta model ni imel fotografij.",
+  "post-saved": "Zapis je shranjen.",
+  "post-published": "Zapis je objavljen in je na spletni strani.",
+  "post-unpublished": "Zapis je umaknjen s spletne strani.",
+  "post-deleted": "Zapis je izbrisan.",
+  "cover-set": "Naslovna slika je naložena.",
+  "cover-cleared": "Naslovna slika je odstranjena.",
 };
 
 /** "bazen/slug/uuid.webp" + 800 → "bazen/slug/uuid-800.webp" */
