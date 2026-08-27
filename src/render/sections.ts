@@ -1,4 +1,5 @@
 import type { ShopConfig } from "../tenants/types";
+import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
 import type { ShopContent, ArtKey, ProductCard, UtilCard, PdpContent } from "../content/types";
 import type { SectionKey } from "../themes/shared/sections";
 
@@ -394,8 +395,12 @@ export function renderHeader(ctx: RenderCtx): string {
     '<nav class="nav" aria-label="Glavni meni">' +
     links.map(([k, label]) => '<a href="' + s.routeSlugs[k] + ctx.q + '">' + esc(label) + "</a>").join("") +
     "</nav>" +
-    '<a class="head-phone" href="' + ctx.phoneHref + '">' + esc(ctx.phoneDisplay) +
-    " <small>pon–pet, 8.00–18.00</small></a>" +
+    // Guarded, and the OPENING HOURS ARE GONE: "pon–pet, 8.00–18.00" existed
+    // nowhere in any config — an invented fact in the header of a theme that
+    // could return. No hours are stated anywhere until the owner states some.
+    (isSetPhone(ctx.phoneDisplay)
+      ? '<a class="head-phone" href="' + ctx.phoneHref + '">' + esc(ctx.phoneDisplay) + "</a>"
+      : "") +
     "</div></header>"
   );
 }
@@ -430,8 +435,19 @@ export function renderFooter(ctx: RenderCtx): string {
       [s.routeSlugs["/withdrawal"], "Odstop od pogodbe"],
     ]) +
     '</div><div class="legalline">' +
-    esc(s.company.legalName + " · ID za DDV: " + s.company.vatId + " · " +
-      s.contact.address.street + ", " + s.contact.address.zip + " " + s.contact.address.city) +
+    // The identity rule, here too: unset registry facts render as visibly
+    // unset, never as "SI00000000" published to whoever reads the footer.
+    // This was the one identity surface with no predicate at all — unreached
+    // while every shop wears studio, which is exactly when a regression
+    // would ship silently the day a second theme returns.
+    esc(
+      (isSet(s.company.legalName) ? s.company.legalName : "firma še ni vpisana") +
+      " · ID za DDV: " + (isSetVat(s.company.vatId) ? s.company.vatId : "še ni vpisan") +
+      " · " +
+      (isSet(s.contact.address.street) && isSetZip(s.contact.address.zip)
+        ? s.contact.address.street + ", " + s.contact.address.zip + " " + s.contact.address.city
+        : "sedež še ni vpisan"),
+    ) +
     "</div></div></footer>"
   );
 }

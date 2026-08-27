@@ -104,6 +104,20 @@ export type Block =
    * not become a way to publish an outbound link from a compromised account.
    */
   | { kind: "links"; h?: string; items: [string, string][] }
+  /**
+   * A photograph between sections — an editorial band, not an illustration
+   * of a specific claim.
+   *
+   * `slot` is a SITE-IMAGE STEM registered in admin/site-images.ts
+   * ("o-nas-ekipa" → /media/site/o-nas-ekipa.webp): the operator chooses the
+   * picture in the panel and can replace it without a deploy, exactly like
+   * the hero. Because the picture can change under the page, the image is
+   * DECORATIVE — empty alt, aria-hidden — and any visible caption must stay
+   * true whatever the slot holds. That is why `caption` is optional and why
+   * nothing here may caption a photograph with a claim ("naša ekipa na
+   * montaži") the shop has not put into the slot.
+   */
+  | { kind: "figure"; slot: string; caption?: string }
   /** A closing call to action pointing at an internal route. */
   | { kind: "cta"; h: string; p: string; label: string; href: string };
 

@@ -69,6 +69,18 @@ export const PRIVACY: Page = {
           "Podatki o modelu, datumu predaje in opravljenih posegih. Pravna podlaga: izvajanje " +
             "pogodbe in zakonske obveznosti.",
         ],
+        // The row /piskotki has always pointed at ("kot piše v izjavi o
+        // zasebnosti") and this page never carried — the cross-reference
+        // dangled. Says only what the code proves: the stran itself writes
+        // no log of visitors anywhere (there is no such call in the Worker),
+        // so the one processing to declare is the host's own.
+        [
+          "Tehnični zapisi strežnika",
+          "Ob obisku spletne strani ponudnik gostovanja obdela vaš naslov IP, ker je to " +
+            "tehnično nujno za prikaz strani in za zaščito pred zlorabami. Pravna podlaga: " +
+            "zakoniti interes za varno delovanje strani. Sami teh zapisov ne vodimo in jih " +
+            "ne povezujemo z drugimi podatki.",
+        ],
       ],
     },
     {
@@ -79,8 +91,10 @@ export const PRIVACY: Page = {
           "smiselna, nato jih izbrišemo. Podatke o sklenjenih poslih hranimo, dokler trajajo " +
           "obveznosti iz pogodbe, jamstva za skladnost blaga in garancije. Račune hranimo " +
           "toliko časa, kolikor zahtevajo davčni predpisi — praviloma deset let.",
-        "Podatke nam daste prostovoljno in vam jih ni treba dati. Brez njih pa ne moremo " +
-          "odgovoriti na povpraševanje, pripraviti ponudbe ali izvesti dostave in montaže.",
+        "Podatke ob povpraševanju daste prostovoljno in vam jih ni treba dati — brez njih pa " +
+          "ne moremo odgovoriti, pripraviti ponudbe ali izvesti dostave in montaže. Ko je " +
+          "naročilo sklenjeno, so podatki, ki jih zahtevajo pogodba in davčni predpisi (na " +
+          "primer podatki na računu), obvezni po zakonu.",
       ],
     },
     {
@@ -88,9 +102,15 @@ export const PRIVACY: Page = {
       h: "Komu jih posredujemo",
       p: [
         "Samo tistim, ki so potrebni za izvedbo posla: prevozniku in montažni ekipi za dostavo, " +
-          "računovodskemu servisu za račune, ponudniku financiranja, če se zanj odločite, in " +
-          "ponudniku gostovanja spletne strani. Vsak od njih obdeluje podatke po naših navodilih " +
-          "in zgolj za navedeni namen.",
+          "računovodskemu servisu za račune in ponudniku gostovanja spletne strani. Vsak od " +
+          "njih obdeluje podatke po naših navodilih in zgolj za navedeni namen.",
+        // Deliberately OUT of the po-naših-navodilih sentence: financiranje.ts
+        // says in the shop's own words that the credit is a second contract
+        // the lender decides on its own assessment — that is an independent
+        // controller with its own notice, not a processor under instruction.
+        "Če se odločite za financiranje, podatke, ki jih zahteva ponudnik financiranja, " +
+          "posredujete njemu; ponudnik financiranja je samostojni upravljavec, o vlogi odloča " +
+          "po lastni presoji in obdelavo pojasnjuje v svoji izjavi o zasebnosti.",
         "Kadar kakšen od teh ponudnikov podatke obdeluje zunaj Evropskega gospodarskega " +
           "prostora, to poteka le na podlagi jamstev, ki jih zahteva splošna uredba o varstvu " +
           "podatkov — na primer standardnih pogodbenih določil ali sklepa o ustreznosti.",

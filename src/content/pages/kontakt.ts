@@ -42,7 +42,7 @@ export const CONTACT: Page = {
         "Fotografija prostora in poti do njega pove več kot dolg opis. Pošljite jo po e-pošti.",
         "Če še ne veste, kam bi ga postavili, povejte, koliko ljudi naj sprejme in ali vas bolj " +
           "zanima sedenje in masaža ali plavanje. To je razlika med masažnim bazenom in swim spa " +
-          "bazenom — med školjko 195 do 230 cm in školjko 450 do 580 cm — in od nje je odvisno " +
+          "bazenom — med školjko od 195 do 230 cm in školjko od 450 do 580 cm — in od nje je odvisno " +
           "vse drugo: podlaga, dostop, poraba in cena.",
       ],
     },
@@ -87,7 +87,7 @@ export const CONTACT: Page = {
       kind: "steps",
       h: "Kaj sledi",
       items: [
-        ["Odgovor", "Na klic in e-pošto odgovorimo v enem delovnem dnevu."],
+        ["Odgovor", "Na klic odgovorimo sproti, na e-pošto v enem delovnem dnevu."],
         ["Ogled lokacije", "Brezplačen. Preverimo dostop, podlago in električni priklop."],
         [
           "Ponudba",
@@ -143,7 +143,7 @@ export const CONTACT: Page = {
           "o katerem bazenu teče beseda, in vam ni treba ničesar opisovati dvakrat.",
       ],
     },
-    { kind: "imprint" },
+    { kind: "imprint", h: "Podatki o podjetju" },
     {
       kind: "cta",
       h: "Morda je odgovor že tu",

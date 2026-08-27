@@ -567,7 +567,12 @@ export function renderStudioSocial(ctx: RenderCtx): string {
 
   return (
     '<section class="st-soc" aria-labelledby="st-soc-h">' +
-    '<p class="st-soc-label"><span>Sledite nam</span>' +
+    // "Sledite nam" only when there is a profile to follow: with socials
+    // empty the label promised a feed over a strip of the shop's own
+    // photographs and an e-mail button. The band is honest either way now.
+    '<p class="st-soc-label"><span>' +
+    (id.href.startsWith("http") ? "Sledite nam" : "Iz naših fotografij") +
+    "</span>" +
     '<span class="st-soc-handle">' + esc(id.handle) + "</span></p>" +
     '<div class="st-mq st-soc-mq">' +
     // Own id: hero.ts's ticker already owns "st-mq-pause" and both devices can

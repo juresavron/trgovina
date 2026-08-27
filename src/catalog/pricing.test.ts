@@ -444,8 +444,13 @@ describe("a live shop can identify itself", () => {
     // but honest signal: the stub body was ~105 characters.
     for (const page of PAGES.filter((p) => p.legal)) {
       expect(page.blocks.length, page.key + " has no content").toBeGreaterThan(2);
+      // Prose AND procedure: /blagajna states its substance as steps (how a
+      // contract forms), which is exactly the shape a checkout's legal
+      // content takes — a prose-only count read it as a stub.
       const words = page.blocks
-        .flatMap((b) => (b.kind === "prose" ? b.p : []))
+        .flatMap((b) =>
+          b.kind === "prose" ? b.p : b.kind === "steps" ? b.items.map((i) => i[1]) : [],
+        )
         .join(" ");
       expect(words.length, page.key + " states almost nothing").toBeGreaterThan(200);
     }

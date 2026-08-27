@@ -57,6 +57,12 @@ export const ABOUT: Page = {
           "kako se vzdržuje. Kadar se kaj zatakne, ni nikogar, na kogar bi lahko pokazali.",
       ],
     },
+    // The photograph bands are SLOTS, not statements — see the figure note in
+    // content/pages.ts. Until the owner uploads something real (the team, the
+    // van, an installation) each falls back to the shop's own product
+    // photography, which is true by definition. No caption on any of them:
+    // a caption would be a claim about a picture this file cannot see.
+    { kind: "figure", slot: "o-nas-1" },
     {
       kind: "prose",
       h: "Zakaj šest modelov in ne petdeset",
@@ -113,6 +119,7 @@ export const ABOUT: Page = {
         ],
       ],
     },
+    { kind: "figure", slot: "o-nas-2" },
     {
       kind: "prose",
       h: "Kaj pomeni servisna zgodovina",
@@ -149,8 +156,11 @@ export const ABOUT: Page = {
         ],
       ],
     },
-    { kind: "imprint" },
-    { kind: "contact", h: "Kje nas dobite" },
+    { kind: "imprint", h: "Podatki o podjetju" },
+    // omitAddress, same reasoning salon.ts spells out: the seat in Koper is
+    // an office, not a place to visit, and the imprint above already states
+    // it as Sedež — under "kje nas dobite" it read as an invitation.
+    { kind: "contact", h: "Kako nas dobite", omitAddress: true },
     {
       kind: "cta",
       h: "Poglejte ponudbo",

@@ -916,7 +916,11 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
     '<div class="st-band-foot">' +
     '<span class="st-band-chip">' + esc(d.eyebrow) + "</span>" +
     '<span class="st-band-title">' + esc(d.title) + "</span>" +
-    '<a class="st-btn-light" href="' + esc(pdpHref(ctx)) + '">Oglejte si model</a>' +
+    // The finder, not the flagship PDP: the BAZEN 230 card two bands above
+    // already links that page, so the band added no route. "Which one is
+    // mine?" is the question a brand statement leaves a reader with.
+    '<a class="st-btn-light" href="' + esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
+    '">Kateri je pravi za vas?</a>' +
     "</div></section>"
   );
 }

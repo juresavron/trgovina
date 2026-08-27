@@ -58,10 +58,11 @@
  * total) it emits behaviour.ts's markup contract and that one shared script
  * upgrades it. Everything still works if the script never runs: the gallery
  * is a real scroll container whose thumbs are real anchors, and the add-on
- * prices are all server-rendered. The CONFIGURATOR stays static on purpose —
- * it renders the selected option as state (a `data-on` attribute the CSS
- * styles as chosen) and never emits a radio, checkbox or <select> that could
- * not change anything, because no script here can change the configuration.
+ * prices are all server-rendered. The CONFIGURATOR is a real GET form now —
+ * radio groups and checkboxes whose values land on /kontakt as query
+ * parameters the worker re-matches against this model's own option lists —
+ * so the old rule ("never emits a radio…") no longer describes this module:
+ * the controls act with no script, because the form does.
  *
  * Token discipline (docs/THEMES.md): colors, radii, faces, gutters, rhythm and
  * chrome height are var(--…) from tokens.ts — this module re-declares none of
@@ -1726,6 +1727,7 @@ export const STUDIO_PDP_CSS = `
     :root[data-theme="studio"] .st-pdp-bar,
     :root[data-theme="studio"] .st-pdp-crumbs,
     :root[data-theme="studio"] .st-also,
+    :root[data-theme="studio"] .st-tst,
     :root[data-theme="studio"] .st-mq,
     :root[data-theme="studio"] .st-mem,
     :root[data-theme="studio"] .st-soc,
@@ -1838,6 +1840,13 @@ export const STUDIO_PDP_CSS = `
    * box (24 × 1.33em = 32px) plus this bar's padding runs a few px past
    * --chrome-h on desktop; the bar is min-height, so it grows rather than
    * clipping. */
+  /* The bar's "z DDV" sits on the DARK bar, not the light buy column, so the
+   * shared .st-vat ink (mid ink on white) reads 3.53:1 here — the bar's own
+   * muted-on-invert rung is the 7.3:1 one. Caught by the pixel audit the
+   * same hour the span was added. */
+  :root[data-theme="studio"] .st-pdp-bar .st-vat {
+    color: var(--on-invert-mute);
+  }
   :root[data-theme="studio"] .st-pdp-bar-price {
     margin-left: auto;
     font-family: var(--f-display);
@@ -2187,11 +2196,18 @@ function alsoLike(ctx: RenderCtx): string {
     const start = Math.min(Math.max(0, here - 1), Math.max(0, list.length - 3));
     return list.slice(start, start + 3);
   };
-  // Same family, in catalogue order, windowed on this model; then the rest of
-  // the range in its own order to fill a family too small to give three.
+  // Same family only, windowed on this model. The cross-family fill is gone:
+  // each family holds exactly three models, so `own` always yields two and
+  // the third card was ALWAYS the other family — every hot-tub page ended on
+  // a ~16.700 € swim spa, the exact price-mismatch this function's own
+  // header says it fixed. Two honest alternatives beat two-plus-a-stranger;
+  // the fill returns only for a family of one, where kinship has no meaning.
   const own = kin ? near(all.filter((x) => kin.has(x.slug))).filter((x) => x.slug !== ctx.pdp.slug) : [];
   const seen = new Set(own.map((x) => x.slug));
-  const picks = [...own, ...rest.filter((x) => !seen.has(x.slug))].slice(0, 3);
+  const picks =
+    own.length >= 2
+      ? own.slice(0, 3)
+      : [...own, ...rest.filter((x) => !seen.has(x.slug))].slice(0, 3);
   if (picks.length === 0) return "";
 
   const base = ctx.shop.routeSlugs["/product"] + "/";
@@ -2515,7 +2531,10 @@ export function renderStudioPdp(ctx: RenderCtx): string {
             '<span data-st-extras>' + esc(formatEur(0)) + "</span></p>" +
             '<p class="st-pdp-ao-total"><span>Skupaj</span>' +
             '<span class="st-pdp-ao-sum" data-st-total data-st-base="' +
-            String(d.priceCents) + '">' + esc(d.price) + "</span></p>"
+            String(d.priceCents) + '">' + esc(d.price) + "</span>" +
+            // The largest figure in the buy column carries the same
+            // qualifier every other price on the page does.
+            ' <span class="st-vat">z DDV</span></p>'
           : "") +
         (d.pricesProvisional
           ? '<p class="st-pdp-ao-note">Cene so informativne in še niso dokončne.</p>'
@@ -2564,6 +2583,13 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     (ctx.phoneDisplay ? " · " + esc(ctx.phoneDisplay) : "") +
     "<br>Tehnični list · " + esc(d.title) +
     (d.price.includes("€") ? " · " + esc(d.price) + " z DDV" : "") +
+    // The handed-out artefact must not show a total-looking price
+    // with no word on delivery: the freight rows live in .st-pdp-buy,
+    // which the print stylesheet hides wholesale. One line restates
+    // the composition — the same sentence the buy column carries.
+    (d.price.includes("€")
+      ? "<br>Cena vključuje zagon, umeritev in predajo; dostava se obračuna po ponudbi."
+      : "") +
     "</div>";
   const panels =
     '<div class="st-pdp-panels">' +
@@ -2618,8 +2644,15 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     "modela pa sedem; kateri veljajo za vaš model, potrdimo ob naročilu.</p>";
   const finishes =
     (d.finishes ?? []).length || (d.cabinetFinishes ?? []).length
-      ? group("Barva školjke", "barva", d.finishes ?? [], 0, "st-pdp-fin", true) +
-        group("Barva obloge", "obloga", d.cabinetFinishes ?? [], 0, "st-pdp-cab", true) +
+      // -1: NO shade arrives pre-checked. With selected = 0 a visitor who
+      // never touched the row submitted "Midnight" and "Svetlo siva", and
+      // /kontakt printed them back — and put them into the mail body — as
+      // the configuration they chose. On a page whose own note says only
+      // seven of the ten shades apply to your model, a default finish is a
+      // choice the buyer did not make; an untouched radio group contributes
+      // nothing to the enquiry, which is the honest reading of untouched.
+      ? group("Barva školjke", "barva", d.finishes ?? [], -1, "st-pdp-fin", true) +
+        group("Barva obloge", "obloga", d.cabinetFinishes ?? [], -1, "st-pdp-cab", true) +
         swatchNote
       : "";
 
@@ -2864,6 +2897,10 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       ? ' data-st-total data-st-base="' + String(d.priceCents) + '"'
       : "") +
     ">" + esc(d.bar[2]) + "</span>" +
+    // The one price on screen at every scroll position was the one
+    // without "z DDV" — only where a figure exists, though: the bar
+    // must not qualify "cena po povpraševanju".
+    (d.bar[2].includes("€") ? ' <span class="st-vat">z DDV</span>' : "") +
     '<a class="st-pdp-cta" href="' +
     esc(
       ctx.shop.ordersOnline

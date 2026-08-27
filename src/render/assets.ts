@@ -80,5 +80,18 @@ export function assetResponse(path: string): Response | null {
       },
     });
   }
+  // Any other /assets/ path is a request for a file, not a page: a browser
+  // asking for a stylesheet that never existed should get a small text 404,
+  // not the site's 9 kB styled-HTML one dressed as text/css confusion bait.
+  if (path.startsWith("/assets/")) {
+    return new Response("Not found", {
+      status: 404,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+        "x-content-type-options": "nosniff",
+      },
+    });
+  }
   return null;
 }

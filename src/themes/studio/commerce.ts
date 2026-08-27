@@ -1008,6 +1008,12 @@ export const STUDIO_COMMERCE_CSS = `
     margin: clamp(20px, 2vw, 36px) 0 0;
     text-align: center;
   }
+  /* The head's own escape to the full catalogue: above the grid, quiet,
+   * left-aligned with the heading it belongs to. */
+  :root[data-theme="studio"] .st-shop-more--head {
+    margin: 0 0 clamp(18px, 2vw, 28px);
+    text-align: left;
+  }
 
   /* The hub's closing prose. Set on the reading measure and separated from
    * the last grid by a hairline, so it reads as the page's own voice rather
@@ -1998,7 +2004,10 @@ function productCards(
           "<" + level + ' class="st-util-h">' + esc(p.h) + "</" + level + ">" +
           '<p class="st-util-p">' + esc(p.p) + "</p>" +
           "</div>" +
-          '<span class="st-util-go">' + esc(p.cta) + "</span>" +
+          // The arrow is an ELEMENT, not text: a screen reader announcing
+          // "Naročite ogled desna puščica" was the cost of the glyph in copy.
+          '<span class="st-util-go">' + esc(p.cta) +
+          ' <span aria-hidden="true">→</span></span>' +
           "</a>"
         );
       }
@@ -2051,7 +2060,13 @@ export function renderStudioProducts(ctx: RenderCtx): string {
     // The heading is the shop's own hand-written CTA line, not a templated
     // sentence: four shops on this baseline must not share a visible line.
     '<h2 class="st-sec-h">' + esc(ctx.content.cta) + "</h2>" +
-    "</div></div>" +
+    "</div>" +
+    // The way to the OTHER two. This band shows four of six models and ended
+    // on the util tile: a visitor whose model was not among the four had no
+    // route to the rest from the band that asked them to choose.
+    '<p class="st-shop-more st-shop-more--head"><a class="st-btn-line" href="' +
+    esc(ctx.shop.routeSlugs["/products"] + ctx.q) + '">Vsi modeli</a></p>' +
+    "</div>" +
     // The grid element is what carries the ruled table's 1px padding, so an
     // EMPTY one is not an empty box — it is a 2px grey hairline sitting under
     // the heading with nothing in it. The section itself still renders: the
@@ -2444,7 +2459,7 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
     // questions were built for.
     '<p class="st-shop-intro"><a class="st-fnd-link" href="' +
     esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
-    '">Ne veste, kateri? Odgovorite na tri vprašanja → predlagamo model.</a></p>' +
+    '">Ne veste, kateri? Odgovorite na dve do tri vprašanja <span aria-hidden="true">→</span> predlagamo model.</a></p>' +
     "</div>" +
     hubChoice(ctx) +
     "</div></section>" +

@@ -72,9 +72,9 @@ export const SHOWROOM: Page = {
             "Vzame približno pol ure.",
         ],
         [
-          "Poveste, kaj ste videli",
+          "Povemo, kaj smo videli",
           "Kateri modeli so pri vas izvedljivi, kaj bi bilo treba pripraviti in kje so ozka " +
-            "grla. Če je treba podlago ali elektriko urediti, poveste, kaj točno.",
+            "grla. Če je treba podlago ali elektriko urediti, povemo, kaj točno.",
         ],
         [
           "Ponudba",
@@ -90,7 +90,7 @@ export const SHOWROOM: Page = {
         [
           "Mesto postavitve",
           "Približna predstava, kam bi bazen postavili. Natančno izmerimo mi — pomembno je " +
-            "le, da se pogovarjava o istem kotu vrta.",
+            "le, da se pogovarjamo o istem kotu vrta.",
         ],
         [
           "Dostop do dvorišča",
@@ -113,6 +113,12 @@ export const SHOWROOM: Page = {
         ],
       ],
     },
+    // Operator-managed slot; falls back to the shop's own photography. See
+    // the figure note in content/pages.ts — and the page's own warning above:
+    // no caption, because a caption here would be one more promised sight.
+    // AFTER the facts table, not before it: two wide blocks back to back
+    // read as band-then-table with the prose orphaned around them.
+    { kind: "figure", slot: "ogled-lokacije" },
     {
       kind: "qa",
       h: "Pogosta vprašanja",

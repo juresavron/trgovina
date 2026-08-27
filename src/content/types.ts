@@ -219,7 +219,19 @@ export interface PdpContent {
 }
 
 export interface ShopContent {
-  nav: [string, string, string, string, string];
+  /**
+   * Header labels, by POSITION: 0 Trgovina, 1 O nas, 2 Vodniki, 3 Dostava,
+   * 4 Kontakt, 5 Primerjava, 6 the guided choice.
+   *
+   * ⚠️ APPEND-ONLY. Three renderers index into this tuple (the studio
+   * chrome, the legacy header in render/sections.ts, the PDP breadcrumb),
+   * and each hardcodes which index maps to which ROUTE. 5 and 6 were
+   * appended rather than inserted in display order precisely so the legacy
+   * header's nav[1]="/about" stayed true; the studio header states its own
+   * display order in renderStudioHeader. Reordering these labels reroutes
+   * links silently — extend at the end or not at all.
+   */
+  nav: [string, string, string, string, string, string, string];
   artKey: ArtKey;
   kicker: string;
   h1: string;

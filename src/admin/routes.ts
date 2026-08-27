@@ -263,11 +263,29 @@ export function slugStem(s: string, max = 60): string {
 }
 export async function handleMedia(request: Request, env: Env): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
-    return new Response("Method not allowed", { status: 405 });
+    // Same shape as the storefront's 405 (worker.ts): allow, a type, nosniff.
+    return new Response("Method not allowed", {
+      status: 405,
+      headers: {
+        allow: "GET, HEAD",
+        "content-type": "text/plain; charset=utf-8",
+        "x-content-type-options": "nosniff",
+      },
+    });
   }
   if (!env.SUPABASE_URL) return new Response("Not found", { status: 404 });
 
-  const path = decodeURIComponent(new URL(request.url).pathname.slice("/media/".length));
+  // ⚠️ decodeURIComponent THROWS on an invalid percent-sequence — the WHATWG
+  // URL parser leaves "/media/%" in pathname untouched, so the throw happened
+  // BEFORE the pattern gate below could 404 it and surfaced as the catch-all
+  // 500 (no cache-control, no robots tag) on any host. A malformed name is
+  // exactly what the gate exists to refuse; refuse it the same way.
+  let path: string;
+  try {
+    path = decodeURIComponent(new URL(request.url).pathname.slice("/media/".length));
+  } catch {
+    return new Response("Not found", { status: 404 });
+  }
 
   // An ALIAS resolves a clean site path to a bucket key that could never be a
   // URL — see src/media-aliases.ts. It is a fixed allowlist, so it is a

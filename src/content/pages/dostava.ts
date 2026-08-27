@@ -60,6 +60,8 @@ export const DELIVERY: Page = {
         ],
       ],
     },
+    // Operator-managed slot — see the figure note in content/pages.ts.
+    { kind: "figure", slot: "dostava" },
     {
       kind: "prose",
       h: "Kaj pripravite vi",
@@ -71,7 +73,7 @@ export const DELIVERY: Page = {
           "lokacijo, povemo ob ogledu.",
         "Električni priklop po navodilih, ki jih dobite v drugem koraku, in dostop do vode za " +
           "prvo polnjenje. Priprava podlage in elektroinštalacija sta na vaši strani; " +
-            "kaj točno je treba pripraviti, poveste po ogledu.",
+            "kaj točno je treba pripraviti, povemo po ogledu.",
       ],
     },
     {

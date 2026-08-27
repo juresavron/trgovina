@@ -62,6 +62,26 @@ function counted(n: number, forms: readonly [string, string, string, string]): s
 }
 
 const MASSAGE_JETS = ["masažna šoba", "masažni šobi", "masažne šobe", "masažnih šob"] as const;
+const SWIM_JETS = ["protitočna šoba", "protitočni šobi", "protitočne šobe", "protitočnih šob"] as const;
+/**
+ * "…je namenjena sprostitvi" — the whole predicate, selected on the same
+ * last-two-digits rule as the noun. It was `(n < 5 ? " so" : " je") +
+ * " namenjenih"`: the verb switched but the participle stayed genitive, so
+ * 2–4 jets would have printed "so namenjenih", and <5 is a units test that
+ * the dual of 102 would fail. Latent (SWIM 450's 4 jets take the no-swim-jet
+ * branch), but the whole point of count.ts is that this class of bug does
+ * not wait to be reachable.
+ */
+const AIMED_AT_REST = [
+  "je namenjena sprostitvi",
+  "sta namenjeni sprostitvi",
+  "so namenjene sprostitvi",
+  "je namenjenih sprostitvi",
+] as const;
+function aimedAtRest(n: number): string {
+  const t = n % 100;
+  return AIMED_AT_REST[t === 1 ? 0 : t === 2 ? 1 : t === 3 || t === 4 ? 2 : 3]!;
+}
 /**
  * Every model the shop actually offers, both families, for the figures that
  * describe the RANGE rather than one product.
@@ -109,6 +129,13 @@ const heaviestDryKg = Math.max(
  * These are product photographs, so the alt is content rather than decoration
  * — a screen reader needs it, and image search is a real channel for goods at
  * this price.
+ *
+ * ⚠️ HISTORICAL FALLBACK, FULLY SHADOWED TODAY. Every OWN_MEDIA entry now
+ * ships a non-empty alt straight from the database (the admin's alt writer
+ * maintains them), so the `p.alt ||` below never falls through to this table
+ * and its texts have already drifted from what actually renders. Do NOT edit
+ * a caption here expecting the page to change — edit it in /admin. The table
+ * stays only as the last-resort text for a future photo synced without one.
  */
 const PHOTO_ALT: Readonly<Record<string, readonly string[]>> = {
   "veliki-230": [
@@ -301,7 +328,10 @@ const categories: Category[] = [
       modelCount(OFFERED_SWIMSPAS.length) +
       " · " +
       sizeSpan(OFFERED_SWIMSPAS.map((m) => m.mm[0])) +
-      (swimSpaFamilyHasSwimJets() ? " · s protitočno šobo" : " · za plavanje in sprostitev"),
+      // The false branch is a NON-FUNCTIONAL fact on purpose: while the
+      // entry model's sheet lists no counter-current jet the card may not
+      // promise swimming for the family — seats are the fact all three share.
+      (swimSpaFamilyHasSwimJets() ? " · s protitočno šobo" : " · 3 do 7 oseb"),
     price: familyRange(OFFERED_SWIMSPAS.map((m) => swimModelPrice(m))),
     href: "/swim-spa",
     // The photograph supplied for this family, under a clean alias for the
@@ -347,13 +377,24 @@ function pdpFor(m: PolaModel): PdpContent {
     slug: m.slug,
     code: m.code,
     family: "masažni bazen",
-    eyebrow: m.tier ?? (m.lounges === 2 ? "Dva ležalnika" : "Ležalnik in pet sedežev"),
+    // The fallback DERIVES: the old second branch asserted "Ležalnik in pet
+    // sedežev" for any non-two-lounger model — including one with none.
+    eyebrow:
+      m.tier ??
+      (m.lounges === 2
+        ? "Dva ležalnika"
+        : m.lounges === 1
+          ? "En ležalnik"
+          : "Brez ležalnika"),
     title: m.name,
+    // A sentence, not a spec line: seating(m)'s middot form ("5 oseb · 2
+    // ležalnika") is right in the cards and wrong mid-sentence — and this
+    // string is also the meta description and the JSON-LD description.
     sub:
       "Akrilni masažni bazen " +
       footprint(m) +
       " za " +
-      seating(m) +
+      seating(m).replace(" · ", ", od tega ") +
       ": " +
       counted(m.jets, ADJUSTABLE_JETS) +
       ", ogrevanje in filtracija.",
@@ -373,7 +414,7 @@ function pdpFor(m: PolaModel): PdpContent {
     freight: [
       ["Dostava z ekipo in opremo za prenos", "po ponudbi", false],
       ["Zagon, umeritev in predaja", "vključeno", true],
-      ["Ogled lokacije pred dostavo", "vključeno", true],
+      ["Ogled lokacije pred ponudbo", "vključeno", true],
     ],
     // ⚠️ THIS LINE USED TO PRINT "razred pallet_xl · cona SI" — the freight
     // engine's own enum, rendered to a customer. It is a key in
@@ -394,19 +435,23 @@ function pdpFor(m: PolaModel): PdpContent {
       // thinks in m², and "100 sf" was the one unit on the page that was
       // neither Slovenian nor translated.
       ["Filter", filterAreaText(m.filterSf)],
-      // The colour count is the PICKER'S list, not a typed number: the price
-      // list's standard line says "7 shell colours" while the supplier's own
-      // chart names ten, and the page offering ten swatches beside a spec row
-      // claiming seven contradicted itself. One source now feeds both; which
-      // count the supplier really honours is an open question for them, and
-      // resolving it means editing SHELL_FINISHES, not this row.
-      ["Školjka", "ameriški akril, " + SHELL_FINISHES.length + " barv · izolacija 2 cm"],
+      // The SUPPLIER'S per-model count, not the picker's: the sheet's
+      // standard line says "7 shell colours" while the chart names ten
+      // shades across the range, and the swatch note beside the picker is
+      // where that tension is explained to the buyer. The spec table states
+      // what the sheet states; a length-derived count here printed "10 barv"
+      // against the note's "sedem" on the same page. (Also: no counted()
+      // needed while the literal is 7, but keep the two digits' agreement in
+      // mind if the sheet ever changes.)
+      ["Školjka", "ameriški akril, 7 barv · izolacija 2 cm"],
       ["Mere", footprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
       ["Teža", kgText(m.dryKg) + " prazen · " + kgText(m.filledKg) + " poln"],
       // The supplier's own code, printed. It is what an order, a warranty
       // claim and a spare part are matched on — a buyer quoting "ZR805" on
       // the phone saves both sides the "the small one, the 195" dance.
-      ["Priklop", "220 V / 380 V"],
+      // "Električni priklop": bare "Priklop" also labels the configurator's
+      // who-wires-it group on the same page — one word, two meanings.
+      ["Električni priklop", "220 V / 380 V"],
       ["Garancija", "2–5 let, odvisno od sklopa"],
       // Last, in BOTH families: the two comparison tables sit one click
       // apart and the row rhythm should not change between them.
@@ -506,7 +551,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
   // spec table where a buyer goes looking for it, as an em dash against
   // "Protitočne šobe". Not claiming is honest; advertising an absence is
   // just bad writing.
-  const swimJets = m.swimJets > 0 ? m.swimJets + " protitočne šobe, " : "";
+  const swimJets = m.swimJets > 0 ? counted(m.swimJets, SWIM_JETS) + ", " : "";
   return {
     slug: m.slug,
     code: m.code,
@@ -551,7 +596,12 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ],
       ["Krmilnik", "Balboa · " + m.topside + " · grelec 3 kW"],
       ["Filtracija", m.skimmers + " × " + filterAreaText(m.filterSf)],
-      ["Školjka", "ameriški akril · izolacija 2 cm"],
+      // ⚠️ NO INSULATION LINE. "izolacija 2 cm" is the POLA sheet's shell
+      // line; the swim-spa sheet's common list states shell, frame, cabinet,
+      // base, heater, control and voltages — no shell insulation — and
+      // cabinet+bottom insulation is a PRICED OPTION on these units. The
+      // shell colour is the sheet's own: silver white.
+      ["Školjka", "ameriški akril · silver white"],
       ["Mere", swimFootprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
       // Omitted entirely where the supplier states no mass. A dash would read
       // as "none"; an estimate would be a structural claim nobody made.
@@ -583,18 +633,19 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
         "Opis izdelka",
         "Akrilna školjka " +
           swimFootprint(m) +
-          " z izolacijo 2 cm, pocinkan nosilni okvir in PS obloga. " +
+          ", pocinkan nosilni okvir in PS obloga. " +
           // Two whole sentences, not a lead-in and a tail: the tail used to
           // assume the lead-in, so SWIM 450 — the one model with no
           // counter-current jets — rendered "…obloga. poleg 4 masažne šobe…",
           // a lowercase fragment with a dangling preposition.
           (m.swimJets > 0
-            ? m.swimJets +
-              " protitočne šobe ustvarijo tok, v katerem se plava na mestu; " +
-              counted(m.jets, MASSAGE_JETS) + (m.jets < 5 ? " so" : " je") +
-              " namenjenih sprostitvi po plavanju."
-            : counted(m.jets, MASSAGE_JETS) +
-              " so namenjene sprostitvi po plavanju."),
+            ? counted(m.swimJets, SWIM_JETS) +
+              (m.swimJets % 100 === 1 ? " ustvari" : m.swimJets % 100 === 2 ? " ustvarita" : " ustvarijo") +
+              " tok, v katerem se plava na mestu; " +
+              counted(m.jets, MASSAGE_JETS) + " " + aimedAtRest(m.jets) +
+              " po plavanju."
+            : counted(m.jets, MASSAGE_JETS) + " " + aimedAtRest(m.jets) +
+              " po plavanju."),
       ],
       [
         "Mere in prostor",
@@ -616,7 +667,12 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
         "2–5 let, odvisno od sklopa. Rezervni deli in servis prek naše mreže.",
       ],
     ],
-    finishes: [...SHELL_FINISHES],
+    // ⚠️ NO SHELL LIST EITHER — the sheet states ONE shell colour for every
+    // swim spa ("silver white 6427"), so the ten-shade hot-tub chart rendered
+    // here as a live choice was an inherited assumption dressed as a
+    // configurator: the picked shade travelled into the enquiry mail as an
+    // agreed configuration nobody can honour. The spec row states the sheet's
+    // own colour instead. Same reasoning as the cabinet note below.
     // ⚠️ NO CABINET LIST FOR A SWIM SPA, DELIBERATELY. catalog/swimspa.ts says
     // nothing about colours at all — the supplier's swim-spa sheets carry no
     // finish page — so the shell list above is already an inheritance from the
@@ -731,7 +787,10 @@ export const bazenContent: ShopContent = {
   // the three-word label was the one that dissolved into the edge fade with
   // KONTAKT pushed off-screen entirely. The page's own h1 keeps the full
   // name; a nav label is a handle, not a title.
-  nav: ["Trgovina", "O nas", "Vodniki", "Dostava", "Kontakt"],
+  // 5 and 6 are APPENDED — see the nav note in types.ts. "Kateri bazen?"
+  // over "Izbira": the nav is the one place a label has to work with no
+  // sentence around it, and the question names what the visitor gets.
+  nav: ["Trgovina", "O nas", "Vodniki", "Dostava", "Kontakt", "Primerjava", "Kateri bazen?"],
   artKey: "pool",
   kicker: "Masažni bazen · Slovenija",
   h1: "Masažni bazen za pet ali šest oseb.",
@@ -739,13 +798,20 @@ export const bazenContent: ShopContent = {
   // an h1's sub is the one a customer remembers, and it would go stale the
   // day the inputs move — the cards and the PDPs derive theirs and this line
   // would not.
-  sub: "Trije modeli — mali, srednji in veliki, od 195 do 230 cm. Akrilna školjka, od petintrideset do petdeset šob, ogrevanje in filtracija. Na teraso ga pripeljemo, priklopimo in zaženemo — vi pripravite kopalke.",
+  // ⚠️ THIS LINE IS THE STATEMENT BAND'S ONLY PROSE, under the heading "Od
+  // terase do prve kopeli — vse opravimo mi." Two things follow: it has to
+  // COVER THE WHOLE SHOP (it still sold a three-model, 195–230 cm range two
+  // bands above a stats row saying "6 modelov / 195–580 cm"), and it has to
+  // DELIVER THE ARC the heading promises — ogled, dostava, priklop, zagon —
+  // because moat.steps render on /dostava-in-montaza, not here. Spelled-out
+  // numerals, because the ring device cuts numerals in this band.
+  sub: "Trije masažni bazeni od 195 do 230 cm in trije swim spa bazeni od 450 do 580 cm. Pridemo pogledat lokacijo, bazen pripeljemo, priklopimo, zaženemo in predamo — vi pripravite kopalke.",
   cta: "Izberite svoj bazen",
   metaDescription:
     "Masažni bazeni za 5 ali 6 oseb, 35–50 šob, akrilna školjka in ogrevanje. Ogled lokacije, dostava na teraso in zagon po vsej Sloveniji.",
   trust: [
     "Dostava in zagon po vsej Sloveniji",
-    "Ogled lokacije pred dostavo",
+    "Ogled lokacije pred ponudbo",
     "Servisna mreža in rezervni deli",
     "Do 36 mesečnih obrokov",
   ],
@@ -808,11 +874,15 @@ export const bazenContent: ShopContent = {
     {
       util: true,
       h: "Bo terasa zdržala?",
-      p: "Napolnjen bazen tehta do 2.210 kg, swim spa še precej več. Pred dostavo brezplačno preverimo nosilnost, dostop in elektriko.",
-      cta: "Naročite ogled →",
-      // The enquiry page, not the flagship model: the tile promises a site
-      // survey, and the survey is booked by writing or calling.
-      href: "/kontakt",
+      // "Pred nakupom", not "pred dostavo": the visit is the shop's
+      // see-before-you-buy offer and every other surface places it before
+      // the purchase — logistics wording undersold it here.
+      p: "Napolnjen bazen tehta do 2.210 kg, swim spa še precej več. Pred nakupom brezplačno preverimo nosilnost, dostop in elektriko.",
+      cta: "Naročite ogled",
+      // The page WRITTEN for this errand. It pointed at /kontakt while the
+      // closing band's identical promise pointed at /ogled-lokacije — the
+      // same click, two destinations on one scroll.
+      href: "/ogled-lokacije",
     },
   ],
   moat: {
@@ -837,7 +907,7 @@ export const bazenContent: ShopContent = {
     // who has not is being told this is easier than it is. "Tudi tisoč
     // štiristo" is the real range's top, spelled out because the ring device
     // cuts this sentence and a numeral would be cut with it.
-    claim: ["Bazen tehta tudi tisoč štiristo kilogramov. ", "Premaknemo ga mi."],
+    claim: ["Bazen tehta tudi tisoč štiristo trideset kilogramov. ", "Premaknemo ga mi."],
   },
   // ⚠️ THE TWO INVENTED REVIEWS ARE GONE, AND THIS IS WHERE THEY WERE.
   //
@@ -871,9 +941,13 @@ export const bazenContent: ShopContent = {
   collections,
   // Distinct from the home page's on purpose: the hub's job is "both
   // families, all six models", where home leads with the keyword.
+  // ⚠️ "cene, z dostavo" stood here — a snippet reading as delivery-inclusive
+  // prices, against pogoji.ts and both freight tables ("po ponudbi"). The
+  // SERP line is a price surface like any other: what it says about the
+  // composition must match what the page says beside the figure.
   hubMetaDescription:
     "Masažni bazeni od 195 do 230 cm in swim spa bazeni od 450 do 580 cm. " +
-    "Mere, specifikacije in cene, z dostavo, priklopom in zagonom po Sloveniji.",
+    "Mere, specifikacije in cene z DDV; priklop in zagon vključena, dostava po ponudbi.",
   // The lede states the decision; the two cards under it carry the facts the
   // decision turns on. What used to be here — one nine-line paragraph doing
   // both jobs — is the reason hubChoice exists; see its note in types.ts.

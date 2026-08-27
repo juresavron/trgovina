@@ -121,7 +121,7 @@ export const COMPARE: Page = {
       items: [
         [
           "Ali gre swim spa na teraso?",
-          "Praviloma ne. Školjka je dolga 4,5 do 5,8 metra, široka 2,28 metra in napolnjena " +
+          "Praviloma ne. Školjka je dolga 4,5 do 5,8 metra, široka 2,24 do 2,28 metra in napolnjena " +
             "tehta od 5.750 do 8.490 kilogramov — to je obremenitev, ki jo lesena ali " +
             "nadgrajena terasa redko prenese. Swim spa zato skoraj vedno stoji na betonski " +
             "plošči na terenu. Masažni bazen je pri 1.500 do 2.210 kilogramih pogosto " +
@@ -137,7 +137,7 @@ export const COMPARE: Page = {
           "Kateri sprejme največ ljudi?",
           "Med masažnimi bazeni BAZEN 210 s šestimi mesti, med swim spa bazeni SWIM 580 " +
             "HIDRO in SWIM 580 MAXI s sedmimi. Število mest pa ni isto kot velikost školjke: " +
-            "BAZEN 230 je večji od BAZEN 210 in ima eno mesto manj, ker ima dva ležalnika " +
+            "BAZEN 230 je večji od BAZENA 210 in ima eno mesto manj, ker ima dva ležalnika " +
             "namesto enega.",
         ],
         [
@@ -172,7 +172,7 @@ export const COMPARE: Page = {
       // navigated to "/BAZEN%20195". The proofread caught it; the structure
       // test below the fragment sweep now pins the direction.
       items: [
-        ["Kateri je pravi za vas? — tri vprašanja", "/izbira"],
+        ["Kateri je pravi za vas? — dve do tri vprašanja", "/izbira"],
         ["BAZEN 195", "/bazen/mali-195"],
         ["BAZEN 210", "/bazen/srednji-210"],
         ["BAZEN 230", "/bazen/veliki-230"],

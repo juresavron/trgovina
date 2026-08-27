@@ -18,6 +18,7 @@ import {
   nextStep,
   previousAnswers,
   recommend,
+  walk,
   type FinderAnswers,
   type FinderStep,
 } from "../../content/finder";
@@ -295,15 +296,21 @@ function href(base: string, a: FinderAnswers): string {
   return q ? base + "?" + q : base;
 }
 
-/** "Vprašanje 2 od 3" — the relaxation branch is 3 deep, swimming 2. */
-function progress(a: FinderAnswers): string {
-  const depth = a.namen === "plavanje" ? 2 : 3;
-  const answered =
-    (a.namen ? 1 : 0) +
-    (a.osebe ? 1 : 0) +
-    (a.prostor ? 1 : 0) +
-    (a.masaza ? 1 : 0);
-  return "Vprašanje " + Math.min(answered + 1, depth) + " od " + depth;
+/**
+ * "Vprašanje 2" / "Zadnje vprašanje" — a count, never a total.
+ *
+ * The old label said "od 3" everywhere and delivered three questions on one
+ * path of three: swimming resolves in two, and six-people ends the
+ * relaxation branch at two. A total that depends on answers not yet given
+ * is not a fact, so the label states the number — and says "last" exactly
+ * where that is provable, which is when every choice of the current step
+ * terminates the tree.
+ */
+function progress(answered: number, seen: FinderAnswers, step: FinderStep): string {
+  const last = step.choices.every(
+    (c) => nextStep({ ...seen, [step.param]: c.value }) === null,
+  );
+  return last && answered > 0 ? "Zadnje vprašanje" : "Vprašanje " + (answered + 1);
 }
 
 function stepHtml(
@@ -313,23 +320,31 @@ function stepHtml(
   step: FinderStep,
 ): string {
   const base = shop.routeSlugs["/finder"];
+  // ⚠️ ONLY ANSWERS THE TREE ACCEPTED — walk() replays the branch and drops
+  // everything else. Counting raw query entries did two wrong things at
+  // once: a stray ?osebe=nonsense made `answered` non-zero, which hid the
+  // lead, the catalogue and the trust notes from the entry page (the only
+  // page carrying the outbound product links), and every option href copied
+  // the nonsense forward — one click away from the replay loop the module
+  // note in content/finder.ts describes.
+  const accepted = walk(a).seen;
   const params = new URLSearchParams();
   let answered = 0;
-  for (const [k, v] of Object.entries(a)) {
+  for (const [k, v] of Object.entries(accepted)) {
     if (v) {
       params.set(k, v);
       answered++;
     }
   }
-  const back = previousAnswers(a);
+  const back = previousAnswers(accepted);
   return (
-    '<p class="st-fnd-eyebrow">' + esc(progress(a)) + "</p>" +
+    '<p class="st-fnd-eyebrow">' + esc(progress(answered, accepted, step)) + "</p>" +
     "<h1>" + esc(step.question) + "</h1>" +
     // The lead only on the FIRST question: it says what this is and what it
     // costs the visitor. Repeating it above questions two and three would be
     // explaining a thing already in progress.
     (answered === 0
-      ? '<p class="st-fnd-lead">Tri vprašanja, pol minute — potem predlagamo ' +
+      ? '<p class="st-fnd-lead">Dve do tri vprašanja, pol minute — potem predlagamo ' +
         "model iz naše ponudbe in povemo, zakaj prav tega. Ničesar ni treba " +
         "vpisati.</p>"
       : "") +
@@ -486,8 +501,10 @@ export function renderStudioFinder(
 ): string {
   const shop = ctx.shop;
   const content = ctx.content;
-  const step = nextStep(a);
-  const inner = step ? stepHtml(shop, content, a, step) : resultHtml(shop, content, a);
+  // Sanitize ONCE at the door: everything below sees only accepted answers.
+  const clean = walk(a).seen;
+  const step = nextStep(clean);
+  const inner = step ? stepHtml(shop, content, clean, step) : resultHtml(shop, content, clean);
   return (
     renderStudioHeader(ctx) +
     '<main><section class="st-fnd"><div class="st-fnd-in">' +

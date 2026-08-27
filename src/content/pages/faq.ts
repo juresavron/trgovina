@@ -137,6 +137,18 @@ export const FAQ: Page = {
         ],
       ],
     },
+    // The withdrawal answer above names its page; qa items are escaped text
+    // and cannot carry an anchor, so the name was unreachable from the one
+    // page that sends people there. One row of links makes it a route.
+    {
+      kind: "links",
+      h: "Strani, ki jih odgovori omenjajo",
+      items: [
+        ["Odstop od pogodbe", "/odstop-od-pogodbe"],
+        ["Dostava in montaža", "/dostava-in-montaza"],
+        ["Pogoji poslovanja", "/pogoji-poslovanja"],
+      ],
+    },
     {
       kind: "cta",
       h: "Vprašanja ni na seznamu?",

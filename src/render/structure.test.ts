@@ -475,3 +475,41 @@ describe("rich results", () => {
     }
   });
 });
+
+describe("figure blocks", () => {
+  it("names only slots the panel manages, so a typo cannot become a permanent fallback", async () => {
+    // A figure's slot resolves through /media/site/<slot>.webp, which serves
+    // the legacy fallback for REGISTERED slots and 404s for anything else —
+    // silently, because the image is decorative. The registry is the truth.
+    const { PAGES } = await import("../content/pages");
+    const { siteImageByKey } = await import("../admin/site-images");
+    let figures = 0;
+    for (const page of PAGES) {
+      for (const b of page.blocks) {
+        if (b.kind !== "figure") continue;
+        figures++;
+        expect(
+          siteImageByKey("site/" + b.slot + ".webp"),
+          page.key + " names unregistered figure slot: " + b.slot,
+        ).toBeTruthy();
+      }
+    }
+    // The count pins the four placements; a fifth page adding one updates it.
+    expect(figures).toBe(4);
+  });
+
+  it("stays out of the page's own table of contents", async () => {
+    const res = handleRequest(
+      new Request("https://trgovina.workers.dev/o-nas?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+    const html = await res.text();
+    // Two figures render on /o-nas…
+    expect((html.match(/st-page-fig-img/g) ?? []).length).toBe(2);
+    // …and the TOC lists only headed sections, no figure entries.
+    const toc = (html.match(/<nav class="st-page-toc"[\s\S]*?<\/nav>/) ?? [""])[0];
+    expect(toc).toContain("Kaj delamo");
+    expect(toc).not.toContain("figure");
+  });
+});

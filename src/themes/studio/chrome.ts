@@ -43,7 +43,7 @@
 import { esc, type RenderCtx } from "../../render/sections";
 import { brandMark } from "./brand";
 import { basketIcon, mailIcon } from "./icons";
-import { isSetPhone } from "../../lib/filled";
+import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 
 /* ---- inline line icons ----------------------------------------------- */
 /* 24px grid, stroke-only, currentColor. The chrome's magnifier and basket are
@@ -343,7 +343,6 @@ export const STUDIO_CHROME_CSS = `
    * centred, so it floated above the brand and the lockup read as two
    * separate labels. The container aligns the line; the glyph, which has no
    * text baseline of its own, is centred back. */
-  :root[data-theme="studio"] .st-chrome-mark,
   :root[data-theme="studio"] .st-foot-mark {
     align-items: baseline;
   }
@@ -363,7 +362,8 @@ export const STUDIO_CHROME_CSS = `
     justify-self: start;
     display: inline-flex;
     align-items: center;
-    block-size: var(--st-tap);
+    /* min-, for 200% text-only zoom — see .st-chrome-tel. */
+    min-block-size: var(--st-tap);
     margin-block: -10px;
     font-family: var(--f-display);
     font-weight: var(--w-display);
@@ -443,9 +443,11 @@ export const STUDIO_CHROME_CSS = `
    * can lose width without losing meaning, so it is a scroll container at every
    * width: min-inline-size:0 lets the auto grid track shrink past max-content,
    * and the overflow is a swipeable/arrow-scrollable rail rather than a menu
-   * that runs off the page. At ≥1200 with our longest menu it never triggers;
-   * between 900 and 1200 an unusually long shop name can, and that is the
-   * point — the page must never scroll sideways.
+   * that runs off the page. With the SEVEN-item menu the rail is live through
+   * the whole 901–1060 band (the ≤1359 gap step and the 1560 tel threshold
+   * are sized off the same arithmetic — see those rules); at ≥1360 it never
+   * triggers. Either way the point holds: the page must never scroll
+   * sideways.
    *
    * The padding/margin pair is the same device as the links: it opens 10px of
    * room inside the SCROLL PORT so the 44px link boxes are not clipped by the
@@ -552,7 +554,8 @@ export const STUDIO_CHROME_CSS = `
      * because the items had shrunk to fit. */
     flex: 0 0 auto;
     justify-content: center;
-    block-size: var(--st-tap);
+    /* min-, for 200% text-only zoom — see .st-chrome-tel. */
+    min-block-size: var(--st-tap);
     margin-block: -10px;
     /* Label role — 14px DM Sans, uppercase, tracked 0.06em. Its 1.71em leading
      * is exactly the 24px --chrome-line that --chrome-h is derived from, so the
@@ -705,7 +708,9 @@ export const STUDIO_CHROME_CSS = `
     align-items: center;
     /* 8px — the source's icon-to-label gap inside a nav item. */
     gap: var(--chrome-item-gap);
-    block-size: var(--st-tap);
+    /* min-, so 200% text-only zoom grows the box instead of clipping the
+     * line inside a fixed 44px — the footer's links state the same rule. */
+    min-block-size: var(--st-tap);
     margin-block: -10px;
     /* A meta row in the bar, so the same label rung as the nav — both draw the
      * 24px line the bar is built on, and the number stays distinct from the
@@ -720,6 +725,33 @@ export const STUDIO_CHROME_CSS = `
     white-space: nowrap;
   }
   :root[data-theme="studio"] .st-chrome-tel .st-ico { inline-size: 16px; block-size: 16px; }
+
+  /* ≥1560: THE NUMBER JOINS THE BAR. Below 900 it earns its place because the
+   * two-row bar has a row to spend; on a wide desktop the single row has slack
+   * instead, and a shop selling by enquiry hides its phone number at exactly
+   * the widths where showing it costs nothing. The bar's template grows a
+   * fourth track (mark | nav | tel | actions): the two outer 1fr tracks keep
+   * the middle pair optically centred.
+   *
+   * 1560 IS ARITHMETIC, NOT TASTE — and it was 1360 for one audit run, which
+   * caught it. Measured at 1440: mark 338px + seven-item nav 818px (labels
+   * ~518 + six 50px gaps) + number ~180 + disc + three column gaps ≈ 1448px
+   * against a 1360px container — so the number sat ON "Kontakt" and the
+   * wordmark ran under "Trgovina", and the contrast gate read the collisions
+   * as 1.13:1 and 2.65:1. The pixel audit is the regression test for this
+   * block: the sum fits from a 1480px container up, so the number waits for
+   * 1560 of viewport. Between 901 and 1559 the footer states it on every
+   * page, and the PDP and contact page carry it above the fold. */
+  @media (min-width: 1560px) {
+    /* :has(), because the tel is only EMITTED when the phone is set: an
+     * unconditional four-track template put a three-child bar into it and
+     * parked the disc a quarter-screen from the gutter on any tenant with
+     * no number. */
+    :root[data-theme="studio"] .st-chrome-bar:has(> .st-chrome-tel) {
+      grid-template-columns: 1fr auto auto 1fr;
+    }
+    :root[data-theme="studio"] .st-chrome-tel { display: inline-flex; }
+  }
 
   /* Skip link: off-screen until focused, then a white plate. Its corners are
    * --r-ctrl — 4px, the radius the transcribed source gives every control that
@@ -784,6 +816,12 @@ export const STUDIO_CHROME_CSS = `
     align-items: start;
     gap: clamp(32px, 4vw, 80px);
     margin-bottom: var(--gap-3xl);
+  }
+  /* One column when the newsletter block is absent (a LIVE shop renders the
+   * wordmark alone): a two-track grid with one child is half an empty row
+   * still paying its bottom margin. */
+  :root[data-theme="studio"] .st-foot-top:not(:has(.st-news)) {
+    grid-template-columns: minmax(0, 1fr);
   }
   /* THE ONE SANCTIONED OUTLIER in this module. At ~150px it runs well past the
    * ramp's tallest rung (h1, 92px), so it keeps its clamp() and its 0.88
@@ -902,6 +940,9 @@ export const STUDIO_CHROME_CSS = `
     opacity: 1;
     cursor: not-allowed;
   }
+  /* Kept for the wired-up future: the input ships disabled pre-live, so this
+   * cannot match today — it is the focus state the field takes the day the
+   * newsletter goes live, not dead code to re-derive then. */
   :root[data-theme="studio"] .st-news-in:focus-visible {
     outline: 2px solid var(--on-invert); outline-offset: 6px; border-radius: var(--r-ctrl);
   }
@@ -1221,8 +1262,18 @@ export const STUDIO_CHROME_CSS = `
    * block padding halves for free; what does not scale is the 50px nav gap —
    * five items at 50px plus a wordmark and the icons stop fitting around
    * 1150px. 24px is the source's own next rung down and buys ~130px. */
-  @media (max-width: 1199px) {
+  /* ≤1359 (was ≤1199): the nav gap steps down to --gap-lg. The 50px gap is
+   * the transcribed source value for a FIVE-item menu; with seven items the
+   * arithmetic changes — labels ~518px + six 50px gaps + the 338px wordmark
+   * is 1244px, which fits a 1360px container and NOT the 1200–1324px band,
+   * where the mark ran under the first label. Six 24px gaps bring the row to
+   * 1088px, inside the container from 1200 of viewport up. The transcription
+   * fixed the gap for a menu it no longer describes; the target floor and
+   * now the fit are the two things that outrank it. */
+  @media (max-width: 1359px) {
     :root[data-theme="studio"] .st-chrome-nav { gap: var(--gap-lg); }
+  }
+  @media (max-width: 1199px) {
     /* The source's small header draws its icons at 34px. inset is (44 − 34) ÷ 2
      * so the target stays at --st-tap. Note what that costs: --chrome-pad-y is
      * 8px here, so the bar is 40px and a 44px target cannot fit inside it —
@@ -1406,8 +1457,13 @@ export const STUDIO_CHROME_CSS = `
    *
    * Plainer, never broken, is the same trade the :has() and animation-timeline
    * notes at the top of this file already make. */
+  /* 1060, not the 900 row switch: with SEVEN items the row needs ~1012px at
+   * the ≤1199 tier (labels ~518 + six 24px gaps + mark + disc + gaps), so on
+   * engines without scroll timelines the nav overflows with no scrollbar
+   * (suppressed above), no cue and a hard clip through the whole 901–1060
+   * band. The static fade is the cue; past ~1060 the row genuinely fits. */
   @supports not (animation-timeline: scroll()) {
-    @media (max-width: 900px) {
+    @media (max-width: 1060px) {
       :root[data-theme="studio"] .st-chrome-nav {
         -webkit-mask-image:
           linear-gradient(to right, #000 calc(100% - 40px), transparent 100%);
@@ -1544,16 +1600,21 @@ function markHtml(ctx: RenderCtx, key: string): string {
 export function renderStudioHeader(ctx: RenderCtx): string {
   const s = ctx.shop;
   const c = ctx.content;
+  // DISPLAY order, not tuple order — the tuple is append-only (types.ts).
+  // The sequence is the buying journey: catalogue, the two deciding tools,
+  // the reading, the logistics, the company, the act. Primerjava and the
+  // guided choice were in the footer only, which is where a visitor looks
+  // for them last: they are the two highest-intent destinations this site
+  // has, and the header is the one nav that is on screen at every scroll
+  // position. Seven items still fit the bar's ways of failing: the nav track
+  // is a fade-masked scroll rail wherever it runs out of room.
   const links = [
     ["/products", c.nav[0]],
-    // nav[1] is "O nas". It pointed at /compare, so the About link on every
-    // page of the site went to the model comparison instead. It stayed
-    // invisible because /o-nas was a stub until an hour ago: nothing in the
-    // chrome linked the About page at all, so there was no wrong destination
-    // to notice — only a right one that was missing.
-    ["/about", c.nav[1]],
+    ["/compare", c.nav[5]],
+    ["/finder", c.nav[6]],
     ["/guides", c.nav[2]],
     ["/delivery", c.nav[3]],
+    ["/about", c.nav[1]],
     ["/contact", c.nav[4]],
   ] as const;
 
@@ -1642,7 +1703,7 @@ export function renderStudioHeader(ctx: RenderCtx): string {
         '" aria-label="Košarica — ' + cartCount + ' izdelkov">' + basketIcon() +
         '<span class="st-chrome-badge" data-st-cart-count="' + cartCount + '" aria-hidden="true">' +
         cartCount + "</span></a>"
-      : '<a class="st-chrome-btn st-chrome-cart" href="' +
+      : '<a class="st-chrome-btn" href="' +
         esc(s.routeSlugs["/contact"] + ctx.q) +
         '" aria-label="Povpraševanje in kontakt">' + mailIcon() + "</a>") +
     "</div>" +
@@ -1673,18 +1734,17 @@ export function renderStudioHeader(ctx: RenderCtx): string {
  */
 const FACT_UNSET = '<span class="st-foot-todo">podatek še ni vpisan</span>';
 
-function isUnsetFact(value: string): boolean {
-  return value.includes("TODO") || value === "SI00000000" || value === "0000";
-}
-
-/** Nothing but zeros once the country code is off is not a phone number. */
-function isUnsetPhone(phone: string): boolean {
-  return phone.replace(/\D/g, "").replace(/^386/, "").replace(/0/g, "") === "";
-}
+/* ⚠️ THE LITERAL LIST IS GONE. isUnsetFact used to test three exact strings
+ * — "TODO", "SI00000000", "0000" — which caught the placeholders this repo
+ * happens to contain and no other: "SI 0000 0000", a ten-zero registration
+ * number or a five-zero postcode would have printed as registry facts. The
+ * per-field predicates in lib/filled.ts are the one home of this rule (see
+ * the module's own header for the third-copy incident); the footer now
+ * consults them per field instead of pattern-matching today's placeholders. */
 
 /** A text fact, escaped — or the visible mark that it is not filled in yet. */
-function fact(value: string): string {
-  return isUnsetFact(value) ? FACT_UNSET : esc(value);
+function fact(value: string, set: (v: string) => boolean = isSet): string {
+  return set(value) ? esc(value) : FACT_UNSET;
 }
 
 /**
@@ -1755,8 +1815,8 @@ export function renderStudioFooter(ctx: RenderCtx): string {
    * no collections contributes no rows and the column still stands. */
   const families = (c.collections ?? []).map((k) => [k.path, k.navLabel] as const);
 
-  const addressSet = ![a.street, a.zip, a.city].some(isUnsetFact);
-  const phoneSet = !isUnsetPhone(s.contact.phone);
+  const addressSet = isSet(a.street) && isSetZip(a.zip) && isSet(a.city);
+  const phoneSet = isSetPhone(s.contact.phone);
   const addressHtml = addressSet
     ? esc(a.street + ", " + a.zip + " " + a.city)
     : FACT_UNSET;
@@ -1791,7 +1851,14 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     '<div class="st-foot-brand">' +
     '<p class="st-foot-blurb">' + esc(c.footNote) + "</p>" +
     '<div class="st-contacts">' +
-    contact("mail", "mailto:" + s.contact.email, "E-pošta", esc(s.contact.email)) +
+    // Guarded like the phone row below: a TODO e-mail must not become a
+    // live mailto: from every page. The row stays; the link and text go.
+    contact(
+      "mail",
+      isSet(s.contact.email) ? "mailto:" + s.contact.email : null,
+      "E-pošta",
+      isSet(s.contact.email) ? esc(s.contact.email) : FACT_UNSET,
+    ) +
     // A tel: link is what the rest of the site gives this number (the bar, the
     // pdp, the contact page), and it is what the footer gives it the moment
     // there is a number. While it is the placeholder, the ROW STAYS and the
@@ -1846,15 +1913,24 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     // how the card metas break.
     '<p class="st-foot-legal">' +
     '<span class="st-foot-seg">Firma: ' + fact(s.company.legalName) + " ·</span> " +
-    '<span class="st-foot-seg">ID za DDV: ' + fact(s.company.vatId) + " ·</span> " +
+    '<span class="st-foot-seg">ID za DDV: ' + fact(s.company.vatId, isSetVat) + " ·</span> " +
+    // Matična številka and the register: the same ZGD-1 čl. 45 reading that
+    // put the first three here — an imprint without them is incomplete, and
+    // the footer is the one sitewide surface that can state them. They wear
+    // the visible unset mark until AJPES values land in the config, exactly
+    // like their neighbours. isSetVat doubles as the all-zero test for the
+    // matična: digits, minus zeros, is the same emptiness either way.
+    '<span class="st-foot-seg">Matična številka: ' + fact(s.company.regNumber, isSetVat) + " ·</span> " +
+    '<span class="st-foot-seg">Register: ' + fact(s.company.register) + " ·</span> " +
     '<span class="st-foot-seg">Sedež: ' + addressHtml + "</span>" +
     "</p>" +
     "</div></footer>" +
-    // Back to top — a fixed disc that fades in with scroll and out again at
-    // the top, driven by scroll position alone (no listener, no rAF). Inside
-    // @supports: a browser without scroll timelines renders it display:none
-    // and loses a convenience, never content. "#top" is the fragment every
-    // browser special-cases as document start, so the link needs no anchor.
+    // Back to top — a fixed disc the stylesheet keeps hidden until
+    // behaviour.ts flips `.is-on` past one viewport of scroll (a scroll
+    // timeline drove it once; the class flip replaced it so the control
+    // works wherever the script runs and simply stays hidden where it
+    // does not — a convenience lost, never content). "#top" is the fragment
+    // every browser special-cases as document start, so no anchor needed.
     '<a class="st-top" href="#top" aria-label="Na vrh strani">' +
     '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
     'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +

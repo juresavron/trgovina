@@ -70,7 +70,10 @@ const OSEBE: FinderStep = {
     {
       value: "druzba",
       label: "6 oseb naenkrat",
-      hint: "En ležalnik in pet sedežev — največ mest v ponudbi.",
+      // "med masažnimi bazeni", not "v ponudbi": both SWIM 580 seat seven,
+      // and this step is asked inside the relaxation branch where the
+      // comparison set is the hot-tub family — the hint has to say so.
+      hint: "En ležalnik in pet sedežev — največ mest med masažnimi bazeni.",
     },
   ],
 };
@@ -142,6 +145,29 @@ export function nextStep(a: FinderAnswers): FinderStep | null {
  * therefore gets a correct back link for free, and cannot drift from one.
  */
 export function previousAnswers(a: FinderAnswers): FinderAnswers | null {
+  const walked = walk(a);
+  if (walked.order.length === 0) return null;
+  const back: Record<string, string> = {};
+  for (const key of walked.order.slice(0, -1)) back[key] = a[key]!;
+  return back as FinderAnswers;
+}
+
+/**
+ * Replay the tree over an answer set and keep only what the tree ACCEPTED.
+ *
+ * ⚠️ THE ACCEPTANCE TEST IS WHAT TERMINATES THE LOOP. The first version
+ * applied whatever value the query string held for the asked parameter;
+ * given ?namen=x, nextStep() re-asks "namen" (an unrecognised value is
+ * unanswered by design), the replay applied "x" again, and the walk never
+ * advanced — an infinite loop a visitor could reach from the address bar,
+ * killing the isolate on an indexable route. A value the step's own choices
+ * do not list now ends the walk exactly as an absent one does, so the whole
+ * module treats a hand-edited URL as "answered up to the first nonsense".
+ */
+export function walk(a: FinderAnswers): {
+  readonly order: readonly (keyof FinderAnswers)[];
+  readonly seen: FinderAnswers;
+} {
   const order: (keyof FinderAnswers)[] = [];
   let seen: FinderAnswers = {};
   for (;;) {
@@ -149,14 +175,11 @@ export function previousAnswers(a: FinderAnswers): FinderAnswers | null {
     if (!step) break;
     const key = step.param as keyof FinderAnswers;
     const value = a[key];
-    if (!value) break;
+    if (!value || !step.choices.some((c) => c.value === value)) break;
     order.push(key);
     seen = { ...seen, [key]: value };
   }
-  if (order.length === 0) return null;
-  const back: Record<string, string> = {};
-  for (const key of order.slice(0, -1)) back[key] = a[key]!;
-  return back as FinderAnswers;
+  return { order, seen };
 }
 
 /**
