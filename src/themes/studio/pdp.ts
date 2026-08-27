@@ -1411,6 +1411,11 @@ export const STUDIO_PDP_CSS = `
     background: var(--bg-alt);
     overflow: hidden;
   }
+  :root[data-theme="studio"] .st-also-frame img { transition: transform 0.6s ease-out; }
+  :root[data-theme="studio"] .st-also-card:hover .st-also-frame img,
+  :root[data-theme="studio"] .st-also-card:focus-visible .st-also-frame img {
+    transform: scale(1.035);
+  }
   :root[data-theme="studio"] .st-also-name {
     font-family: var(--f-display);
     font-weight: var(--w-display);

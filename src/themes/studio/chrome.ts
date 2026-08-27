@@ -1175,6 +1175,40 @@ export const STUDIO_CHROME_CSS = `
    * plus a street address) runs ~38ch against the line's 56ch measure. */
   :root[data-theme="studio"] .st-foot-seg { white-space: nowrap; }
 
+  /* ---- back to top ----------------------------------------------------
+   * Hidden is the RESTING state and script is what earns the reveal — a
+   * visitor with no JS simply never sees a convenience, which is the right
+   * direction to fail. The first draft drove this from a scroll() timeline
+   * with an animation-range and measured differently on identical runs;
+   * a class flipped by the behaviour script is boring and always true.
+   * visibility rides along so the hidden disc is inert to tab and tap. */
+  :root[data-theme="studio"] .st-top {
+    position: fixed;
+    inset-block-end: 18px;
+    inset-inline-end: 18px;
+    z-index: 40;
+    display: grid;
+    place-items: center;
+    inline-size: var(--st-tap);
+    block-size: var(--st-tap);
+    border-radius: 999px;
+    background: var(--ink-invert);
+    color: var(--on-invert);
+    border: 1px solid var(--ink-invert);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-out, visibility 0.3s;
+  }
+  :root[data-theme="studio"] .st-top.is-on {
+    opacity: 1;
+    visibility: visible;
+  }
+  /* The product page owns its bottom edge with the sticky buy bar; the
+   * disc steps above it rather than sitting on the price. */
+  :root[data-theme="studio"] body:has(.st-pdp-bar) .st-top {
+    inset-block-end: calc(18px + 64px);
+  }
+
   /* ---- responsive ----
    * The breakpoints are the source's own tiers where the source has an answer,
    * and ours where it does not. 1200 and 810 are its tiers. 900 is hero.ts's
@@ -1804,6 +1838,15 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     '<span class="st-foot-seg">· ID za DDV: ' + fact(s.company.vatId) + "</span> " +
     '<span class="st-foot-seg">· Sedež: ' + addressHtml + "</span>" +
     "</p>" +
-    "</div></footer>"
+    "</div></footer>" +
+    // Back to top — a fixed disc that fades in with scroll and out again at
+    // the top, driven by scroll position alone (no listener, no rAF). Inside
+    // @supports: a browser without scroll timelines renders it display:none
+    // and loses a convenience, never content. "#top" is the fragment every
+    // browser special-cases as document start, so the link needs no anchor.
+    '<a class="st-top" href="#top" aria-label="Na vrh strani">' +
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
+    'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
+    'focusable="false"><path d="M12 19V5.8M5.8 12 12 5.8 18.2 12"/></svg></a>'
   );
 }

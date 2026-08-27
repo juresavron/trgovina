@@ -242,6 +242,20 @@ export const STUDIO_COMMERCE_CSS = `
     block-size: 100%;
     object-fit: contain;
   }
+  /* The photograph leans in, the card does not move. Scale on the image
+   * inside its clipped frame is the one hover a flat monochrome theme can
+   * afford: no shadow, no lift, no layout, and the reduced-motion strip in
+   * the kernel removes the transition wholesale. */
+  :root[data-theme="studio"] .st-card .st-shot-img,
+  :root[data-theme="studio"] .st-cat-img {
+    transition: transform 0.6s ease-out;
+  }
+  :root[data-theme="studio"] .st-card:hover .st-shot-img,
+  :root[data-theme="studio"] .st-card:focus-visible .st-shot-img,
+  :root[data-theme="studio"] .st-cat-card:hover .st-cat-img,
+  :root[data-theme="studio"] .st-cat-card:focus-visible .st-cat-img {
+    transform: scale(1.035);
+  }
   :root[data-theme="studio"] .st-shot-floor {
     position: absolute;
     left: 50%; bottom: 12%; transform: translateX(-50%);
@@ -1614,6 +1628,15 @@ export const STUDIO_COMMERCE_CSS = `
     line-height: var(--lh-body);
     color: var(--ink-mute);
     white-space: nowrap;
+  }
+  /* The row under the pointer, said quietly. Thirteen data rows across six
+   * columns is exactly where an eye loses its line; the wash is the panel
+   * token so it reads as paper, not selection. */
+  :root[data-theme="studio"] .st-cmp tbody tr:hover > th,
+  :root[data-theme="studio"] .st-cmp tbody tr:hover > td,
+  :root[data-theme="studio"] .st-page-cmp tbody tr:hover > th,
+  :root[data-theme="studio"] .st-page-cmp tbody tr:hover > td {
+    background: var(--bg-alt);
   }
   :root[data-theme="studio"] .st-cmp-v {
     font-family: var(--f-body);

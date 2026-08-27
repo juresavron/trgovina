@@ -74,6 +74,14 @@ const SHEET = `
     html { scroll-behavior: auto; }
     *, *::before, *::after { transition: none !important; }
   }
+  /* Same-origin navigations cross-fade instead of flashing white — the
+   * cross-document View Transitions opt-in, which is one rule and nothing
+   * else: no library, no JS, and a browser without it simply navigates.
+   * Inside the motion query so a reduced-motion reader keeps the instant
+   * cut, which for them IS the better transition. */
+  @media not (prefers-reduced-motion: reduce) {
+    @view-transition { navigation: auto; }
+  }
 
   .display {
     font-family: var(--f-display); font-weight: var(--w-display);
