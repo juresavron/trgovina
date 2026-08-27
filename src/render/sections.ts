@@ -3,6 +3,17 @@ import type { ShopContent, ArtKey, ProductCard, UtilCard, PdpContent } from "../
 import type { SectionKey } from "../themes/shared/sections";
 
 /** HTML-escape everything interpolated from content. */
+/**
+ * Bind every middot separator to the token BEFORE it, so a wrap can put a
+ * dot at a line's end — where a comma would sit — but never at its start.
+ * Applied at EMIT, not in content: the strings stay plain " · " joins that
+ * tests and mail bodies read naturally, and only the rendered markup gets
+ * the no-break bond.
+ */
+export function dotBind(s: string): string {
+  return s.replace(/ · /g, "\u00a0· ");
+}
+
 export function esc(s: string): string {
   return String(s).replace(/[&<>"]/g, (c) =>
     c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&quot;",

@@ -1438,7 +1438,12 @@ export const STUDIO_CHROME_CSS = `
      * a swipe to discover. A tighter gap puts all five on a 390 at rest; the
      * narrowest phones still scroll, and the edge fade still says so. */
     :root[data-theme="studio"] .st-chrome-nav {
-      gap: clamp(24px, 6.5vw, var(--gap-lg));
+      /* Measured against the five labels: at 5vw the fifth item's first
+       * letters cross the right edge on a 390px phone, so KONTAKT peeks
+       * under the fade instead of sitting wholly off-screen — a menu whose
+       * fifth entry cannot be seen at all reads as a four-item menu, and
+       * the fade then advertises nothing. */
+      gap: clamp(16px, 5vw, var(--gap-lg));
     }
     /* THE LOCKUP GOES TO TWO LINES, because one line was arithmetic that
      * could not come out. A shrink-only rule stood here with a comment
@@ -1828,15 +1833,16 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     // ZGD-1 and the VAT act use — so that a mark says WHICH obligation is
     // still unmet instead of leaving three anonymous blanks in a row.
     '<hr class="st-foot-rule">' +
-    // Each fact is one no-break segment with its separator INSIDE, leading —
-    // the same device editorial.ts uses on the "Zakaj kupci" subtitle, for
-    // the same reason: joined with plain " · " the line wrapped after the
-    // dot, and every desktop footer ended a line "…podatek še ni vpisan ·"
-    // with the separator dangling where a full stop would sit.
+    // Each fact is one no-break segment with its separator bound to the
+    // segment's END — the site's one separator rule: a middot may end a
+    // line the way a comma does, and may never start one. This chip
+    // carried its dot LEADING for a while, and a wrapped footer then
+    // opened lines with "· Sedež:" — a stray bullet, and the opposite of
+    // how the card metas break.
     '<p class="st-foot-legal">' +
-    '<span class="st-foot-seg">Firma: ' + fact(s.company.legalName) + "</span> " +
-    '<span class="st-foot-seg">· ID za DDV: ' + fact(s.company.vatId) + "</span> " +
-    '<span class="st-foot-seg">· Sedež: ' + addressHtml + "</span>" +
+    '<span class="st-foot-seg">Firma: ' + fact(s.company.legalName) + " ·</span> " +
+    '<span class="st-foot-seg">ID za DDV: ' + fact(s.company.vatId) + " ·</span> " +
+    '<span class="st-foot-seg">Sedež: ' + addressHtml + "</span>" +
     "</p>" +
     "</div></footer>" +
     // Back to top — a fixed disc that fades in with scroll and out again at

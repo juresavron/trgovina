@@ -1267,6 +1267,13 @@ function tileShot(ctx: RenderCtx, slot: string, cls: string, sizes: string): str
  * izberejo finsko savno") — the declension contract in tenants/types.ts exists
  * precisely so shared chrome can do this without producing broken Slovenian.
  */
+/** The impact tile's caption: the moat claim's own closing line, falling
+ * back to the stat's caption for a shop whose claim has no second half. */
+function tileCaption(ctx: RenderCtx, fallback: string): string {
+  const end = ctx.content.moat.claim?.[1]?.trim().replace(/\.$/, "");
+  return end && end.length > 0 ? end.charAt(0).toLowerCase() + end.slice(1) : fallback;
+}
+
 export function renderStudioImpact(ctx: RenderCtx): string {
   const steps = ctx.content.moat.steps;
   const label = steps[0];
@@ -1348,7 +1355,12 @@ export function renderStudioImpact(ctx: RenderCtx): string {
     (stat
       ? '<div class="st-imp-stat">' +
         '<span class="st-imp-v">' + statValue(stat[0]) + "</span>" +
-        '<span class="st-imp-c">' + esc(stat[1]) + "</span></div>"
+        // The CLAIM's own words as the caption, not the stat row's: the row
+        // one band below prints all four stats with their captions, so a
+        // tile repeating the row's cell verbatim made the page say the same
+        // sentence twice within a scroll. The claim is what this band
+        // argues; the figure is its evidence.
+        '<span class="st-imp-c">' + esc(tileCaption(ctx, stat[1])) + "</span></div>"
       : "") +
     "</div>";
 

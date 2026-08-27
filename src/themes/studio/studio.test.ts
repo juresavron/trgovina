@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { handleRequest } from "../../worker";
 import { SHOPS } from "../../tenants";
+import { dotBind } from "../../render/sections";
 import { CONTENT } from "../../content";
 import type { PdpContent } from "../../content/types";
 import { STUDIO_CSS } from ".";
@@ -257,7 +258,10 @@ describe("the collection comparison table", () => {
         expect(table, "the table omits " + d.title).toContain(d.title);
         for (const [label, value] of d.spec) {
           expect(table, d.title + " is missing " + label).toContain(label);
-          expect(table, d.title + " is missing the value for " + label).toContain(value);
+          // The emit binds each middot to its preceding token (dotBind), so
+          // the table carries the value with NBSP-bound separators — same
+          // words, one wrap rule.
+          expect(table, d.title + " is missing the value for " + label).toContain(dotBind(value));
         }
       }
       // And nothing else: no price in any cell.

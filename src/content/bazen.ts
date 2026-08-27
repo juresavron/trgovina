@@ -406,9 +406,11 @@ function pdpFor(m: PolaModel): PdpContent {
       // The supplier's own code, printed. It is what an order, a warranty
       // claim and a spare part are matched on — a buyer quoting "ZR805" on
       // the phone saves both sides the "the small one, the 195" dance.
-      ["Koda modela", m.code],
       ["Priklop", "220 V / 380 V"],
       ["Garancija", "2–5 let, odvisno od sklopa"],
+      // Last, in BOTH families: the two comparison tables sit one click
+      // apart and the row rhythm should not change between them.
+      ["Koda modela", m.code],
     ],
     bar: [m.name, seating(m) + " · " + counted(m.jets, JETS_SHORT), modelPrice(m), "V košarico"],
     addons: m.addons.map((x) => ({
