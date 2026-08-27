@@ -109,10 +109,31 @@ export async function uploadObject(
   path: string,
   body: ArrayBuffer,
   contentType: string,
+  /**
+   * ⚠️ REPLACE AN OBJECT THAT IS ALREADY THERE. Required for every FIXED key.
+   *
+   * Supabase Storage's POST refuses a key it already holds — 400, "Duplicate"
+   * — and this function turned that into a throw, which the panel showed as
+   * "Napaka na strežniku". So the hero image could be set exactly once: the
+   * first upload succeeded, and every attempt to change it afterwards failed
+   * with a server error that said nothing about the real reason. Confirmed in
+   * the project's own request log: POST site/hero.webp 200, then 400 on the
+   * next one 27 seconds later.
+   *
+   * Default false, deliberately. A product photograph is written under a fresh
+   * UUID every time, so a collision there would mean something had genuinely
+   * gone wrong with key generation, and upserting everywhere would hide it.
+   * Only the callers whose whole design is "same key, new bytes" pass true.
+   */
+  upsert = false,
 ): Promise<void> {
   const res = await fetch(api.env.SUPABASE_URL + "/storage/v1/object/" + BUCKET + "/" + path, {
     method: "POST",
-    headers: headers(api, { "content-type": contentType, "cache-control": "public, max-age=31536000, immutable" }),
+    headers: headers(api, {
+      "content-type": contentType,
+      "cache-control": "public, max-age=31536000, immutable",
+      ...(upsert ? { "x-upsert": "true" } : {}),
+    }),
     body,
   });
   if (!res.ok) throw new Error("upload failed (" + res.status + "): " + (await res.text()).slice(0, 300));

@@ -410,7 +410,20 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       if (!isWebp(bytes)) return seeOther("/admin/site/" + stemOf(slot.key) + "?e=type");
       // FIXED KEY, overwritten in place — see site-images.ts on why it cannot
       // be content-addressed and why /media gives it a short cache instead.
-      await uploadObject(api, slot.key, bytes, "image/webp");
+      //
+      // Hence upsert. "Overwritten in place" was the intent and not the
+      // behaviour: Supabase's POST refuses a key it already holds, so the
+      // hero could be set once and never changed, and the second attempt came
+      // back as a bare 500. See uploadObject.
+      // A FAILURE HERE USED TO BE A BARE 500. The panel rendered that as
+      // "Napaka na strežniku", which is true and useless: it named neither the
+      // picture nor the reason, and the operator had no move except to try the
+      // same thing again. Storage failures are worth naming.
+      try {
+        await uploadObject(api, slot.key, bytes, "image/webp", true);
+      } catch {
+        return seeOther("/admin/site/" + stemOf(slot.key) + "?e=store");
+      }
       return seeOther("/admin/site/" + stemOf(slot.key) + "?m=uploaded");
     }
     if (parts[3]) return page(notFoundPage("Neznano dejanje.", admin.email), 404);
@@ -604,6 +617,8 @@ const ERRORS: Record<string, string> = {
   stale: "Seznam fotografij se je med tem spremenil, zato ni bilo nič " +
     "izbrisano. Osvežite stran in poskusite znova.",
   "no-ai": "Razvrščanje potrebuje GEMINI_API_KEY, ki ni nastavljen.",
+  store: "Slike ni bilo mogoče shraniti. Poskusite znova; če se ponovi, " +
+    "je težava pri shrambi in ne pri vaši sliki.",
 };
 
 const NOTICES: Record<string, string> = {
