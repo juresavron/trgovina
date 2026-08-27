@@ -54,8 +54,37 @@ export const STUDIO_PAGE_CSS = `
    * term is untouched: at 390px and 320px the gutter calc wins and the count
    * is 43 and 34. Re-measure if --t-body or the body face moves. */
   :root[data-theme="studio"] .st-page {
-    padding-block: var(--studio-rhythm);
+    /* ⚠️ NOT THE FULL RHYTHM ON TOP. --studio-rhythm is 170px and it is the
+     * gap between full-bleed bands on the home page — a distance that reads
+     * as a deliberate pause between two coloured grounds. A document has no
+     * band above it, only the fixed chrome, so the same 170px reads as the
+     * page not starting: measured on /o-nas at 1440x1000, the eyebrow sat
+     * 235px down and the title was the only thing above the fold.
+     *
+     * The chrome floats over this section, so the top still has to clear it —
+     * hence a floor rather than nothing. The bottom keeps the full rhythm,
+     * because below the last block there IS a band: the footer. */
+    padding-block: clamp(48px, 6.5vw, 96px) var(--studio-rhythm);
     background: var(--bg);
+  }
+  /* ⚠️ THE CLASS IS REPEATED TO WIN A TIE, and the tie is worth naming.
+   *
+   * chrome.ts gives the site's first-child section rule (main > section,
+   * first child, not the hero) the full
+   * --studio-rhythm as padding-top, for sections that follow a full-bleed band
+   * and would otherwise start hard against it. A subpage IS that first child,
+   * so it collected 170px there regardless of what the rule above asked for —
+   * measured: cutting .st-page's own padding moved the eyebrow from 235px to
+   * 226px, which is the rounding, not the rule.
+   *
+   * Both selectors carry the same specificity (0,4,2), so source order decides
+   * and neither file should have to know which stylesheet is concatenated
+   * first. Repeating .st-page makes this one strictly higher and the outcome
+   * independent of order. It is a blunt device and it is documented rather
+   * than clever: the alternative is a rule in chrome.ts excluding .st-page,
+   * which puts knowledge of the subpage renderer into the site chrome. */
+  :root[data-theme="studio"] main > section.st-page.st-page:first-child {
+    padding-top: clamp(48px, 6.5vw, 96px);
   }
   /* THE MEASURE MOVED OFF THE CONTAINER, and that is the whole restructure.
    *
