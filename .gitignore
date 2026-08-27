@@ -25,3 +25,8 @@ dist/
 !/package.json
 !/package-lock.json
 !/tsconfig.json
+
+# Claude Code session tooling — agent worktrees live here during a session
+# and hold deliberately uncommittable rehearsal state (e.g. a local live:true
+# flip with stand-in identity values). Never repository content.
+/.claude/

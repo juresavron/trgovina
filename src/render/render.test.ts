@@ -118,21 +118,36 @@ describe("QA host (workers.dev)", () => {
   });
 });
 
-describe("production domains (pre-live)", () => {
-  it("serves 503 + noindex until live flips", async () => {
+/**
+ * LIVE-AWARE, deliberately: these used to hard-code the pre-live answers,
+ * which made them three tests that fail ON THE LAUNCH COMMIT — the one
+ * commit nobody has time to argue with a red suite about. The launch-flip
+ * rehearsal found them; they now assert the gate in whichever state the
+ * config is actually in, so the flip changes what is asserted, not whether
+ * the suite passes.
+ */
+describe("production domains (gated by live)", () => {
+  const LIVE = SHOPS["bazen"]!.live;
+
+  it(LIVE ? "serves 200, indexable, once live" : "serves 503 + noindex until live flips", async () => {
     const r = get("/", PROD_HOST);
-    expect(r.status).toBe(503);
-    expect(r.headers.get("x-robots-tag")).toContain("noindex");
-    const body = await text(r);
-    expect(body).toContain("Kmalu.");
+    if (LIVE) {
+      expect(r.status).toBe(200);
+      expect(r.headers.get("x-robots-tag")).toBeNull();
+      expect(await text(r)).not.toContain('name="robots"');
+    } else {
+      expect(r.status).toBe(503);
+      expect(r.headers.get("x-robots-tag")).toContain("noindex");
+      expect(await text(r)).toContain("Kmalu.");
+    }
   });
 
-  it("sitemap 404s while pre-live", () => {
-    expect(get("/sitemap.xml", PROD_HOST).status).toBe(404);
+  it(LIVE ? "sitemap serves once live" : "sitemap 404s while pre-live", () => {
+    expect(get("/sitemap.xml", PROD_HOST).status).toBe(LIVE ? 200 : 404);
   });
 
   it("www resolves to the same shop", () => {
-    expect(get("/", "www." + PROD_HOST).status).toBe(503);
+    expect(get("/", "www." + PROD_HOST).status).toBe(LIVE ? 200 : 503);
   });
 
   it("404s a host that is not the shop's, with no fallback", () => {

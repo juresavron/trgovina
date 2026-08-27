@@ -1438,7 +1438,12 @@ export const STUDIO_CHROME_CSS = `
      * a swipe to discover. A tighter gap puts all five on a 390 at rest; the
      * narrowest phones still scroll, and the edge fade still says so. */
     :root[data-theme="studio"] .st-chrome-nav {
-      gap: clamp(24px, 6.5vw, var(--gap-lg));
+      /* Measured against the five labels: at 5vw the fifth item's first
+       * letters cross the right edge on a 390px phone, so KONTAKT peeks
+       * under the fade instead of sitting wholly off-screen — a menu whose
+       * fifth entry cannot be seen at all reads as a four-item menu, and
+       * the fade then advertises nothing. */
+      gap: clamp(16px, 5vw, var(--gap-lg));
     }
     /* THE LOCKUP GOES TO TWO LINES, because one line was arithmetic that
      * could not come out. A shrink-only rule stood here with a comment
@@ -1662,9 +1667,9 @@ export function renderStudioHeader(ctx: RenderCtx): string {
  * over every field, and a company name has no digits at all: "Masažni Bazen
  * d.o.o." and "Ljubljana" both collapse to the empty string and would be
  * marked unset forever. Here the phone keeps its own test and text facts keep
- * theirs. (The same fold is why content/pages.ts legalPagesReady() returns
- * false for a fully filled-in shop — flagged to the coordinator, not fixed
- * here: neither file is this task's to edit.)
+ * theirs. (legalPagesReady() had the same fold once and returned false for
+ * a fully filled-in shop; it reads the per-field predicates in lib/filled.ts
+ * now and the "can actually be satisfied" test in pricing.test.ts holds it.)
  */
 const FACT_UNSET = '<span class="st-foot-todo">podatek še ni vpisan</span>';
 
@@ -1778,7 +1783,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     icon("arrow") + "</button>" +
     "</div>" +
     '<p class="st-news-note" id="st-news-note">Prijava na e-novice bo na voljo ob ' +
-    "zagonu trgovine. Do takrat nas, prosimo, pokličite ali pišite.</p>" +
+    "zagonu trgovine. Do takrat nas, prosimo, pokličite ali nam pišite.</p>" +
     "</div>") +
     "</div>" +
 
@@ -1828,15 +1833,16 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     // ZGD-1 and the VAT act use — so that a mark says WHICH obligation is
     // still unmet instead of leaving three anonymous blanks in a row.
     '<hr class="st-foot-rule">' +
-    // Each fact is one no-break segment with its separator INSIDE, leading —
-    // the same device editorial.ts uses on the "Zakaj kupci" subtitle, for
-    // the same reason: joined with plain " · " the line wrapped after the
-    // dot, and every desktop footer ended a line "…podatek še ni vpisan ·"
-    // with the separator dangling where a full stop would sit.
+    // Each fact is one no-break segment with its separator bound to the
+    // segment's END — the site's one separator rule: a middot may end a
+    // line the way a comma does, and may never start one. This chip
+    // carried its dot LEADING for a while, and a wrapped footer then
+    // opened lines with "· Sedež:" — a stray bullet, and the opposite of
+    // how the card metas break.
     '<p class="st-foot-legal">' +
-    '<span class="st-foot-seg">Firma: ' + fact(s.company.legalName) + "</span> " +
-    '<span class="st-foot-seg">· ID za DDV: ' + fact(s.company.vatId) + "</span> " +
-    '<span class="st-foot-seg">· Sedež: ' + addressHtml + "</span>" +
+    '<span class="st-foot-seg">Firma: ' + fact(s.company.legalName) + " ·</span> " +
+    '<span class="st-foot-seg">ID za DDV: ' + fact(s.company.vatId) + " ·</span> " +
+    '<span class="st-foot-seg">Sedež: ' + addressHtml + "</span>" +
     "</p>" +
     "</div></footer>" +
     // Back to top — a fixed disc that fades in with scroll and out again at

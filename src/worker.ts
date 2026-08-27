@@ -123,6 +123,21 @@ function htmlResponse(body: string, status: number, extra?: Record<string, strin
   });
 }
 
+// Security headers on everything public. nosniff stops a browser
+// reinterpreting a response against its declared type; the referrer policy
+// keeps full URLs (with ?model= choices in them) off third-party request
+// logs; the permissions policy declares the powerful APIs this site simply
+// does not use. Module scope because the FIRST responses out of the handler
+// — the unknown-host 404, the 405, the canonicalizing 308 — need them before
+// any per-request state exists. No CSP here yet: the admin has a strict one,
+// and a public one is worth doing deliberately once, not as a header dropped
+// in a list.
+const SECURITY = {
+  "x-content-type-options": "nosniff",
+  "referrer-policy": "strict-origin-when-cross-origin",
+  "permissions-policy": "camera=(), microphone=(), geolocation=()",
+} as const;
+
 /** Titles for placeholder routes, per internal key. */
 const PLACEHOLDER_TITLES: Partial<Record<InternalRouteKey, string>> = {
   "/products": "Ponudba",
@@ -152,13 +167,36 @@ export function handleRequest(request: Request): Response {
 
   let shop = resolveShop(host);
   if (!shop) {
+    // Bare text, full headers: an unknown host earns nothing, but the
+    // response it does get should still refuse sniffing and caching.
     return new Response("Not found", {
       status: 404,
-      headers: { "content-type": "text/plain; charset=utf-8" },
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+        "x-robots-tag": "noindex, nofollow",
+        ...SECURITY,
+      },
     });
   }
 
   const dev = isDevHost(host);
+
+  // The storefront speaks GET and HEAD. Nothing here mutates — every form
+  // is a GET to /kontakt — so a POST is a mistake or a probe, and answering
+  // it with a rendered 200 let OPTIONS read as CORS consent. The admin, the
+  // media proxy and the blog take their methods before this runs.
+  if (request.method !== "GET" && request.method !== "HEAD") {
+    return new Response("Method not allowed", {
+      status: 405,
+      headers: {
+        allow: "GET, HEAD",
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+        ...SECURITY,
+      },
+    });
+  }
 
   // NO OVERRIDES, AND NO SWITCHER.
   //
@@ -185,7 +223,19 @@ export function handleRequest(request: Request): Response {
   let path = url.pathname;
   const canonicalPath = (path === "/" ? "/" : path.replace(/\/+$/, "")).toLowerCase() || "/";
   if (canonicalPath !== path) {
-    return Response.redirect(url.origin + canonicalPath + (q || url.search ? url.search : ""), 308);
+    // Response.redirect() cannot carry headers, and a 308 is heuristically
+    // cacheable by shared caches — so the redirect states its own policy
+    // (and, on the QA host, its own noindex) like every other response.
+    return new Response(null, {
+      status: 308,
+      headers: {
+        location: url.origin + canonicalPath + (q || url.search ? url.search : ""),
+        ...(dev
+          ? { "x-robots-tag": "noindex, nofollow", "cache-control": "no-store" }
+          : { "cache-control": "public, max-age=0, s-maxage=300" }),
+        ...SECURITY,
+      },
+    });
   }
 
   const content = CONTENT[shop.key];
@@ -199,21 +249,16 @@ export function handleRequest(request: Request): Response {
   // logs; the permissions policy declares the powerful APIs this site simply
   // does not use. No CSP here yet — the admin has a strict one, and a public
   // one is worth doing deliberately once, not as a header dropped in a list.
-  const security = {
-    "x-content-type-options": "nosniff",
-    "referrer-policy": "strict-origin-when-cross-origin",
-    "permissions-policy": "camera=(), microphone=(), geolocation=()",
-  } as const;
   const baseHeaders: Record<string, string> = dev
-    ? { "x-robots-tag": "noindex, nofollow", "cache-control": "no-store", ...security }
-    : { "cache-control": "public, max-age=0, s-maxage=300", ...security };
+    ? { "x-robots-tag": "noindex, nofollow", "cache-control": "no-store", ...SECURITY }
+    : { "cache-control": "public, max-age=0, s-maxage=300", ...SECURITY };
 
   // The stylesheet and the behaviour script, content-addressed and immutable
   // — see render/assets.ts. Before the live gate on purpose: a pre-live
   // shop's own 503 page still links them.
   const asset = assetResponse(path);
   if (asset) {
-    for (const [k, v] of Object.entries(security)) asset.headers.set(k, v);
+    for (const [k, v] of Object.entries(SECURITY)) asset.headers.set(k, v);
     return asset;
   }
 
@@ -235,7 +280,12 @@ export function handleRequest(request: Request): Response {
 
   // sitemap.xml — only for live shops on their real domain.
   if (path === "/sitemap.xml") {
-    if (!shop.live || dev) return new Response("Not found", { status: 404 });
+    if (!shop.live || dev) {
+      return new Response("Not found", {
+        status: 404,
+        headers: { "content-type": "text/plain; charset=utf-8", ...baseHeaders },
+      });
+    }
     // ⚠️ THE PATHS AND THE XML LIVE IN render/sitemap.ts, because the blog
     // builds this document too — it has to add the posts, and it cannot ask a
     // synchronous renderer what has been published. Two implementations of
@@ -269,6 +319,9 @@ export function handleRequest(request: Request): Response {
       "x-robots-tag": "noindex, nofollow",
       "cache-control": "no-store",
       "retry-after": "86400",
+      // Launch eve is exactly when crawlers hammer this host — the holding
+      // page gets the same security posture as every other response.
+      ...SECURITY,
     });
   }
 

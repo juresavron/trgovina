@@ -43,7 +43,7 @@ export const SHOWROOM: Page = {
           "pa razlika med bazenom, ki se komaj umesti, in takim, okoli katerega se da hoditi.",
         "Drugo je sedež. Podatek o višini školjke — od 82 do 88 centimetrov — pove, kako visoka " +
           "je školjka, ne pa, kako globoko boste sedeli v njej. Kam vam seže voda in ali je " +
-          "ležalnik dolg za vašo postavo, se izve tako, da se vanj usedete. To vzame pol " +
+          "ležalnik dovolj dolg za vašo postavo, se izve tako, da se vanj usedete. To vzame pol " +
           "minute in odgovori na vprašanje, o katerem se sicer ugiba tedne.",
         "Tretje je zvok. Črpalka pri polni moči ni tiha in kako glasno je to, si vsak " +
           "predstavlja drugače. Če bazen ob vašem obisku deluje, ga poslušajte pri najvišji in " +
@@ -62,13 +62,13 @@ export const SHOWROOM: Page = {
           "preizkusili. Kaj bo tisti dan na ogled in v kakšnem stanju, vam povemo vnaprej — to " +
           "je odgovor, ki je bolj uporaben po telefonu kot pred vrati.",
         "Ogled salona in ogled lokacije nista isto. V salonu se odločite za model; na vašem " +
-          "naslovu preverimo dostop, podlago in električni priklop. Drugo je ločen brezplačen " +
+          "naslovu preverimo dostop, podlago in električni priklop. Slednji je ločen brezplačen " +
           "obisk, ki ga opravimo pri vas pred dostavo.",
       ],
     },
     {
       kind: "facts",
-      h: "Kaj prinesite s seboj",
+      h: "Kaj prinesti s seboj",
       rows: [
         [
           "Mere mesta postavitve",
@@ -92,7 +92,7 @@ export const SHOWROOM: Page = {
         ],
         [
           "Elektrika",
-          "Kje je elektro omarica, kako daleč je do mesta postavitve in kaj je vmes.",
+          "Kje je električna omarica, kako daleč je do mesta postavitve in kaj je vmes.",
         ],
         [
           "Višinske razlike",

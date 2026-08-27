@@ -86,7 +86,11 @@ export const bazen: ShopConfig = {
   contact: {
     phone: "+386 40 202 488",
     email: "info@masazni-bazeni-vrelec.si",
-    address: { street: "Ferarska ulica 30", zip: "6000", city: "Koper" },
+    address: { // "Ferrarska", double r — the Koper street is named after Ferrara and the
+      // single-r spelling this field first carried is not a street that
+      // exists. Corrected against the street register; the owner should
+      // still confirm it matches the seat on the AJPES extract.
+      street: "Ferrarska ulica 30", zip: "6000", city: "Koper" },
   },
   company: {
     // The registered entity, which is NOT the brand — normal, and exactly

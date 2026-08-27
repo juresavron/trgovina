@@ -617,7 +617,10 @@ end $$;
 insert into public.shops (id, domain, name, is_live, order_prefix) values
   ('savna', 'infrardeca-savna.si', 'Infrardeča Savna', false, 'SAV'),
   ('kad', 'ledena-kad.si', 'Ledena Kad', false, 'KAD'),
-  ('bazen', 'masazni-bazen.si', 'Masažni Bazen', false, 'BAZ'),
+  -- ⚠️ The domain here was masazni-bazen.si — a domain this business does
+  -- not own. The tenant's real domain (src/tenants/bazen.ts) is below; the
+  -- LIVE database row must match it before is_live flips.
+  ('bazen', 'masazni-bazeni-vrelec.si', 'Masažni bazeni Vrelec', false, 'BAZ'),
   ('fotelj', 'masazni-fotelj.si', 'Masažni Fotelj', false, 'FOT'),
   ('kopalna', 'prostostojeca-kad.si', 'Prostostoječa Kad', false, 'KOP'),
   ('biljard', 'biljardna-miza.si', 'Biljardna Miza', false, 'BIL');

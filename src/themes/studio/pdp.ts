@@ -71,7 +71,7 @@
  * :root[data-theme="studio"] — zarja/lednik/salon share this sheet.
  */
 
-import { esc, type RenderCtx } from "../../render/sections";
+import { dotBind, esc, type RenderCtx } from "../../render/sections";
 import { isSetPhone } from "../../lib/filled";
 import type { ArtKey, Collection, PdpContent, PdpPhoto } from "../../content/types";
 import { productArt } from "./product-art";
@@ -2497,7 +2497,7 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   // The specification is always the first panel and is BUILT from the model
   // rather than written, so it cannot drift from the spec table's source.
   const specRows = d.spec
-    .map((row) => '<div class="st-pdp-srow"><dt>' + esc(row[0]) + "</dt><dd>" + esc(row[1]) + "</dd></div>")
+    .map((row) => '<div class="st-pdp-srow"><dt>' + esc(row[0]) + "</dt><dd>" + esc(dotBind(row[1])) + "</dd></div>")
     .join("");
   const panels =
     '<div class="st-pdp-panels">' +

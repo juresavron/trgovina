@@ -93,7 +93,7 @@
  * zarja/lednik/salon share this sheet.
  */
 
-import { esc, type RenderCtx } from "../../render/sections";
+import { dotBind, esc, type RenderCtx } from "../../render/sections";
 import { productArt } from "./product-art";
 import { productImg } from "./media";
 import { arrowIcon } from "./icons";
@@ -1971,7 +1971,7 @@ function productCards(
         // glance, like six prices. It is the line a buyer compares on, it is
         // already derived from the supplier's own figures, and it costs one
         // row of the card.
-        (p.meta ? '<span class="st-card-meta">' + esc(p.meta) + "</span>" : "") +
+        (p.meta ? '<span class="st-card-meta">' + esc(dotBind(p.meta)) + "</span>" : "") +
         '<span class="st-price-row">' +
         // The struck price's only cue is the line through it, and most screen
         // readers announce neither <s> nor text-decoration — so the row would
@@ -2168,7 +2168,7 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
         "</span>" +
         '<span class="st-cat-body">' +
         '<span class="st-cat-name">' + esc(c.name) + "</span>" +
-        '<span class="st-cat-meta">' + esc(c.meta) + "</span>" +
+        '<span class="st-cat-meta">' + esc(dotBind(c.meta)) + "</span>" +
         '<span class="st-cat-price">' + esc(c.price) +
         (c.price.includes("€") ? ' <span class="st-vat">z DDV</span>' : "") +
         "</span>" +
@@ -2265,7 +2265,7 @@ function compareTable(ctx: RenderCtx, c: Collection): string {
         "<tr>" +
         '<th scope="row" class="st-cmp-label">' + esc(label) + "</th>" +
         rows
-          .map((d) => '<td class="st-cmp-v">' + esc(d.spec[i]![1]) + "</td>")
+          .map((d) => '<td class="st-cmp-v">' + esc(dotBind(d.spec[i]![1])) + "</td>")
           .join("") +
         "</tr>",
     )

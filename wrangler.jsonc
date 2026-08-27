@@ -84,16 +84,20 @@
   // their tenants — a route for a host the resolver does not know serves a
   // hard 404 at best, and at worst attaches a zone nobody owns.
   //
-  // ⚠️ As of 25 Aug 2026 masazni-bazen.si resolves to 212.44.105.63, which is
-  // not a Cloudflare address. Whatever is answering there, it is not this
-  // Worker — so the zone is either not in this account or is DNS-only. Do NOT
-  // uncomment this until the zone reads Active in THIS account: step 1 above
-  // is not paperwork, it is the difference between a working deploy and
-  // error 10082 taking the whole deploy down.
+  // ⚠️ THE PAIR BELOW NOW NAMES THE SHOP'S OWN DOMAIN. It used to name
+  // masazni-bazen.si — a domain this business DOES NOT OWN (it resolves to
+  // 212.44.105.63, not Cloudflare) — so following the launch steps verbatim
+  // would have attached somebody else's hostname. The tenant's domain is
+  // masazni-bazeni-vrelec.si (src/tenants/bazen.ts), and that is the only
+  // pair that may ever be uncommented here.
+  //
+  // Do NOT uncomment until that zone reads Active in THIS account: step 1
+  // above is not paperwork, it is the difference between a working deploy
+  // and error 10082 taking the whole deploy down.
   //
   // "routes": [
-  //   { "pattern": "masazni-bazen.si", "custom_domain": true },
-  //   { "pattern": "www.masazni-bazen.si", "custom_domain": true }
+  //   { "pattern": "masazni-bazeni-vrelec.si", "custom_domain": true },
+  //   { "pattern": "www.masazni-bazeni-vrelec.si", "custom_domain": true }
   // ],
 
   // Static assets, served from the edge before the Worker runs. Only /img/*

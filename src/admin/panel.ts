@@ -1373,13 +1373,31 @@ const SMART_JS = `
     say("AI razvršča " + fs.length + " slik …", "");
 
     /* Probes first, all of them, then ONE sorting request: the assignment is
-       a property of the batch — see the site-sort route. */
+       a property of the batch — see the site-sort route.
+
+       ⚠️ A FAILED PROBE MUST NOT KILL THE BATCH. The first version chained
+       these with no per-file catch, so one PDF in the drag — or an AVIF on
+       an engine that cannot decode it — rejected the whole chain before
+       anything was classified, and nine good photographs died with it. The
+       failed file keeps its SLOT in the array as a 1×1 stand-in (the server
+       answers by position, so the indexes must stay aligned), is marked
+       dead here, and is skipped when the answers come back. */
     var probes = [];
+    var deadRows = {};
+    function standIn(){
+      var c = document.createElement("canvas");
+      c.width = 1; c.height = 1;
+      return toBlob(c, "image/jpeg", 0.5);
+    }
     var chain = Promise.resolve();
     fs.forEach(function(f, i){
       chain = chain.then(function(){
         mark(i, "pripravljam …");
-        return probe(f).then(function(b){ probes[i] = b; });
+        return probe(f).then(function(b){ probes[i] = b; }, function(err){
+          deadRows[i] = true;
+          mark(i, err && err.message ? err.message : "slike ni bilo mogoče prebrati", "bad");
+          return standIn().then(function(b){ probes[i] = b; });
+        });
       });
     });
 
@@ -1398,6 +1416,7 @@ const SMART_JS = `
       items.forEach(function(it){
         seq = seq.then(function(){
           var i = it.i, f = fs[i];
+          if (deadRows[i]) { skipped++; return; }
           if (!it.stem) {
             skipped++;
             mark(i, "ni razporejena — " + (it.reason || "brez razloga"), "bad");
@@ -1507,12 +1526,12 @@ const UPLOAD_JS = `
 
   function slike(n){
     if (n === 0) return "brez fotografij";
-    var teen = n % 100;
-    if (teen >= 11 && teen <= 14) return n + " fotografij";
-    var u = n % 10;
-    if (u === 1) return n + " fotografija";
-    if (u === 2) return n + " fotografiji";
-    if (u === 3 || u === 4) return n + " fotografije";
+    /* Last two digits, matched exactly — the same rule photoCount() states
+       server-side: compounds (22, 94) take the genitive plural. */
+    var t = n % 100;
+    if (t === 1) return n + " fotografija";
+    if (t === 2) return n + " fotografiji";
+    if (t === 3 || t === 4) return n + " fotografije";
     return n + " fotografij";
   }
 
