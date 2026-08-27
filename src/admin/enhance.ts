@@ -57,12 +57,28 @@ const MODELS = [
  * alter" is the whole point of the instruction, and the reason the prompt
  * names the subject as a product photograph rather than describing a scene.
  */
-const PROMPT =
-  "Upscale this product photograph to 2K resolution. Preserve the subject " +
-  "exactly: do not add, remove, move or alter any part of the product, its " +
-  "colour, its materials, its proportions or the number of any of its " +
-  "features. Do not restyle the lighting or the background. Increase " +
-  "resolution and sharpness only. Return the image at the same aspect ratio.";
+function prompt(target: "2K" | "4K"): string {
+  return (
+    "Upscale this product photograph to " + target + " resolution. Preserve " +
+    "the subject exactly: do not add, remove, move or alter any part of the " +
+    "product, its colour, its materials, its proportions or the number of any " +
+    "of its features. Do not restyle the lighting or the background. Do not " +
+    "recompose, recrop or move the camera. Increase resolution and sharpness " +
+    "only. Return the image at the same aspect ratio."
+  );
+}
+
+/**
+ * ⚠️ "DO NOT RECOMPOSE, RECROP OR MOVE THE CAMERA" IS NEW, AND IT IS THERE
+ * BECAUSE OF WHAT HAPPENED TO THE HERO.
+ *
+ * The clause list already said do not add, remove or alter the product. The
+ * model obeyed that and moved the camera instead: same tub, different garden,
+ * cropped to a corner. That is why site pictures were taken off this path
+ * entirely, and it is the failure the size guard in the panel now catches
+ * whatever the prompt does — a redraw that is not bigger than what it was
+ * given is all risk and no gain, so the browser throws it away.
+ */
 
 export function enhanceAvailable(env: Env): boolean {
   return typeof env.GEMINI_API_KEY === "string" && env.GEMINI_API_KEY !== "";
@@ -92,18 +108,29 @@ export interface Enhanced {
   readonly mime: string;
 }
 
+/** The sizes the API takes. Not a free number — it is an enum upstream. */
+export type EnhanceTarget = "2K" | "4K";
+
 /**
- * Redraw one image at 2K, or return null.
+ * Redraw one image larger, or return null.
  *
  * Null for every failure — no key, a refusal, a timeout, a response with no
  * image in it. The caller uploads the original when this is null, which is
  * why none of these cases throws: an upload that fails because an optional
  * enhancement failed would be a worse tool than one that never had it.
+ *
+ * ⚠️ ASKING FOR 4K IS NOT THE SAME AS GETTING IT. imageSize is a request, and
+ * which sizes a given model actually honours moves with the model. So the
+ * caller MEASURES what came back rather than trusting the number it asked
+ * for — see the size guard in panel.ts, which throws away a result that is not
+ * genuinely larger than the picture it was given. A redraw that did not add
+ * pixels is all of this path's risk and none of its benefit.
  */
 export async function enhance(
   env: Env,
   bytes: ArrayBuffer,
   mime: string,
+  target: EnhanceTarget = "2K",
 ): Promise<Enhanced | null> {
   if (!enhanceAvailable(env)) return null;
 
@@ -112,12 +139,12 @@ export async function enhance(
     contents: [
       {
         parts: [
-          { text: PROMPT },
+          { text: prompt(target) },
           { inline_data: { mime_type: mime, data: base64(bytes) } },
         ],
       },
     ],
-    generationConfig: { imageConfig: { imageSize: "2K" } },
+    generationConfig: { imageConfig: { imageSize: target } },
   });
 
   const models = env.GEMINI_IMAGE_MODEL ? [env.GEMINI_IMAGE_MODEL] : MODELS;

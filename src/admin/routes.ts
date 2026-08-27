@@ -391,7 +391,11 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       return new Response("No file", { status: 400 });
     }
     const bytes = await part.arrayBuffer();
-    const done = await enhance(env, bytes, part.type || "image/jpeg");
+    // The caller says how big it wants the result. Validated against the two
+    // the API takes rather than passed through — this is a value off the
+    // wire, and it reaches an outside service.
+    const want = String(form.get("target") ?? "") === "4K" ? "4K" : "2K";
+    const done = await enhance(env, bytes, part.type || "image/jpeg", want);
     // Null means the upscaler did not produce anything usable. Answering 204
     // rather than an error is what lets the browser carry on with the file it
     // already has: an optional enhancement must never cost an upload.
@@ -609,6 +613,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         admin.email,
         slot.ratio,
         slot.maxWidth,
+        enhanceAvailable(env),
       ),
     );
   }

@@ -287,6 +287,11 @@ input[type=file]::file-selector-button:hover{background:var(--paper)}
 .drop{border:1px dashed var(--line-ctrl);border-radius:var(--r-card);
   padding:16px;background:#fbfbfb}
 .drop.is-over{border-color:var(--ink);background:var(--paper)}
+/* The opt-in above the disclosure it belongs to: a real 44px row, because it
+   is a control that changes what gets published. */
+.ai-opt{display:flex;align-items:center;gap:10px;min-height:44px;margin:14px 0 0;
+  font-size:14px;font-weight:500;color:var(--ink);cursor:pointer}
+.ai-opt input{width:18px;height:18px;flex:none;cursor:pointer}
 .note-ai{margin:16px 0 0;padding:11px 13px;border-left:2px solid var(--ink);
   background:#fbfbfb;font-size:13px;line-height:1.45;color:var(--mute);
   max-width:56ch}
@@ -745,6 +750,8 @@ export function siteImagePage(
   ratio?: readonly [number, number],
   /** The largest width worth storing — a cap, never a target to inflate to. */
   maxWidth = 2048,
+  /** Whether GEMINI_API_KEY is set, so the upscale can even be offered. */
+  canEnhance = false,
   // No enhance parameter. It used to take one and pass it to the form; a site
   // photograph is never redrawn now, so a caller handing this page the
   // upscaler's availability would be describing something that does not
@@ -821,9 +828,32 @@ export function siteImagePage(
       // picture is REDRAWN at 2K rather than sharpened, and an operator who
       // does not know that cannot judge whether the result still shows the
       // product they are selling.
-      '<p class="note-ai">Ta slika se ne obdeluje z umetno inteligenco — ' +
-      "naložimo jo tako, kot ste jo izbrali, samo pretvorjeno v WebP. " +
-      "Priporočena širina 2000 px ali več.</p>" +
+      // ⚠️ AN OPT-IN, AND OFF BY DEFAULT, AND HERE AT ALL BECAUSE THE OWNER
+      // ASKED TWICE FOR IT ON THIS SLOT.
+      //
+      // The refusal above it is the same one this file has carried since the
+      // hero came back as a different garden, and it is still why nothing
+      // happens unless somebody ticks the box. What changed is that "no" was
+      // not an answer to "my hero is not sharp enough": the panel caps and
+      // never inflates, so a small upload stays small, and the only thing that
+      // can genuinely add pixels is a model that draws them.
+      //
+      // So the choice is put where the decision is made, with the cost stated
+      // in the same breath — not in a manual, and not switched on quietly.
+      // The size guard in the script refuses a result that is not actually
+      // larger, so ticking this can cost time and never quality.
+      (canEnhance
+        ? '<label class="ai-opt" for="ai"><input type="checkbox" id="ai">' +
+          "<span>Povečaj z umetno inteligenco na 4K</span></label>" +
+          '<p class="note-ai">Brez kljukice sliko naložimo tako, kot ste jo ' +
+          "izbrali — samo obrezano na pravo razmerje in pretvorjeno v WebP. " +
+          "S kljukico jo model PONOVNO NARIŠE večjo: rezultat je oster, ni " +
+          "pa nujno več ista fotografija. Pri naslovni sliki to pomeni, da " +
+          "je lahko bazen v drugačnem vrtu, zato jo po nalaganju poglejte. " +
+          "Če model ne vrne večje slike, obdržimo vašo.</p>"
+        : '<p class="note-ai">Ta slika se ne obdeluje z umetno inteligenco — ' +
+          "naložimo jo tako, kot ste jo izbrali, samo obrezano na pravo " +
+          "razmerje in pretvorjeno v WebP.</p>") +
       '<p id="gowrap"><button class="btn" type="submit" id="go">Naloži</button></p>' +
       "</div></div></form>" +
       "<script>" + UPLOAD_JS + "</script>",
@@ -1388,7 +1418,14 @@ const UPLOAD_JS = `
   })();
   var slotMax = parseInt(form.getAttribute("data-max") || "", 10) || MAX_W;
 
-  var doEnhance = form.getAttribute("data-enhance") === "on";
+  /* ⚠️ READ AT SUBMIT TIME, NOT AT LOAD. The product forms carry
+     data-enhance="on" and always upscale; a site slot offers a checkbox the
+     operator ticks, and a boolean captured when the script ran would be the
+     state of a box nobody had touched yet. */
+  var aiBox = document.getElementById("ai");
+  function wantsEnhance(){
+    return form.getAttribute("data-enhance") === "on" || (aiBox && aiBox.checked);
+  }
 
   /* Ask the Worker to redraw the picture at 2K, or hand back what we had.
      A 204 means the upscaler produced nothing usable and the ORIGINAL should
@@ -1411,18 +1448,37 @@ const UPLOAD_JS = `
   var shot = "";
   var shotWarn = false;
 
+  /* Ask a picture to come back bigger, keeping the original unless it does.
+     A site slot asks for 4K, a product for 2K: the hero is the full viewport
+     and the largest contentful paint on the page, the product frames are a
+     column wide. */
   function enhanced(f, i){
-    if (!doEnhance) return Promise.resolve(f);
+    if (!wantsEnhance()) return Promise.resolve(f);
     phase(i, "izboljšujem", .1);
     var fd = new FormData();
     fd.append("file", f, f.name);
+    fd.append("target", siteMode ? "4K" : "2K");
     return fetch("/admin/enhance", { method: "POST", body: fd, credentials: "same-origin" })
       .then(function(res){
         if (res.status === 204 || !res.ok) return f;
         return res.blob().then(function(b){
           if (!(b.size > 0)) return f;
-          upscaled++; hit[i] = true;
-          return b;
+          /* ⚠️ MEASURE WHAT CAME BACK. imageSize is a REQUEST, and which sizes
+             a model honours moves with the model — so "we asked for 4K" is not
+             evidence that anything got bigger. A redraw that is no larger than
+             what it was given is all of this path's risk (the hero came back
+             as the same tub in a different garden) and none of its benefit, so
+             it is thrown away and the operator's own file goes through.
+
+             Both are decoded because neither carries its size until it is. If
+             either fails to decode, keep the original — the safe direction. */
+          return Promise.all([decode(f), decode(b)]).then(function(pair){
+            var was = pair[0].width || pair[0].naturalWidth;
+            var now = pair[1].width || pair[1].naturalWidth;
+            if (!(now > was)) return f;
+            upscaled++; hit[i] = true;
+            return b;
+          }, function(){ return f; });
         });
       })
       .catch(function(){ return f; });
@@ -1536,9 +1592,15 @@ const UPLOAD_JS = `
            be said in 13px grey and taken off the screen two and a half seconds
            later; it is now the loud state of the status region, and it holds
            long enough to be read. */
-        if (doEnhance && upscaled === 0) {
-          say("Naloženo — nobene slike ni bilo mogoče izboljšati na 2K. " +
-            "Naložene so takšne, kot ste jih izbrali.", "warn");
+        if (wantsEnhance() && upscaled === 0) {
+          /* The size this run ASKED for, not a hard-coded 2K. A site slot asks
+             for 4K, and telling somebody who ticked "povečaj na 4K" that
+             nothing could be upscaled to 2K reads as a different feature
+             failing. */
+          say("Naloženo — " + (siteMode ? "slike ni" : "nobene slike ni") +
+            " bilo mogoče povečati na " + (siteMode ? "4K" : "2K") + ". " +
+            (siteMode ? "Naložena je takšna" : "Naložene so takšne") +
+            ", kot ste jo izbrali.", "warn");
           setTimeout(function(){ location.reload(); }, 5000);
           return;
         }
