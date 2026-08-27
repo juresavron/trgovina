@@ -147,7 +147,7 @@ if (DUMP) {
   // would 403 for the sake of nothing, since the output is grouped by
   // "<shop>/<slug>" and those keys are sorted alphabetically further down.
   products = await rest("products?select=id,shop_id,slug");
-  media = await rest("product_media?select=product_id,url,alt,sort,widths&order=sort");
+  media = await rest("product_media?select=product_id,url,alt,sort,widths,shot&order=sort");
 }
 
 const byProduct = new Map(products.map((p) => [p.id, p]));
@@ -184,7 +184,11 @@ const body = [...groups.keys()]
           "    { " +
           'src: "/media/' + esc(m.url) + '", ' +
           'alt: "' + esc(m.alt) + '", ' +
-          "widths: [" + (w.length > 1 ? w.map((n) => rung(n, widest)).join(", ") : "") + "] },"
+          "widths: [" + (w.length > 1 ? w.map((n) => rung(n, widest)).join(", ") : "") + "]" +
+          // The KIND of shot travels with the picture so the renderer can
+          // choose one rather than taking whatever sorted first — the hero
+          // wants the atmospheric frame, not the top-down diagram.
+          (m.shot ? ', shot: "' + esc(m.shot) + '"' : "") + " },"
         );
       })
       .join("\n");
