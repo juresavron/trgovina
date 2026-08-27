@@ -550,6 +550,47 @@ grant select (id, shop_id, slug, title, excerpt, body, cover_url, cover_alt,
 -- shop_order_seq: deliberately NO anon policies. Service role only.
 
 -- ---------------------------------------------------------------------------
+-- THE PUBLISHABLE KEY MAY NOT WRITE. ANYWHERE.
+--
+-- ⚠️ RUN THIS LAST, AND RUN IT AGAIN AFTER ADDING A TABLE. Supabase grants anon
+-- and authenticated everything on a new table in public, so a table created
+-- after this block re-opens the hole this closes.
+--
+-- The project relied on RLS alone to refuse anonymous writes, and RLS was
+-- doing it: it is enabled on every table and the only write policies are the
+-- three admin ones, each `to authenticated` behind is_admin(). Nothing was
+-- exploitable. It was still the wrong shape, because of what the anon key IS
+-- here — public by design, in wrangler.jsonc, shipped to browsers. The default
+-- grant was one mistake away from being a hole: RLS disabled to debug
+-- something, or a policy written `using (true)` with no role clause, and
+-- anyone at all could write. On public.admins — the allowlist that decides who
+-- administers the shop — that mistake hands over the whole back office.
+--
+-- Two locks is the point. RLS decides which ROWS; the grant decides whether
+-- the role may write AT ALL, and for a key printed in a config file the answer
+-- is no. Nothing in this repository writes as anon: the storefront only reads
+-- (published posts, and the index rebuild's three product columns), and every
+-- admin call carries the signed-in person's token and acts as `authenticated`.
+--
+-- SELECT is deliberately untouched — the column grants above are doing real
+-- work and the storefront depends on them.
+-- ---------------------------------------------------------------------------
+do $$
+declare t text;
+begin
+  for t in
+    select c.relname
+    from pg_class c
+    join pg_namespace n on n.oid = c.relnamespace
+    where n.nspname = 'public' and c.relkind = 'r'
+  loop
+    execute format(
+      'revoke insert, update, delete, truncate on public.%I from anon', t
+    );
+  end loop;
+end $$;
+
+-- ---------------------------------------------------------------------------
 -- Seed the pilots (matches src/tenants/*.ts keys).
 -- ---------------------------------------------------------------------------
 insert into public.shops (id, domain, name, is_live, order_prefix) values

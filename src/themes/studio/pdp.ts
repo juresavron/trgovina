@@ -103,7 +103,24 @@ export const STUDIO_PDP_CSS = `
      * plus nine 10px gaps need 690px, and the gallery column is 611px at
      * 1280 and 496px at 1024 — so the strip was silently two rows, 122px and
      * 120px tall, at both.) */
-    --studio-pdp-thumb: 60px;
+    /* ⚠️ 88px, UP FROM 60 — THE CEILING, NOT THE MEASURED SIZE.
+     *
+     * The strip divides its width by the number of photographs and clamps the
+     * result, so this ceiling only binds on a SHORT set. On a hot tub with six
+     * pictures under a 747px frame the old 60 gave a 400px strip: 54% of the
+     * width it sits under, left-aligned, reading as something that failed to
+     * finish rather than as a picker. And 60px of a white-ground hot tub is
+     * too small to tell one view from another, which is the whole job.
+     *
+     * 88 fills that strip to 568px and makes the six distinguishable. It binds
+     * nowhere else: ten photographs at 1920 still compute 76px, and the phone
+     * still bottoms out at its 44px floor.
+     *
+     * It costs 28px of frame WIDTH on a square model, because the reserve
+     * below feeds the pinned gallery's height budget. That is the trade and it
+     * is the right way round: the stage went from 627 to 836 in the same pass,
+     * and a picker you can read is worth more than the last 4% of it. */
+    --studio-pdp-thumb: 88px;
     /* WCAG 2.5.5 (AAA) target size. 2.5.8 (AA), which the comment above this
      * token used to cite for the same number, is 24px — the figure the
      * breadcrumb rule below is costed against. It is the floor of the
@@ -435,6 +452,10 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-thumbs {
     display: flex;
     flex-wrap: wrap;
+    /* Centred, because the strip is narrower than the frame whenever the
+     * ceiling above binds. Left-aligned under a frame half again its width
+     * reads as a row that ran out; centred under it reads as a caption. */
+    justify-content: center;
     gap: var(--studio-pdp-thumb-gap);
     --st-pdp-n: 10;
   }
@@ -776,12 +797,28 @@ export const STUDIO_PDP_CSS = `
     background: var(--ink-invert);
     border-color: var(--ink-invert);
   }
-  :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-opt .st-pdp-box svg { opacity: 1; }
+  :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-opt .st-pdp-dot {
+    transform: scale(1);
+  }
   :root[data-theme="studio"] .st-pdp-radio:focus-visible + .st-pdp-opt .st-pdp-box {
     outline: 2px solid var(--acc);
     outline-offset: 3px;
   }
-  /* SQUARE, and sharp (--r-ctrl): §9 keeps round for pills and arrows. */
+  /* ⚠️ ROUND, AND A DOT — BECAUSE THESE ARE RADIOS NOW.
+   *
+   * It was square and sharp (--r-ctrl), with the same tick the add-on rows
+   * use, on the argument that §9 keeps round for pills and arrows. That held
+   * while the rows were inert: a mark that chooses nothing can look like
+   * anything. They choose now, and a square box with a tick is the web's word
+   * for "pick as many as you like" — printed directly above a column of
+   * add-on checkboxes that mean exactly that. A buyer ticking "Moj električar"
+   * and then "Naš partner" and watching the first one clear has been told the
+   * form is broken.
+   *
+   * So the shape carries the arity: round with a dot for one-of, square with a
+   * tick for any-of. That is the one convention every operating system and
+   * every browser has agreed on for thirty years, and it costs a border-radius
+   * and a different glyph. */
   :root[data-theme="studio"] .st-pdp-box {
     flex: 0 0 auto;
     display: inline-flex; align-items: center; justify-content: center;
@@ -790,13 +827,19 @@ export const STUDIO_PDP_CSS = `
     /* Optical centering against the first line of a 1.625em-leading label. */
     margin-top: 0.15em;
     border: 1px solid var(--line-strong);
-    border-radius: var(--r-ctrl);
+    border-radius: 50%;
     background: var(--surface);
     color: var(--on-invert);
   }
-  :root[data-theme="studio"] .st-pdp-box svg {
-    inline-size: 68%; block-size: 68%;
-    opacity: 0;
+  /* The dot is drawn rather than iconised: a circle inside a circle needs no
+   * glyph, and scaling it from the centre is what makes the state read as
+   * filling in rather than as something appearing on top. */
+  :root[data-theme="studio"] .st-pdp-dot {
+    inline-size: 46%;
+    block-size: 46%;
+    border-radius: 50%;
+    background: currentColor;
+    transform: scale(0);
   }
 
   /* Pill row — the sidebar's "availability as outlined round pills". */
@@ -861,10 +904,14 @@ export const STUDIO_PDP_CSS = `
     outline: 2px solid var(--acc);
     outline-offset: 3px;
   }
-  /* Where the shades can be seen, since no swatch is drawn. Sits under the
-   * colour groups only. */
+  /* Where the shades can be seen, since no swatch is drawn.
+   *
+   * No margin of its own: it is an item of the configurator's flex column and
+   * takes that column's gap, like every group beside it. A margin here would
+   * add to the gap rather than replace it, which is how the block above it
+   * ended up with two different distances between the same kind of thing. */
   :root[data-theme="studio"] .st-pdp-swatch-note {
-    margin-top: clamp(10px, 0.9vw, 16px);
+    margin-block: 0;
     font-family: var(--f-body);
     font-size: var(--t-body);
     line-height: var(--lh-body);
@@ -1093,7 +1140,6 @@ export const STUDIO_PDP_CSS = `
   }
 
   /* ---- finishes, quantity, the cart ----------------------------------- */
-  :root[data-theme="studio"] .st-pdp-finish { margin-top: clamp(24px, 2.4vw, 44px); }
   :root[data-theme="studio"] .st-pdp-buyrow {
     display: flex;
     gap: clamp(10px, 1vw, 18px);
@@ -2317,7 +2363,8 @@ export function renderStudioPdp(ctx: RenderCtx): string {
             '<label class="st-pdp-pill" for="' + id + '">' + esc(o) + "</label></li>"
           : "<li>" + input +
             '<label class="st-pdp-opt" for="' + id + '">' +
-            '<span class="st-pdp-box">' + CHECK + "</span>" +
+            // A DOT, NOT THE TICK the add-on rows use — see .st-pdp-box.
+            '<span class="st-pdp-box"><span class="st-pdp-dot"></span></span>' +
             "<span>" + esc(o) + "</span></label></li>";
       })
       .join("");
@@ -2475,11 +2522,9 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     "školjke; katerih sedmih, potrdimo ob naročilu.</p>";
   const finishes =
     (d.finishes ?? []).length || (d.cabinetFinishes ?? []).length
-      ? '<div class="st-pdp-finish">' +
-        group("Barva školjke", "barva", d.finishes ?? [], 0, "st-pdp-fin", true) +
+      ? group("Barva školjke", "barva", d.finishes ?? [], 0, "st-pdp-fin", true) +
         group("Barva obloge", "obloga", d.cabinetFinishes ?? [], 0, "st-pdp-cab", true) +
-        swatchNote +
-        "</div>"
+        swatchNote
       : "";
 
   // Quantity and the cart. The stepper is a real number input inside a real
@@ -2636,9 +2681,21 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<input type="hidden" name="model" value="' + esc(d.slug) + '">' +
     buy +
     assure +
-    finishes +
-    (cfg
-      ? '<div class="st-pdp-cfg">' + cfg + "</div>" +
+    // ⚠️ THE COLOURS AND THE CONFIGURATION ARE ONE BLOCK, and they were two.
+    //
+    // .st-pdp-finish was a plain div with a margin on top holding two groups
+    // and a note, none of which had any rhythm between them — so "BARVA
+    // OBLOGE" sat directly on the last row of shell-colour pills, close enough
+    // to read as part of it. Reported as bad spacing, and it was: the pills
+    // wrap to three rows on a hot tub, and the heading of the next question
+    // landed in the gap the third row left.
+    //
+    // .st-pdp-cfg was already a flex column with the gap these need. They are
+    // the same kind of thing — questions with answers — so they go in the same
+    // container and take one rhythm for the whole configurator instead of one
+    // rule per group.
+    (finishes || cfg
+      ? '<div class="st-pdp-cfg">' + finishes + cfg + "</div>" +
         // THE NUMBER, ONLY WHILE THERE IS ONE. This sentence carried a live
         // tel: link to "+386 00 000 000" — the placeholder, underlined and
         // dialable, in the middle of the configuration block on a €2,890
