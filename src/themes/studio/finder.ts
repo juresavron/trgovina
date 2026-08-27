@@ -33,7 +33,11 @@ export const STUDIO_FINDER_CSS = `
     margin-inline: auto;
     padding: clamp(40px, 6vw, 96px) var(--studio-gutter) clamp(64px, 8vw, 128px);
   }
-  :root[data-theme="studio"] .st-fnd-in { max-inline-size: 44rem; }
+  /* Centred, like every other solo-column page (/blog, a railless content
+   * page): the column sat pinned to the left gutter, which at 1440 left
+   * ~700px of dead white on the right — the one page drawn off the site's
+   * grid. */
+  :root[data-theme="studio"] .st-fnd-in { max-inline-size: 44rem; margin-inline: auto; }
   :root[data-theme="studio"] .st-fnd-eyebrow {
     font-family: var(--f-label);
     font-size: var(--t-label);
@@ -186,8 +190,10 @@ export const STUDIO_FINDER_CSS = `
    * competing offers. */
   :root[data-theme="studio"] .st-fnd-skip {
     margin-block-start: clamp(48px, 6vw, 80px);
-    padding-block-start: clamp(28px, 3vw, 40px);
-    border-block-start: var(--bw-line) solid var(--line);
+    /* No border-top: the option list's own last hairline already closes the
+     * group, and two rules sandwiching 78px of nothing read as a row that
+     * failed to render. The white gap IS the separator. */
+    padding-block-start: 0;
   }
   :root[data-theme="studio"] .st-fnd-skip h2 {
     font-family: var(--f-label);
@@ -219,7 +225,9 @@ export const STUDIO_FINDER_CSS = `
     grid-template-columns: 1fr auto;
     align-items: center;
     gap: 16px;
-    padding: 14px 2px;
+    /* Tighter than the question's options on purpose: this list is the
+     * escape hatch, not the answer, and it must not weigh what it serves. */
+    padding: 10px 2px;
     text-decoration: none;
     color: var(--ink);
   }

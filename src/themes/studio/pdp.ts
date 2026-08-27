@@ -1387,7 +1387,17 @@ export const STUDIO_PDP_CSS = `
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0;
   }
+  /* Since the fill went kin-only every family page shows exactly TWO
+   * alternatives; two cards in a three-track grid left a card-sized void at
+   * the row's right edge. The row sizes to its census. */
+  :root[data-theme="studio"] .st-also-row:has(> :last-child:nth-child(2)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   :root[data-theme="studio"] .st-also-cell { min-width: 0; }
+  :root[data-theme="studio"] .st-also-meta {
+    font-size: var(--t-body);
+    color: var(--ink-mute);
+  }
   :root[data-theme="studio"] .st-also-card {
     display: flex;
     flex-direction: column;
@@ -2222,6 +2232,9 @@ function alsoLike(ctx: RenderCtx): string {
           esc(base + m.slug + ctx.q) + '">' +
           '<span class="st-also-frame">' + shot(ctx, i, m.photos?.[0]) + "</span>" +
           '<span class="st-also-name">' + esc(m.title) + "</span>" +
+          // The one product card on the site with no spec line was this one,
+          // and it is the card asking to be compared against the page above.
+          '<span class="st-also-meta">' + esc(m.bar[1]) + "</span>" +
           '<span class="st-also-price">' + esc(m.price) +
           // The same qualifier every other price on the site carries. These
           // were the last prices before the footer and the only bare ones.
@@ -2529,12 +2542,16 @@ export function renderStudioPdp(ctx: RenderCtx): string {
         (priced.length > 0 && d.priceCents > 0
           ? '<p class="st-pdp-ao-line"><span>Izbrana oprema</span>' +
             '<span data-st-extras>' + esc(formatEur(0)) + "</span></p>" +
+            // One right-anchored group: sum + qualifier. As three loose
+            // children of a space-between row the sum floated centred
+            // between the label and "z DDV", anchored to neither edge.
+            // (The wrapper, not the sum span, because behaviour.ts replaces
+            // the sum's textContent on every tick — a qualifier inside it
+            // would be wiped by the first add-on.)
             '<p class="st-pdp-ao-total"><span>Skupaj</span>' +
-            '<span class="st-pdp-ao-sum" data-st-total data-st-base="' +
+            '<span class="st-pdp-ao-r"><span class="st-pdp-ao-sum" data-st-total data-st-base="' +
             String(d.priceCents) + '">' + esc(d.price) + "</span>" +
-            // The largest figure in the buy column carries the same
-            // qualifier every other price on the page does.
-            ' <span class="st-vat">z DDV</span></p>'
+            ' <span class="st-vat">z DDV</span></span></p>'
           : "") +
         (d.pricesProvisional
           ? '<p class="st-pdp-ao-note">Cene so informativne in še niso dokončne.</p>'

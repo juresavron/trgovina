@@ -350,7 +350,7 @@ export function renderStudioBlogPost(
     .map((b, i) => ("h" in b && b.h ? { h: b.h, id: ids[i]! } : null))
     .filter((x): x is { h: string; id: string } => x !== null);
   const index =
-    headed.length < 3
+    headed.length < 4
       ? ""
       : '<nav class="st-page-toc" aria-labelledby="st-post-toc-h">' +
         '<p class="st-page-toc-h" id="st-post-toc-h">V tem zapisu</p>' +
