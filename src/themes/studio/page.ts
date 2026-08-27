@@ -276,10 +276,21 @@ export const STUDIO_PAGE_CSS = `
    * page's buy button, the chrome's icon buttons — so the placeholder takes
    * the same one. 16:1, and the one button on the site that did not look like
    * this theme now does. */
+  /* And the same VOICE, not only the same ink. The kernel's .btn is 15px
+   * bold sentence case on a rounded pill; every studio control is an
+   * uppercase, letter-spaced DM Sans label on the control radius. The 404's
+   * one button was the last control on the site speaking the other theme's
+   * typography. */
   :root[data-theme="studio"] .placeholder .btn-fill {
     background: var(--ink-invert);
     color: var(--on-invert);
     border-color: var(--ink-invert);
+    border-radius: var(--r-ctrl);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
   }
   :root[data-theme="studio"] .placeholder .btn-fill:hover {
     filter: none;
@@ -301,6 +312,7 @@ export const STUDIO_PAGE_CSS = `
   :root[data-theme="studio"] .st-page-block + .st-page-block {
     margin-block-start: clamp(38px, 4vw, 64px);
   }
+  :root[data-theme="studio"] .st-page-onward[id],
   :root[data-theme="studio"] .st-page-h2 {
     font-family: var(--f-display);
     font-weight: var(--w-display);
@@ -371,6 +383,16 @@ export const STUDIO_PAGE_CSS = `
     display: flex;
     flex-direction: column;
     gap: clamp(4px, 0.5vw, 8px);
+  }
+  /* 44px targets on 24px text: padding grows the hit area, the negative
+   * margin gives the same pixels back to the layout, so the rail's rhythm
+   * does not change. The theme's own bar is --st-tap on every control; these
+   * links were the three that undershot it (a11y audit, 2.5.5). */
+  :root[data-theme="studio"] .st-page-toc a,
+  :root[data-theme="studio"] .st-page-fv a {
+    display: inline-block;
+    padding-block: 10px;
+    margin-block: -10px;
   }
   :root[data-theme="studio"] .st-page-toc a {
     display: inline-flex;
@@ -621,6 +643,93 @@ export const STUDIO_PAGE_CSS = `
     display: grid;
     margin-block: 0;
     border-block-start: var(--bw-line) solid var(--line);
+  }
+  /* ---- the A/B table (kind: "compare") --------------------------------
+   * The facts device's hairlines and rungs, arranged as three columns. The
+   * label column takes the facts list's own 12rem; the two value columns
+   * split the rest equally so the families stay visually comparable. Values
+   * here are short editorial phrases, so the table fits 320px without a
+   * scroll region — table-layout: fixed is what guarantees the equal split
+   * rather than letting the longer phrase buy a wider column. */
+  :root[data-theme="studio"] .st-page-cmp {
+    inline-size: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+  :root[data-theme="studio"] .st-page-cmp thead td { border: 0; }
+  :root[data-theme="studio"] .st-page-cmp th,
+  :root[data-theme="studio"] .st-page-cmp td {
+    padding: clamp(12px, 1.2vw, 18px) 0;
+    border-block-end: var(--bw-line) solid var(--line);
+    text-align: left;
+    vertical-align: top;
+  }
+  :root[data-theme="studio"] .st-page-cmp td + td,
+  :root[data-theme="studio"] .st-page-cmp th + th {
+    padding-inline-start: clamp(10px, 1.2vw, 24px);
+  }
+  @media (min-width: 620px) {
+    :root[data-theme="studio"] .st-page-cmp col:first-child,
+    :root[data-theme="studio"] .st-page-cmp th[scope="row"] { inline-size: 12rem; }
+  }
+  :root[data-theme="studio"] .st-page-cmp-h {
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-page-cmp-k {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+    padding-inline-end: clamp(10px, 1.2vw, 24px);
+  }
+  :root[data-theme="studio"] .st-page-cmp-v {
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+    overflow-wrap: anywhere;
+  }
+  /* 320–619: the label goes ABOVE its pair of values instead of beside them
+   * — three columns of a 270px measure would be nine characters each. The
+   * row headers become full-width rungs; the value cells keep the split. */
+  @media (max-width: 619px) {
+    :root[data-theme="studio"] .st-page-cmp,
+    :root[data-theme="studio"] .st-page-cmp tbody,
+    :root[data-theme="studio"] .st-page-cmp tr { display: block; }
+    :root[data-theme="studio"] .st-page-cmp thead {
+      display: block;
+    }
+    :root[data-theme="studio"] .st-page-cmp thead tr {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(10px, 3vw, 24px);
+    }
+    :root[data-theme="studio"] .st-page-cmp thead td { display: none; }
+    :root[data-theme="studio"] .st-page-cmp tbody tr {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0 clamp(10px, 3vw, 24px);
+      padding-block-end: clamp(12px, 3vw, 18px);
+      border-block-end: var(--bw-line) solid var(--line);
+    }
+    :root[data-theme="studio"] .st-page-cmp tbody th[scope="row"] {
+      grid-column: 1 / -1;
+      border: 0;
+      padding-block: clamp(12px, 3vw, 18px) 4px;
+    }
+    :root[data-theme="studio"] .st-page-cmp tbody td {
+      border: 0;
+      padding-block: 0;
+    }
+    :root[data-theme="studio"] .st-page-cmp td + td { padding-inline-start: 0; }
   }
   :root[data-theme="studio"] .st-page-frow {
     display: grid;
@@ -1036,10 +1145,14 @@ function links(b: Extract<Block, { kind: "links" }>, id?: string): string {
   if (b.items.length === 0) return "";
   const head = b.h ?? "Oglejte si";
   const hid = (id ?? "st-links") + "-h";
+  // The nav carries the section id itself. It used to sit on nothing — the
+  // heading got id+"-h" and a data-anchor no selector ever consumed — so the
+  // first links block with a real heading gave the TOC a fragment that
+  // resolved to nowhere. structure.test.ts now proves every rail link lands.
   return (
-    '<nav class="st-page-onward" aria-labelledby="' + esc(hid) + '">' +
-    '<p class="st-page-onward-h" id="' + esc(hid) + '"' +
-    (id ? ' data-anchor="' + esc(id) + '"' : "") + ">" + esc(head) + "</p><ul>" +
+    '<nav class="st-page-onward"' + (id ? ' id="' + esc(id) + '"' : "") +
+    ' aria-labelledby="' + esc(hid) + '">' +
+    '<p class="st-page-onward-h" id="' + esc(hid) + '">' + esc(head) + "</p><ul>" +
     b.items
       .map(
         ([label, href]) =>
@@ -1076,6 +1189,32 @@ function qa(b: Extract<Block, { kind: "qa" }>, id?: string): string {
  * as raw HTML because it travelled in the same array as the anchors — now
  * goes through esc() at its call site like every other string in this file.
  */
+/**
+ * The A/B table: one label column, one column per side, on the facts device's
+ * own hairline vocabulary. A real <table> — column association is the entire
+ * content here, and scope attributes are what carry it to a screen reader.
+ */
+function compare(b: Extract<Block, { kind: "compare" }>, id?: string): string {
+  return (
+    h2(b.h, id) +
+    '<table class="st-page-cmp">' +
+    '<thead><tr><td></td>' +
+    b.cols
+      .map((c) => '<th scope="col" class="st-page-cmp-h">' + esc(c) + "</th>")
+      .join("") +
+    "</tr></thead><tbody>" +
+    b.rows
+      .map(
+        ([label, a, x]) =>
+          '<tr><th scope="row" class="st-page-cmp-k">' + esc(label) + "</th>" +
+          '<td class="st-page-cmp-v">' + esc(a) + "</td>" +
+          '<td class="st-page-cmp-v">' + esc(x) + "</td></tr>",
+      )
+      .join("") +
+    "</tbody></table>"
+  );
+}
+
 function facts(
   h: string | undefined,
   rows: readonly (readonly [string, string])[],
@@ -1161,7 +1300,7 @@ function contactActions(ctx: RenderCtx): string {
   return acts.length === 0 ? "" : '<div class="st-page-acts">' + acts.join("") + "</div>";
 }
 
-function contact(ctx: RenderCtx, h?: string, id?: string): string {
+function contact(ctx: RenderCtx, h?: string, id?: string, omitAddress = false): string {
   const c = ctx.shop.contact;
   const a = c.address;
   // The postal address is three fields, so it is three questions: a street
@@ -1181,7 +1320,10 @@ function contact(ctx: RenderCtx, h?: string, id?: string): string {
     // model.
     (ctx.about
       ? '<p class="st-page-about">Povpraševanje za <strong>' +
-        esc(ctx.about.title) + "</strong> · " + esc(ctx.about.price) + "</p>"
+        esc(ctx.about.title) + "</strong> · " + esc(ctx.about.price) +
+        // The one price on the site that lacked its qualifier. Only beside a
+        // real figure — a dash with "z DDV" after it would be nonsense.
+        (ctx.about.price.includes("€") ? " z DDV" : "") + "</p>"
       : "") +
     // WHAT THEY CHOSE, SAID BACK BEFORE THEY WRITE.
     //
@@ -1208,7 +1350,10 @@ function contact(ctx: RenderCtx, h?: string, id?: string): string {
     [
       ["Telefon", link(ctx.phoneHref, ctx.phoneDisplay, isSetPhone(ctx.phoneDisplay))],
       ["E-pošta", link("mailto:" + c.email, c.email, isSet(c.email))],
-      ["Naslov", fact(place, placeSet)],
+      // The seat, unless the page says otherwise: on the showroom page this
+      // row printed the company's Koper address as "Naslov" directly under a
+      // headline about Ljubljana — the seat is not that page's address.
+      ...(omitAddress ? [] : ([["Naslov", fact(place, placeSet)]] as [string, string][])),
     ],
     true,
     )
@@ -1217,11 +1362,23 @@ function contact(ctx: RenderCtx, h?: string, id?: string): string {
 
 function imprint(ctx: RenderCtx, h?: string, id?: string): string {
   const co = ctx.shop.company;
+  const a = ctx.shop.contact.address;
+  const seat = [a.street, [a.zip, a.city].filter(Boolean).join(" ")]
+    .filter(Boolean)
+    .join(", ");
+  // The full ZGD-1 čl. 45 set, each row present even while unset: an imprint
+  // that omits the matična številka looks complete and is not, and the unset
+  // mark is what tells the owner exactly which obligation is still open.
+  // "ID za DDV", not "Davčna številka" — the footer already says ID za DDV
+  // for the same value, and one value may not carry two names on one site.
   return facts(
     h ?? "Podatki o podjetju",
     [
-      ["Naziv", fact(co.legalName, isSet(co.legalName))],
-      ["Davčna številka", fact(co.vatId, isSetVat(co.vatId))],
+      ["Firma", fact(co.legalName, isSet(co.legalName))],
+      ["Sedež", fact(seat, isSet(a.street) && isSetZip(a.zip) && isSet(a.city))],
+      ["Matična številka", fact(co.regNumber, isSet(co.regNumber) && co.regNumber !== "0000000000")],
+      ["ID za DDV", fact(co.vatId, isSetVat(co.vatId))],
+      ["Vpis v register", fact(co.register, isSet(co.register))],
       ["Spletno mesto", esc(ctx.shop.domain)],
     ],
     true,
@@ -1240,6 +1397,7 @@ function imprint(ctx: RenderCtx, h?: string, id?: string): string {
 function isWide(b: Block): boolean {
   return (
     b.kind === "facts" || b.kind === "contact" || b.kind === "imprint" ||
+    b.kind === "compare" ||
     // A row of links is navigation laid out across the column, not a sentence
     // to read at the measure — same reason onward() spans the body.
     b.kind === "links"
@@ -1256,12 +1414,14 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
           ? list(b, id)
           : b.kind === "links"
             ? links(b, id)
-            : b.kind === "qa"
+            : b.kind === "compare"
+              ? compare(b, id)
+              : b.kind === "qa"
           ? qa(b, id)
           : b.kind === "facts"
             ? facts(b.h, b.rows, false, id)
             : b.kind === "contact"
-              ? contact(ctx, b.h, id)
+              ? contact(ctx, b.h, id, b.omitAddress === true)
               : b.kind === "imprint"
                 ? imprint(ctx, b.h, id)
                 : '<div class="st-page-cta">' +

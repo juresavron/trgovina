@@ -144,7 +144,11 @@ export const SHOWROOM: Page = {
           "ločen brezplačen obisk.",
       ],
     },
-    { kind: "contact", h: "Naslov in kontakt" },
+    // No Naslov row: the only address the config holds is the company seat
+    // in Koper, and printing it under this page's Ljubljana headline claimed
+    // it as the showroom's address. The visit is by appointment; the exact
+    // location comes with the appointment.
+    { kind: "contact", h: "Kontakt za dogovor", omitAddress: true },
     {
       kind: "cta",
       h: "Dogovorite se za termin",

@@ -16,27 +16,46 @@ export const GUIDES: Page = {
     "Vodniki za nakup masažnega bazena: kaj preveriti pred nakupom, koliko stane nakup in " +
     "obratovanje ter kako bazen deluje pozimi.",
   blocks: [
+    // A `steps` block, not prose — and it was prose once. The guide's whole
+    // argument is an ORDER ("prvo … drugo … tretje … šele četrto"), and as
+    // four paragraphs that order was buried in a wall the eye cannot rank.
+    // The ordinals moved out of the sentences and into the numerals; not a
+    // fact changed.
     {
-      kind: "prose",
+      kind: "steps",
       h: "Masažni bazen na terasi: kaj preveriti pred nakupom",
-      p: [
-        "Prvo vprašanje ni model, ampak podlaga. Napolnjen masažni bazen tehta od 1.500 do " +
-          "2.210 kilogramov, z ljudmi v njem pa še nekaj sto več; napolnjen swim spa od 5.750 " +
-          "do 8.490 kilogramov. Betonska plošča to nosi brez razmisleka, lesena terasa in " +
-          "balkon pa ne nujno — in to je stvar konstrukcije, ne občutka.",
-        "Drugo je pot do lokacije. Izmerite najožje mesto na poti — vrata, prehod med hišo in " +
-          "ograjo, ovinek na stopnišču. Bazen se prenaša postrani, a širina školjke je fizična " +
-          "meja, ki se je ne da obiti.",
-        "Tretje je elektrika. Bazen potrebuje svoj odklopnik in zaščitno stikalo; koliko " +
-          "natanko, je odvisno od grelca in števila črpalk v modelu. Za vsak model damo pisna " +
-          "navodila, ki jih vaš električar preprosto izvede.",
-        "Šele četrto je model — koliko oseb, koliko šob, kakšna ležalna pozicija. Ta izbira je " +
-          "prijetna in jo lahko naredite v miru; prve tri pa določijo, kaj je sploh mogoče.",
+      items: [
+        [
+          "Podlaga, ne model",
+          "Napolnjen masažni bazen tehta od 1.500 do 2.210 kilogramov, z ljudmi v njem pa " +
+            "še nekaj sto več; napolnjen swim spa od 5.750 do 8.490 kilogramov. Betonska " +
+            "plošča to nosi brez razmisleka, lesena terasa in balkon pa ne nujno — in to " +
+            "je stvar konstrukcije, ne občutka.",
+        ],
+        [
+          "Pot do lokacije",
+          "Izmerite najožje mesto na poti — vrata, prehod med hišo in ograjo, ovinek na " +
+            "stopnišču. Bazen se prenaša postrani, a širina školjke je fizična meja, ki se " +
+            "je ne da obiti.",
+        ],
+        [
+          "Elektrika",
+          "Bazen potrebuje svoj odklopnik in zaščitno stikalo; koliko natanko, je odvisno " +
+            "od grelca in števila črpalk v modelu. Za vsak model damo pisna navodila, ki " +
+            "jih vaš električar preprosto izvede.",
+        ],
+        [
+          "Šele nato model",
+          "Koliko oseb, koliko šob, kakšna ležalna pozicija — ta izbira je prijetna in jo " +
+            "lahko naredite v miru; prve tri točke pa določijo, kaj je sploh mogoče.",
+        ],
       ],
     },
     {
       kind: "prose",
-      h: "Koliko stane masažni bazen: nakup in obratovanje",
+      // The site's only three-line h2 stair-stepped 20/12/14 characters at
+      // every width. The dropped subtitle is the first sentence's job anyway.
+      h: "Koliko stane masažni bazen",
       p: [
         "Nakupna cena modela je na strani vsakega modela; ogled lokacije, zagon in predaja so " +
           "vključeni, dostavo pa obračunamo po ponudbi, ker je odvisna od lokacije in dostopa. " +

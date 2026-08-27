@@ -63,10 +63,28 @@ export type Block =
   | { kind: "list"; h?: string; items: string[] }
   /** Question and answer pairs; the theme may emit disclosure elements. */
   | { kind: "qa"; h?: string; items: [string, string][] }
+  /**
+   * Two things side by side: a label column and one value per side. Built for
+   * /primerjava, whose rows used to be `facts` with both families packed into
+   * one value cell ("Masažni bazen 195–230 cm · swim spa 450–580 cm") — on
+   * the one page whose whole job is scanning A against B, the reader had to
+   * re-parse every row to find where A ended.
+   */
+  | { kind: "compare"; h?: string; cols: [string, string]; rows: [string, string, string][] }
   /** Term/definition rows — spec-like facts, legal definitions. */
   | { kind: "facts"; h?: string; rows: [string, string][] }
   /** The shop's own contact details, rendered from ShopConfig. */
-  | { kind: "contact"; h?: string }
+  | {
+      kind: "contact";
+      h?: string;
+      /**
+       * Skip the Naslov row. For pages where the company seat is NOT the
+       * place the page is about — the showroom page headlines Ljubljana, and
+       * printing the Koper seat under it as "Naslov" read as the showroom's
+       * address.
+       */
+      omitAddress?: boolean;
+    }
   /** The registered-company imprint, rendered from ShopConfig. */
   | { kind: "imprint"; h?: string }
   /**
@@ -171,12 +189,17 @@ export const PAGES: readonly Page[] = [
 // the third copy of them was publishing "TODO" to Google as structured data.
 
 export function legalPagesReady(
-  company: { legalName: string; vatId: string },
+  company: { legalName: string; vatId: string; regNumber: string; register: string },
   contact: { phone: string; address: { street: string; zip: string; city: string } },
 ): boolean {
   return (
     isSet(company.legalName) &&
     isSetVat(company.vatId) &&
+    // ZGD-1 čl. 45: the matična številka and the register of entry belong on
+    // the web presence with the firm and the seat — an imprint without them
+    // is incomplete, so a shop without them may not go live.
+    isSet(company.regNumber) && company.regNumber !== "0000000000" &&
+    isSet(company.register) &&
     isSetPhone(contact.phone) &&
     isSet(contact.address.street) &&
     isSetZip(contact.address.zip) &&

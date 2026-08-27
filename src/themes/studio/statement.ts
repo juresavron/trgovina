@@ -603,9 +603,19 @@ export const STUDIO_STATEMENT_CSS = `
     line-height: var(--lh-h2);
     color: var(--ink);
     font-variant-numeric: tabular-nums;
-    /* Values are short tokens ("230 V", "≈ 0,25 €") — keep the unit with the
-     * number, never break "0,25" across two lines. */
-    text-wrap: balance;
+    /* NOWRAP, NOT BALANCE — balance was here with a comment promising to
+     * "keep the unit with the number", and balance cannot promise that: it
+     * evens out the lines a wrap produces, it does not prevent the wrap.
+     * At the phone rung "6 modelov" split to "6 / modelov" and the 2×2
+     * grid's captions lost their shared baseline. Worded values instead get
+     * a smaller rung below (the media query after this rule), so the widest
+     * value the content carries fits the narrowest column the grid makes. */
+    white-space: nowrap;
+  }
+  @media (max-width: 620px) {
+    /* The phone columns are ~165px; "6 modelov" at the h2 rung needs ~175.
+     * One rung down keeps every current value on one line with slack. */
+    :root[data-theme="studio"] .st-stat-v { font-size: var(--t-h3); }
   }
   /* The trailing +/% is a REAL superscript (§4.8), positioned rather than left
    * to vertical-align:super, which would stretch the h2 line box. (The source

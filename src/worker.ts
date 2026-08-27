@@ -33,6 +33,7 @@ import {
   faqJsonLd,
 } from "./render/page";
 import { sitemapPaths, sitemapXml } from "./render/sitemap";
+import { assetResponse } from "./render/assets";
 import { handleAdmin, handleMedia } from "./admin/routes";
 import { handlePosts } from "./blog/routes";
 import type { Env } from "./admin/supabase";
@@ -135,6 +136,10 @@ const PLACEHOLDER_TITLES: Partial<Record<InternalRouteKey, string>> = {
   "/faq": "Pogosta vprašanja",
   "/cart": "Košarica",
   "/checkout": "Blagajna",
+  // Routed even though nothing links to it yet: the slug exists in
+  // routeSlugs, and a configured route that 404s is a landmine for the day
+  // checkout wires up and redirects here.
+  "/order-success": "Naročilo uspešno",
   "/terms": "Pogoji poslovanja",
   "/privacy": "Zasebnost",
   "/cookies": "Piškotki",
@@ -188,9 +193,29 @@ export function handleRequest(request: Request): Response {
     return new Response("Shop content missing", { status: 500 });
   }
 
+  // Security headers on everything public. nosniff stops a browser
+  // reinterpreting a response against its declared type; the referrer policy
+  // keeps full URLs (with ?model= choices in them) off third-party request
+  // logs; the permissions policy declares the powerful APIs this site simply
+  // does not use. No CSP here yet — the admin has a strict one, and a public
+  // one is worth doing deliberately once, not as a header dropped in a list.
+  const security = {
+    "x-content-type-options": "nosniff",
+    "referrer-policy": "strict-origin-when-cross-origin",
+    "permissions-policy": "camera=(), microphone=(), geolocation=()",
+  } as const;
   const baseHeaders: Record<string, string> = dev
-    ? { "x-robots-tag": "noindex, nofollow", "cache-control": "no-store" }
-    : { "cache-control": "public, max-age=0, s-maxage=300" };
+    ? { "x-robots-tag": "noindex, nofollow", "cache-control": "no-store", ...security }
+    : { "cache-control": "public, max-age=0, s-maxage=300", ...security };
+
+  // The stylesheet and the behaviour script, content-addressed and immutable
+  // — see render/assets.ts. Before the live gate on purpose: a pre-live
+  // shop's own 503 page still links them.
+  const asset = assetResponse(path);
+  if (asset) {
+    for (const [k, v] of Object.entries(security)) asset.headers.set(k, v);
+    return asset;
+  }
 
   // robots.txt — closed until a shop is live; QA host permanently closed.
   if (path === "/robots.txt") {
@@ -284,9 +309,13 @@ export function handleRequest(request: Request): Response {
         content,
         theme,
         path: pdpPath,
-        title: pdp.title + " — " + shop.keyword.primary + " | " + shop.name,
+        // The FAMILY keyword, not the shop's primary: "SWIM 450 — swim spa",
+        // "BAZEN 230 — masažni bazen". The collection pages hold these two
+        // apart as different queries; the titles must not merge them back.
+        title: pdp.title + " — " + pdp.family + " | " + shop.name,
         description: pdp.sub,
         noindex: dev,
+        ogType: "product",
         q,
         // The model's own lead photograph on the share card. A product link
         // sent to somebody's partner should show the product, not the shop's
@@ -335,7 +364,9 @@ export function handleRequest(request: Request): Response {
       bodyHtml: renderShopHub(shop, content, q, theme),
       jsonLd: [
         organizationJsonLd(shop),
-        breadcrumbJsonLd(shop, [{ name: "Trgovina" }]),
+        // Two items with a linked root, because a one-item trail is inert:
+        // Google renders nothing for it, so the hub's SERP line stayed a URL.
+        breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: "Trgovina" }]),
       ],
     });
     return htmlResponse(doc, 200, baseHeaders);
@@ -412,7 +443,7 @@ export function handleRequest(request: Request): Response {
       })(),
       jsonLd: [
         organizationJsonLd(shop),
-        breadcrumbJsonLd(shop, [{ name: page.h1 }]),
+        breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: page.h1 }]),
         // FAQPage FROM THE QUESTIONS THE PAGE ACTUALLY RENDERS, and only
         // those. Markup whose answers a visitor cannot read is a
         // structured-data violation and a manual action, so this is built by
@@ -460,7 +491,15 @@ export function handleRequest(request: Request): Response {
     description: "Zahtevana stran ne obstaja. Oglejte si ponudbo ali nas pokličite.",
     noindex: true,
     q,
-    bodyHtml: renderPlaceholder(shop, content, "Te strani ni.", q, theme),
+    bodyHtml: renderPlaceholder(
+      shop,
+      content,
+      "Te strani ni.",
+      q,
+      theme,
+      "Naslov je morda napačno vpisan ali pa je bila stran umaknjena. " +
+        "Ponudba in kontakt sta na začetni strani.",
+    ),
   });
   return htmlResponse(doc, 404, { ...baseHeaders, "x-robots-tag": "noindex, nofollow" });
 }

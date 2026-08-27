@@ -1263,7 +1263,12 @@ function tileShot(ctx: RenderCtx, slot: string, cls: string, sizes: string): str
 export function renderStudioImpact(ctx: RenderCtx): string {
   const steps = ctx.content.moat.steps;
   const label = steps[0];
-  const stat = ctx.content.stats[0];
+  // The LAST stat, not the first: the stat row a screen below opens with
+  // stats[0], and the tile showing the same figure made the home page repeat
+  // itself within one scroll. The last stat is the delivery-mass figure —
+  // which is also the claim this whole band argues ("Premaknemo ga mi"), so
+  // the tile now evidences its own band instead of echoing the next one.
+  const stat = ctx.content.stats[ctx.content.stats.length - 1] ?? ctx.content.stats[0];
   // Three short proof points read as one muted line under the head; more than
   // three and the 21px sub starts competing with the tiles. Each claim is its
   // own inline-block chip so the line breaks only at the gaps BETWEEN chips

@@ -84,7 +84,10 @@ export function blogIndexDoc(
     noindex,
     q: "",
     bodyHtml: renderBlogIndex(shop, content, "", H1, LEAD, posts),
-    jsonLd: [organizationJsonLd(shop), breadcrumbJsonLd(shop, [{ name: H1 }])],
+    jsonLd: [
+      organizationJsonLd(shop),
+      breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: H1 }]),
+    ],
   });
 }
 
@@ -124,11 +127,21 @@ export async function handlePosts(request: Request, env: Env): Promise<Response 
     // Not configured is not an error for the sitemap — it simply has no posts
     // to add, so the storefront's own version is the right answer.
     if (isSitemap) return null;
-    return html(
-      renderBlogIndex(shop, content, "", H1, LEAD, []),
-      200,
-      { "x-robots-tag": "noindex, nofollow", "cache-control": "no-store" },
-    );
+    // ⚠️ A post URL in this state is a page that does not exist, and it used
+    // to answer 200 with the index's BODY FRAGMENT — no doctype, no head, no
+    // title, no canonical, only the x-robots-tag header standing between a
+    // half-document and an index. The index itself renders as the full
+    // document with an honest empty state; anything under it is a 404.
+    if (isPost) {
+      return html(blogIndexDoc(shop, content, [], true), 404, {
+        "x-robots-tag": "noindex, nofollow",
+        "cache-control": "no-store",
+      });
+    }
+    return html(blogIndexDoc(shop, content, [], true), 200, {
+      "x-robots-tag": "noindex, nofollow",
+      "cache-control": "no-store",
+    });
   }
 
   const api = anonApi(env);
@@ -157,9 +170,11 @@ export async function handlePosts(request: Request, env: Env): Promise<Response 
     // knows the first set — see render/sitemap.ts on why that is not restated
     // here. The index goes in even when no post has a cover or a date; the
     // posts follow in publication order, which is the order they were listed.
+    // sitemapPaths already lists the index (unconditionally, since the
+    // storefront's own fallback has to carry it too) — only the posts are
+    // this branch's to add.
     const body = sitemapXml(shop, [
       ...sitemapPaths(shop, content),
-      base,
       ...cards.map((c) => base + "/" + c.slug),
     ]);
     return new Response(body, {

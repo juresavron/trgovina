@@ -21,7 +21,8 @@
  * freight class, separate buying question. See docs/SUPPLIER-SWIMSPA-2026.md.
  */
 
-import { displayPrice, displayPriceCents, priceFromFob } from "./pricing";
+import { displayPrice, displayPriceCents, envelopeOf } from "./pricing";
+import { jetsText } from "./count";
 
 /**
  * An option the supplier prices separately from the shell.
@@ -519,9 +520,15 @@ export function polaBySlug(slug: string): PolaModel | undefined {
 }
 
 /** Metres, as Slovenian writes them: "2,30 × 2,30 m". */
+/**
+ * The dimension is one token: NBSP around the multiply sign and before the
+ * unit, so "1,95 × 1,95 m" can never split across lines — at 390px the card
+ * meta wrapped it to "1,95 ×" / "1,95 m", the classic spec-line typo. The
+ * meta line still breaks freely at its middot separators.
+ */
 export function footprint(m: PolaModel): string {
   const s = (mm: number) => (mm / 1000).toFixed(2).replace(".", ",");
-  return s(m.mm[0]) + " × " + s(m.mm[1]) + " m";
+  return s(m.mm[0]) + "\u00a0×\u00a0" + s(m.mm[1]) + "\u00a0m";
 }
 
 /**
@@ -540,12 +547,15 @@ export function seating(m: PolaModel): string {
 
 /** The card's spec line: who fits, how many jets, how much terrace it needs. */
 export function metaLine(m: PolaModel): string {
-  return seating(m) + " · " + m.jets + " šob · " + footprint(m);
+  // jetsText for the same reason swimspa.ts's metaLine uses it: today every
+  // offered tub counts 35–50 jets and the raw " šob" happens to be right,
+  // but the first model with 2–4 jets would print the wrong form.
+  return seating(m) + " · " + jetsText(m.jets) + " · " + footprint(m);
 }
 
 /** The display price for a model, or the unset dash. */
 export function modelPrice(m: PolaModel): string {
-  return displayPrice(m.fobUsd);
+  return displayPrice({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
 }
 
 /**
@@ -553,12 +563,12 @@ export function modelPrice(m: PolaModel): string {
  * €14 pillow light taken up to a shell's retail point would be priced at €90.
  */
 export function addonPrice(x: Addon): string {
-  return displayPrice(x.fobUsd, "addon");
+  return displayPrice({ kind: "addon", fobUsd: x.fobUsd });
 }
 
 /** The same figure as a number, for the buy bar's total. 0 when unpriced. */
 export function addonPriceCents(x: Addon): number {
-  return displayPriceCents(x.fobUsd, "addon");
+  return displayPriceCents({ kind: "addon", fobUsd: x.fobUsd });
 }
 
 /**
@@ -570,5 +580,5 @@ export function addonPriceCents(x: Addon): number {
  * reasoning that already keeps Review schema off these pages.
  */
 export function modelPriceCents(m: PolaModel): number {
-  return displayPriceCents(m.fobUsd);
+  return displayPriceCents({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
 }

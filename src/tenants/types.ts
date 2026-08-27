@@ -180,6 +180,19 @@ export type ShopConfig = {
     legalName: string;
     /** Slovenian tax number ('SI…') — imprint requirement. */
     vatId: string;
+    /**
+     * Matična številka (10 digits, AJPES). ZGD-1 čl. 45 requires it on a
+     * company's public documents and web presence alongside the registered
+     * name and seat. "0000000000" is the unset placeholder, exactly as
+     * SI00000000 is for the VAT id.
+     */
+    regNumber: string;
+    /**
+     * The court register the company is entered at, as the imprint states
+     * it — "Okrožno sodišče v Kopru, vl. št. …". Empty until supplied; the
+     * imprint prints the unset mark rather than an invented court.
+     */
+    register: string;
   };
 
   /**

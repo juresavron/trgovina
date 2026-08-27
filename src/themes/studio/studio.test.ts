@@ -25,9 +25,9 @@ import { OWN_PHOTOS } from "./media";
  * So this asserts the sheet is self-consistent on a real rendered page.
  */
 describe("studio renders a self-consistent sheet", () => {
-  const render = (key: string) => {
+  const render = (key: string, path = "/") => {
     const res = handleRequest(
-      new Request("https://trgovina.workers.dev/?shop=" + key + "&theme=studio", {
+      new Request("https://trgovina.workers.dev" + path + (path.includes("?") ? "&" : "?") + "shop=" + key + "&theme=studio", {
         headers: { host: "trgovina.workers.dev" },
       }),
     );
@@ -48,11 +48,19 @@ describe("studio renders a self-consistent sheet", () => {
     });
   }
 
+  /** The stylesheet is a linked, content-addressed asset (render/assets.ts)
+   * — resolve it off the page the way a browser would. */
+  const sheetOf = async (html: string): Promise<string> => {
+    const m = html.match(/href="(\/assets\/site-[0-9a-f]+\.css)"/);
+    expect(m, "page links no stylesheet asset").toBeTruthy();
+    return await render("savna", m![1]!).text();
+  };
+
   it("ships verified faces from a single origin", async () => {
     const html = await render("savna").text();
-    // CSS comments are part of the emitted sheet, and they discuss the faces
-    // we replaced. Assert against what actually renders, not the prose.
-    const sheet = html.replace(/\/\*[\s\S]*?\*\//g, "");
+    // CSS comments never reach the wire (minify strips them), so the sheet is
+    // exactly what renders.
+    const sheet = await sheetOf(html);
 
     expect(sheet).toContain("Chivo");
     expect(sheet).toContain("Plus Jakarta Sans");
@@ -76,12 +84,18 @@ describe("studio renders a self-consistent sheet", () => {
    * broken page for anyone whose JS never arrives.
    */
   it("ships behaviour hooks in the server-rendered HTML", async () => {
-    const html = await render("savna").text();
+    // ⚠️ THE PDP, NOT THE HOME PAGE — and this assertion has a confession to
+    // make. It used to check the home page and pass, because the behaviour
+    // script was INLINED and its own source mentions every hook name: the
+    // test was reading selectors out of the script it was supposed to be
+    // proving the markup satisfies. Externalizing the script exposed it —
+    // the home page has no slider (a shop with categories renders the static
+    // rail). The gallery hooks genuinely live on the product page.
+    const html = await render("savna", "/bazen/veliki-230").text();
     expect(html).toContain("data-st-slider");
     expect(html).toContain("data-st-scroll");
-    expect(html).toContain("data-st-prev");
-    expect(html).toContain("data-st-next");
-    expect(html).toContain('<script type="module">');
+    expect(html).toContain("data-st-addons");
+    expect(html).toMatch(/<script type="module" src="\/assets\/site-[0-9a-f]+\.js">/);
     // Never a blocking classic script.
     expect(html).not.toMatch(/<script(?![^>]*type="(module|application\/ld\+json)")/);
   });

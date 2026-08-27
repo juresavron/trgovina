@@ -59,14 +59,26 @@ describe("deploy smoke assertions hold locally", () => {
    * longer existed and this test went green on the old name. It now asserts
    * the RELATIONSHIP: every preloaded file is one the sheet actually serves.
    */
+  /** The stylesheet is a linked asset now — resolve it the way a browser
+   * would, so these assertions read the file the page actually references. */
+  const cssOf = async (html: string): Promise<string> => {
+    const m = html.match(/href="(\/assets\/site-[0-9a-f]+\.css)"/);
+    expect(m, "page links no stylesheet asset").toBeTruthy();
+    const r = get(m![1]!);
+    expect(r.status, "stylesheet asset does not serve").toBe(200);
+    expect(r.headers.get("cache-control")).toContain("immutable");
+    return await r.text();
+  };
+
   it("preloads only self-hosted faces the sheet declares", async () => {
     const html = await get("/").text();
+    const css = await cssOf(html);
     const preloads = [...html.matchAll(/<link rel="preload" as="font"[^>]*href="([^"]+)"/g)]
       .map((m) => m[1]!);
     expect(preloads.length, "no display face is preloaded at all").toBeGreaterThan(0);
-    expect(html).toContain("@font-face");
+    expect(css).toContain("@font-face");
     for (const href of preloads) {
-      expect(html, href + " is preloaded but no @font-face serves it").toContain(
+      expect(css, href + " is preloaded but no @font-face serves it").toContain(
         "url('" + href + "')",
       );
     }
@@ -74,8 +86,10 @@ describe("deploy smoke assertions hold locally", () => {
 
   it("reaches no third-party font origin", async () => {
     const html = await get("/").text();
+    const css = await cssOf(html);
     for (const origin of ["fonts.googleapis.com", "fonts.gstatic.com", "fontshare"]) {
       expect(html, origin + " is back in the shipped page").not.toContain(origin);
+      expect(css, origin + " is back in the shipped stylesheet").not.toContain(origin);
     }
   });
 
@@ -87,7 +101,10 @@ describe("deploy smoke assertions hold locally", () => {
   /** Faces dropped because their Slovenian coverage could not be proven. */
   it("ships neither unverified face", async () => {
     const html = await get("/").text();
-    expect(html).not.toContain("Clash Display");
-    expect(html).not.toContain("Satoshi");
+    const css = await cssOf(html);
+    for (const doc of [html, css]) {
+      expect(doc).not.toContain("Clash Display");
+      expect(doc).not.toContain("Satoshi");
+    }
   });
 });

@@ -1170,6 +1170,10 @@ export const STUDIO_CHROME_CSS = `
      * character count. */
     max-inline-size: 56ch;
   }
+  /* A segment wraps as a unit, so a separator can start a line but never end
+   * one. Safe to forbid internal wrapping: the longest segment ("· Sedež: "
+   * plus a street address) runs ~38ch against the line's 56ch measure. */
+  :root[data-theme="studio"] .st-foot-seg { white-space: nowrap; }
 
   /* ---- responsive ----
    * The breakpoints are the source's own tiers where the source has an answer,
@@ -1388,23 +1392,40 @@ export const STUDIO_CHROME_CSS = `
     :root[data-theme="studio"] .st-foot-rule { margin-block: var(--gap-xl) 25px; }
   }
 
-  /* ≤620: the wordmark shrinks. The rule that used to hide the magnifier here
+  /* ≤620: the wordmark stacks. The rule that used to hide the magnifier here
    * went with the magnifier itself — it was the one action with a duplicate,
    * and the duplicate was the reason it existed to be hidden. The remaining
    * button STAYS at every width: it is the only path to the enquiry, and the
    * rail has no contact route of its own. */
   @media (max-width: 620px) {
-    /* The wordmark shrinks rather than truncates.
+    /* THE LOCKUP GOES TO TWO LINES, because one line was arithmetic that
+     * could not come out. A shrink-only rule stood here with a comment
+     * claiming three words at ~16px "need 210 and fit whole"; measured in
+     * the rendered chrome they need 230px at 16.4px against a 230px cell at
+     * 390 — and 215px against 200 at 360, and 160 would take 11px type at
+     * 320, which is no longer a wordmark. Both halves ellipsized on every
+     * phone screenshot: "MASAŽNI BAZ… VREL…" in the one place the shop says
+     * who it is.
      *
-     * The cap above stops the name reaching the buttons, but reaching the cap
-     * means an ellipsis, and "MASAŽNI BAZ… VRELEC" in the one place the shop
-     * says who it is looks like a defect rather than a decision. Three words
-     * at the h6 rung need 310px of a 242px cell on a 390px phone; at ~16px
-     * they need 210 and fit whole. The floor keeps it legible on the narrowest
-     * phone in use, and the ceiling hands the tier's own rung back as soon as
-     * there is room for it. */
+     * So the gap span — until now a 0.3em spacer — becomes the line break:
+     * flex-basis 100% forces the halves onto their own rows, mark beside the
+     * first, and the longest half now needs ~150px at the same type size the
+     * shrink rule used. It fits the 160px cell of a 320px phone with room,
+     * so the per-span ellipsis above still exists only as a belt for a shop
+     * name this network has not met yet.
+     *
+     * The ceiling is 17px, not the tier's h6: the bar's fixed --st-tap block
+     * holds two lines of 17px at 1.2 (40.8px) and does not hold two of 22. */
     :root[data-theme="studio"] .st-chrome-mark {
-      font-size: clamp(15px, 4.2vw, var(--t-h6));
+      flex-wrap: wrap;
+      align-content: center;
+      font-size: clamp(13px, 4.2vw, 17px);
+      line-height: 1.2;
+    }
+    :root[data-theme="studio"] .st-chrome-mark .st-mark-gap {
+      flex-basis: 100%;
+      block-size: 0;
+      overflow: hidden;
     }
   }
 
@@ -1698,7 +1719,12 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     '<footer class="st-foot"><div class="st-foot-in">' +
     '<div class="st-foot-top">' +
     '<p class="st-foot-mark">' + markHtml(ctx, "ft") + "</p>" +
-    '<div class="st-news">' +
+    // Pre-live only. The disabled control plus its printed explanation is
+    // the honest pre-launch state; on a LIVE shop the same block would say
+    // "na voljo ob zagonu trgovine" about a shop that has launched — so the
+    // flip that opens the shop removes the block, until a real list service
+    // exists to wire the form to.
+    (s.live ? "" : '<div class="st-news">' +
     '<h2 class="st-news-h">E-novice</h2>' +
     '<div class="st-news-row">' +
     '<label class="st-vh" for="st-news">Vaš e-poštni naslov</label>' +
@@ -1711,7 +1737,8 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     "</div>" +
     '<p class="st-news-note" id="st-news-note">Prijava na e-novice bo na voljo ob ' +
     "zagonu trgovine. Do takrat nas, prosimo, pokličite ali pišite.</p>" +
-    "</div></div>" +
+    "</div>") +
+    "</div>" +
 
     '<div class="st-foot-cols">' +
     '<div class="st-foot-brand">' +
@@ -1759,10 +1786,15 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     // ZGD-1 and the VAT act use — so that a mark says WHICH obligation is
     // still unmet instead of leaving three anonymous blanks in a row.
     '<hr class="st-foot-rule">' +
+    // Each fact is one no-break segment with its separator INSIDE, leading —
+    // the same device editorial.ts uses on the "Zakaj kupci" subtitle, for
+    // the same reason: joined with plain " · " the line wrapped after the
+    // dot, and every desktop footer ended a line "…podatek še ni vpisan ·"
+    // with the separator dangling where a full stop would sit.
     '<p class="st-foot-legal">' +
-    "Firma: " + fact(s.company.legalName) +
-    " · ID za DDV: " + fact(s.company.vatId) +
-    " · Sedež: " + addressHtml +
+    '<span class="st-foot-seg">Firma: ' + fact(s.company.legalName) + "</span> " +
+    '<span class="st-foot-seg">· ID za DDV: ' + fact(s.company.vatId) + "</span> " +
+    '<span class="st-foot-seg">· Sedež: ' + addressHtml + "</span>" +
     "</p>" +
     "</div></footer>"
   );

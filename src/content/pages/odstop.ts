@@ -78,10 +78,15 @@ export const WITHDRAWAL: Page = {
         ],
         [
           "Vrnemo plačilo",
+          // ⚠️ NO WITHHOLDING SENTENCE HERE, and one stood here once. Art.
+          // 13(3) of Directive 2011/83 lets a trader withhold the refund
+          // until the goods are back — UNLESS the trader has offered to
+          // collect them, which is exactly what the step above promises.
+          // Claiming both was asserting a right the offer had signed away.
           "Najkasneje v 14 dneh od prejema obvestila o odstopu, z istim plačilnim sredstvom, " +
             "kot ste plačali, in brez dodatnih stroškov za vas. Vrnemo tudi stroške dostave, " +
             "ki ste jih plačali; če ste izbrali dražjo obliko dostave od naše običajne, " +
-            "razlike ne vrnemo. Vračilo lahko zadržimo, dokler blaga ne prevzamemo.",
+            "razlike ne vrnemo.",
         ],
       ],
     },

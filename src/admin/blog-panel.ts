@@ -77,12 +77,12 @@ function notice(n?: { kind: "ok" | "err"; text: string }): string {
 /** "3 zapisi" — the same four Slovenian forms photoCount() spells out. */
 export function postCount(n: number): string {
   if (n === 0) return "ni zapisov";
-  const teen = n % 100;
-  if (teen >= 11 && teen <= 14) return n + " zapisov";
-  const unit = n % 10;
-  if (unit === 1) return n + " zapis";
-  if (unit === 2) return n + " zapisa";
-  if (unit === 3 || unit === 4) return n + " zapisi";
+  // Last two digits, matched exactly: 22 and 94 are compounds and take the
+  // genitive plural — a units-digit rule would print "22 zapisa".
+  const t = n % 100;
+  if (t === 1) return n + " zapis";
+  if (t === 2) return n + " zapisa";
+  if (t === 3 || t === 4) return n + " zapisi";
   return n + " zapisov";
 }
 

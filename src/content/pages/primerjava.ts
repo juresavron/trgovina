@@ -31,16 +31,21 @@ export const COMPARE: Page = {
     "Primerjava masažnih bazenov in swim spa bazenov: mere, teža, prostor in namen. " +
     "Kateri tip bazena je pravi za vašo teraso ali vrt.",
   blocks: [
+    // The same six axes and the same figures the facts rows carried — only
+    // the SHAPE changed: label | masažni | swim spa, so the eye runs down a
+    // family's own column instead of re-parsing each row for the middot that
+    // separated the two.
     {
-      kind: "facts",
+      kind: "compare",
       h: "Masažni bazen proti swim spa bazenu",
+      cols: ["Masažni bazen", "Swim spa"],
       rows: [
-        ["Mere školjke", "Masažni bazen 195–230 cm v kvadrat · swim spa 450–580 cm v dolžino"],
-        ["Namen", "Masažni bazen: sedenje, masaža, sprostitev · Swim spa: daljša školjka za plavanje in sprostitev"],
-        ["Prostor", "Masažni bazen gre na teraso · Swim spa praviloma zahteva vrt in betonsko ploščo"],
-        ["Teža prazen", "Masažni bazen 300–410 kg · Swim spa 1.050–1.430 kg"],
-        ["Teža napolnjen", "Masažni bazen 1.500–2.210 kg · Swim spa 5.750–8.490 kg"],
-        ["Dostava", "Oboje z ekipo in opremo za prenos · Pri swim spa je dostop pogosto odločilen"],
+        ["Mere školjke", "195–230 cm, v kvadrat", "450–580 cm, v dolžino"],
+        ["Namen", "Sedenje, masaža, sprostitev", "Daljša školjka za plavanje in sprostitev"],
+        ["Prostor", "Gre na teraso", "Praviloma vrt in betonska plošča"],
+        ["Teža prazen", "300–410 kg", "1.050–1.430 kg"],
+        ["Teža napolnjen", "1.500–2.210 kg", "5.750–8.490 kg"],
+        ["Dostava", "Z ekipo in opremo za prenos", "Enako — in dostop je pogosto odločilen"],
       ],
     },
     {
@@ -66,6 +71,24 @@ export const COMPARE: Page = {
         "Namenoma ne primerjamo modelov po ceni na tej strani. Cena velja za točno določen " +
           "model v točno določeni konfiguraciji in je navedena tam, kjer je tudi vse, kar vanjo " +
           "spada — na strani modela.",
+      ],
+    },
+    // The six models by name, because this page withholds prices ON PURPOSE
+    // (see the block above — a price belongs beside its configuration) and
+    // then pointed a reader who had just compared models at a hub where they
+    // would have to find their model again. The comparison's natural next
+    // step is THE model's page, and a crawler reads the same six links as
+    // this page passing its comparison intent to the pages that convert it.
+    {
+      kind: "links",
+      h: "Strani modelov",
+      items: [
+        ["/bazen/mali-195", "BAZEN 195"],
+        ["/bazen/srednji-210", "BAZEN 210"],
+        ["/bazen/veliki-230", "BAZEN 230"],
+        ["/bazen/swim-450", "SWIM 450"],
+        ["/bazen/swim-580-hidro", "SWIM 580 HIDRO"],
+        ["/bazen/swim-580-maxi", "SWIM 580 MAXI"],
       ],
     },
     {
