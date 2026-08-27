@@ -650,6 +650,17 @@ export interface SiteSlot {
   note: string;
   /** The /media path to preview, whether it has been replaced yet or not. */
   src: string;
+  /**
+   * Which part of the site this belongs to.
+   *
+   * ⚠️ THE LIST OUTGREW A FLAT WALL. It was three slots and is fourteen, and
+   * fourteen identical cards under one heading is a wall to scan rather than a
+   * structure to navigate — an operator looking for the gallery strip should
+   * not have to read six labels called "Galerija — slika n" to find out
+   * whether they are in the right place. The heading answers it before they
+   * start reading.
+   */
+  group: string;
 }
 
 export function indexPage(
@@ -709,22 +720,32 @@ export function indexPage(
       // THE SITE'S OWN PICTURES, which had no way in here at all — so the
       // heaviest image on the storefront (a 2.7 MB PNG hero) was the one
       // picture the panel's convert-to-WebP promise never reached.
-      (site.length === 0
-        ? ""
-        : "<h2>Slike strani</h2>" +
-          '<ul class="models">' +
-          site
-            .map(
-              (x) =>
-                '<li class="model"><a href="/admin/site/' + esc(x.stem) + '">' +
-                '<img class="cover" src="' + esc(x.src) + '" alt="" loading="lazy" ' +
-                'width="232" height="174">' +
-                '<span class="meta"><span class="name">' + esc(x.label) + "</span>" +
-                '<span class="count">' + esc(x.note) + "</span></span>" +
-                "</a></li>",
-            )
-            .join("") +
-          "</ul>") +
+      // GROUPED, IN THE ORDER THE SLOTS APPEAR ON THE PAGE. The groups are
+      // derived from the slots rather than listed here, so a new slot lands in
+      // its section without this file knowing about it — and a new SECTION
+      // appears by naming it once, in site-images.ts, where the slot is
+      // declared. Set preserves first-seen order, which is already the order
+      // SITE_IMAGES is written in.
+      [...new Set(site.map((x) => x.group))]
+        .map(
+          (g) =>
+            "<h2>" + esc(g) + "</h2>" +
+            '<ul class="models">' +
+            site
+              .filter((x) => x.group === g)
+              .map(
+                (x) =>
+                  '<li class="model"><a href="/admin/site/' + esc(x.stem) + '">' +
+                  '<img class="cover" src="' + esc(x.src) + '" alt="" loading="lazy" ' +
+                  'width="232" height="174">' +
+                  '<span class="meta"><span class="name">' + esc(x.label) + "</span>" +
+                  '<span class="count">' + esc(x.note) + "</span></span>" +
+                  "</a></li>",
+              )
+              .join("") +
+            "</ul>",
+        )
+        .join("") +
 
       '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>",
     who,

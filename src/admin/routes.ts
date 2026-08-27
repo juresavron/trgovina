@@ -370,6 +370,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
             label: x.label,
             note: x.note,
             src: "/media/" + x.key,
+            group: x.group,
           }),
         ),
       ),

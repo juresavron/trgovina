@@ -52,6 +52,8 @@ export interface SiteImage {
   readonly label: string;
   /** What the picture is for, in the operator's language. */
   readonly note: string;
+  /** The heading this slot sits under in the panel. See SiteSlot.group. */
+  readonly group: string;
   /**
    * The key this slot used BEFORE it was managed here.
    *
@@ -103,9 +105,14 @@ export interface SiteImage {
   readonly maxWidth: number;
 }
 
+const CHROME = "Slike strani";
+const HOME = "Domača stran";
+const GALLERY = "Galerija na dnu strani";
+
 const CHROME_IMAGES: readonly SiteImage[] = [
   {
     key: "site/hero.webp",
+    group: CHROME,
     label: "Naslovna slika",
     // ⚠️ THE CROP IS THE THING TO SAY, not the file size. This picture fills
     // the whole screen at whatever shape the screen is: about 2:1 on a laptop
@@ -127,6 +134,7 @@ const CHROME_IMAGES: readonly SiteImage[] = [
   },
   {
     key: "site/kategorija-masazni-bazeni.webp",
+    group: CHROME,
     label: "Kategorija — masažni bazeni",
     note: "Kvadratna slika kartice za družino masažnih bazenov na domači " +
       "strani. Kvadrat, najbolje 1600 × 1600 px." + HOME_NOTE_TAIL,
@@ -136,6 +144,7 @@ const CHROME_IMAGES: readonly SiteImage[] = [
   },
   {
     key: "site/kategorija-swim-spa.webp",
+    group: CHROME,
     label: "Kategorija — swim spa",
     note: "Kvadratna slika kartice za družino swim spa bazenov na domači " +
       "strani. Kvadrat, najbolje 1600 × 1600 px." + HOME_NOTE_TAIL,
@@ -161,6 +170,7 @@ const CHROME_IMAGES: readonly SiteImage[] = [
 const HOME_IMAGES: readonly SiteImage[] = [
   {
     key: "site/zgodba.webp",
+    group: HOME,
     label: "Zgodba — velika slika",
     // Every note answers the two questions an operator actually has: WHERE
     // does this appear, and WHAT SHAPE should the file be. A note that says
@@ -175,6 +185,7 @@ const HOME_IMAGES: readonly SiteImage[] = [
   },
   {
     key: "site/zgodba-detajl.webp",
+    group: HOME,
     label: "Zgodba — mala slika",
     // contain, not cover: this frame shows the picture WHOLE, so the advice
     // is the opposite of every other slot and has to say so.
@@ -187,6 +198,7 @@ const HOME_IMAGES: readonly SiteImage[] = [
   },
   {
     key: "site/zakaj-mi.webp",
+    group: HOME,
     label: "Zakaj mi — slika",
     note: "Kvadratna slika v pasu s prednostmi na domači strani, ob številki. " +
       "Kvadrat, najbolje 1200 × 1200 px." + HOME_NOTE_TAIL,
@@ -194,14 +206,85 @@ const HOME_IMAGES: readonly SiteImage[] = [
     ratio: [1, 1],
     maxWidth: 1200,
   },
+  // ⚠️ THE OTHER TWO TILES IN THIS BAND ARE object-fit: contain AND THE FIRST
+  // ONE IS NOT. Measured off the rendered page: the room tile is 407 × 407
+  // cover, the second is 407 × 283 contain and the third is 497 × 497 contain.
+  // Same class on all three, different fit — .st-imp-quiet is the modifier.
+  // So these two get NO ratio: cropping a frame that shows the picture whole
+  // throws away content for nothing, and telling the operator to centre their
+  // subject would be advice about a crop that never happens.
+  {
+    key: "site/zakaj-mi-2.webp",
+    group: HOME,
+    label: "Zakaj mi — druga slika",
+    note: "Druga slika v pasu s prednostmi. Ta se NE obreže — vidi se cela, " +
+      "v okvirju 3 : 2 ležeče. Najbolje 900 × 600 px.",
+    fallbackOffset: 13,
+    maxWidth: 900,
+  },
+  {
+    key: "site/zakaj-mi-3.webp",
+    group: HOME,
+    label: "Zakaj mi — tretja slika",
+    note: "Tretja, največja slika v pasu s prednostmi. Ta se NE obreže — vidi " +
+      "se cela, v kvadratnem okvirju. Najbolje 1000 × 1000 px.",
+    fallbackOffset: 31,
+    maxWidth: 1000,
+  },
 ];
+
+/* ---- the gallery band ---------------------------------------------------
+ *
+ * The six-tile strip that scrolls near the foot of the home page. It is the
+ * shop's own gallery, and it was six consecutive offsets into the product
+ * photographs — consecutive on purpose, because six consecutive integers stay
+ * distinct however the pool grows, so no tile ever repeated its neighbour.
+ * That argument still decides what each tile FALLS BACK to; it no longer
+ * decides what the band shows.
+ *
+ * Six separate cards rather than one multi-file upload, because each tile is
+ * a fixed key the storefront names in code — the same reason every slot here
+ * is fixed. An operator filling all six does six uploads; an operator who
+ * wants to change one changes one.
+ *
+ * ⚠️ 6–11, NOT THE 25–30 THE STRIP USED TO CARRY, BECAUSE 25 WAS ALREADY
+ * TAKEN. closing.ts chose 25–30 to clear every other offset on the page and
+ * wrote down which ones those were: "2 and 13 (editorial tiles), 5 (hero), 7
+ * and 11 (statement), 9 (editorial room)". The statement band holds 23 and 25
+ * today. The list went stale, nothing checked it, and offset 25 was resolving
+ * for both the story band's large frame and this strip's first tile — the same
+ * photograph twice on one page, which is the exact fault that comment exists
+ * to prevent.
+ *
+ * A prose list of taken numbers cannot hold. site-images.test.ts asserts the
+ * resolved photographs are all distinct instead, so the next edit that
+ * collides fails a test rather than shipping a duplicate.
+ */
+const GALLERY_IMAGES: readonly SiteImage[] = [6, 7, 8, 9, 10, 11].map(
+  (offset, i): SiteImage => ({
+    key: "site/galerija-" + String(i + 1) + ".webp",
+    group: GALLERY,
+    label: "Galerija — slika " + String(i + 1),
+    // No ratio: the tiles are object-fit: contain, so each picture is shown
+    // whole inside a square. Measured, like every other shape here.
+    note: "Slika " + String(i + 1) + " od šestih v traku na dnu domače strani. " +
+      "Ta se NE obreže — vidi se cela, v kvadratnem okvirju. Najbolje " +
+      "900 × 900 px.",
+    fallbackOffset: offset,
+    maxWidth: 900,
+  }),
+);
 
 /**
  * Every managed slot, in the order the panel lists them: the chrome first —
  * the hero and the two category cards a visitor meets before anything else —
  * then the pictures the home page composes with further down.
  */
-export const SITE_IMAGES: readonly SiteImage[] = [...CHROME_IMAGES, ...HOME_IMAGES];
+export const SITE_IMAGES: readonly SiteImage[] = [
+  ...CHROME_IMAGES,
+  ...HOME_IMAGES,
+  ...GALLERY_IMAGES,
+];
 
 export function siteImageByKey(key: string): SiteImage | undefined {
   return SITE_IMAGES.find((s) => s.key === key);
