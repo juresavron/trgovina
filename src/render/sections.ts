@@ -37,6 +37,17 @@ export interface RenderCtx {
   pdp: PdpContent;
   /** Query suffix carrying dev overrides ('' in production). */
   q: string;
+  /**
+   * The canonical path of the page being rendered ("" where the caller has
+   * none, e.g. the 404 placeholder).
+   *
+   * Added so the CHROME can know where it is: every render* caller knows its
+   * own path, so the header can set aria-current server-side — with JS off,
+   * and with section awareness the client's exact-match setter cannot have
+   * (a product page marks Trgovina). behaviour.ts's setter stays as the
+   * exact-match fallback; it only ever adds the attribute, never removes.
+   */
+  path?: string;
   phoneHref: string;
   phoneDisplay: string;
   /**

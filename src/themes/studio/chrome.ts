@@ -609,9 +609,9 @@ export const STUDIO_CHROME_CSS = `
   }
   /* WHERE YOU ARE: the page's own nav item rests with its underline already
    * full — the same device the hover grows, not a second vocabulary. The
-   * attribute is set by behaviour.ts, the one place that knows the URL (the
-   * renderer builds ONE nav string for every page, so it cannot); no script,
-   * no marker, which loses an enhancement, never a destination. */
+   * attribute is SERVER-SET now (RenderCtx.path — each renderer states its
+   * own canonical path, so the marker survives JS-off and is section-aware);
+   * behaviour.ts's exact-match setter stays as a harmless fallback. */
   :root[data-theme="studio"] .st-chrome-nav a[aria-current="page"] > span::after {
     transform: scaleX(1);
   }
@@ -742,6 +742,30 @@ export const STUDIO_CHROME_CSS = `
    * block: the sum fits from a 1480px container up, so the number waits for
    * 1560 of viewport. Between 901 and 1559 the footer states it on every
    * page, and the PDP and contact page carry it above the fold. */
+  /* 1240–1559: THE NUMBER AS A DISC. The full number needs ~180px this band
+   * does not have (its arithmetic is on the ≥1560 rule below), but the shop
+   * sells by enquiry and this is the laptop band — the header carrying no
+   * phone affordance at 1280px was the cost of the earlier fit fix. A 36px
+   * disc in the mark's own two-disc vocabulary fits from 1240 up (1088px of
+   * row + 36 + gaps against an 1160px container; at 1200 exactly it is 20px
+   * short, so the floor is 1240). Icon-only, like ≤460: the aria-label and
+   * the title carry the number, the tap carries the call. */
+  @media (min-width: 1240px) and (max-width: 1559px) {
+    :root[data-theme="studio"] .st-chrome-bar:has(> .st-chrome-tel) {
+      grid-template-columns: 1fr auto auto 1fr;
+    }
+    :root[data-theme="studio"] .st-chrome-tel {
+      display: inline-flex;
+      justify-content: center;
+      inline-size: 36px;
+      min-inline-size: 36px;
+      border-radius: var(--r-pill);
+      border: var(--bw-line) solid var(--on-invert-24);
+      background: var(--on-invert-16);
+    }
+    :root[data-theme="studio"] .st-chrome-tel span { display: none; }
+  }
+
   @media (min-width: 1560px) {
     /* :has(), because the tel is only EMITTED when the phone is set: an
      * unconditional four-track template put a three-child bar into it and
@@ -1262,15 +1286,17 @@ export const STUDIO_CHROME_CSS = `
    * block padding halves for free; what does not scale is the 50px nav gap —
    * five items at 50px plus a wordmark and the icons stop fitting around
    * 1150px. 24px is the source's own next rung down and buys ~130px. */
-  /* ≤1359 (was ≤1199): the nav gap steps down to --gap-lg. The 50px gap is
+  /* ≤1559 (was ≤1199): the nav gap steps down to --gap-lg. The 50px gap is
    * the transcribed source value for a FIVE-item menu; with seven items the
    * arithmetic changes — labels ~518px + six 50px gaps + the 338px wordmark
    * is 1244px, which fits a 1360px container and NOT the 1200–1324px band,
    * where the mark ran under the first label. Six 24px gaps bring the row to
-   * 1088px, inside the container from 1200 of viewport up. The transcription
-   * fixed the gap for a menu it no longer describes; the target floor and
-   * now the fit are the two things that outrank it. */
-  @media (max-width: 1359px) {
+   * 1088px, inside the container from 1200 of viewport up — and leave, from
+   * 1240 up, the ~60px the phone DISC below needs. The band's ceiling is
+   * 1559 because ≥1560 seats the full number beside 50px gaps (see the tel
+   * rule); the transcription fixed the gap for a menu it no longer
+   * describes, and the target floor and the fit outrank it. */
+  @media (max-width: 1559px) {
     :root[data-theme="studio"] .st-chrome-nav { gap: var(--gap-lg); }
   }
   @media (max-width: 1199px) {
@@ -1618,6 +1644,23 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     ["/contact", c.nav[4]],
   ] as const;
 
+  // WHERE YOU ARE, said by the server. ctx.path is the canonical path each
+  // renderer states about itself, so the attribute needs no script — and it
+  // can be SECTION-aware, which the client's exact-match fallback cannot: a
+  // model page rests the underline under Trgovina, a guide under Vodniki,
+  // because that is the drawer the visitor opened to get there.
+  const current = (key: (typeof links)[number][0]): boolean => {
+    const p = ctx.path;
+    if (!p) return false;
+    if (p === s.routeSlugs[key]) return true;
+    if (key === "/products") {
+      if (p.startsWith(s.routeSlugs["/product"] + "/")) return true;
+      if ((c.collections ?? []).some((col) => col.path === p)) return true;
+    }
+    if (key === "/guides" && p.startsWith(s.routeSlugs["/guide"] + "/")) return true;
+    return false;
+  };
+
   // No cart session exists at SSR time, so the count is the honest 0 and the
   // link's label says so. The integrator swaps the NUMERAL — both places it
   // appears, the attribute and the text, which are one value — never the
@@ -1638,7 +1681,8 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     links
       .map(
         ([k, label]) =>
-          '<a href="' + esc(s.routeSlugs[k] + ctx.q) + '"><span>' +
+          '<a href="' + esc(s.routeSlugs[k] + ctx.q) + '"' +
+          (current(k) ? ' aria-current="page"' : "") + "><span>" +
           esc(label) + "</span></a>",
       )
       .join("") +
@@ -1656,8 +1700,11 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     // rather than restating); the header is the last place that was still
     // doing it.
     (isSetPhone(ctx.phoneDisplay)
-      ? '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
-        esc(ctx.phoneDisplay) + '">' + icon("phone") +
+      ? // title as well as aria-label: in the disc band (1240–1559) the
+        // digits are hidden, and the tooltip is how a pointer reads them
+        // without committing to a call.
+        '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
+        esc(ctx.phoneDisplay) + '" title="' + esc(ctx.phoneDisplay) + '">' + icon("phone") +
         "<span>" + esc(ctx.phoneDisplay) + "</span></a>"
       : "") +
     '<div class="st-chrome-actions">' +

@@ -429,7 +429,7 @@ export function handleRequest(request: Request): Response {
         "specifikacijah.",
       noindex: dev,
       q,
-      bodyHtml: renderStudioFinder(buildCtx(shop, content, q), answers),
+      bodyHtml: renderStudioFinder(buildCtx(shop, content, q, content.pdp, path), answers),
       jsonLd: [
         organizationJsonLd(shop),
         breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: "Izbira bazena" }]),

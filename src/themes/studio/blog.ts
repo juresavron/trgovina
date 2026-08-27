@@ -19,7 +19,7 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import type { Block } from "../../content/pages";
-import { renderStudioBlocks } from "./page";
+import { renderStudioBlocks, sectionId } from "./page";
 import { dateAttr, dateText, type Post, type PostCard } from "../../blog/post";
 
 export const STUDIO_BLOG_CSS = `
@@ -338,6 +338,27 @@ export function renderStudioBlogPost(
   others: readonly PostCard[],
 ): string {
   const meta = [dated(post.publishedAt), esc(minutes + " min branja")].filter(Boolean);
+  // "Na tej strani", exactly as the content pages build it — same threshold
+  // (three headed sections; under that a list of two links is furniture),
+  // same ids (renderStudioBlocks assigns them with the same sectionId), same
+  // rail. A published post here runs five or six sections of buying advice;
+  // a reader arriving from a search with one question was scrolling blind
+  // through all of them while /dostava, thirty pixels of nav away, offered
+  // an index for less text.
+  const ids = blocks.map((b, i) => ("h" in b && b.h ? sectionId(b.h, i) : ""));
+  const headed = blocks
+    .map((b, i) => ("h" in b && b.h ? { h: b.h, id: ids[i]! } : null))
+    .filter((x): x is { h: string; id: string } => x !== null);
+  const index =
+    headed.length < 4
+      ? ""
+      : '<nav class="st-page-toc" aria-labelledby="st-post-toc-h">' +
+        '<p class="st-page-toc-h" id="st-post-toc-h">V tem zapisu</p>' +
+        "<ol>" +
+        headed
+          .map((x) => '<li><a href="#' + esc(x.id) + '">' + esc(x.h) + "</a></li>")
+          .join("") +
+        "</ol></nav>";
   const cover = post.coverUrl
     ? '<figure class="st-post-cover st-page-block st-page-block--wide">' +
       '<img src="' + esc(post.coverUrl) + '" alt="' + esc(post.coverAlt) +
@@ -358,13 +379,14 @@ export function renderStudioBlogPost(
         "</ul></nav>";
   return (
     '<main><section class="st-page"><div class="st-page-in">' +
-    '<div class="st-page-grid st-page-grid--solo">' +
+    '<div class="st-page-grid' + (index ? "" : " st-page-grid--solo") + '">' +
     '<header class="st-page-head">' +
     '<p class="st-page-eyebrow">' + esc(baseLabel) + "</p>" +
     '<h1 class="st-page-h">' + esc(post.title) + "</h1>" +
     (post.excerpt ? '<p class="st-page-lead">' + esc(post.excerpt) + "</p>" : "") +
     '<p class="st-post-meta">' + meta.join("<span aria-hidden=\"true\">·</span>") + "</p>" +
     "</header>" +
+    (index ? '<div class="st-page-rail">' + index + "</div>" : "") +
     '<div class="st-page-body">' +
     cover +
     renderStudioBlocks(ctx, blocks) +

@@ -369,19 +369,22 @@ export function buildCtx(
   q: string,
   /** The model being rendered. Defaults to the shop's flagship. */
   pdp: PdpContent = content.pdp,
+  /** Canonical path of the page — see RenderCtx.path. */
+  path = "",
 ): RenderCtx {
   return {
     shop,
     content,
     pdp,
     q,
+    path,
     phoneHref: "tel:" + shop.contact.phone.replace(/\s+/g, ""),
     phoneDisplay: shop.contact.phone,
   };
 }
 
 export function renderHome(shop: ShopConfig, content: ShopContent, theme: ThemeKey, q: string): string {
-  const ctx = buildCtx(shop, content, q);
+  const ctx = buildCtx(shop, content, q, content.pdp, "/");
   // A shop may override the theme's act order — the anti-doorway control
   // described in ShopConfig.design.composition. Capped here rather than at the
   // config, so an override can never turn a page into a scroll of everything.
@@ -412,7 +415,7 @@ export function renderPdp(
   theme: ThemeKey,
   pdp: PdpContent = content.pdp,
 ): string {
-  const ctx = buildCtx(shop, content, q, pdp);
+  const ctx = buildCtx(shop, content, q, pdp, shop.routeSlugs["/product"] + "/" + pdp.slug);
   if (theme === "studio") {
     return renderStudioHeader(ctx) + "<main>" + renderStudioPdp(ctx) + "</main>" + renderStudioFooter(ctx);
   }
@@ -433,7 +436,7 @@ export function renderCollection(
   theme: ThemeKey,
   collection: Collection,
 ): string {
-  const ctx = buildCtx(shop, content, q);
+  const ctx = buildCtx(shop, content, q, content.pdp, collection.path);
   return (
     renderStudioHeader(ctx) +
     // The closing band is the page's ending, and a collection page had none:
@@ -452,7 +455,7 @@ export function renderShopHub(
   q: string,
   theme: ThemeKey,
 ): string {
-  const ctx = buildCtx(shop, content, q);
+  const ctx = buildCtx(shop, content, q, content.pdp, shop.routeSlugs["/products"]);
   return (
     renderStudioHeader(ctx) +
     "<main>" + renderStudioShopHub(ctx) + renderStudioMembership(ctx) + "</main>" +
@@ -486,7 +489,13 @@ export function renderContentPage(
   // distinction between "absent" and "present and undefined" — and `about`
   // being absent is the ordinary case.
   const ctx: RenderCtx = {
-    ...buildCtx(shop, content, q),
+    ...buildCtx(
+      shop,
+      content,
+      q,
+      content.pdp,
+      (shop.routeSlugs as Record<string, string>)[page.key] ?? "",
+    ),
     ...(about ? { about } : {}),
     ...(chosen && chosen.length > 0 ? { chosen } : {}),
   };
@@ -509,7 +518,7 @@ export function renderBlogIndex(
   lead: string,
   posts: readonly PostCard[],
 ): string {
-  const ctx = buildCtx(shop, content, q);
+  const ctx = buildCtx(shop, content, q, content.pdp, shop.routeSlugs["/blog"]);
   return (
     renderStudioHeader(ctx) +
     renderStudioBlogIndex(ctx, shop.routeSlugs["/blog"], h1, lead, posts) +
@@ -527,7 +536,7 @@ export function renderBlogPost(
   minutes: number,
   others: readonly PostCard[],
 ): string {
-  const ctx = buildCtx(shop, content, q);
+  const ctx = buildCtx(shop, content, q, content.pdp, shop.routeSlugs["/blog"]);
   return (
     renderStudioHeader(ctx) +
     renderStudioBlogPost(ctx, shop.routeSlugs["/blog"], "Blog", post, blocks, minutes, others) +
@@ -586,6 +595,16 @@ export function renderPlaceholder(
     '<h1 class="display" style="margin-top:14px">' + esc(title) + "</h1>" +
     "<p>" + esc(body) + "</p>" +
     '<a class="btn btn-fill" href="/' + q + '">Na začetno stran</a>' +
+    // A lost visitor's three real errands, not just the door back out. The
+    // most common way to land here is a mistyped or moved model URL, so the
+    // catalogue leads; the finder catches the visitor who never had a URL;
+    // contact is the shop's whole conversion path. Quiet links under the
+    // button — the page stays an apology, not a sitemap.
+    '<p class="placeholder-links">' +
+    '<a href="' + esc(shop.routeSlugs["/products"] + q) + '">Vsi modeli</a>' +
+    '<a href="' + esc(shop.routeSlugs["/finder"] + q) + '">Kateri bazen je pravi za vas?</a>' +
+    '<a href="' + esc(shop.routeSlugs["/contact"] + q) + '">Kontakt</a>' +
+    "</p>" +
     "</div></div></section></main>" +
     foot
   );

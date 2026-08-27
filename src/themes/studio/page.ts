@@ -344,6 +344,13 @@ export const STUDIO_PAGE_CSS = `
   :root[data-theme="studio"] .st-page-block + .st-page-block {
     margin-block-start: clamp(38px, 4vw, 64px);
   }
+  /* The photograph band is a PAUSE, so it takes the section step on both
+   * sides — at the block gap it read as a tail hanging off the table above
+   * it rather than as its own beat. */
+  :root[data-theme="studio"] .st-page-block:has(> .st-page-fig),
+  :root[data-theme="studio"] .st-page-block:has(> .st-page-fig) + .st-page-block {
+    margin-block-start: clamp(56px, 6vw, 92px);
+  }
   :root[data-theme="studio"] .st-page-h2 {
     font-family: var(--f-display);
     font-weight: var(--w-display);
@@ -352,6 +359,16 @@ export const STUDIO_PAGE_CSS = `
     line-height: var(--lh-h4);
     color: var(--ink);
     text-wrap: balance;
+  }
+  /* One heading-to-body offset whatever follows. Prose paid it through the
+   * paragraph's own top margin; a steps list, a facts table and the compare
+   * table paid nothing, so half the site's H2s sat collided with their
+   * content while the other half breathed. */
+  :root[data-theme="studio"] .st-page-h2 + .st-page-steps,
+  :root[data-theme="studio"] .st-page-h2 + .st-page-facts,
+  :root[data-theme="studio"] .st-page-h2 + .st-page-qa,
+  :root[data-theme="studio"] .st-page-h2 + .st-page-cmp {
+    margin-block-start: 20px;
   }
   /* ⚠️ ONE ANCHOR OFFSET, ON THE SCROLLER, FOR EVERY TARGET ON THE PAGE.
    *
@@ -714,6 +731,9 @@ export const STUDIO_PAGE_CSS = `
     color: var(--ink);
   }
   :root[data-theme="studio"] .st-page-cmp-k {
+    /* ~180px, not the even third it was taking: the labels end by ~110px and
+     * the trench they left forced both VALUE columns to wrap. */
+    inline-size: 11rem;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -1586,7 +1606,10 @@ export function renderStudioPage(ctx: RenderCtx, page: Page): string {
     .map((b, i) => (b.kind !== "cta" && "h" in b && b.h ? { h: b.h, id: ids[i]! } : null))
     .filter((x): x is { h: string; id: string } => x !== null);
   const index =
-    headed.length < 3
+    // Four, not three: a three-link rail held a 256px column open beside
+    // 3,300px of empty track on /dostava. Under four entries the body gets
+    // the width back.
+    headed.length < 4
       ? ""
       : '<nav class="st-page-toc" aria-labelledby="st-toc-h">' +
         '<p class="st-page-toc-h" id="st-toc-h">Na tej strani</p>' +

@@ -1019,8 +1019,12 @@ export const STUDIO_COMMERCE_CSS = `
    * the last grid by a hairline, so it reads as the page's own voice rather
    * than as a third product band. */
   :root[data-theme="studio"] .st-hub-outro {
-    max-inline-size: 40rem;
-    margin-inline: auto;
+    /* LEFT-ALIGNED on the page's own grid, at a true reading measure. The
+     * centred 40rem column floated between the gutters with ~360px of dead
+     * space either side and ran ~90 characters — a block from another
+     * document appended to the hub. 62ch is the ~65-character measure the
+     * site reads at; the hairline stays, the drift goes. */
+    max-inline-size: 62ch;
     padding-block-start: clamp(32px, 4vw, 56px);
     border-block-start: var(--bw-line) solid var(--line);
   }
@@ -2243,7 +2247,12 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
     '<section class="st-cat-sec" aria-labelledby="st-cat-h">' +
     '<div class="st-cat-head">' +
     '<p class="st-eyebrow">Ponudba</p>' +
-    '<h2 class="st-sec-h" id="st-cat-h">Izberite vrsto bazena</h2>' +
+    // "Dve družini" over the old "Izberite vrsto bazena": one screen below,
+    // the model grid is headed by the shop's own CTA line ("Izberite svoj
+    // bazen"), and two consecutive bands both opening with an imperative
+    // "Izberite …" read as the same band rendered twice. This one names the
+    // fact, the next one makes the ask.
+    '<h2 class="st-sec-h" id="st-cat-h">Dve družini, šest modelov</h2>' +
     // The guided choice offered AT the moment of choosing. This band asks the
     // visitor to pick a family; the finder exists for the visitor who cannot,
     // and until now it was reachable only from the hub and the comparison —
