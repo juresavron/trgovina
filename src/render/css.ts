@@ -281,6 +281,10 @@ const SHEET = `
 
   .placeholder { min-height: 40vh; display: grid; place-items: center; text-align: center; padding: clamp(70px, 10vw, 140px) 0; }
   .placeholder h1 { font-size: clamp(1.9rem, 4vw, 3rem); }
+  /* The 404's quiet errand row: under the button, wrapping, each link its
+   * own 44px-tall target. */
+  .placeholder-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 26px; margin-top: 26px; }
+  .placeholder-links a { color: inherit; text-underline-offset: 3px; padding-block: 10px; }
   .placeholder p { color: var(--ink-soft); margin-top: 16px; }
   .placeholder .btn { margin-top: 28px; }
 

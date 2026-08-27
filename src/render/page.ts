@@ -595,6 +595,16 @@ export function renderPlaceholder(
     '<h1 class="display" style="margin-top:14px">' + esc(title) + "</h1>" +
     "<p>" + esc(body) + "</p>" +
     '<a class="btn btn-fill" href="/' + q + '">Na začetno stran</a>' +
+    // A lost visitor's three real errands, not just the door back out. The
+    // most common way to land here is a mistyped or moved model URL, so the
+    // catalogue leads; the finder catches the visitor who never had a URL;
+    // contact is the shop's whole conversion path. Quiet links under the
+    // button — the page stays an apology, not a sitemap.
+    '<p class="placeholder-links">' +
+    '<a href="' + esc(shop.routeSlugs["/products"] + q) + '">Vsi modeli</a>' +
+    '<a href="' + esc(shop.routeSlugs["/finder"] + q) + '">Kateri bazen je pravi za vas?</a>' +
+    '<a href="' + esc(shop.routeSlugs["/contact"] + q) + '">Kontakt</a>' +
+    "</p>" +
     "</div></div></section></main>" +
     foot
   );
