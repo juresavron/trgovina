@@ -24,6 +24,7 @@ import type { Page } from "../pages";
 export const COMPARE: Page = {
   key: "/compare",
   h1: "Primerjava modelov",
+  seoTitle: "Swim spa ali masažni bazen? Primerjava",
   lead:
     "Prva odločitev ni model, ampak vrsta bazena. Masažni bazen je za sedenje in sprostitev, " +
     "swim spa pa za plavanje — razlika je v dolžini, teži in tem, kaj zahtevata od prostora.",
@@ -87,6 +88,7 @@ export const COMPARE: Page = {
       // navigated to "/BAZEN%20195". The proofread caught it; the structure
       // test below the fragment sweep now pins the direction.
       items: [
+        ["Kateri je pravi za vas? — tri vprašanja", "/izbira"],
         ["BAZEN 195", "/bazen/mali-195"],
         ["BAZEN 210", "/bazen/srednji-210"],
         ["BAZEN 230", "/bazen/veliki-230"],

@@ -91,6 +91,15 @@ export const CONTACT: Page = {
           "Model in konfiguracija, dostava, priklop in zagon — vse v eni številki z DDV. " +
             "Kar v ponudbi piše, je tudi cena posla.",
         ],
+        // The fourth step, added after the competitive teardown: the best
+        // shops in this category publish the WHOLE arc, because the silence
+        // after "we sent the offer" is where enquiries die — the buyer
+        // should know the story ends in water, not in paperwork.
+        [
+          "Dostava in prva kopel",
+          "Na dogovorjeni dan bazen pripeljemo, postavimo, napolnimo in zaženemo. " +
+            "Preden odidemo, voda kroži in se greje, vi pa veste, kaj pomeni vsaka tipka.",
+        ],
       ],
     },
     {

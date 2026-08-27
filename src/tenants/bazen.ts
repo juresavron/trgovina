@@ -124,6 +124,10 @@ export const bazen: ShopConfig = {
     "/compare": "/primerjava",
     "/guide": "/vodnik",
     "/guides": "/vodniki",
+    // "izbira" over "svetovalec" or "kviz": it names the OUTCOME (a choice
+    // made), not the mechanism, and it is the word the page's own question
+    // uses — "Kateri bazen je pravi za vas?"
+    "/finder": "/izbira",
     // "blog" is the Slovenian word too, and it is what a reader looks for in
     // a nav. /novice would be news and /nasveti would promise advice on every
     // post; neither is what this is.
