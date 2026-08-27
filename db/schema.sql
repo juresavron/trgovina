@@ -473,6 +473,27 @@ create policy index_build_read on public.product_media
 revoke select on public.products from anon;
 grant select (id, shop_id, slug) on public.products to anon;
 
+-- ⚠️ AND THE SAME WITHOUT THE LIVE CHECK, FOR ANON, so the deploy's review
+-- generator can read them (scripts/sync-reviews.mjs). Two of the three
+-- conditions above block that build: the shop is not live, and a PUBLISHED but
+-- unverified review is a legitimate thing to show — it renders as a plain
+-- quote with no "Preverjen nakup" chip. reviews_public_read would hide it from
+-- the generator, so the site would silently drop every review the owner had
+-- not ticked as verified.
+--
+-- The verified flag rides through to the generated module and decides the chip
+-- there, which is where the Annex I 23b claim belongs: a row being readable is
+-- not the same as a claim being made about it.
+create policy reviews_prelive_read on public.reviews
+  for select to anon using (published);
+
+-- Narrowed to what the storefront renders. No order_id and no
+-- order_number_snapshot: the evidence behind a verified tick stays in the back
+-- office and out of a build artefact.
+revoke select on public.reviews from anon;
+grant select (id, shop_id, product_id, author_name, rating, body, verified, published, created_at)
+  on public.reviews to anon;
+
 create policy reviews_public_read on public.reviews
   for select using (
     published

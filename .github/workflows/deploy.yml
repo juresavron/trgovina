@@ -73,6 +73,22 @@ jobs:
             git diff --stat -- src/themes/studio/own-media.ts
           fi
 
+      # Reviews are baked in rather than read at request time — see
+      # src/content/reviews.generated.ts. They run BEFORE the typecheck and the
+      # tests on purpose: a review is an Annex I claim, so the launch gate and
+      # the suite should see the real ones and fail the deploy rather than let
+      # something reach a customer.
+      - name: Rebuild the reviews from Supabase
+        continue-on-error: true
+        run: |
+          node scripts/sync-reviews.mjs
+          if git diff --quiet -- src/content/reviews.generated.ts; then
+            echo "reviews already matched the database"
+          else
+            echo "reviews changed — the committed copy was stale:"
+            git diff --stat -- src/content/reviews.generated.ts
+          fi
+
       - name: Typecheck
         run: npx tsc --noEmit
 

@@ -268,7 +268,28 @@ export interface ShopContent {
    * let a shop go live while any review is flagged. Delete the flag only
    * when the quote, the person and the order behind it are all real.
    */
-  reviews: { q: string; who: string; model: string; placeholder?: boolean }[];
+  reviews: {
+    q: string;
+    who: string;
+    model: string;
+    /** True for content nobody wrote. The launch gate refuses live while set. */
+    placeholder?: boolean;
+    /**
+     * ⚠️ THE ANNEX I 23b CLAIM, AND THE ONLY THING THAT EARNS THE CHIP.
+     *
+     * Separate from `placeholder`, because they are different failures. A
+     * placeholder is invented — nobody said it, and no shop may go live with
+     * one. An unverified review is REAL and simply has not been checked
+     * against an order, which is fine to publish and not fine to dress as a
+     * verified purchase.
+     *
+     * Conflating them was the earlier shape: the chip printed whenever a
+     * review was not a placeholder, so a genuine quote the shop had never
+     * checked would have carried "Preverjen nakup" the moment the flag came
+     * off. The operator ticks this in the panel against an order number.
+     */
+    verified?: boolean;
+  }[];
   guides: [string, string][];
   /** The flagship: the model the home page leads with. */
   pdp: PdpContent;

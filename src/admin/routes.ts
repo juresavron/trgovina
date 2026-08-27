@@ -56,6 +56,14 @@ import { enhance, enhanceAvailable } from "./enhance";
 import { describe, describeAvailable } from "./describe";
 import { arrange } from "./shots";
 import { blogEditPage, blogListPage } from "./blog-panel";
+import { reviewEditPage, reviewListPage } from "./reviews-panel";
+import {
+  createReview,
+  deleteReview,
+  getReview,
+  listReviews,
+  updateReview,
+} from "./reviews";
 import {
   createPost,
   deletePost,
@@ -405,6 +413,108 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       status: 200,
       headers: { "content-type": done.mime, "cache-control": "no-store" },
     });
+  }
+
+  // --- customer reviews ---
+  //
+  // ⚠️ THE MOST LEGALLY LOADED SURFACE IN THIS PANEL. See admin/reviews.ts for
+  // the two Annex I entries; what matters here is that "published" and
+  // "verified" are separate decisions and the second one refuses to save
+  // without the order number that justifies it.
+  if (parts[1] === "mnenja") {
+    const shopKey = "bazen";
+    const notice = url.searchParams.get("m")
+      ? ({ kind: "ok", text: NOTICES[url.searchParams.get("m")!] ?? "Shranjeno." } as const)
+      : url.searchParams.get("e")
+        ? ({ kind: "err", text: ERRORS[url.searchParams.get("e")!] ?? "Ni uspelo." } as const)
+        : undefined;
+    const cat = CATALOGUE_SHOPS[shopKey]!;
+    const models = cat.models.map((m) => ({ slug: m.slug, name: m.name }));
+
+    /**
+     * The form, with the product resolved to a real row.
+     *
+     * The model arrives as a SLUG and is matched against this shop's own
+     * catalogue before it becomes anything — a review may only ever name a
+     * product the shop actually sells. The two invented reviews this replaces
+     * named "BAZEN RELAX 5", a model that has never existed.
+     */
+    const read = async (): Promise<
+      { ok: true; draft: Parameters<typeof createReview>[2] } | { ok: false; why: string }
+    > => {
+      const form = await request.formData();
+      const body = String(form.get("body") ?? "").trim();
+      const authorName = String(form.get("who") ?? "").trim();
+      if (!body || !authorName) return { ok: false, why: "rv-empty" };
+      const orderNumber = String(form.get("order") ?? "").trim();
+      const verified = form.get("verified") !== null;
+      if (verified && orderNumber === "") return { ok: false, why: "rv-unverified" };
+      const slug = String(form.get("model") ?? "");
+      const model = cat.models.find((m) => m.slug === slug);
+      const productId = model
+        ? await ensureProduct(api, shopKey, model.slug, model.name, model.freightClass)
+        : null;
+      const rating = Number(form.get("rating") ?? 5);
+      return {
+        ok: true,
+        draft: {
+          body,
+          authorName,
+          rating: Number.isFinite(rating) ? rating : 5,
+          productId,
+          orderNumber,
+          verified,
+          published: form.get("published") !== null,
+        },
+      };
+    };
+
+    if (parts.length === 2 && request.method === "GET") {
+      return page(reviewListPage(await listReviews(api, shopKey), admin.email, notice));
+    }
+
+    if (parts[2] === "novo") {
+      if (request.method === "GET") {
+        return page(reviewEditPage(null, models, admin.email, notice));
+      }
+      if (request.method === "POST") {
+        const got = await read();
+        if (!got.ok) return seeOther("/admin/mnenja/novo?e=" + got.why);
+        try {
+          const made = await createReview(api, shopKey, got.draft);
+          return seeOther("/admin/mnenja/" + made.id + "?m=rv-saved");
+        } catch (err) {
+          console.error(err);
+          return seeOther("/admin/mnenja/novo?e=rv");
+        }
+      }
+    }
+
+    const rid = parts[2] ?? "";
+    if (!rid) return page(notFoundPage("To mnenje ne obstaja.", admin.email), 404);
+    const review = await getReview(api, shopKey, rid);
+    if (!review) return page(notFoundPage("To mnenje ne obstaja.", admin.email), 404);
+    const rhere = "/admin/mnenja/" + review.id;
+
+    if (parts.length === 3 && request.method === "GET") {
+      return page(reviewEditPage(review, models, admin.email, notice));
+    }
+    if (parts.length === 3 && request.method === "POST") {
+      const got = await read();
+      if (!got.ok) return seeOther(rhere + "?e=" + got.why);
+      try {
+        await updateReview(api, shopKey, review.id, got.draft);
+      } catch (err) {
+        console.error(err);
+        return seeOther(rhere + "?e=rv");
+      }
+      return seeOther(rhere + "?m=rv-saved");
+    }
+    if (parts[3] === "delete" && request.method === "POST") {
+      await deleteReview(api, shopKey, review.id);
+      return seeOther("/admin/mnenja?m=rv-deleted");
+    }
+    return page(notFoundPage("Neznano dejanje.", admin.email), 404);
   }
 
   // --- the blog ---
@@ -792,6 +902,11 @@ const ERRORS: Record<string, string> = {
     "je težava pri shrambi in ne pri vaši sliki.",
   title: "Zapis potrebuje naslov.",
   post: "Zapisa ni bilo mogoče shraniti. Poskusite znova.",
+  rv: "Mnenja ni bilo mogoče shraniti. Poskusite znova.",
+  "rv-empty": "Mnenje potrebuje besedilo in podpis.",
+  // The tick was offered, the evidence was not. See reviews.ts: the chip is a
+  // claim under Annex I 23b and the order number is the check behind it.
+  "rv-unverified": "Za oznako »preverjen nakup« vpišite številko naročila.",
 };
 
 const NOTICES: Record<string, string> = {
@@ -812,6 +927,8 @@ const NOTICES: Record<string, string> = {
   "post-deleted": "Zapis je izbrisan.",
   "cover-set": "Naslovna slika je naložena.",
   "cover-cleared": "Naslovna slika je odstranjena.",
+  "rv-saved": "Mnenje je shranjeno. Na strani se pokaže ob naslednji posodobitvi.",
+  "rv-deleted": "Mnenje je izbrisano.",
 };
 
 /** "bazen/slug/uuid.webp" + 800 → "bazen/slug/uuid-800.webp" */

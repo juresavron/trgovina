@@ -77,7 +77,7 @@
 import { esc, type RenderCtx } from "../../render/sections";
 import { statValue } from "./stat";
 import { arrowIcon } from "./icons";
-import { OWN_PHOTOS, decorativeImg, pick, sitePhoto } from "./media";
+import { OWN_PHOTOS, decorativeImg, sitePhoto } from "./media";
 
 export const STUDIO_EDITORIAL_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ----
@@ -96,11 +96,6 @@ export const STUDIO_EDITORIAL_CSS = `
     --studio-tile-r: clamp(10px, 0.7vw, 14px);
     --studio-guide-r: clamp(10px, 0.8vw, 16px);
 
-    /* §4.10: the Ø300px #1C1C1C disc — mixed from tokens, never a hex, and
-     * mixed HERE rather than borrowed from another module's private var. It is
-     * the ground of the DRAWN medallion only; a medallion holding a real
-     * photograph is a light panel instead (see .st-tst-disc--lit). */
-    --studio-quote-disc: color-mix(in srgb, var(--on-invert) 12%, var(--ink-invert));
     /* §4.10, the two numbers the testimonial band's composition is built from.
      *
      * The medallion's diameter is a WIDTH, so it is a clamp and belongs to no
@@ -141,8 +136,16 @@ export const STUDIO_EDITORIAL_CSS = `
      * than a number invented for this band. Below 1080px the stage collapses
      * back to --studio-read-narrow alone (see the stacked tier), so the
      * narrow measure still governs everywhere the row is a column. */
-    --studio-tst-disc: clamp(160px, 18vw, 300px);
-    --studio-tst-stage: min(100%, calc(var(--studio-read) + var(--gap-2xl) + var(--studio-tst-disc)));
+    /* ⚠️ THE STAGE IS THE READING MEASURE NOW, and it used to be the measure
+     * PLUS a gap PLUS the medallion. With the medallion gone that calc was
+     * reserving 300px of nothing at the end of every quote — the band would
+     * have kept its old width and hung the text off to one side of it.
+     *
+     * --studio-tst-disc goes with it. The only thing still asking for it was
+     * .st-tst-nav-in, which sized the control pair to the medallion's column
+     * so the arrows sat under it; there is no column to sit under, so the
+     * pair takes its own width. */
+    --studio-tst-stage: min(100%, var(--studio-read));
     /* The hairline the inverted band uses for its own frames and chips. --line
      * (#dfdfdf) is a white-ground value and glares here. */
     --studio-line-invert: color-mix(in srgb, var(--on-invert) 16%, transparent);
@@ -654,16 +657,18 @@ export const STUDIO_EDITORIAL_CSS = `
    * Named areas rather than source order, because <figcaption> must be a
    * direct child of <figure> to be its caption — it cannot live inside the
    * quote column's wrapper, so the grid puts it there instead. */
+  /* ONE COLUMN, because the medallion is gone — see renderStudioTestimonials.
+   * The quote used to share the row with a product photograph picked by
+   * offset; it now has the band to itself and takes a reading measure rather
+   * than whatever was left beside a 300px disc. */
   :root[data-theme="studio"] .st-tst-fig {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--studio-tst-disc);
     grid-template-areas:
-      "body disc"
-      "cap  disc";
-    align-items: center;
-    column-gap: var(--gap-2xl);
+      "body"
+      "cap";
     row-gap: clamp(16px, 1.8vw, 36px);
     margin: 0;
+    max-inline-size: 46rem;
   }
   /* THE TWO TEXT ROWS MUST TOUCH, and centring them individually is why they
    * did not. The medallion spans both rows and is taller than the quote, so
@@ -681,7 +686,6 @@ export const STUDIO_EDITORIAL_CSS = `
    * never grow and the same two rules are simply inert. */
   :root[data-theme="studio"] .st-tst-body { grid-area: body; align-self: end; }
   :root[data-theme="studio"] .st-tst-cap { grid-area: cap; align-self: start; }
-  :root[data-theme="studio"] .st-tst-disc { grid-area: disc; }
 
   :root[data-theme="studio"] .st-tst-body { min-width: 0; }
   /* The oversized opening glyph, one ramp step DOWN from where it was.
@@ -829,96 +833,12 @@ export const STUDIO_EDITORIAL_CSS = `
     color: var(--on-invert-mute);
   }
 
-  /* The circular product medallion (§4.10), clipped to --r-circle. The frame
-   * is composition and is built regardless; the picture inside it is
-   * inventory, and while a shop owns none the interior stays the drawn
-   * placeholder (see media.ts on what a product slot claims). */
-  :root[data-theme="studio"] .st-tst-disc {
-    position: relative;
-    overflow: hidden;
-    inline-size: var(--studio-tst-disc);
-    aspect-ratio: 1 / 1;
-    border-radius: var(--r-circle);
-    background: var(--studio-quote-disc);
-    box-shadow: inset 0 0 0 var(--bw-line) var(--studio-line-invert);
-  }
-  /* THE CROP WAS THE DEFECT, AND object-fit:cover WAS THE CROP.
-   *
-   * The note this replaces argued the opposite — "a disc is a crop by
-   * definition, and a contained image leaves two crescents of background that
-   * read as a rendering fault". That is true of a photograph of a ROOM. It is
-   * exactly wrong for the photography this shop actually owns, which is
-   * white-sweep studio cutouts: the product centred, small in frame, floating
-   * in a large field of near-white. Cover-crop one into a 216px circle and the
-   * circle fills with sweep — a white disc with a fragment of acrylic across
-   * it, which is what the owner saw and read as a broken image. The larger the
-   * product sits in frame, the worse it gets, because cover clips whatever
-   * does not fit the square and the thing being sold is what gets clipped.
-   *
-   * So the medallion becomes what the source's is: a light PANEL with the
-   * product contained inside it and air all round. Three parts, and all three
-   * are load-bearing:
-   *
-   *   1. object-fit: contain, so the whole product survives at ANY source
-   *      aspect ratio — and this bucket mixes 900x900 hot tubs with 900x620
-   *      swim spas, so a rule that only works on squares is not a rule.
-   *   2. a --surface panel behind it. Contain leaves letterboxing wherever the
-   *      picture is not square, and the crescents the old note feared are real
-   *      — they just have to be the SAME white as the sweep, and then the
-   *      panel and the picture are one continuous field with a product in it.
-   *      A darker rung (--bg-alt, say) would draw the seam it is meant to hide.
-   *   3. padding, which is the air. inset:0 on an absolutely positioned image
-   *      resolves against its containing block's PADDING box, so padding here
-   *      is the only thing that insets it — sizing it with inline-size alone
-   *      does not, because a replaced element ignores inset-shrinking and
-   *      takes its intrinsic width instead. A tenth of the diameter reads as
-   *      generous at 300px and still leaves a legible product at the 160px
-   *      floor — and it is written as a division of the token rather than as
-   *      padding:10%, because percentage padding resolves against the
-   *      CONTAINING BLOCK, not the element. Stacked on a phone the medallion
-   *      is 160px inside a 340px column, so the percentage form quietly paid
-   *      it 34px of padding a side: 42% of the disc, and a product shrunk to
-   *      a smudge in the middle of it.
-   *
-   * The ring goes with it: a white disc on a near-black band needs no help
-   * being a shape, and a 16%-white hairline over white is invisible anyway.
-   *
-   * The DRAWN fallback keeps the dark disc above, because its mass and floor
-   * shadow are white-on-transparent mixes that would vanish on a light panel.
-   * Hence a modifier rather than a redefinition: the two interiors are lit
-   * differently because they are different things. */
-  :root[data-theme="studio"] .st-tst-disc--lit {
-    background: var(--surface);
-    padding: calc(var(--studio-tst-disc) / 10);
-    box-shadow: none;
-  }
-  :root[data-theme="studio"] .st-tst-disc-photo {
-    position: absolute;
-    inset: 0;
-    inline-size: 100%;
-    block-size: 100%;
-    object-fit: contain;
-  }
-  :root[data-theme="studio"] .st-tst-disc-mass {
-    position: absolute;
-    inset: 26%;
-    border-radius: var(--r-media);
-    border: 1px solid color-mix(in srgb, var(--on-invert) 10%, transparent);
-    background: color-mix(in srgb, var(--on-invert) 7%, transparent);
-  }
-  :root[data-theme="studio"] .st-tst-disc-floor {
-    position: absolute;
-    left: 50%; bottom: 17%;
-    translate: -50% 0;
-    inline-size: 46%;
-    block-size: 6%;
-    border-radius: var(--r-pill);
-    background: radial-gradient(
-      50% 50% at 50% 50%,
-      color-mix(in srgb, var(--on-invert) 12%, transparent),
-      transparent 72%
-    );
-  }
+  /* ⚠️ THE CIRCULAR MEDALLION AND ITS THREE INTERIORS ARE GONE — about 90
+   * lines of stylesheet, including a long note arguing how to light a
+   * white-sweep cutout inside a 216px circle. Every word of it was right
+   * about a problem the band no longer has: a review is words and who said
+   * them, and a product photograph picked by offset was decoration standing
+   * where evidence belongs. See renderStudioTestimonials. */
 
   /* The two circular controls, TUCKED UNDER THE MEDALLION (§4.10). 64px square
    * with a 2px ring — --ctrl-circle-size and --bw-ctrl are tokens.ts's own
@@ -949,7 +869,6 @@ export const STUDIO_EDITORIAL_CSS = `
     align-items: center;
     justify-content: center;
     gap: var(--gap-sm);
-    inline-size: var(--studio-tst-disc);
   }
   /* THE RING IS THE CONTROL'S BOUNDARY, so WCAG 1.4.11's 3:1 applies to it:
    * --on-invert-mute is 7.33:1 on the band, with headroom to spare, and the
@@ -1462,7 +1381,13 @@ function motif(): string {
  * attribution stands alone with no hole beside it. Nothing in the stylesheet
  * is conditioned on the chip's presence or on what it says.
  */
-function quoteBlock(r: { q: string; who: string; model?: string; placeholder?: boolean }): string {
+function quoteBlock(r: {
+  q: string;
+  who: string;
+  model?: string;
+  placeholder?: boolean;
+  verified?: boolean;
+}): string {
   // ⚠️ A PLACEHOLDER NEVER WEARS THE CHIP.
   //
   // ShopContent.reviews states the rule — "the renderer must not dress it as
@@ -1476,11 +1401,17 @@ function quoteBlock(r: { q: string; who: string; model?: string; placeholder?: b
   // but a gate on a config flag is one flip away from publishing the claim,
   // and the QA host renders it in the meantime. The model still shows — it is
   // useful context — as a plain caption that asserts nothing.
+  // ⚠️ THE CHIP IS EARNED, NOT INFERRED. It used to print for anything that
+  // was not a placeholder, which made "not invented" the same thing as
+  // "checked against a real order" — so a genuine quote nobody had verified
+  // would have claimed a verified purchase the moment the flag came off. The
+  // claim now comes from `verified` alone, which the operator ticks in the
+  // panel against an order number and nothing else sets.
   const chip = !r.model
     ? ""
-    : r.placeholder
-      ? '<span class="st-tst-model">' + esc(r.model) + "</span>"
-      : '<span class="st-tst-chip">Preverjen nakup · ' + esc(r.model) + "</span>";
+    : r.verified === true && !r.placeholder
+      ? '<span class="st-tst-chip">Preverjen nakup · ' + esc(r.model) + "</span>"
+      : '<span class="st-tst-model">' + esc(r.model) + "</span>";
   return (
     '<div class="st-tst-body">' +
     '<span class="st-tst-glyph" aria-hidden="true">„</span>' +
@@ -1559,30 +1490,20 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
       // is what lets that anchor move focus into a quote that is not itself
       // interactive.
       const id = "st-tst-" + String(i + 1);
-      // A photograph, not the grey disc. The rule in the stylesheet says the
-      // frame is composition and the picture inside it is inventory, "until a
-      // shop owns photography" — it owns 43 files now, and two empty discs
-      // beside the reviews were the last of the placeholder furniture on this
-      // page. Offset 17 + i keeps them off the pictures the bands above
-      // already took (5, 13, 22, 23, 25-30, 31) and off each other.
+      // ⚠️ NO MEDALLION. It held a product photograph picked by offset — a
+      // picture of a hot tub beside a sentence about the delivery crew, which
+      // is decoration standing where evidence belongs. A review is words and
+      // who said them; the picture added nothing a reader could check, and it
+      // took a third of the band to say it.
       //
-      // The two interiors are lit differently, so the class says which one it
-      // is: --lit is the light panel a white-sweep cutout needs to sit on, and
-      // the drawn mass would disappear into it. `sizes` follows the medallion,
-      // which now survives below 1080px stacked above the quote — it is
-      // clamp(160px, 18vw, 300px), so 200px is a safe upper bound for every
-      // viewport under the breakpoint and 18vw describes the rest.
-      const lit = OWN_PHOTOS.length > 0;
-      const disc = lit
-        ? decorativeImg(pick(OWN_PHOTOS, ctx.shop.key, 17 + i), "st-tst-disc-photo", "(max-width: 1080px) 200px, 18vw")
-        : '<span class="st-tst-disc-mass"></span><span class="st-tst-disc-floor"></span>';
+      // Asked for directly, and it is the right call on its own: what makes a
+      // testimonial persuasive is that it reads like a person, and a stock
+      // product shot beside it reads like an advertisement. The quote now has
+      // the full measure.
       return (
         '<li class="st-tst-slide" data-st-item id="' + esc(id) + '" tabindex="-1">' +
         '<figure class="st-tst-fig">' +
         quoteBlock(r) +
-        '<div class="st-tst-disc' + (lit ? " st-tst-disc--lit" : "") + '" aria-hidden="true">' +
-        disc +
-        "</div>" +
         "</figure></li>"
       );
     })
@@ -1592,9 +1513,12 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
 
   // The heading makes the same claim the chip does, so it answers to the same
   // rule: it may say "verified" only when every quote under it is real.
-  const heading = reviews.some((r) => r.placeholder)
-    ? "Mnenja strank"
-    : "Preverjena mnenja strank";
+  // The heading makes the same claim the chip does, so it answers to the same
+  // rule — and to the stricter half of it: it may say "verified" only when
+  // EVERY quote under it has been checked, because it speaks for all of them.
+  const heading = reviews.every((r) => r.verified === true && !r.placeholder)
+    ? "Preverjena mnenja strank"
+    : "Mnenja strank";
 
   return (
     '<section class="st-tst" data-st-slider aria-labelledby="st-tst-h">' +

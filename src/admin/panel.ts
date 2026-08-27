@@ -717,6 +717,19 @@ export function indexPage(
       '<a class="btn btn--ghost" href="/admin/blog">Uredi zapise</a>' +
       "</div>" +
 
+      // MNENJA, and the sentence says the OPPOSITE of the blog's above it —
+      // deliberately, and for a reason worth the two lines. A post publishes
+      // itself; a review waits for the next update of the site, because it is
+      // baked into the build so the launch gate sees it before a customer does
+      // (src/content/reviews.generated.ts). An operator who has just learned
+      // that posts are instant will assume everything here is.
+      "<h2>Mnenja strank</h2>" +
+      '<div class="card row-card">' +
+      "<p>Prepisana mnenja kupcev. Na strani se pokažejo ob naslednji " +
+      "posodobitvi.</p>" +
+      '<a class="btn btn--ghost" href="/admin/mnenja">Uredi mnenja</a>' +
+      "</div>" +
+
       // THE SITE'S OWN PICTURES, which had no way in here at all — so the
       // heaviest image on the storefront (a 2.7 MB PNG hero) was the one
       // picture the panel's convert-to-WebP promise never reached.
