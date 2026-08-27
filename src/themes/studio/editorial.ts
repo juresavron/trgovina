@@ -77,7 +77,7 @@
 import { esc, type RenderCtx } from "../../render/sections";
 import { statValue } from "./stat";
 import { arrowIcon } from "./icons";
-import { OWN_PHOTOS, decorativeImg, pick } from "./media";
+import { OWN_PHOTOS, decorativeImg, pick, sitePhoto } from "./media";
 
 export const STUDIO_EDITORIAL_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ----
@@ -1388,7 +1388,11 @@ export function renderStudioImpact(ctx: RenderCtx): string {
   // against, and the multiply ground seats it. Distinct from every other
   // pick offset on the page (5, 13, 17+i, 23, 25-30, 31 — the full list sits
   // at the hero tile above).
-  const roomPhoto = OWN_PHOTOS.length > 0 ? pick(OWN_PHOTOS, ctx.shop.key, 22) : undefined;
+  // A NAMED SLOT, not offset 22. The comment above records why 22 was chosen
+  // and it stays true of the fallback — /media resolves that same offset until
+  // the owner uploads — but which picture anchors this tile is now theirs to
+  // decide in the panel rather than ours to compute.
+  const roomPhoto = OWN_PHOTOS.length > 0 ? sitePhoto("zakaj-mi") : undefined;
   const room =
     '<div class="st-imp-tile">' +
     (roomPhoto

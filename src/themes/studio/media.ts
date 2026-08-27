@@ -217,6 +217,39 @@ export function decorativeImg(media: Paintable, cls: string, sizes: string): str
  * six distinct pictures and no more, and pick() still keeps the choice stable
  * across renders.
  */
+/**
+ * A picture the OPERATOR chose for a named place on the site.
+ *
+ * ⚠️ THE ALTERNATIVE WAS AN ALGORITHM, AND IT WAS SHOWING THE WRONG PICTURES.
+ * The story band, the trust tile and the social strip all called
+ * pick(OWN_PHOTOS, shop, n) — a hash of the shop key plus an offset — so the
+ * large atmospheric frame on the home page held whatever product photograph
+ * that arithmetic landed on, and the only way to change it was to change the
+ * offset in this repository and deploy. The owner could upload sixteen
+ * photographs through the panel and still not decide which one anchors their
+ * own front page.
+ *
+ * So these slots are named, and the panel lists them (admin/site-images.ts).
+ * The FIXED KEY is the mechanism, exactly as it is for the hero: the
+ * storefront renders synchronously and cannot learn a new filename, so a
+ * replacement lands at the same path and /media gives a human-named file five
+ * minutes rather than the immutable year.
+ *
+ * ⚠️ AND IT RENDERS THE PATH WHETHER OR NOT ANYTHING IS THERE YET. That is
+ * what keeps an upload from needing a deploy. /media falls back to the
+ * photograph the slot showed before it was managed — see legacyFallback in
+ * admin/site-images.ts, which resolves the very same pick() this replaced — so
+ * the page looks identical until the day somebody uploads, and changes that
+ * afternoon when they do.
+ *
+ * No width/height and no srcset: there is one stored file at one size, and the
+ * frames that paint these all set their own aspect-ratio and size the image to
+ * 100%, so the box is reserved by CSS either way.
+ */
+export function sitePhoto(stem: string): Paintable {
+  return { src: "/media/site/" + stem + ".webp" };
+}
+
 export const OWN_PHOTOS: readonly Paintable[] = Object.values(OWN_MEDIA)
   .flat()
   // exactOptionalPropertyTypes is on, so an absent size must be an ABSENT
