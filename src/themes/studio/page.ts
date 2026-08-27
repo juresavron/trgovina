@@ -102,7 +102,19 @@ export const STUDIO_PAGE_CSS = `
    * banner over the page rather than the head of it. Reading order is the DOM
    * order — head, index, body — which is also the order a screen reader wants
    * and the order the tab key takes. */
-  @media (min-width: 1100px) {
+  /* ⚠️ 1000px, NOT 1100. The old threshold left 1024 and 1099 — every tablet
+   * in landscape, and the widest the single-column tier ever gets — showing a
+   * 544px column in a 1099px window: 49.5% of the screen, with 277px of empty
+   * on each side of a page whose own wrapper measured 1049px. The rail had
+   * room from about 1000px and was being withheld for a hundred pixels.
+   *
+   * The columns are minmax(0, …), so where the pair does not fit the content
+   * column shrinks rather than overflowing — which is what happens between
+   * 1000 and about 1130, and is a better page than half a screen of margin.
+   * It also puts this tier on the same threshold as the product page's own
+   * two-column rule (min-width: 1001px, pdp.ts), so the whole site changes
+   * shape at one width instead of two. */
+  @media (min-width: 1000px) {
     :root[data-theme="studio"] .st-page-grid {
       display: grid;
       max-inline-size: none;
