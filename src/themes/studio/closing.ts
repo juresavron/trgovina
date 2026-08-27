@@ -618,18 +618,18 @@ export function renderStudioSocial(ctx: RenderCtx): string {
  * visit — true, and it is already answered two hundred pixels higher up.
  * socialIdentity() above sends the social card to routeSlugs["/contact"]
  * whenever a shop has no profile to link (every shop on the network today
- * ships socials: {}), so the closing pair as rendered is enquiry, then
- * showroom: two destinations, no repetition, in that order. Pointing this
+ * ships socials: {}), so the closing pair as rendered is enquiry, then the
+ * site visit: two destinations, no repetition, in that order. Pointing this
  * button at /contact as well would put the same href in two consecutive
  * bands, and the second one would be the louder — the page would end by
  * saying the same thing twice.
  *
- * The showroom is also worth the click on its own terms now. /razstavni-salon
- * is a written page, not the stub it was when this band was built: it states
- * that visits are arranged by phone, tells a visitor to bring room dimensions
- * and a photograph of the access route, and carries the address block. For
- * goods at €2,400–8,400 that is the trust anchor, which is exactly what
- * ShopConfig's route table calls it.
+ * ⚠️ THE SECOND DESTINATION USED TO BE A SHOWROOM THAT DOES NOT EXIST. This
+ * band invited visitors to "Oglejte si modele v živo" at a salon in
+ * Ljubljana; the shop has no display floor anywhere. It now offers the
+ * errand the shop genuinely runs — the free site visit at the customer's
+ * own address — which for a 400 kg object is the better trust anchor
+ * anyway. See content/pages/salon.ts for the full removal.
  *
  * What this band cannot fix by itself is the conditional: the moment a shop
  * fills in socials, the card above becomes a link to Instagram and the
@@ -674,11 +674,13 @@ export function renderStudioMembership(ctx: RenderCtx): string {
     '<div class="st-mem-in">' +
     '<h2 class="st-mem-h" id="st-mem-h">Pomagamo vam izbrati ' +
     esc(ctx.shop.keyword.accusative) + "</h2>" +
-    '<p class="st-mem-p">Oglejte si modele v živo in se pred nakupom ' +
-    "posvetujte z našo ekipo.</p>" +
+    // "Oglejte si modele v živo" invited the visitor to a showroom that does
+    // not exist. The band now offers the errand that does: we come to them.
+    '<p class="st-mem-p">Pridemo pogledat, kam bi bazen postavili — ' +
+    "brezplačno in brez obveznosti.</p>" +
     '<a class="st-btn-light" href="' +
     esc(ctx.shop.routeSlugs["/showroom"] + ctx.q) +
-    '">Obiščite razstavni salon</a>' +
+    '">Naročite brezplačen ogled</a>' +
     "</div></section>"
   );
 }

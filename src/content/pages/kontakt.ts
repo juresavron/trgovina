@@ -75,8 +75,10 @@ export const CONTACT: Page = {
         ],
         [
           "Ali lahko bazen prej vidim v živo?",
-          "Razstavni bazen je v Ljubljani, za obisk se dogovorimo vnaprej. Kaj se splača " +
-            "prinesti s seboj, piše na strani o razstavnem salonu.",
+          "Razstavnega salona nimamo, zato bazena pred nakupom ne moremo pokazati v živo. " +
+            "Pošljemo pa vam vzorčnik barv školjke, vse mere in specifikacije so na strani " +
+            "vsakega modela, na brezplačnem ogledu lokacije pa z merami v roki povemo, kako " +
+            "velik bo pri vas videti.",
         ],
       ],
     },

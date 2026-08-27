@@ -98,7 +98,9 @@ export const FAQ: Page = {
         ],
         [
           "Ali lahko bazen vidim v živo?",
-          "Da, razstavni bazen je v Ljubljani. Za obisk se dogovorimo vnaprej po telefonu.",
+          "Razstavnega salona nimamo. Pošljemo vam vzorčnik barv školjke, vse mere in " +
+            "specifikacije so na strani vsakega modela, na brezplačnem ogledu lokacije pa " +
+            "vam z merami v roki pokažemo, koliko prostora bo bazen zavzel pri vas.",
         ],
         [
           "Ali je mogoče plačilo na obroke?",

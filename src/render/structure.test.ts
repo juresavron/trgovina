@@ -254,7 +254,7 @@ describe("no in-page link points at nothing", () => {
     "/", "/trgovina", "/masazni-bazeni", "/swim-spa", "/bazen/veliki-230",
     "/kontakt", "/dostava-in-montaza", "/primerjava", "/o-nas", "/vodniki",
     "/pogoji-poslovanja", "/pogosta-vprasanja", "/piskotki", "/zasebnost",
-    "/odstop-od-pogodbe", "/razstavni-salon", "/financiranje", "/kosarica",
+    "/odstop-od-pogodbe", "/ogled-lokacije", "/financiranje", "/kosarica",
   ];
 
   for (const path of PATHS) {
