@@ -69,6 +69,23 @@ export type Block =
   | { kind: "contact"; h?: string }
   /** The registered-company imprint, rendered from ShopConfig. */
   | { kind: "imprint"; h?: string }
+  /**
+   * A short list of internal links.
+   *
+   * ⚠️ THE ONE BLOCK THAT CAN CARRY A LINK, and it exists because a blog post
+   * could not. Every other block escapes its text — deliberately, so a post
+   * cannot inject markup into the storefront — which left a post unable to
+   * point at a single product page. scripts/audit-seo.mjs said so in as many
+   * words: "links to only 0 other pages from its body — a dead end for a
+   * crawler". On a site whose whole strategy is search, an article that
+   * mentions three models and links to none of them is wasted.
+   *
+   * Each entry is [label, path]. The PATH IS VALIDATED WHERE IT IS PARSED, to
+   * an internal absolute path and nothing else — no scheme, no host, no
+   * protocol-relative "//". A post may point at this shop's own pages; it may
+   * not become a way to publish an outbound link from a compromised account.
+   */
+  | { kind: "links"; h?: string; items: [string, string][] }
   /** A closing call to action pointing at an internal route. */
   | { kind: "cta"; h: string; p: string; label: string; href: string };
 
