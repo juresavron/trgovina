@@ -292,6 +292,25 @@ export const STUDIO_PAGE_CSS = `
      * the heading they asked for rather than the paragraph after it. */
     scroll-margin-top: calc(var(--chrome-h) + 24px);
   }
+  /* ⚠️ THE BAR IS NOT --chrome-h TALL ON A PHONE, so neither is the offset.
+   *
+   * --chrome-h is 56px: one 24px label line and its padding. At 900 and below
+   * the bar wraps to TWO rows and measures 104px, and it has never been
+   * --chrome-h — chrome.ts states that and reserves main's padding from the
+   * row tokens rather than from the derived height.
+   *
+   * The anchor offset was not restated, so following a link in the section
+   * index on a phone scrolled the heading to 80px and the bar covered it to
+   * 104: the reader landed on the paragraph AFTER the heading they asked for,
+   * which is the one failure an in-page index has to avoid. Same three tokens
+   * as chrome.ts's own reservation, so the two cannot drift. */
+  @media (max-width: 900px) {
+    :root[data-theme="studio"] .st-page-h2 {
+      scroll-margin-top: calc(
+        var(--chrome-pad-y) + 2 * var(--st-tap) + var(--gap-xs) + 24px
+      );
+    }
+  }
 
   /* ---- The section index ------------------------------------------------
    * A quiet list, not a card: it sits between the lead and the first section
