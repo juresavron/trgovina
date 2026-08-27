@@ -86,7 +86,7 @@ export const STUDIO_PAGE_CSS = `
    * is inert, and the max-inline-size is the same 31rem the container used to
    * carry, so a phone and a tablet get exactly the page they had. */
   :root[data-theme="studio"] .st-page-grid {
-    max-inline-size: 31rem;
+    max-inline-size: 34rem;
     margin-inline: auto;
   }
   /* THE INDEX BECOMES A RAIL at the width where there is room for one.
@@ -106,11 +106,29 @@ export const STUDIO_PAGE_CSS = `
     :root[data-theme="studio"] .st-page-grid {
       display: grid;
       max-inline-size: none;
-      grid-template-columns: minmax(0, 15rem) minmax(0, 40rem);
-      column-gap: clamp(48px, 5vw, 88px);
+      grid-template-columns: minmax(0, 16rem) minmax(0, 46rem);
+      column-gap: clamp(48px, 4vw, 80px);
       justify-content: center;
     }
-    :root[data-theme="studio"] .st-page-head { grid-area: 1 / 2; }
+    /* ⚠️ THE MASTHEAD SPANS BOTH COLUMNS, and this note replaces one arguing
+     * the opposite. That note said a title starting 15rem left of its own
+     * text would read as a banner over the page rather than the head of it,
+     * and pinned the head to the content column so the h1, the standfirst and
+     * the first paragraph shared one left edge.
+     *
+     * It is a real typographic argument and the rendered page refuted it. The
+     * head in column two left the entire top-left of the document empty, and
+     * the index — three short links — sat alone in that emptiness, below the
+     * title, with nothing above it. What the reader saw was not a document
+     * with a tidy left edge; it was a narrow strip of text pushed to the right
+     * of a mostly blank page, which is exactly what was reported.
+     *
+     * Spanning both puts the eyebrow, the h1 and the hairline at the
+     * document's true left edge, gives the index something to sit under, and
+     * makes the rule under the masthead as wide as the thing it closes. The
+     * body's left edge no longer matches the title's — that is the cost, and
+     * it is the smaller one. */
+    :root[data-theme="studio"] .st-page-head { grid-area: 1 / 1 / 2 / -1; }
     :root[data-theme="studio"] .st-page-rail { grid-area: 2 / 1; }
     :root[data-theme="studio"] .st-page-body { grid-area: 2 / 2; }
     /* A PAGE WITH NO INDEX HAS NO RAIL, and must not reserve a track for one.
@@ -120,7 +138,7 @@ export const STUDIO_PAGE_CSS = `
      * centre with an empty margin where the rail would have been. The legal
      * pages are exactly this shape. */
     :root[data-theme="studio"] .st-page-grid--solo {
-      grid-template-columns: minmax(0, 40rem);
+      grid-template-columns: minmax(0, 46rem);
     }
     :root[data-theme="studio"] .st-page-grid--solo .st-page-head { grid-area: 1 / 1; }
     :root[data-theme="studio"] .st-page-grid--solo .st-page-body { grid-area: 2 / 1; }
@@ -182,7 +200,7 @@ export const STUDIO_PAGE_CSS = `
     /* The standfirst keeps a measure of its own: the head is 40rem wide so the
      * title can have it, and a 20px lead run to 40rem is 75 characters — past
      * the top of the range the body measure was calibrated against. */
-    max-inline-size: 34rem;
+    max-inline-size: 38rem;
     margin-block-start: clamp(16px, 1.6vw, 26px);
     font-family: var(--f-body);
     font-size: var(--t-lead);
@@ -212,7 +230,7 @@ export const STUDIO_PAGE_CSS = `
    * measured. A block that is DATA opts out — see --wide, which the renderer
    * puts on the fact tables, the contact block and the imprint. */
   :root[data-theme="studio"] .st-page-block {
-    max-inline-size: 31rem;
+    max-inline-size: 34rem;
   }
   :root[data-theme="studio"] .st-page-block--wide {
     max-inline-size: none;
