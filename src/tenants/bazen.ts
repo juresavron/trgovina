@@ -72,11 +72,21 @@ export const bazen: ShopConfig = {
     composition: ["hero", "marquee", "products", "moat", "trust", "stats", "reviews", "guides"],
   },
 
-  // FILL BEFORE LIVE.
+  // ⚠️ SUPPLIED BY THE OWNER. Every one of these is a claim this shop makes
+  // about who and where it is — on the imprint, on the terms, as the GDPR
+  // controller, and as machine-readable structured data to Google — so none
+  // of it was ever going to be filled in from anywhere but the owner's own
+  // words. See src/lib/filled.ts for the predicates that kept the site honest
+  // while they were blank: a placeholder phone is not rendered as a dialable
+  // link, and an unset address is printed as "podatek še ni vpisan" rather
+  // than published as TODO.
+  //
+  // The VAT id is STILL A PLACEHOLDER and the imprint still says so. It is
+  // the last unset identity field.
   contact: {
-    phone: "+386 00 000 000",
+    phone: "+386 40 202 488",
     email: "info@masazni-bazeni-vrelec.si",
-    address: { street: "TODO", zip: "0000", city: "TODO" },
+    address: { street: "Ferarska ulica 30", zip: "6000", city: "Koper" },
   },
   company: {
     // The registered entity, which is NOT the brand — normal, and exactly
