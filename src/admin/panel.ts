@@ -730,6 +730,33 @@ export function indexPage(
       '<a class="btn btn--ghost" href="/admin/mnenja">Uredi mnenja</a>' +
       "</div>" +
 
+      // THE SMART UPLOADER — the owner's flow, in the owner's words: "I drop
+      // 10 pictures and AI upscales and checks what on the image and assign
+      // to correct section." The model CLASSIFIES (admin/assign.ts) and the
+      // browser then runs the exact per-slot pipeline the single pages run —
+      // crop to the slot's own frame, WebP, the guarded upscale — so this
+      // card adds a router in front of the machinery, not a second copy of
+      // it. The per-slot pages below remain the manual override.
+      "<h2>Slike strani — pametno nalaganje</h2>" +
+      '<div class="card">' +
+      '<div class="drop" id="sm-drop">' +
+      '<label for="sm-f">Izberite ali povlecite več slik naenkrat</label>' +
+      '<input id="sm-f" type="file" multiple ' +
+      'accept="image/webp,image/jpeg,image/png,image/avif">' +
+      '<p class="fmeta" id="sm-meta">AI vsako fotografijo pogleda, jo razporedi ' +
+      "na pravo mesto spodaj — naslovna, kategoriji, zgodba, vodniki, galerija — " +
+      "jo obreže na pravo razmerje in naloži. Spodaj piše, kaj je šlo kam.</p>" +
+      "</div>" +
+      '<label class="ai-opt" for="sm-ai"><input type="checkbox" id="sm-ai" checked>' +
+      "<span>Premajhne slike povečaj z umetno inteligenco</span></label>" +
+      '<p class="note-ai">Velja za slike, ožje od okvirja, v katerega gredo. ' +
+      "Model sliko PONOVNO NARIŠE večjo: rezultat je oster, ni pa nujno več " +
+      "ista fotografija — razporejene slike po nalaganju preglejte. Če model " +
+      "ne vrne večje slike, obdržimo vašo.</p>" +
+      '<p class="stline" id="sm-stwrap" role="status"><span id="sm-st"></span></p>' +
+      '<ul class="picked" id="sm-list"></ul>' +
+      "</div>" +
+
       // THE SITE'S OWN PICTURES, which had no way in here at all — so the
       // heaviest image on the storefront (a 2.7 MB PNG hero) was the one
       // picture the panel's convert-to-WebP promise never reached.
@@ -760,7 +787,8 @@ export function indexPage(
         )
         .join("") +
 
-      '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>",
+      '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>" +
+      "<script>" + SMART_JS + "</script>",
     who,
   );
 }
@@ -1204,6 +1232,242 @@ export function modelPage(
  * silent one, and it is why the preview and the drag-and-drop below are
  * additions to a working form rather than the way it works.
  */
+/* THE SMART UPLOADER'S SCRIPT — the router in front of the single-slot
+   pipeline. Shares its moves with UPLOAD_JS (decode, WebP-verified encode,
+   centre-crop to the slot's frame, the guarded upscale) but not its DOM:
+   that script is married to the one-form page, and marrying it to two would
+   couple every future change to both. The duplication is ~60 lines of
+   canvas code and is priced in. */
+const SMART_JS = `
+(function(){
+  "use strict";
+  var file = document.getElementById("sm-f");
+  if (!file) return;
+  var drop = document.getElementById("sm-drop"), list = document.getElementById("sm-list"),
+      st = document.getElementById("sm-st"), stwrap = document.getElementById("sm-stwrap"),
+      ai = document.getElementById("sm-ai");
+  var rows = [], lis = [], urls = [], busy = false;
+
+  function say(text, kind){
+    st.textContent = text;
+    stwrap.className = "stline" + (kind ? " is-" + kind : "");
+  }
+  function mark(i, text, cls){
+    if (!rows[i]) return;
+    rows[i].textContent = text;
+    rows[i].className = "rowst" + (cls ? " " + cls : "");
+    lis.forEach(function(li, k){ li.className = k === i && !cls ? "is-live" : ""; });
+  }
+
+  function decode(f){
+    if (window.createImageBitmap) return createImageBitmap(f);
+    return new Promise(function(res, rej){
+      var img = new Image(), url = URL.createObjectURL(f);
+      img.onload = function(){ URL.revokeObjectURL(url); res(img); };
+      img.onerror = function(){ URL.revokeObjectURL(url); rej(new Error("slike ni bilo mogoče prebrati")); };
+      img.src = url;
+    });
+  }
+  function isWebp(buf){
+    var b = new Uint8Array(buf);
+    return b.length > 12 &&
+      b[0] === 82 && b[1] === 73 && b[2] === 70 && b[3] === 70 &&
+      b[8] === 87 && b[9] === 69 && b[10] === 66 && b[11] === 80;
+  }
+  function toBlob(c, type, q){
+    return new Promise(function(res, rej){
+      c.toBlob(function(b){ b ? res(b) : rej(new Error("pretvorba ni uspela")); }, type, q);
+    });
+  }
+
+  /* A small JPEG stand-in for the classifier. JPEG, not WebP: every engine
+     encodes it, and the model reads either — the WebP guarantee matters for
+     what is STORED, and probes are never stored. */
+  function probe(f){
+    return decode(f).then(function(bmp){
+      var w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight;
+      var pw = Math.min(w, 1024), ph = Math.max(1, Math.round(h * (pw / w)));
+      var c = document.createElement("canvas");
+      c.width = pw; c.height = ph;
+      c.getContext("2d").drawImage(bmp, 0, 0, pw, ph);
+      return toBlob(c, "image/jpeg", 0.85);
+    });
+  }
+
+  /* Centre-crop to the slot's shape, capped at its width — the same cut the
+     single-slot page makes, so the two roads store the same picture. */
+  function drawSlot(bmp, ar, maxW){
+    var sw = bmp.width || bmp.naturalWidth, sh = bmp.height || bmp.naturalHeight;
+    var sx = 0, sy = 0, cw = sw, ch = sh;
+    if (ar > 0) {
+      if (sw / sh > ar) { cw = Math.round(sh * ar); sx = Math.round((sw - cw) / 2); }
+      else { ch = Math.round(sw / ar); sy = Math.round((sh - ch) / 2); }
+    }
+    var w = Math.min(cw, maxW || 2048), h = Math.max(1, Math.round(ch * (w / cw)));
+    var c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    c.getContext("2d").drawImage(bmp, sx, sy, cw, ch, 0, 0, w, h);
+    return toBlob(c, "image/webp", 0.82).then(function(blob){
+      return blob.arrayBuffer().then(function(buf){
+        if (!isWebp(buf)) throw new Error("ta brskalnik ne zna shraniti v WebP — poskusite v Chromu ali posodobite Safari");
+        return { blob: blob, w: w, h: h };
+      });
+    });
+  }
+
+  /* The guarded upscale — only when the picture is too small for its slot,
+     only when the box is ticked, and only kept when what came back is
+     MEASURABLY larger. Same guard as the single pages: a redraw that added
+     no pixels is all risk and no benefit. */
+  function maybeEnhance(f, srcW, maxW, i){
+    if (!ai.checked || !(srcW < maxW)) return Promise.resolve({ f: f, up: false });
+    mark(i, "povečujem z AI …");
+    var fd = new FormData();
+    fd.append("file", f, f.name || "slika");
+    fd.append("target", maxW >= 3000 ? "4K" : "2K");
+    return fetch("/admin/enhance", { method: "POST", body: fd, credentials: "same-origin" })
+      .then(function(res){
+        if (res.status === 204 || !res.ok) return { f: f, up: false };
+        return res.blob().then(function(b){
+          if (!(b.size > 0)) return { f: f, up: false };
+          return Promise.all([decode(f), decode(b)]).then(function(pair){
+            var was = pair[0].width || pair[0].naturalWidth;
+            var now = pair[1].width || pair[1].naturalWidth;
+            return now > was ? { f: b, up: true } : { f: f, up: false };
+          }, function(){ return { f: f, up: false }; });
+        });
+      })
+      .catch(function(){ return { f: f, up: false }; });
+  }
+
+  function shown(fs){
+    urls.forEach(URL.revokeObjectURL); urls = []; rows = []; lis = [];
+    list.innerHTML = "";
+    list.className = "picked on";
+    fs.forEach(function(f){
+      var u = URL.createObjectURL(f); urls.push(u);
+      var li = document.createElement("li");
+      var img = document.createElement("img"); img.src = u; img.alt = "";
+      var box = document.createElement("div"); box.className = "grow";
+      var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = f.name;
+      var stat = document.createElement("span"); stat.className = "rowst wait"; stat.textContent = "čaka";
+      box.appendChild(nm); box.appendChild(stat);
+      li.appendChild(img); li.appendChild(box);
+      list.appendChild(li);
+      rows.push(stat); lis.push(li);
+    });
+  }
+
+  /* The card on this very page that previews the slot — refreshed after an
+     upload so the operator sees the change without reloading. The key never
+     changes, so without the bust the browser shows the picture it replaced. */
+  function refreshCard(stem){
+    var a = document.querySelector('a[href="/admin/site/' + stem + '"] img');
+    if (a) a.src = "/media/site/" + stem + ".webp?v=" + Date.now();
+  }
+
+  function run(fs){
+    if (busy || !fs.length) return;
+    busy = true;
+    shown(fs);
+    say("AI razvršča " + fs.length + " slik …", "");
+
+    /* Probes first, all of them, then ONE sorting request: the assignment is
+       a property of the batch — see the site-sort route. */
+    var probes = [];
+    var chain = Promise.resolve();
+    fs.forEach(function(f, i){
+      chain = chain.then(function(){
+        mark(i, "pripravljam …");
+        return probe(f).then(function(b){ probes[i] = b; });
+      });
+    });
+
+    chain.then(function(){
+      var fd = new FormData();
+      probes.forEach(function(b, i){ fd.append("files", b, "p" + i + ".jpg"); });
+      fs.forEach(function(_, i){ mark(i, "AI razvršča …"); });
+      return fetch("/admin/site-sort", { method: "POST", body: fd, credentials: "same-origin" });
+    }).then(function(res){
+      if (!res.ok) throw new Error("razvrščanje ni uspelo (" + res.status + ")");
+      return res.json();
+    }).then(function(data){
+      var items = data.items || [];
+      var done = 0, up = 0, skipped = 0;
+      var seq = Promise.resolve();
+      items.forEach(function(it){
+        seq = seq.then(function(){
+          var i = it.i, f = fs[i];
+          if (!it.stem) {
+            skipped++;
+            mark(i, "ni razporejena — " + (it.reason || "brez razloga"), "bad");
+            return;
+          }
+          var ar = 0;
+          if (it.ar) {
+            var p = it.ar.split(":");
+            ar = parseFloat(p[0]) / parseFloat(p[1]);
+          }
+          var wasUp = false;
+          mark(i, it.label + " · pripravljam …");
+          return decode(f).then(function(bmp){
+            var srcW = bmp.width || bmp.naturalWidth;
+            return maybeEnhance(f, srcW, it.max || 2048, i);
+          }).then(function(e){
+            wasUp = e.up;
+            if (e.up) up++;
+            return decode(e.f);
+          }).then(function(bmp2){
+            mark(i, it.label + " · obrezujem …");
+            return drawSlot(bmp2, ar, it.max || 2048);
+          }).then(function(r){
+            mark(i, it.label + " · nalagam …");
+            var fd = new FormData();
+            fd.append("file", r.blob, it.stem + ".webp");
+            fd.append("bulk", "1");
+            return fetch("/admin/site/" + it.stem + "/upload", {
+              method: "POST", body: fd, credentials: "same-origin",
+            }).then(function(res){
+              if (!(res.status === 204 || res.ok)) throw new Error("shramba ni sprejela slike");
+              done++;
+              refreshCard(it.stem);
+              mark(i, it.label + " · naloženo · " + r.w + " × " + r.h + " px" +
+                (wasUp ? " · AI povečava" : ""), "ok");
+            });
+          }).catch(function(err){
+            skipped++;
+            mark(i, it.label + " · " + (err && err.message ? err.message : "ni uspelo"), "bad");
+          });
+        });
+      });
+      return seq.then(function(){
+        say("Razporejenih " + done + " od " + fs.length +
+          (up ? " · " + up + " povečanih z AI" : "") +
+          (skipped ? " · " + skipped + " brez mesta" : "") +
+          ". Slike so na strani v nekaj minutah.", done ? "ok" : "bad");
+      });
+    }).catch(function(err){
+      say(err && err.message ? err.message : "Ni uspelo.", "bad");
+    }).then(function(){ busy = false; });
+  }
+
+  file.addEventListener("change", function(){
+    run(file.files ? Array.prototype.slice.call(file.files) : []);
+  });
+  ["dragover", "dragenter"].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.add("is-over"); });
+  });
+  ["dragleave", "drop"].forEach(function(ev){
+    drop.addEventListener(ev, function(e){ e.preventDefault(); drop.classList.remove("is-over"); });
+  });
+  drop.addEventListener("drop", function(e){
+    var fs = e.dataTransfer && e.dataTransfer.files
+      ? Array.prototype.slice.call(e.dataTransfer.files) : [];
+    if (fs.length) run(fs);
+  });
+})();
+`;
+
 const UPLOAD_JS = `
 (function(){
   "use strict";
