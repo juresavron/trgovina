@@ -17,8 +17,11 @@
  * §0 sets, and it is why the icon discs are 36px rather than the measured 46,
  * why they sit on a white alpha rather than a #2A2A2A disc, why the nav gap is
  * exactly 50px rather than a clamp, and why the footer's link columns are
- * spaced 24px rather than the measured ~66px. Each of those is flagged where
- * it is set.
+ * spaced from the transcribed 24px rather than the measured ~66px. Each of
+ * those is flagged where it is set. (The link columns now sit at 24 + 8 = 32px:
+ * a TARGET floor is the one thing that outranks the transcription, and the
+ * eight is the clear space two 44px targets need between them. See
+ * .st-foot-col ul.)
  *
  * Type does not interpolate: tokens.ts sets every role per breakpoint tier
  * (≥1200 / 810–1199 / ≤809), so a size is a token lookup, never a clamp, and
@@ -460,6 +463,73 @@ export const STUDIO_CHROME_CSS = `
     margin-block: -10px;
   }
   :root[data-theme="studio"] .st-chrome-nav::-webkit-scrollbar { display: none; }
+
+  /* THE RAIL HAS TO SAY IT IS A RAIL.
+   *
+   * Measured at 390px: the five items plus the rail's own gutters draw 561px
+   * into a 390px port, so 171px of the menu — KONTAKT entirely, and "DOSTAVA
+   * IN MONTAŽA" from its second word on — sat outside it, and 3 of 5
+   * destinations WERE the menu as far as a reader could tell. Nothing on the screen said otherwise: the scrollbar
+   * is hidden above (a 15px grey trough across a 24px label line is not what
+   * the bar is for), so the only cue was a label stopping mid-word at the
+   * screen edge, which reads as a clipping bug rather than as an invitation.
+   *
+   * A MASK, not an overlay gradient, and the reason is st-chrome-ground: over
+   * a full-bleed hero this bar is TRANSPARENT until 120px of scroll, so a
+   * gradient painted in --ink-invert would smear a dark wedge across the
+   * photograph at rest. A mask fades the rail's own ink to nothing over
+   * whatever ground happens to be behind it, at any scroll position.
+   *
+   * 40px is the fade width — mechanics, not a design value: wide enough that
+   * a whole glyph is visibly dissolving rather than a letter looking cropped,
+   * narrow enough that it never reaches the second-to-last item.
+   *
+   * scroll-padding keeps a keyboard out of it: without it, tabbing to a link
+   * scrolls that link flush against the port edge, i.e. under the fade. */
+  :root[data-theme="studio"] .st-chrome-nav { scroll-padding-inline: 40px; }
+
+  /* AND THE FADE RETREATS AS THE READER SPENDS IT.
+   *
+   * A static fade is honest at rest and wrong at the end of the rail, where
+   * it dims the last item although nothing follows it. A scroll-progress
+   * timeline fixes that with no script: the mask interpolates from
+   * "trailing edge faded" at scroll 0 to "leading edge faded" at scroll end,
+   * so mid-rail both edges are half-faded — which is exactly what is true
+   * there. Four stops in both keyframes so the two edges interpolate
+   * independently; two would have cross-faded the left edge into the right.
+   *
+   * IT IS ALSO THE OVERFLOW TEST. A scroll timeline whose scroller has no
+   * inline overflow is INACTIVE, and an animation on an inactive timeline
+   * applies nothing — so the nav is masked only where the nav actually
+   * scrolls. That is what lets this rule stand outside the media query and
+   * cover the 900–1200 band, where a long shop name can push the desktop bar
+   * into its rail (measured: no mask at 1024, 1099, 1440 or 1920 with this
+   * menu, mask at 390).
+   *
+   * Exempt from the prefers-reduced-motion strip at the end of the sheet, for
+   * the same reason st-chrome-ground is: progress IS scroll position, nothing
+   * moves that the reader did not move, and freezing it would put the fade
+   * back over the last item permanently. */
+  @supports (animation-timeline: scroll()) {
+    :root[data-theme="studio"] .st-chrome-nav {
+      animation: st-nav-edges linear both;
+      animation-timeline: scroll(self inline);
+    }
+    @keyframes st-nav-edges {
+      from {
+        -webkit-mask-image:
+          linear-gradient(to right, #000 0, #000 0, #000 calc(100% - 40px), transparent 100%);
+        mask-image:
+          linear-gradient(to right, #000 0, #000 0, #000 calc(100% - 40px), transparent 100%);
+      }
+      to {
+        -webkit-mask-image:
+          linear-gradient(to right, transparent 0, #000 40px, #000 100%, #000 100%);
+        mask-image:
+          linear-gradient(to right, transparent 0, #000 40px, #000 100%, #000 100%);
+      }
+    }
+  }
   :root[data-theme="studio"] .st-chrome-nav a {
     position: relative;
     display: inline-flex;
@@ -752,12 +822,26 @@ export const STUDIO_CHROME_CSS = `
     max-width: 100%; overflow-wrap: anywhere; hyphens: none;
   }
 
-  /* Source: the newsletter column is capped at 350px and sits at the right
-   * edge of the top row, not stretched across half the footer. */
+  /* The newsletter column sits at the RIGHT EDGE of the top row rather than
+   * stretching across half the footer — that much is the source's, and so was
+   * the 350px this rule capped it at.
+   *
+   * 350px is a FIELD measure, and this block holds a paragraph too. Measured
+   * at every width above 900, the note under the input came out at exactly
+   * 350px — 47 characters, a label's length for two sentences of prose, and
+   * narrowest on the widest screens because the cap never moved. So the cap
+   * that is stated is now the one that matters: 500px is 67 characters of
+   * body type, inside the 45–75 band the rest of the site's running text is
+   * set to. The input row takes the same width rather than keeping its own —
+   * the source's device is a bare rule with an arrow at its end, and it is
+   * that at 500px exactly as it is at 350.
+   *
+   * The cap is also what stops the note running the footer's whole width once
+   * the top row stacks: 718px, 96 characters, measured at 768 before it. */
   :root[data-theme="studio"] .st-news {
     justify-self: end;
     inline-size: 100%;
-    max-inline-size: 350px;
+    max-inline-size: 500px;
   }
   /* The footer's one block heading. h3 is the nominal rung for a sub-section
    * heading, but 48px next to a 150px wordmark reads as a second section
@@ -871,15 +955,30 @@ export const STUDIO_CHROME_CSS = `
    * The fourth column is free on a phone: at 2 columns the old three filled
    * three of four cells and left one blank (measured at 390px), so Podjetje
    * lands in a hole that already existed. Its cost is one grid track at
-   * desktop, where the brand track still measures 318px at 1440 and 261px at
-   * 1200 — wider than the 229px the e-mail row needs. */
+   * desktop, and that track is what the brand ratio below had to pay for.
+   *
+   * 2.6fr ON THE BRAND TRACK, NOT THE 1.5fr THIS SHIPPED WITH. The e-mail row
+   * needs 229px and 1.5fr covered it — 318px at 1440 — but the blurb is a
+   * PARAGRAPH in the same track, and 318px of body type is 42 characters
+   * (47 at 1920, where the track reaches 354px). Running text is set to 45–75
+   * characters everywhere else on this site. 2.6fr puts 459px under it at
+   * 1440 and hits the blurb's own 42ch cap at 1920, while still leaving each
+   * link column 176px — 29px more than the longest label ("Odstop od
+   * pogodbe", 147px) needs.
+   *
+   * The ratio only works while there is width to divide: see the ≤1359 block,
+   * which gives the brand its own row below the point where five tracks stop
+   * fitting. */
   :root[data-theme="studio"] .st-foot-cols {
     display: grid;
-    grid-template-columns: minmax(0, 1.5fr) repeat(4, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 2.6fr) repeat(4, minmax(0, 1fr));
     gap: clamp(32px, 3.4vw, 68px);
   }
-  /* An ordinary paragraph — body, at the 42ch measure below. The 32px beneath
-   * it is the source's gap between the blurb and the contact list. */
+  /* An ordinary paragraph — body, at the 42ch measure below (492px, 65
+   * characters). The cap is what sets the blurb at every width from 600 up
+   * now; above 1359 the brand grid track is what has to be wide enough to let
+   * it, which is what the 2.6fr on .st-foot-cols is for. The 32px beneath it
+   * is the source's gap between the blurb and the contact list. */
   :root[data-theme="studio"] .st-foot-blurb {
     font-family: var(--f-body);
     font-size: var(--t-body);
@@ -972,20 +1071,43 @@ export const STUDIO_CHROME_CSS = `
     color: var(--on-invert-mute);
     margin-bottom: var(--gap-lg);
   }
-  /* 24px rows, 14px on a phone — transcribed. The measured pass read ~66px and
-   * this module reproduced it; at 66px the three columns ran a screen and a
-   * half tall and the footer stopped being a footer. Where the two passes
-   * disagree the stylesheet wins (STUDIO-BASELINE §0). */
+  /* 32px ROWS, AND THE 8px INSIDE THEM IS THE WHOLE POINT.
+   *
+   * The transcribed row gap is 24px (the measured pass read ~66px and this
+   * module reproduced it; at 66 the columns ran a screen and a half tall and
+   * the footer stopped being a footer — where the two passes disagree the
+   * stylesheet wins, STUDIO-BASELINE §0). But 24px is also exactly what the
+   * 44px target box below spends on its own overhang around a 20px label,
+   * 12px each side, so at 24px two neighbouring targets tiled edge to edge:
+   * measured 0px of clear space at 390/600/768 — and because the phone tier
+   * closed the gap further, to 14px, a 10px OVERLAP there, where a tap
+   * between two links necessarily hit one of them.
+   *
+   * 32px is 24 + 8: the overhang, plus the 8px of clear space this chrome now
+   * holds every adjacent pair to. It is a rung the source uses (the frequency
+   * count in tokens.ts finds 32px six times), and it costs a row 8px — the
+   * labels read 52px apart instead of 50.4, which is nothing to the rhythm
+   * and is the difference between two targets and one to a thumb.
+   *
+   * The li is a FLEX container so that arithmetic is true rather than
+   * approximately true: as a list-item its height was the inherited BODY
+   * strut (26.4px), not the 20px label line, so the real clearance drifted
+   * with a font this rule never set — 6.4px at 1024 against −3.6px at 768,
+   * from one declaration. A flex li is exactly its child's margin box. */
   :root[data-theme="studio"] .st-foot-col ul {
     list-style: none; margin: 0; padding: 0;
     display: flex; flex-direction: column;
-    gap: var(--gap-lg);
+    gap: 32px;
   }
+  :root[data-theme="studio"] .st-foot-col li { display: flex; }
   /* The link columns are label too — same rung as the nav in the bar, which is
    * what makes the two chromes read as one system. Tight leading, and the same
    * 44px target device as the bar's links: a 20px line box grown to --st-tap
-   * and pulled back by (20 − 44) ÷ 2 = −12px, so the rows still sit 24px apart
-   * and two neighbouring targets stop 4px short of each other. */
+   * and pulled back by (20 − 44) ÷ 2 = −12px, so the label contributes its own
+   * 20px to the column and the target reaches 12px past it top and bottom.
+   * That overhang is what the 32px row gap above is sized around —
+   * 32 − 2 × 12 = 8px of clear space between neighbouring targets, measured at
+   * every width. */
   :root[data-theme="studio"] .st-foot-col a {
     display: inline-flex;
     align-items: center;
@@ -1032,18 +1154,29 @@ export const STUDIO_CHROME_CSS = `
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     color: var(--on-invert-mute);
-    /* It had no measure at all, so it ran the full width of the footer: 118
-     * characters on a tablet and 87 on a desktop, both past the point where
-     * the eye reliably finds the start of the next line. It is the longest
-     * single run of text on every page of the site. 70ch is generous for a
-     * meta row and still lets the whole line sit on one at most widths. */
-    max-inline-size: 70ch;
+    /* It is the longest single run of text on every page of the site, and it
+     * had no measure at all — it ran the full width of the footer. The 70ch
+     * that replaced that did far less than it reads: ch is the advance of
+     * "0", which DM Sans draws at 0.69em, against an average of 0.47em across
+     * this line's own mix of words, digits and separators. So 70ch is 676px,
+     * and 676px HOLDS 92.5 characters — measured at 768 and up, where the
+     * whole 87-character imprint therefore sat on one line, which is the
+     * thing the measure was added to prevent.
+     *
+     * 56ch is 541px is 74 characters: inside the 45–75 band the rest of this
+     * site's running text is set to, and it breaks the imprint into two lines
+     * of about 44. Kept in ch rather than px so it follows the label rung if
+     * that ever retiers — the arithmetic above is why the number is not the
+     * character count. */
+    max-inline-size: 56ch;
   }
 
   /* ---- responsive ----
    * The breakpoints are the source's own tiers where the source has an answer,
    * and ours where it does not. 1200 and 810 are its tiers. 900 is hero.ts's
-   * (see below). 620 and 460 are ours, and each drops exactly one thing. */
+   * (see below). 1360, 620 and 460 are ours: 1360 is where the footer's five
+   * tracks stop fitting a paragraph and four labels at once, and the other two
+   * each drop exactly one thing. */
 
   /* ≥810–1199: the source's tablet tier. --studio-gutter and --chrome-pad-y
    * have already retiered themselves in tokens.ts, so the bar narrows and its
@@ -1063,12 +1196,37 @@ export const STUDIO_CHROME_CSS = `
     :root[data-theme="studio"] .st-chrome-btn { inline-size: 34px; block-size: 34px; }
     :root[data-theme="studio"] .st-chrome-btn::before { inset: -5px; }
     :root[data-theme="studio"] .st-foot { padding-block: 100px 30px; }
-    /* The brand block takes its own row and the four columns share the width.
-     * Inline, the five tracks put 146px under each column at 1024 — measured
-     * against a 147px "Odstop od pogodbe" — so every second label wrapped and
-     * the e-mail row (229px) ran past a 219px brand track into the clip. Full
-     * width gives the brand its 42ch measure back and 210px to each column,
-     * which is more than the longest label in any of them. */
+    /* THE TOP ROW STACKS HERE, NOT AT 900.
+     *
+     * Two-up, the newsletter track measured 397px at 1024 and 428px at 1099,
+     * so the note under the field read 53 and 57 characters against the 67 its
+     * own cap allows — a run of text at its narrowest on the LARGER screens,
+     * which is the tell that a container and not the type was setting it.
+     * Stacked, it gets its 500px from 600px of viewport up.
+     *
+     * The giant wordmark gains by the same move rather than paying for it: at
+     * 1024 its first line needs 486px of what was a 536px track (see the
+     * measured table on .st-foot-mark), and it now has the whole row. */
+    :root[data-theme="studio"] .st-foot-top { grid-template-columns: minmax(0, 1fr); }
+    :root[data-theme="studio"] .st-news { justify-self: start; }
+  }
+
+  /* ≤1359: THE BRAND BLOCK TAKES ITS OWN ROW.
+   *
+   * Inline, the five tracks put 146px under each link column at 1024 —
+   * measured against a 147px "Odstop od pogodbe" — so every second label
+   * wrapped and the 229px e-mail row ran past a 219px brand track into the
+   * clip. Full width gives the brand its 42ch measure back and 210px to each
+   * column, more than the longest label in any of them.
+   *
+   * 1359, not the 1199 tier boundary this rule used to sit on, and the blurb
+   * is the reason. The five-track row cannot give the brand a paragraph's
+   * measure and the link columns their longest label at the same time until
+   * about 1360px: at 1200 the 2.6fr the base rule now carries would leave
+   * each column 145px against a 147px label. At 1360 the same ratio puts
+   * 431px under the blurb and still 166px under each column, and below it a
+   * full-width brand row hands the blurb its whole 42ch instead. */
+  @media (max-width: 1359px) {
     :root[data-theme="studio"] .st-foot-cols {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
@@ -1095,8 +1253,9 @@ export const STUDIO_CHROME_CSS = `
    * two cannot drift.
    *
    * Both rows are --st-tap tall, which is not decoration: it is what lets every
-   * control in them be a 44px target without overlays, and it stops the top
-   * row's targets from bleeding into the rail's. */
+   * control in them be a 44px target without overlays. What it does NOT do on
+   * its own is keep the two rows' targets apart — at row-gap 0 they met on the
+   * pixel, which is what the gap in the grid below is for. */
   @media (max-width: 900px) {
     :root[data-theme="studio"] .st-chrome-bar {
       /* minmax(0, auto): with a long shop name the wordmark yields before the
@@ -1104,11 +1263,33 @@ export const STUDIO_CHROME_CSS = `
       grid-template-columns: minmax(0, auto) 1fr auto;
       grid-template-rows: var(--st-tap) var(--st-tap);
       padding-block: var(--chrome-pad-y) 0;
-      column-gap: var(--gap-sm);
-      row-gap: 0;
+      /* THE ROWS ARE 44px OF TARGET EACH, SO THEY CANNOT TOUCH.
+       *
+       * row-gap was 0 and both rows are exactly --st-tap, so every target in
+       * the top row ended on the pixel the rail's targets began: measured at
+       * 390/600/768, the wordmark and the first nav link were 0px apart, and
+       * the cart disc — 34px of ink whose ::before carries the hit area 5px
+       * further in every direction — cleared the link under it by 1px. Two
+       * mis-tappable pairs on every page, on the only tier where the pointer
+       * is a finger.
+       *
+       * --gap-xs is the whole fix: 8px of dead space between the rows, which
+       * is 8px between hit areas because both rows are their targets. The bar
+       * grows 96px -> 104px on this tier and NOTHING derives from that (it is
+       * two rows, so it was never --chrome-h); the reservation below is the
+       * one consumer and is restated from the same three tokens.
+       *
+       * Column gap is --gap-md, not --gap-sm, for the same ::before: 10px
+       * between the phone number and the cart is 5px of real clearance once
+       * the disc's hit area reaches back into it. 16px leaves 11px. The extra
+       * 12px comes out of the middle 1fr track while that track has slack,
+       * which it does on any shop whose bar carries no number at all — and
+       * where it does not, the wordmark's own clamp at ≤620 is what gives. */
+      column-gap: var(--gap-md);
+      row-gap: var(--gap-xs);
     }
     :root[data-theme="studio"] main {
-      padding-top: calc(var(--chrome-pad-y) + 2 * var(--st-tap));
+      padding-top: calc(var(--chrome-pad-y) + 2 * var(--st-tap) + var(--gap-xs));
     }
     /* Explicit placement: the nav is second in the DOM — primary navigation
      * belongs early for a screen reader, and at every width above this one the
@@ -1162,23 +1343,48 @@ export const STUDIO_CHROME_CSS = `
       padding-inline: var(--studio-gutter);
     }
 
-    /* Footer: one column on top, then the brand block full width with the three
-     * link columns as a 2×2 grid beneath it — the source's phone arrangement. */
-    :root[data-theme="studio"] .st-foot-top {
-      grid-template-columns: minmax(0, 1fr);
-      align-items: start;
-      gap: 25px;
-    }
-    :root[data-theme="studio"] .st-news { justify-self: start; max-inline-size: none; }
+    /* Footer: one column on top, then the brand block full width with the four
+     * link columns as a 2×2 grid beneath it — the source's phone arrangement.
+     * The stacking itself starts at 1199 now (see that block), so all this
+     * tier still owes it is the tighter gap between the two stacked halves.
+     * The newsletter block keeps its 500px cap here rather than releasing it:
+     * unset, the note measured 718px and 96 characters at 768. */
+    :root[data-theme="studio"] .st-foot-top { gap: 25px; }
     :root[data-theme="studio"] .st-foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     :root[data-theme="studio"] .st-foot-brand { grid-column: 1 / -1; }
+  }
+
+  /* THE FADE WITHOUT THE TIMELINE.
+   *
+   * A browser with no scroll-driven animations cannot be asked whether the
+   * rail scrolls, so it gets the resting half of the rule above unconditionally
+   * — and only on the two-row tier, where that is nearly free: the rail is
+   * stretched to the whole bar with its items start-aligned, so a menu that
+   * fits leaves the trailing 40px empty and the fade finds no ink there. (The
+   * exception is the narrow band of widths where the menu ends just inside
+   * that 40px; the last glyph dims and nothing is lost. Above 900 the nav
+   * track shrink-wraps its items instead, so the same declaration would dim
+   * the last label of every menu that fits — which is why it stops here.)
+   *
+   * Plainer, never broken, is the same trade the :has() and animation-timeline
+   * notes at the top of this file already make. */
+  @supports not (animation-timeline: scroll()) {
+    @media (max-width: 900px) {
+      :root[data-theme="studio"] .st-chrome-nav {
+        -webkit-mask-image:
+          linear-gradient(to right, #000 calc(100% - 40px), transparent 100%);
+        mask-image:
+          linear-gradient(to right, #000 calc(100% - 40px), transparent 100%);
+      }
+    }
   }
 
   /* ≤809: the source's phone tier. */
   @media (max-width: 809px) {
     :root[data-theme="studio"] .st-foot { padding-block: 70px 25px; }
     :root[data-theme="studio"] .st-foot-top { margin-bottom: var(--gap-xl); }
-    :root[data-theme="studio"] .st-foot-col ul { gap: 14px; }
+    /* The 14px row gap that stood here is gone: it was the tier where two
+     * 44px link targets overlapped by 10px. See .st-foot-col ul. */
     :root[data-theme="studio"] .st-foot-rule { margin-block: var(--gap-xl) 25px; }
   }
 

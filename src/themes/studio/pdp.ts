@@ -44,10 +44,11 @@
  *
  * Scale translation: this page carries NO measured type. §4's px numbers are
  * the screenshot pass and §1's ramp wins wherever the two touch type (§0), so
- * the devices' geometry is still read off §4 — the 22px
- * checkbox, the square frame — while every font-size, weight, tracking and
- * leading below is a token from the transcribed ramp, taken a whole row at a
- * time. Nothing here sets a size without the weight, tracking and leading that
+ * the devices' geometry is still read off §4 — the 22px checkbox, and §4.7's
+ * frame, which is square for the hot tubs the source's panel was measured
+ * against and 5/2 for the swim spas, whose shells are 5,80 × 2,24 m (see
+ * .st-pdp-frame) — while every font-size, weight, tracking and leading below
+ * is a token from the transcribed ramp, taken a whole row at a time. Nothing here sets a size without the weight, tracking and leading that
  * ship with it, and nothing here tracks negatively: the source's display type
  * is set open and light (500 at 92px), which is the single thing the measured
  * pass had backwards.
@@ -72,7 +73,7 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { isSetPhone } from "../../lib/filled";
-import type { Collection, PdpContent, PdpPhoto } from "../../content/types";
+import type { ArtKey, Collection, PdpContent, PdpPhoto } from "../../content/types";
 import { productArt } from "./product-art";
 import { productImg } from "./media";
 import { helpIcon, returnIcon, shieldIcon, truckIcon } from "./icons";
@@ -86,20 +87,86 @@ export const STUDIO_PDP_CSS = `
     /* Gallery → buy column gap. Sized off §4.7's 48px card padding plus the
      * card gap: the two columns must read as two panels, not one spread. */
     --studio-pdp-col-gap: clamp(26px, 3.4vw, 68px);
-    /* Thumbnail square in the gallery's strip. 60px is costed twice: it is
-     * over WCAG 2.5.8's 44px floor with room for the hairline, and TEN of
-     * them (the largest set any model ships) fit one row in the desktop
-     * gallery column (~693px at 1440: 10 × 60 + 9 × 10 gap = 690). The 56px
-     * floor keeps five per row inside 390's 340px content box. */
-    --studio-pdp-thumb: clamp(56px, 4.2vw, 60px);
+    /* The gallery's own internal step: stage → thumb strip. Was written into
+     * the .st-pdp-gallery rule; it is a token now because the sticky height
+     * budget below has to subtract exactly this value. */
+    --studio-pdp-gal-gap: clamp(10px, 1vw, 16px);
+    /* Thumbnail square in the gallery's strip — the CAP, not a fixed size.
+     * The strip divides its own width by the number of photographs so the
+     * whole set lands on one row, and 60px is where that stops growing: a
+     * picker is a control, not a second gallery. Which way the strip breaks a
+     * tie between the single row and the target size depends on whether the
+     * gallery is pinned — see .st-pdp-thumb and the min-height block above it.
+     *
+     * (It used to be clamp(56px, 4.2vw, 60px), and the comment claimed ten
+     * fit one row. Measured, that was true only at ≥1440: ten 60px thumbs
+     * plus nine 10px gaps need 690px, and the gallery column is 611px at
+     * 1280 and 496px at 1024 — so the strip was silently two rows, 122px and
+     * 120px tall, at both.) */
+    --studio-pdp-thumb: 60px;
+    /* WCAG 2.5.5 (AAA) target size. 2.5.8 (AA), which the comment above this
+     * token used to cite for the same number, is 24px — the figure the
+     * breadcrumb rule below is costed against. It is the floor of the
+     * free-standing strip, which holds the AAA size and takes a second row
+     * instead; the pinned strip has no room for a second row and so has no
+     * floor, landing between 53.5px and 27.5px depending on the window. */
+    --studio-pdp-thumb-min: 44px;
+    /* Gap in the thumb strip. A token for the same reason as the one above:
+     * the thumb's own width formula has to subtract (n − 1) of them. */
+    --studio-pdp-thumb-gap: clamp(8px, 0.8vw, 10px);
     /* §4.13's square 22px checkbox, kept for the configurator and the add-on
-     * rows (the sidebar that shared it is gone — see the file header). */
-    --studio-pdp-box: clamp(16px, 1.1vw, 22px);
+     * rows (the sidebar that shared it is gone — see the file header).
+     *
+     * 2vw, not the 1.1vw this carried: 1.1vw does not reach 22px until a
+     * 2000px viewport, so on every screen the shop is actually read on the
+     * box was the 16px floor and the 22px §4.13 measures was unreachable.
+     * At 2vw it is the measured square from 1100px up (22.0px at 1280, 1440
+     * and 1920) and still ducks to the floor on a phone, which is what the
+     * floor was for. */
+    --studio-pdp-box: clamp(16px, 2vw, 22px);
+
+    /* ---- the sticky gallery's height budget --------------------------
+     *
+     * Three numbers the gallery has to know about the buy bar, written once
+     * here and used by both. The bar is position:sticky at the BOTTOM of the
+     * viewport for the whole page while the gallery is sticky at the top, so
+     * the two are laid out against the same 100svh and nothing in normal flow
+     * keeps them apart — measured at 1920×900 the pinned gallery ran to 952px
+     * with the bar's top edge at 808px, which buried the entire 60px thumb
+     * strip. The picker was unreachable, not merely clipped. */
+    --studio-pdp-gal-top: calc(var(--chrome-h) + clamp(16px, 1.6vw, 32px));
+    /* The bar's REAL height, derived rather than assumed. Its .st-pdp-bar-in
+     * min-height is --chrome-h, but the white CTA inside it is taller than
+     * that at every desktop width, so the CTA's box is what the band actually
+     * measures: label line + its own padding + its hairline, plus the band's
+     * padding. Both padding clamps are these tokens, so the reserve cannot
+     * drift from the bar. Measured against the live bar: 92.1px at 1920,
+     * 74.8 at 1440, 69.0 at 1280, 63.0 at 1024 — this calc lands within 1px
+     * of each, and --studio-pdp-gal-clear covers the rounding. */
+    --studio-pdp-bar-pad: clamp(9px, 0.8vw, 16px);
+    --studio-pdp-cta-pad: clamp(11px, 1vw, 20px);
+    --studio-pdp-bar-h: calc(
+      2 * var(--studio-pdp-bar-pad) + 2 * var(--studio-pdp-cta-pad)
+      + 2 * var(--bw-line) + 20px
+    );
+    /* Air between the two, so the photograph is not flush against the band. */
+    --studio-pdp-gal-clear: clamp(10px, 1vw, 20px);
+    /* What is left for the gallery when both bands have taken their share.
+     * svh, not vh: on a phone the URL bar's collapse must not be allowed to
+     * lend the gallery height it loses again on the next scroll. */
+    --studio-pdp-gal-h: calc(
+      100svh - var(--studio-pdp-gal-top) - var(--studio-pdp-bar-h)
+      - var(--studio-pdp-gal-clear)
+    );
   }
   /* The buy bar sits at the bottom of the viewport for the whole page, so an
    * in-page anchor scrolled flush to the bottom edge landed UNDERNEATH it.
-   * The bar is the chrome band's height (--chrome-h), plus its own block
-   * padding — reserve that much at the end of every scroll.
+   * Reserve the bar's own height at the end of every scroll.
+   *
+   * --studio-pdp-bar-h, not the calc(--chrome-h + clamp(18px, 1.6vw, 32px))
+   * this used to carry: that reserved 86.7px at 1920 against a bar measured
+   * at 92.1px, so an anchor target still landed ~5px under the band. The
+   * token is the bar's construction, so the two can no longer disagree.
    *
    * Gated on the bar EXISTING. It used to sit on :root unconditionally, which
    * is a PDP module reaching every page in the theme: the home page, the
@@ -107,7 +174,7 @@ export const STUDIO_PDP_CSS = `
    * end of every anchor jump for a bar none of them render. :has() is already
    * how this sheet asks whether a frame carries a caption. */
   :root[data-theme="studio"]:has(.st-pdp-bar) {
-    scroll-padding-bottom: calc(var(--chrome-h) + clamp(18px, 1.6vw, 32px));
+    scroll-padding-bottom: calc(var(--studio-pdp-bar-h) + var(--studio-pdp-gal-clear));
   }
 
   /* Visually hidden until focused. Local copy (chrome.ts has .st-vh) so this
@@ -125,39 +192,113 @@ export const STUDIO_PDP_CSS = `
     padding-top: var(--studio-rhythm);
   }
   :root[data-theme="studio"] .st-pdp-in {
-    /* --studio-container (1560px), the baseline's text-led measure (§3) — a PDP
-     * is a decision column, not a full-bleed band. The buy bar below uses
-     * --studio-container. Both are CONTENT measures and box-sizing is border-box,
-     * so the gutter is ADDED to the cap rather than eaten out of it. */
+    /* The CONTENT measure is --studio-container, the baseline's text-led
+     * measure (§3) — a PDP is a decision column, not a full-bleed band — and
+     * box-sizing is border-box, so the gutter has to be added back or it
+     * would be eaten out of the measure. The DECLARED cap is therefore the
+     * sum, not the token: 1560 + 2 × 40 = 1640px at ≥1200, and 1560 + 2 × 25
+     * = 1610px below that, where tokens.ts drops the gutter to 25px. The buy
+     * bar's inner box repeats the same calc so the two bands line up.
+     * (This comment used to name "--studio-container (1560px)" as the cap
+     * itself, which is the one number this declaration never produces.) */
     max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
     padding-inline: var(--studio-gutter);
   }
+  /* FLEX, not grid, and the reason is the sticky gallery's width cap below.
+   *
+   * A grid track sized 1.12fr stays 1.12fr whatever the item inside it does,
+   * so when the gallery is capped the leftover is dead margin in the gallery
+   * column — 145px of it at 1920. Flexbox hands a frozen item's unused space
+   * back to its siblings, so the width the gallery gives up to clear the buy
+   * bar is width the buy column gains: measured at 1920×900 the buy column
+   * goes 705px → 868px, which is the same column the spec table, the four
+   * promises and the add-on rows all live in. The ratio is unchanged — the
+   * gallery still leads at 1.12 : 1 wherever the cap does not bind. */
   :root[data-theme="studio"] .st-pdp-grid {
-    display: grid;
-    /* Gallery leads: the frame is the largest object on the page. */
-    grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: var(--studio-pdp-col-gap);
-    align-items: start;
   }
 
   /* The gallery sticks while the buy column scrolls past it.
    *
    * The buy column is by far the taller of the two — the configurator,
-   * fourteen priced add-ons, a total and the delivery box — and the gallery
-   * is now one stage plus a thumb row (~770px at 1440), so it pins whole and
-   * keeps the product beside the decision for the entire scroll. This
+   * fourteen priced add-ons, a total and the delivery box — so it pins whole
+   * and keeps the product beside the decision for the entire scroll. This
    * replaces the earlier two-branch rule (sticky gallery WITHOUT photos,
    * sticky buy column WITH them): the with-photos branch pinned the taller
    * column, and a sticky element taller than its sibling has no room to
    * travel — it was a no-op, measured against the live page.
    *
-   * Only while the grid HAS two columns: stacked, this would pin the picture
-   * over the copy. The offset clears the fixed chrome band. */
+   * Only while the row HAS two columns: stacked, this would pin the picture
+   * over the copy. The offset clears the fixed chrome band.
+   *
+   * THE WIDTH CAP IS THE FIX FOR THE BUY BAR OVERLAP. The gallery is sized by
+   * its width — the frame takes its height from an aspect-ratio and the strip
+   * sits under it — so the only way to give it a height budget without
+   * breaking the frame's ratio (and printing exactly the empty ground the
+   * swim spa frames were guilty of) is to convert the budget back into a
+   * width: available height × the frame's ratio. Uncapped and pinned at
+   * 1920×900 the gallery ran 86.7 → 952.4 against a bar whose top edge is at
+   * 807.9, hiding the whole thumb strip; capped it runs 86.7 → 783 and every
+   * thumb is clickable. At 1280 and 1024 the cap is larger than the column
+   * the layout already gives (670 vs 611, 701 vs 496), so it changes nothing
+   * there — it binds at 1440 and 1920 only.
+   *
+   * Scoped to a gallery that HAS a stage: the drawing fallback is three
+   * stacked frames rather than one stage plus a strip, so the budget below
+   * would be describing a shape it does not have. It keeps the old
+   * behaviour, which is what it had before this rule existed. */
   @media (min-width: 1001px) {
+    :root[data-theme="studio"] .st-pdp-grid {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+    :root[data-theme="studio"] .st-pdp-gallery {
+      flex: 1.12 1 0;
+      min-inline-size: 0;
+    }
+    :root[data-theme="studio"] .st-pdp-buy { flex: 1 1 0; }
+  }
+  /* The pinning and its budget, gated on HEIGHT as well as width.
+   *
+   * 640px is where a pinned gallery stops being worth what it costs: the
+   * chrome offset and the buy bar take 178px of a short window before the
+   * gallery gets anything, so under it the budget buys a frame smaller than
+   * the thumb strip is wide. Below this the gallery simply scrolls with the
+   * page, which is the same judgement the max-height: 480px block makes about
+   * the bar. Measured at the floor: 1440×640 leaves the frame 398px and the
+   * thumbs 30.6px, both still working; at 1440×720 it is 478px and 38.6px.
+   *
+   * ONE ROW, GUARANTEED, while the budget is in force. The strip's height is
+   * subtracted from that budget as a single row, so a strip that wrapped
+   * would push the gallery back under the bar by exactly the row it added —
+   * which is what happened at 1920×768 and 1440×720 when the thumb kept its
+   * 44px floor here: the cap had squeezed the strip to where ten 44px targets
+   * no longer fit, it wrapped, and 19.8px and 24.5px of it went back under
+   * the band. So inside the budget the thumb drops the floor and takes
+   * exactly its share: measured with the ten-photograph set, 53.5px at
+   * 1920×900, 42.0 at 1024×900, 38.6 at 1440×720 and 27.5 at the gate's
+   * worst corner, 1920×640 — above WCAG 2.2 SC 2.5.8's 24px everywhere the
+   * gate allows, and the 44px AAA size wherever the strip is free to wrap
+   * instead (the phone, and any window under the gate). */
+  @media (min-width: 1001px) and (min-height: 640px) {
     :root[data-theme="studio"] .st-pdp-gallery {
       position: sticky;
-      top: calc(var(--chrome-h) + clamp(16px, 1.6vw, 32px));
+      top: var(--studio-pdp-gal-top);
+    }
+    :root[data-theme="studio"] .st-pdp-gallery:has(.st-pdp-stage) {
+      max-inline-size: calc(
+        (var(--studio-pdp-gal-h) - var(--st-pdp-strip)) * var(--st-pdp-ar)
+      );
+    }
+    :root[data-theme="studio"] .st-pdp-gallery:has(.st-pdp-stage) .st-pdp-thumb {
+      inline-size: min(
+        var(--studio-pdp-thumb),
+        (100% - (var(--st-pdp-n) - 1) * var(--studio-pdp-thumb-gap) - 2px)
+          / var(--st-pdp-n)
+      );
     }
   }
 
@@ -165,11 +306,27 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-frame {
     position: relative;
     margin: 0;
-    /* Square, not the 4/3 the first pass carried (--studio-pdp-frame-ar is
-     * retired — every frame this class paints lives in the gallery, where the
-     * 1/1 override always won): a product cut out on a plain ground sits in a
-     * square without a wasted band above and below it. */
-    aspect-ratio: 1 / 1;
+    /* THE FRAME IS THE SHAPE OF THE PRODUCT IN IT, not one shape for the
+     * catalogue. --st-pdp-ar is set on the gallery from the model's own art
+     * key (content/types.ts ArtKey, "pool" | "swimspa"), which is the one
+     * place the content layer already says which of the two families a model
+     * belongs to.
+     *
+     * A square is right for a hot tub — /bazen/veliki-230 is 2,30 × 2,30 m,
+     * and a product cut out on a plain ground sits in a square with no wasted
+     * band above or below it. It is wrong for a swim spa: /bazen/swim-580-maxi
+     * is 5,80 × 2,24 m and /bazen/swim-580-hidro 5,80 × 2,28 m, so with
+     * object-fit: contain a 2.59:1 photograph in the 692 × 692 frame at 1440
+     * painted 267px of picture and 425px of empty panel — 61% of the largest
+     * object on the page, and 90% of a 900px viewport spent on it. The 5/2
+     * this gives them is the mean of the two footprints to within 2%, so the
+     * ground drops from 425px to under 12px.
+     *
+     * The fallback in the var() is what the drawing path takes: it has no
+     * gallery-level art key of its own to read. (--studio-pdp-frame-ar, the
+     * 4/3 the first pass carried, is retired — every frame this class paints
+     * lives in the gallery, where the 1/1 override always won.) */
+    aspect-ratio: var(--st-pdp-ar, 1);
     background: var(--bg-alt);
     border-radius: var(--r-media);
     overflow: hidden;
@@ -260,24 +417,56 @@ export const STUDIO_PDP_CSS = `
    * three-frame "detail strip" rules that lived here were dead — the strip
    * was never emitted; these are written for the strip the gallery actually
    * renders.) WRAPS rather than scrolls: a nested scroller hides pictures,
-   * and every model's whole set (6–10) fits in one or two rows at every
-   * width, so nothing needs hiding. Flex, not a grid — a grid's last row
-   * would stretch its leftovers into differently-sized cells. */
+   * and the whole set fits one row wherever the gallery is pinned, so nothing
+   * needs hiding. Flex, not a grid — a grid's last row would stretch its leftovers
+   * into differently-sized cells.
+   *
+   * --st-pdp-n is the number of photographs, written on the element by the
+   * renderer. The strip needs it because the thumb below divides the strip's
+   * own width by it; the fallback keeps the rule honest if the attribute ever
+   * goes missing. */
   :root[data-theme="studio"] .st-pdp-thumbs {
     display: flex;
     flex-wrap: wrap;
-    gap: clamp(8px, 0.8vw, 10px);
+    gap: var(--studio-pdp-thumb-gap);
+    --st-pdp-n: 10;
   }
-  /* A thumb is a CONTROL that happens to hold a picture, so it takes the
-   * control radius (--r-ctrl, §9's sharp rung) rather than the media one,
-   * and its boundary escalates like every control here: hairline at rest,
-   * ink on hover, ink DOUBLED (border + inset ring, --bw-ctrl's 2px total)
-   * when it is the photograph on show. The inset ring instead of a wider
-   * border: a border width change would shift the picture a pixel. */
+  /* ONE ROW, BY ARITHMETIC RATHER THAN BY HOPE. Each thumb takes the strip's
+   * width less its gaps, divided by the number of photographs — so a set of
+   * ten and a set of six both land on a single row — clamped between the AAA
+   * target size and the 60px cap. The 2px is slack against sub-pixel
+   * rounding: without it a row that computes to exactly 100% wraps its last
+   * thumb on some fractional widths.
+   *
+   * This is the rule where the strip is free to WRAP: the phone, and any
+   * desktop window too short for the pinned gallery. There the 44px floor
+   * wins over the single row — measured at 390, where ten 44px targets and
+   * nine 8px gaps need 512px in a 340px strip, so it takes two rows. The
+   * pinned case overrides this with a floorless share, because there a
+   * wrapped row goes straight back under the buy bar; see the min-height
+   * block above.
+   *
+   * Measured, per gallery column, for the ten-photograph set: 53.5px at 1920,
+   * 56.6 at 1440, 51.9 at 1280, 42.0 at 1024 — all one row, where the old
+   * flat clamp(56px, 4.2vw, 60px) gave two rows, 122px tall at 1280 and 120px
+   * at 1024, for a comment that claimed ten fit one row at every width.
+   *
+   * A CONTROL that happens to hold a picture, so it takes the control radius
+   * (--r-ctrl, §9's sharp rung) rather than the media one, and its boundary
+   * escalates like every control here: hairline at rest, ink on hover, ink
+   * DOUBLED (border + inset ring, --bw-ctrl's 2px total) when it is the
+   * photograph on show. The inset ring instead of a wider border: a border
+   * width change would shift the picture a pixel. */
   :root[data-theme="studio"] .st-pdp-thumb {
     position: relative;
     display: block;
-    inline-size: var(--studio-pdp-thumb);
+    flex: 0 0 auto;
+    inline-size: clamp(
+      var(--studio-pdp-thumb-min),
+      (100% - (var(--st-pdp-n) - 1) * var(--studio-pdp-thumb-gap) - 2px)
+        / var(--st-pdp-n),
+      var(--studio-pdp-thumb)
+    );
     aspect-ratio: 1 / 1;
     border: 1px solid var(--line);
     border-radius: var(--r-ctrl);
@@ -655,7 +844,25 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-gallery {
     display: flex;
     flex-direction: column;
-    gap: clamp(10px, 1vw, 16px);
+    gap: var(--studio-pdp-gal-gap);
+    /* The frame's ratio, and what the strip under it costs — the two numbers
+     * the sticky width cap above is computed from. Declared here rather than
+     * on :root because both are facts about THIS gallery: the ratio comes
+     * from the model's art key (the renderer writes data-art), and the strip
+     * only exists when there is more than one photograph to choose between. */
+    --st-pdp-ar: 1;
+    --st-pdp-strip: 0px;
+  }
+  /* 5/2 — see .st-pdp-frame for the footprints this is the mean of. */
+  :root[data-theme="studio"] .st-pdp-gallery[data-art="swimspa"] { --st-pdp-ar: 2.5; }
+  /* ONE thumb row plus the step above it — the exact height the strip has
+   * while the gallery is pinned, because the pinned rule sizes each thumb to
+   * its share of the row and it cannot wrap (see the min-height block above).
+   * --studio-pdp-thumb is the row's ceiling rather than its measured height,
+   * so this reserve is never short: the measured strip is 53.5px at 1920,
+   * 56.6 at 1440, 51.9 at 1280 and 42.0 at 1024. */
+  :root[data-theme="studio"] .st-pdp-gallery:has(.st-pdp-thumbs) {
+    --st-pdp-strip: calc(var(--studio-pdp-gal-gap) + var(--studio-pdp-thumb));
   }
   :root[data-theme="studio"] .st-pdp-stage {
     display: flex;
@@ -787,11 +994,30 @@ export const STUDIO_PDP_CSS = `
     outline-offset: 3px;
   }
 
-  /* ---- the assurance row: two by two ---------------------------------- */
+  /* ---- the assurance row ----------------------------------------------
+   *
+   * TWO BY TWO ONLY WHERE A CELL HOLDS A PROMISE. repeat(2, minmax(0, 1fr))
+   * split an already narrow buy column in half again, and the promise inside
+   * a cell is an icon, a gap and then the text — so the measured cell ran
+   * 339.5px at 1920, 299.1 at 1440, 263.8 at 1280 and 214.3 at 1024, leaving
+   * the sub-line 186 to 287px of it. Its longest ("brezplačno preverimo
+   * dostop in elektriko", 40 characters) measures 287px, so two of the four
+   * promises broke onto a second line at 1440 and 1280 and three of the four
+   * at 1024 — and the short ones did not, so the row read as four ragged
+   * blocks rather than one device.
+   *
+   * 22rem is the width a cell needs to hold that longest line: 287px of text
+   * plus the icon and its 10px gap is 321px, and 352px carries it with the
+   * label above it. auto-fit then decides per column rather than per
+   * viewport, which is what the old @media (max-width: 809px) override got
+   * wrong — it named a viewport for a fault that was about the COLUMN width.
+   * That override is gone with it. Measured after: two by two at 1920 (cells
+   * of 420.9px), one per row from 1440 down (652.7 / 545.5 / 443), and all
+   * four promises on one line at every one of the four. */
   :root[data-theme="studio"] .st-pdp-assure {
     list-style: none; margin: clamp(22px, 2.2vw, 40px) 0 0; padding: 0;
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
     gap: clamp(14px, 1.4vw, 26px);
   }
   :root[data-theme="studio"] .st-pdp-assure-i {
@@ -824,9 +1050,14 @@ export const STUDIO_PDP_CSS = `
     color: var(--ink-mute);
   }
 
-  /* ---- collapsible panels --------------------------------------------- */
+  /* ---- collapsible panels ---------------------------------------------
+   *
+   * These sit UNDER the whole two-column row now, not inside the buy column
+   * — the step above them is therefore a band-to-band step rather than a
+   * device-to-device one. See renderStudioPdp for the measurement that moved
+   * them. */
   :root[data-theme="studio"] .st-pdp-panels {
-    margin-top: clamp(26px, 2.6vw, 48px);
+    margin-top: clamp(34px, 3.4vw, 64px);
     border-top: var(--bw-line) solid var(--line);
   }
   :root[data-theme="studio"] .st-pdp-panel {
@@ -963,7 +1194,9 @@ export const STUDIO_PDP_CSS = `
   }
   @media (max-width: 809px) {
     :root[data-theme="studio"] .st-also-row { grid-template-columns: minmax(0, 1fr); }
-    :root[data-theme="studio"] .st-pdp-assure { grid-template-columns: minmax(0, 1fr); }
+    /* (.st-pdp-assure's single-column override lived here. The row is
+     * auto-fit now and collapses on its own measure, at every width — see
+     * the rule for the 352px the pair is costed against.) */
   }
 
   /* ---- add-ons: the first REAL controls on this page ------------------
@@ -1192,13 +1425,41 @@ export const STUDIO_PDP_CSS = `
   /* (.st-pdp-spec and .st-pdp-spec-h — the freestanding two-column spec band
    * with its own h3 — were removed as dead: the table moved into the first
    * collapsible panel and nothing emitted either class any more.) */
+  /* TWO COLUMNS OF ROWS, ONLY WHERE BOTH STILL HOLD A VALUE.
+   *
+   * The panels are laid out across the whole band now rather than inside the
+   * buy column (see renderStudioPdp for why they moved), so the table has
+   * room to place rows side by side. auto-fit with a 40rem floor is the rule
+   * that decides: 640px is what one row needs to keep its value on a single
+   * line (16ch of term + the gap + the 45-character measure below), so the
+   * table is two columns from 1440 up (2 × 640 + 40 = 1320 inside a 1360px
+   * band) and one column at 1280 and 1024, where a second column could only
+   * be bought by breaking the values again. */
   :root[data-theme="studio"] .st-pdp-spec-table {
     margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 40rem), 1fr));
+    column-gap: clamp(24px, 2.4vw, 40px);
     border-top: 1px solid var(--line);
   }
+  /* THE VALUE GETS THE MEASURE; the term takes what a term needs.
+   *
+   * minmax(0, 1fr) / minmax(0, 1.15fr) split the row almost down the middle,
+   * which inside the buy column left the value 25.1 characters at 1024, 30.9
+   * at 1280, 35.0 at 1440 and 36.4 at 1920 — under a 45-character floor at
+   * every one, against values that run to 39 ("ameriški akril, 7 barv ·
+   * izolacija 2 cm"). So most of them wrapped, and a wrapped row is 75px
+   * against 49 for one that does not: the table's own rhythm moved with the
+   * text. The longest TERM is 15 characters ("Protitočne šobe"), so 16ch is
+   * the whole of what the left column needs and the rest belongs to the
+   * right. Measured after: 47.4 characters at 1440 — the two-column case and
+   * the tightest of the four — and 56.4, 100.4 and 78.5 at 1920, 1280 and
+   * 1024. No value wraps at any of them, so every row in a table is the
+   * height of its neighbours (65.4px at 1920 down to 49 at 1024) instead of
+   * alternating 49 and 75 as the text happened to fall. */
   :root[data-theme="studio"] .st-pdp-srow {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    grid-template-columns: minmax(0, 16ch) minmax(0, 1fr);
     gap: clamp(10px, 1.2vw, 24px);
     padding-block: clamp(11px, 1vw, 20px);
     border-bottom: 1px solid var(--line);
@@ -1244,7 +1505,10 @@ export const STUDIO_PDP_CSS = `
     min-height: var(--chrome-h);
     display: flex; align-items: center;
     gap: clamp(10px, 1.4vw, 28px);
-    padding-block: clamp(9px, 0.8vw, 16px);
+    /* The token, not the clamp written out: --studio-pdp-bar-h is built from
+     * this and the CTA's padding, and the sticky gallery reserves that. A
+     * literal here would let the two drift silently. */
+    padding-block: var(--studio-pdp-bar-pad);
   }
   /* The summary is chrome, not content: both halves are meta rows on a band,
    * so both take the label rung and the band's own face. */
@@ -1299,7 +1563,11 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-cta {
     flex: 0 0 auto;
     display: inline-flex; align-items: center; justify-content: center;
-    padding: clamp(11px, 1vw, 20px) clamp(16px, 2vw, 40px);
+    /* The block padding is the token the bar's height reserve is built from
+     * — see --studio-pdp-bar-h. The CTA is what makes this band taller than
+     * its own min-height at every desktop width, so it is the half of the
+     * measurement that has to stay in step. */
+    padding: var(--studio-pdp-cta-pad) clamp(16px, 2vw, 40px);
     background: var(--bg);
     border: 1px solid var(--bg);
     border-radius: var(--r-ctrl);
@@ -1334,6 +1602,16 @@ export const STUDIO_PDP_CSS = `
     }
   }
   @media (max-width: 560px) {
+    /* THE SPEC ROW STACKS. 16ch of term inside a 340px band leaves the value
+     * 167px — 16 characters, the narrowest measure anywhere on this page —
+     * so on a phone the term takes its own line and the value gets the whole
+     * 340px (33 characters). Every row is then the same height whether or not
+     * its value folds, which is the fault the desktop rule above is about.
+     * The tighter gap is because a stacked pair is one item, not two. */
+    :root[data-theme="studio"] .st-pdp-srow {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2px;
+    }
     /* 390px budget for the bar, re-costed on the ramp: 20px gutters leave
      * 350px. The CTA is now a flat 14px label (~122px with 14px padding) and
      * the price is h6's phone value, 22px (~85px), so with two 10px gaps the
@@ -1428,7 +1706,20 @@ function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto): string {
   if (photo) {
     return (
       '<span class="st-pdp-shot">' +
-      productImg(photo, "st-pdp-shot-img", "(max-width: 809px) 92vw, 400px", photo.alt) +
+      // The only slot this branch paints is "ostali modeli"'s .st-also-frame
+      // (the gallery's fallback takes the drawing, which is never an image
+      // request), so the hint is that card's measured width: 306px at 390 —
+      // one column, 78.5vw — 220.7 at 810 and 291.3 at 1024, where the row is
+      // three columns inside a 25px gutter, then 358.4 at 1280, 406.6 at 1440
+      // and 459.3 at 1920, where the band's own cap freezes it. The 400px it
+      // carried was measured against the 1440px container and now
+      // under-promises by 15% at 1920, which is how a card prints soft.
+      productImg(
+        photo,
+        "st-pdp-shot-img",
+        "(max-width: 809px) 80vw, (max-width: 1199px) 28vw, (max-width: 1639px) 30vw, 460px",
+        photo.alt,
+      ) +
       "</span>"
     );
   }
@@ -1473,6 +1764,36 @@ function family(ctx: RenderCtx): Collection | null {
   const slug = ctx.pdp.slug;
   for (const c of ctx.content.collections ?? []) {
     if (c.products.some((p) => p.slug === slug)) return c;
+  }
+  return null;
+}
+
+/**
+ * WHICH OF THE TWO FAMILIES THIS MODEL IS, as the content layer already
+ * records it: content/types.ts ArtKey, "pool" | "swimspa".
+ *
+ * The gallery frame's aspect ratio is the one thing on this page that cannot
+ * be the same for both — a hot tub is square (2,30 × 2,30 m) and a swim spa
+ * is not (5,80 × 2,24 m) — and inventing a rule from the slug or from the
+ * spec text would be this file guessing at a fact the catalogue states.
+ *
+ * PdpContent itself does not carry the key, so it is read off the model's own
+ * ProductCard: the collection that owns the model first (content/types.ts
+ * says a Collection owns its products, the same source family() reads), then
+ * the shop's flat card list for a shop with no collections. The direct read
+ * comes first and structurally, exactly as compareAt() does above, so adding
+ * `art: ArtKey` to PdpContent needs no change here.
+ */
+function artOf(ctx: RenderCtx): ArtKey | null {
+  const own: unknown = (ctx.pdp as { art?: unknown }).art;
+  if (own === "pool" || own === "swimspa") return own;
+  const slug = ctx.pdp.slug;
+  for (const c of ctx.content.collections ?? []) {
+    const card = c.products.find((x) => x.slug === slug);
+    if (card) return card.art;
+  }
+  for (const x of ctx.content.products) {
+    if (!("util" in x) && x.slug === slug) return x.art;
   }
   return null;
 }
@@ -1599,8 +1920,18 @@ function alsoLike(ctx: RenderCtx): string {
 function gallery(ctx: RenderCtx): string {
   const photos = ctx.pdp.photos ?? [];
   if (photos.length > 0) {
-    // The gallery column is ~700px at 1440 and full width once it stacks.
-    const sizes = "(max-width: 1000px) 100vw, 46vw";
+    // WHAT THE STAGE ACTUALLY PAINTS, measured after the frame ratio and the
+    // sticky width cap landed — a hint has to describe the WIDEST case a
+    // width can produce, and that is now the swim spa's 5/2 frame rather than
+    // the square one: at 1920 a pool stage is 627px (the cap binds) while a
+    // swim spa stage is the full 789.7px column. Measured widest: 496px at
+    // 1024, 611 at 1280, 692.6 at 1440, 789.7 at 1920 — 48.5, 47.7, 48.1 and
+    // 41.1vw. So 49vw up to the point --studio-container caps the band
+    // (1560 + 2 × 40 = 1640px of viewport), and the fixed 790px above it,
+    // where the column stops growing. The old "46vw" was measured against a
+    // 1440-wide container and under-promised at every width above it.
+    const sizes =
+      "(max-width: 1000px) 100vw, (max-width: 1639px) 49vw, 790px";
     const stage =
       '<div class="st-pdp-stage" data-st-scroll role="region" ' +
       'aria-label="Fotografije izdelka" tabindex="0">' +
@@ -1630,9 +1961,14 @@ function gallery(ctx: RenderCtx): string {
           "</a>",
       )
       .join("");
+    // The count travels to the stylesheet: .st-pdp-thumb divides the strip's
+    // width by it to keep the whole set on one row. It is a fact about this
+    // gallery, not a style choice, which is why it rides as a custom property
+    // rather than as one more class.
     return (
       stage +
-      '<nav class="st-pdp-thumbs" aria-label="Izbira fotografije">' + thumbs + "</nav>"
+      '<nav class="st-pdp-thumbs" aria-label="Izbira fotografije"' +
+      ' style="--st-pdp-n:' + String(photos.length) + '">' + thumbs + "</nav>"
     );
   }
   return (
@@ -1655,6 +1991,7 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   const d = ctx.pdp;
   const was = compareAt(d);
   const provisional = d.pricesProvisional === true;
+  const art = artOf(ctx);
 
   const cfg = d.cfg
     .map((g, gi) => {
@@ -1886,7 +2223,11 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     // arms behaviour.ts only when there is more than one photograph — with one
     // (or with the drawing fallback) there is nothing to page through, and the
     // script's own guard would bail anyway.
+    // data-art is the frame's aspect ratio, read off the model's own card —
+    // a swim spa is a 2.5:1 object and a hot tub a square one, and the frame
+    // is the biggest thing on the page to get that wrong in.
     '<div class="st-pdp-gallery"' +
+    (art ? ' data-art="' + art + '"' : "") +
     ((ctx.pdp.photos ?? []).length > 1 ? " data-st-slider" : "") + ">" +
     gallery(ctx) + "</div>" +
 
@@ -1958,13 +2299,31 @@ export function renderStudioPdp(ctx: RenderCtx): string {
         "</p>"
       : "") +
     addons +
-    panels +
     '<section class="st-pdp-freight" aria-labelledby="st-pdp-fh">' +
     '<h2 class="st-pdp-glabel" id="st-pdp-fh">Dostava in montaža</h2>' +
     '<dl class="st-pdp-frows">' + freight + "</dl>" +
     '<p class="st-pdp-note">' + esc(d.note) + "</p>" +
     "</section>" +
     "</div></div>" +
+
+    // THE REFERENCE MATERIAL SITS UNDER THE ROW, NOT IN THE DECISION COLUMN.
+    //
+    // The panels were the last thing in .st-pdp-buy, so the spec table
+    // inherited the buy column's width — while the gallery column beside it,
+    // by then scrolled past, was holding nothing but a photograph. Measured,
+    // that gave the value cell 25.1 characters at 1024, 30.9 at 1280, 35.0 at
+    // 1440 and 36.4 at 1920, against values of up to 39; most rows wrapped,
+    // and a wrapped row is 75px where an unwrapped one is 49. No split of a
+    // 443px column can hold 45 characters beside a term, so the column was
+    // the wrong container rather than the split being the wrong ratio.
+    //
+    // Below the row it has the whole band: 974px at 1024 through 1560 at
+    // 1920, laid out as one or two columns of rows by the measure rule in
+    // .st-pdp-spec-table. The panels are reference — the specification, the
+    // description, the care notes — read after the decision rather than
+    // during it, so this is also where they belong in reading order. The
+    // heading level is unchanged (h3 under the h2s above it).
+    panels +
 
     "</div>" +
     // --- the rest of the range, as the source's "you may also like" ---

@@ -3,5 +3,23 @@ dist/
 .env
 .wrangler/
 
-# Transient per-agent measurement harnesses; owners delete them on completion.
-scripts/.tmp-*.mjs
+# Transient measurement harnesses and their before/after captures.
+#
+# ⚠️ ANCHORED TO THE REPO ROOT, and matched by EXTENSION rather than by name.
+#
+# They land at the root and not by choice: playwright-core only resolves from
+# there, so a harness written into scripts/ cannot import it. The rule this
+# replaces was scripts/.tmp-*.mjs, which therefore never matched one of them.
+# Naming them individually did not work either — every audit invents its own
+# spelling (measure.mjs, pdp-measure.mjs, shoot-sections.mjs, sec-before-*.png)
+# and the list was already stale by the time it was written.
+#
+# Safe because the root holds no tracked file of either kind: it carries seven
+# files, all of them config or documentation (git ls-files, no slash). The
+# leading slash keeps this off scripts/*.mjs and public/*.png, both shipped.
+/*.mjs
+/*.png
+/*.json
+!/package.json
+!/package-lock.json
+!/tsconfig.json
