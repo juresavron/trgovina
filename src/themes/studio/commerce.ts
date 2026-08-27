@@ -1047,6 +1047,17 @@ export const STUDIO_COMMERCE_CSS = `
    * starts. The rule now is the one the page can actually be read by —
    * things you BUY are left-aligned, things you READ (the statement, the
    * guides, the testimonials) stay centred. */
+  :root[data-theme="studio"] .st-cat-help {
+    margin: clamp(10px, 1.2vw, 16px) 0 0;
+    font-size: var(--t-body);
+  }
+  :root[data-theme="studio"] .st-cat-help a {
+    color: var(--ink);
+    text-underline-offset: 4px;
+    display: inline-block;
+    padding-block: 10px;
+    margin-block: -10px;
+  }
   :root[data-theme="studio"] .st-cat-head {
     max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
     margin-inline: auto;
@@ -2189,6 +2200,13 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
     '<div class="st-cat-head">' +
     '<p class="st-eyebrow">Ponudba</p>' +
     '<h2 class="st-sec-h" id="st-cat-h">Izberite vrsto bazena</h2>' +
+    // The guided choice offered AT the moment of choosing. This band asks the
+    // visitor to pick a family; the finder exists for the visitor who cannot,
+    // and until now it was reachable only from the hub and the comparison —
+    // two pages further in than where the question is actually asked.
+    '<p class="st-cat-help"><a href="' +
+    esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
+    '">Ne veste, kateri? Odgovorite na tri vprašanja →</a></p>' +
     "</div>" +
     '<ul class="st-cat-row">' + cards + "</ul>" +
     "</section>"
