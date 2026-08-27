@@ -50,7 +50,7 @@ import {
   type MediaView,
   type SiteSlot,
 } from "./panel";
-import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn } from "./auth";
+import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn, readCookie, SESSION_COOKIE } from "./auth";
 import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
 import { assignSlots, classify, slotOptions } from "./assign";
 import { enhance, enhanceAvailable } from "./enhance";
@@ -154,10 +154,19 @@ function page(body: string, status = 200, extra: Record<string, string> = {}): R
   return new Response(body, { status, headers: { ...PRIVATE, ...extra } });
 }
 
+/** Whether a site upload came from the smart uploader's fetch(). */
+function bulkParam(form: FormData): boolean {
+  return form.get("bulk") === "1";
+}
+
 function json(v: unknown, status = 200): Response {
   return new Response(JSON.stringify(v), {
     status,
-    headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" },
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store",
+      "x-content-type-options": "nosniff",
+    },
   });
 }
 
@@ -297,12 +306,24 @@ export async function handleMedia(request: Request, env: Env): Promise<Response>
       res = await fetch(upstream(legacy), { cf: { cacheEverything: true, cacheTtl: 300 } } as RequestInit);
     }
   }
-  if (!res.ok) return new Response("Not found", { status: 404 });
+  if (!res.ok) {
+    return new Response("Not found", {
+      status: 404,
+      headers: {
+        "content-type": "text/plain; charset=utf-8",
+        "cache-control": "no-store",
+        "x-content-type-options": "nosniff",
+      },
+    });
+  }
 
   return new Response(res.body, {
     status: 200,
     headers: {
       "content-type": res.headers.get("content-type") ?? "image/webp",
+      // nosniff on bytes proxied from storage: whatever the bucket claims,
+      // the browser must not second-guess it into something executable.
+      "x-content-type-options": "nosniff",
       "cache-control": forever
         ? "public, max-age=31536000, immutable"
         : "public, max-age=300, must-revalidate",
@@ -336,6 +357,25 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   }
 
   if (parts[1] === "logout" && request.method === "POST") {
+    // Revoke upstream, not only locally: clearing the cookie leaves the
+    // Supabase access token valid for the rest of its hour, and the panel's
+    // own doctrine is that a signed-out account loses access at once. Fire
+    // and forget — a dead auth service must not trap the operator in a
+    // session they asked to leave.
+    const token = readCookie(request, SESSION_COOKIE);
+    if (token && env.SUPABASE_URL) {
+      try {
+        await fetch(env.SUPABASE_URL + "/auth/v1/logout", {
+          method: "POST",
+          headers: {
+            apikey: env.SUPABASE_ANON_KEY ?? "",
+            authorization: "Bearer " + token,
+          },
+        });
+      } catch {
+        // The cookie still clears; the token dies at its own expiry.
+      }
+    }
     return seeOther("/admin", { "set-cookie": sessionCookie("", 0) });
   }
 
@@ -348,6 +388,19 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // signing in is not by itself permission to be here.
   const admin = await currentAdmin(request, env);
   if (!admin) return page(loginPage(), parts.length > 1 ? 401 : 200);
+
+  // A second lock on every write, one header deep. SameSite=Strict already
+  // keeps the cookie off cross-site requests, but that defence is exactly
+  // one cookie attribute wide — this refuses any POST a browser labels as
+  // arriving from another site, whatever the cookie did. Absent header
+  // (older engines, direct tools) passes: the check adds depth, it is not
+  // the gate.
+  if (request.method === "POST") {
+    const sfs = request.headers.get("sec-fetch-site");
+    if (sfs && sfs !== "same-origin" && sfs !== "none") {
+      return new Response("Forbidden", { status: 403 });
+    }
+  }
 
   // Everything past this point talks to Supabase AS THIS PERSON. There is no
   // service key in the Worker to fall back to, so a bug that skipped the gate
@@ -407,6 +460,12 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     if (!(part instanceof File) || part.size === 0) {
       return new Response("No file", { status: 400 });
     }
+    // The bytes get base64d into a JSON payload (~2.7× in memory) and may be
+    // retried against three models — an uncapped 40 MB camera file is a
+    // self-DoS, and Gemini's inline limit is ~20 MB anyway.
+    if (part.size > 15 * 1024 * 1024) {
+      return new Response("Slika je prevelika za izboljšavo (do 15 MB).", { status: 413 });
+    }
     const bytes = await part.arrayBuffer();
     // The caller says how big it wants the result. Validated against the two
     // the API takes rather than passed through — this is a value off the
@@ -419,7 +478,13 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     if (!done) return new Response(null, { status: 204, headers: { "cache-control": "no-store" } });
     return new Response(done.bytes, {
       status: 200,
-      headers: { "content-type": done.mime, "cache-control": "no-store" },
+      headers: {
+        "content-type": done.mime,
+        "cache-control": "no-store",
+        // done.mime is whatever the model's API claimed — nosniff keeps the
+        // browser from second-guessing it into something executable.
+        "x-content-type-options": "nosniff",
+      },
     });
   }
 
@@ -443,12 +508,22 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     // fifty is either a mistake or the product catalogue, which has its own
     // uploader.
     if (files.length > 20) return json({ error: "Največ 20 slik naenkrat." }, 400);
+    // The shipped client sends ~200 KB probes; the server cannot rely on
+    // that, and each file is base64d into a Gemini payload. Per-file and
+    // whole-batch caps keep a direct caller from buffering the isolate out.
+    if (files.some((f) => f.size > 4 * 1024 * 1024)) {
+      return json({ error: "Posamezna slika za razvrščanje sme meriti do 4 MB." }, 413);
+    }
+    if (files.reduce((n, f) => n + f.size, 0) > 24 * 1024 * 1024) {
+      return json({ error: "Celoten izbor sme meriti do 24 MB." }, 413);
+    }
 
     const options = slotOptions();
     const classified = [];
+    const deadModels = new Set<string>();
     for (const f of files) {
       classified.push(
-        await classify(env, await f.arrayBuffer(), f.type || "image/webp", options),
+        await classify(env, await f.arrayBuffer(), f.type || "image/jpeg", options, deadModels),
       );
     }
     const assigned = assignSlots(classified, options);
@@ -473,9 +548,9 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   if (parts[1] === "mnenja") {
     const shopKey = "bazen";
     const notice = url.searchParams.get("m")
-      ? ({ kind: "ok", text: NOTICES[url.searchParams.get("m")!] ?? "Shranjeno." } as const)
+      ? ({ kind: "ok", text: (Object.hasOwn(NOTICES, url.searchParams.get("m")!) ? NOTICES[url.searchParams.get("m")!] : undefined) ?? "Shranjeno." } as const)
       : url.searchParams.get("e")
-        ? ({ kind: "err", text: ERRORS[url.searchParams.get("e")!] ?? "Ni uspelo." } as const)
+        ? ({ kind: "err", text: (Object.hasOwn(ERRORS, url.searchParams.get("e")!) ? ERRORS[url.searchParams.get("e")!] : undefined) ?? "Ni uspelo." } as const)
         : undefined;
     const cat = CATALOGUE_SHOPS[shopKey]!;
     const models = cat.models.map((m) => ({ slug: m.slug, name: m.name }));
@@ -581,9 +656,9 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   if (parts[1] === "blog") {
     const shopKey = "bazen";
     const notice = url.searchParams.get("m")
-      ? ({ kind: "ok", text: NOTICES[url.searchParams.get("m")!] ?? "Shranjeno." } as const)
+      ? ({ kind: "ok", text: (Object.hasOwn(NOTICES, url.searchParams.get("m")!) ? NOTICES[url.searchParams.get("m")!] : undefined) ?? "Shranjeno." } as const)
       : url.searchParams.get("e")
-        ? ({ kind: "err", text: ERRORS[url.searchParams.get("e")!] ?? "Ni uspelo." } as const)
+        ? ({ kind: "err", text: (Object.hasOwn(ERRORS, url.searchParams.get("e")!) ? ERRORS[url.searchParams.get("e")!] : undefined) ?? "Ni uspelo." } as const)
         : undefined;
     const siteUrl = SHOPS[shopKey]?.siteUrl ?? "";
 
@@ -733,12 +808,19 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       if (!(part instanceof File) || part.size === 0) {
         return seeOther("/admin/site/" + stemOf(slot.key) + "?e=alt");
       }
+      // A stored slot image is a browser-encoded WebP capped at the slot's
+      // own width — 10 MB is far above any honest one.
+      if (part.size > 10 * 1024 * 1024) {
+        return bulkParam(form)
+          ? new Response("Slika je prevelika (do 10 MB).", { status: 413 })
+          : seeOther("/admin/site/" + stemOf(slot.key) + "?e=type");
+      }
       const bytes = await part.arrayBuffer();
       // The smart uploader posts here too, once per assigned picture, and a
       // fetch() caller cannot read an outcome out of a redirect — the 303
       // resolves to the slot page at 200 whether the query said ?m= or ?e=.
       // So a request that declares itself bulk gets statuses instead.
-      const bulk = form.get("bulk") === "1";
+      const bulk = bulkParam(form);
       // Same guarantee as every other upload: the bytes decide, not the label.
       if (!isWebp(bytes)) {
         return bulk
@@ -770,9 +852,9 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     if (parts[3]) return page(notFoundPage("Neznano dejanje.", admin.email), 404);
 
     const n = url.searchParams.get("m")
-      ? ({ kind: "ok", text: NOTICES[url.searchParams.get("m")!] ?? "Shranjeno." } as const)
+      ? ({ kind: "ok", text: (Object.hasOwn(NOTICES, url.searchParams.get("m")!) ? NOTICES[url.searchParams.get("m")!] : undefined) ?? "Shranjeno." } as const)
       : url.searchParams.get("e")
-        ? ({ kind: "err", text: ERRORS[url.searchParams.get("e")!] ?? "Nalaganje ni uspelo." } as const)
+        ? ({ kind: "err", text: (Object.hasOwn(ERRORS, url.searchParams.get("e")!) ? ERRORS[url.searchParams.get("e")!] : undefined) ?? "Nalaganje ni uspelo." } as const)
         : undefined;
     return page(
       siteImagePage(
@@ -914,9 +996,9 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
 
   const rows = await listMedia(api, productId);
   const notice = url.searchParams.get("m")
-    ? ({ kind: "ok", text: NOTICES[url.searchParams.get("m")!] ?? "Shranjeno." } as const)
+    ? ({ kind: "ok", text: (Object.hasOwn(NOTICES, url.searchParams.get("m")!) ? NOTICES[url.searchParams.get("m")!] : undefined) ?? "Shranjeno." } as const)
     : url.searchParams.get("e")
-      ? ({ kind: "err", text: ERRORS[url.searchParams.get("e")!] ?? "Nalaganje ni uspelo." } as const)
+      ? ({ kind: "err", text: (Object.hasOwn(ERRORS, url.searchParams.get("e")!) ? ERRORS[url.searchParams.get("e")!] : undefined) ?? "Nalaganje ni uspelo." } as const)
       : undefined;
 
   return page(

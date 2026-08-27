@@ -39,12 +39,20 @@ export const CSS_PATH = "/assets/site-" + fnv1a(BASE_CSS) + ".css";
 export const JS_PATH = "/assets/site-" + fnv1a(STUDIO_JS) + ".js";
 
 /**
- * The asset for a path, or null when the path is not a current asset.
+ * The asset for a path, or null when the path is not an asset at all.
  *
- * Only the CURRENT hash resolves. A stale hash 404s rather than serving old
- * bytes under a wrong name — no page references it, so the only way to ask
- * for one is a cache that should be revalidating anyway.
+ * The CURRENT hash serves immutable. A STALE hash — same family, different
+ * hex — redirects to the current path with no-store, and the reason is the
+ * deploy sequence: live HTML carries s-maxage=300, so for up to five
+ * minutes after a deploy a shared cache can serve OLD HTML referencing the
+ * OLD hash, which the new worker no longer has. "A stale hash 404s" was the
+ * first rule here, and it meant every such visitor got an unstyled page
+ * with dead script. The redirect self-heals them onto the current bytes —
+ * and it must never serve those bytes DIRECTLY under the stale name: an
+ * immutable cache would then hold wrong-name content for a year.
  */
+const STALE_ASSET = /^\/assets\/site-[0-9a-f]{8}\.(css|js)$/;
+
 export function assetResponse(path: string): Response | null {
   if (path === CSS_PATH) {
     return new Response(BASE_CSS, {
@@ -59,6 +67,16 @@ export function assetResponse(path: string): Response | null {
       headers: {
         "content-type": "text/javascript; charset=utf-8",
         "cache-control": "public, max-age=31536000, immutable",
+      },
+    });
+  }
+  const stale = STALE_ASSET.exec(path);
+  if (stale) {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        location: stale[1] === "css" ? CSS_PATH : JS_PATH,
+        "cache-control": "no-store",
       },
     });
   }

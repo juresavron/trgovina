@@ -103,7 +103,7 @@ export const ABOUT: Page = {
         ],
         [
           "Električni priklop",
-          "Kje je elektro omarica, kako daleč je do mesta postavitve in kaj je vmes. Priklop " +
+          "Kje je električna omarica, kako daleč je do mesta postavitve in kaj je vmes. Priklop " +
             "je 220 V ali 380 V.",
         ],
         [

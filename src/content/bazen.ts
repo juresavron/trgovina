@@ -20,7 +20,7 @@ import {
 } from "../catalog/swimspa";
 import type { PolaModel } from "../catalog/pola";
 import { catalogPricingReady } from "../catalog/pricing";
-import { filterAreaText } from "../catalog/count";
+import { filterAreaText, kgText } from "../catalog/count";
 import {
   CABINET_FINISHES,
   OFFERED_MODELS,
@@ -402,7 +402,7 @@ function pdpFor(m: PolaModel): PdpContent {
       // resolving it means editing SHELL_FINISHES, not this row.
       ["Školjka", "ameriški akril, " + SHELL_FINISHES.length + " barv · izolacija 2 cm"],
       ["Mere", footprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
-      ["Teža", m.dryKg + " kg prazen · " + m.filledKg + " kg poln"],
+      ["Teža", kgText(m.dryKg) + " prazen · " + kgText(m.filledKg) + " poln"],
       // The supplier's own code, printed. It is what an order, a warranty
       // claim and a spare part are matched on — a buyer quoting "ZR805" on
       // the phone saves both sides the "the small one, the 195" dance.
@@ -448,8 +448,8 @@ function pdpFor(m: PolaModel): PdpContent {
       [
         "Mere in teža",
         footprint(m) + ", višina " + m.mm[2] / 10 + " cm. Prazen tehta " +
-          m.dryKg + " kg, napolnjen " + m.filledKg +
-          " kg — nosilnost terase preverimo pred dostavo.",
+          kgText(m.dryKg) + ", napolnjen " + kgText(m.filledKg) +
+          " — nosilnost terase preverimo pred dostavo.",
       ],
       [
         "Dostava in montaža",
@@ -531,7 +531,9 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       "Swim spa je izredni tovor: dostop, podlago in nosilnost preverimo na " +
       "lokaciji, preden potrdimo termin.",
     spec: [
-      ["Dolžina", swimFootprint(m)],
+      // Length ALONE: the label says one dimension, so the value carries
+      // one — the full footprint repeats below under "Mere" where it belongs.
+      ["Dolžina", (m.mm[0] / 1000).toFixed(2).replace(".", ",") + " m"],
       ["Kapaciteta", swimSeating(m)],
       ["Protitočne šobe", m.swimJets > 0 ? String(m.swimJets) : "—"],
       ["Masažne šobe", String(m.jets)],
@@ -548,7 +550,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       // Omitted entirely where the supplier states no mass. A dash would read
       // as "none"; an estimate would be a structural claim nobody made.
       ...(m.dryKg && m.filledKg
-        ? ([["Teža", m.dryKg + " kg prazen · " + m.filledKg + " kg poln"]] as [string, string][])
+        ? ([["Teža", kgText(m.dryKg) + " prazen · " + kgText(m.filledKg) + " poln"]] as [string, string][])
         : []),
       ["Priklop", "220 V / 380 V"],
       ["Garancija", "2–5 let, odvisno od sklopa"],
@@ -576,17 +578,23 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
         "Akrilna školjka " +
           swimFootprint(m) +
           " z izolacijo 2 cm, pocinkan nosilni okvir in PS obloga. " +
+          // Two whole sentences, not a lead-in and a tail: the tail used to
+          // assume the lead-in, so SWIM 450 — the one model with no
+          // counter-current jets — rendered "…obloga. poleg 4 masažne šobe…",
+          // a lowercase fragment with a dangling preposition.
           (m.swimJets > 0
             ? m.swimJets +
-              " protitočne šobe ustvarijo tok, v katerem se plava na mestu — "
-            : "") +
-          "poleg " + counted(m.jets, MASSAGE_JETS) + " za sprostitev po plavanju.",
+              " protitočne šobe ustvarijo tok, v katerem se plava na mestu; " +
+              counted(m.jets, MASSAGE_JETS) + (m.jets < 5 ? " so" : " je") +
+              " namenjenih sprostitvi po plavanju."
+            : counted(m.jets, MASSAGE_JETS) +
+              " so namenjene sprostitvi po plavanju."),
       ],
       [
         "Mere in prostor",
         swimFootprint(m) + ", višina " + m.mm[2] / 10 + " cm. " +
           (m.dryKg && m.filledKg
-            ? "Prazen tehta " + m.dryKg + " kg, napolnjen " + m.filledKg + " kg. "
+            ? "Prazen tehta " + kgText(m.dryKg) + ", napolnjen " + kgText(m.filledKg) + ". "
             : "Teže dobavitelj za ta model ne navaja; pred dostavo jo pridobimo " +
               "in preverimo nosilnost podlage. ") +
           "Swim spa praviloma stoji na betonski plošči, ne na terasi.",
@@ -864,7 +872,7 @@ export const bazenContent: ShopContent = {
   // decision turns on. What used to be here — one nine-line paragraph doing
   // both jobs — is the reason hubChoice exists; see its note in types.ts.
   hubIntro:
-    "Najprej se odločite med dvema stvarema, ki nista različici iste. Razlika " +
+    "Najprej se odločite med dvema stvarema, ki nista različici iste stvari. Razlika " +
     "ni v velikosti, ampak v tem, kaj v bazenu počnete — od tega pa je odvisno " +
     "vse drugo: podlaga, dostop, priprava priklopa in cena dostave. Vsakega " +
     "pripeljemo, priklopimo in zaženemo.",

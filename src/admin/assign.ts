@@ -113,6 +113,14 @@ export async function classify(
   bytes: ArrayBuffer,
   mime: string,
   options: readonly SlotOption[],
+  /**
+   * Model names that answered 404 earlier IN THIS BATCH. A retired name
+   * costs one wasted subrequest per file — twenty files against a dead
+   * first fallback is twenty requests that cannot succeed, against the
+   * Workers subrequest budget. The set is per request, never persisted: a
+   * name that is dead this minute may be redeployed the next.
+   */
+  dead?: Set<string>,
 ): Promise<Classified | null> {
   if (typeof env.GEMINI_API_KEY !== "string" || env.GEMINI_API_KEY === "") return null;
 
@@ -147,7 +155,8 @@ export async function classify(
     ? [env.GEMINI_TEXT_MODEL]
     : ["gemini-flash-latest", "gemini-2.5-flash", "gemini-2.0-flash"];
   for (const model of models) {
-    const raw = await ask(env, model, payload);
+    if (dead?.has(model)) continue;
+    const raw = await ask(env, model, payload, dead);
     if (raw === null) continue;
     const parsed = parseClassified(raw, ids);
     if (parsed) return parsed;
@@ -155,8 +164,15 @@ export async function classify(
   return null;
 }
 
-/** One model, one attempt — null means "ask the next one". */
-async function ask(env: Env, model: string, payload: string): Promise<string | null> {
+/** One model, one attempt — null means "ask the next one". A 404 marks the
+ * NAME dead for the batch: that status means the model does not exist, not
+ * that this picture was refused, so retrying it per file is pure waste. */
+async function ask(
+  env: Env,
+  model: string,
+  payload: string,
+  dead?: Set<string>,
+): Promise<string | null> {
   let res: Response;
   try {
     res = await fetch(
@@ -173,6 +189,10 @@ async function ask(env: Env, model: string, payload: string): Promise<string | n
       },
     );
   } catch {
+    return null;
+  }
+  if (res.status === 404) {
+    dead?.add(model);
     return null;
   }
   if (!res.ok) return null;

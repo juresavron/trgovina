@@ -39,3 +39,13 @@ export function filterAreaText(sf: number): string {
   const m2 = (sf * 0.092903).toFixed(1).replace(".", ",");
   return m2 + " m² (" + sf + " sf)";
 }
+
+/**
+ * A mass as Slovenian retail writes it: "1.500 kg", dot for thousands, NBSP
+ * before the unit. The spec tables printed raw integers ("1500 kg poln")
+ * one screen under editorial copy that wrote "1.500 kilogramov" - two
+ * spellings of one number on one page.
+ */
+export function kgText(n: number): string {
+  return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "\u00a0kg";
+}

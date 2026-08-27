@@ -33,7 +33,7 @@ export const CONTACT: Page = {
     { kind: "contact", h: "Kako do nas" },
     {
       kind: "prose",
-      h: "Kaj nam povejte",
+      h: "Kaj nam poveste",
       p: [
         "Če že veste, kam bi bazen postavili, nam to opišite — kraj, nadstropje ali teraso, " +
           "širino najožjega prehoda in kako daleč je do električne omarice. S temi podatki lahko " +

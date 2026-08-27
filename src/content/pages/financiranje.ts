@@ -149,7 +149,7 @@ export const FINANCING: Page = {
     },
     {
       kind: "prose",
-      h: "Kaj na tej strani namenoma ni",
+      h: "Česa na tej strani namenoma ni",
       p: [
         "Ni mesečnega zneska, obrestne mere ali efektivne obrestne mere. Ti podatki so odvisni " +
           "od zneska, dobe in ponudnika financiranja ter veljajo za konkretno vlogo. Objavljena " +

@@ -82,13 +82,17 @@ export const COMPARE: Page = {
     {
       kind: "links",
       h: "Strani modelov",
+      // [label, href] — THE ORDER THE RENDERER READS. These shipped once as
+      // [href, label]: every link showed the raw URL as its text and
+      // navigated to "/BAZEN%20195". The proofread caught it; the structure
+      // test below the fragment sweep now pins the direction.
       items: [
-        ["/bazen/mali-195", "BAZEN 195"],
-        ["/bazen/srednji-210", "BAZEN 210"],
-        ["/bazen/veliki-230", "BAZEN 230"],
-        ["/bazen/swim-450", "SWIM 450"],
-        ["/bazen/swim-580-hidro", "SWIM 580 HIDRO"],
-        ["/bazen/swim-580-maxi", "SWIM 580 MAXI"],
+        ["BAZEN 195", "/bazen/mali-195"],
+        ["BAZEN 210", "/bazen/srednji-210"],
+        ["BAZEN 230", "/bazen/veliki-230"],
+        ["SWIM 450", "/bazen/swim-450"],
+        ["SWIM 580 HIDRO", "/bazen/swim-580-hidro"],
+        ["SWIM 580 MAXI", "/bazen/swim-580-maxi"],
       ],
     },
     {

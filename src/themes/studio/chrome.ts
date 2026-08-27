@@ -1662,9 +1662,9 @@ export function renderStudioHeader(ctx: RenderCtx): string {
  * over every field, and a company name has no digits at all: "Masažni Bazen
  * d.o.o." and "Ljubljana" both collapse to the empty string and would be
  * marked unset forever. Here the phone keeps its own test and text facts keep
- * theirs. (The same fold is why content/pages.ts legalPagesReady() returns
- * false for a fully filled-in shop — flagged to the coordinator, not fixed
- * here: neither file is this task's to edit.)
+ * theirs. (legalPagesReady() had the same fold once and returned false for
+ * a fully filled-in shop; it reads the per-field predicates in lib/filled.ts
+ * now and the "can actually be satisfied" test in pricing.test.ts holds it.)
  */
 const FACT_UNSET = '<span class="st-foot-todo">podatek še ni vpisan</span>';
 
@@ -1778,7 +1778,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     icon("arrow") + "</button>" +
     "</div>" +
     '<p class="st-news-note" id="st-news-note">Prijava na e-novice bo na voljo ob ' +
-    "zagonu trgovine. Do takrat nas, prosimo, pokličite ali pišite.</p>" +
+    "zagonu trgovine. Do takrat nas, prosimo, pokličite ali nam pišite.</p>" +
     "</div>") +
     "</div>" +
 

@@ -72,7 +72,7 @@ export const COOKIES: Page = {
     { kind: "contact", h: "Vprašanja o zasebnosti" },
     {
       kind: "cta",
-      h: "Kaj pa osebni podatki",
+      h: "Kaj pa osebni podatki?",
       p: "Kdo je upravljavec, kaj obdelujemo, na kateri podlagi in kakšne pravice imate.",
       label: "Zasebnost",
       href: "/zasebnost",
