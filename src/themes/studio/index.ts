@@ -25,6 +25,7 @@ import {
 } from "./editorial";
 import { STUDIO_PDP_CSS, renderStudioPdp } from "./pdp";
 import { STUDIO_PAGE_CSS } from "./page";
+import { STUDIO_BLOG_CSS } from "./blog";
 import { STUDIO_JS } from "./behaviour";
 import { STUDIO_FONT_FACE_CSS } from "./fonts";
 import {
@@ -53,6 +54,9 @@ export const STUDIO_CSS =
   STUDIO_EDITORIAL_CSS +
   STUDIO_PDP_CSS +
   STUDIO_PAGE_CSS +
+  // After the page module: the blog reuses .st-page-* for its masthead and
+  // its body, and only adds to it.
+  STUDIO_BLOG_CSS +
   STUDIO_CLOSING_CSS +
   STUDIO_EFFECTS_CSS;
 

@@ -32,7 +32,9 @@ import {
   itemListJsonLd,
   faqJsonLd,
 } from "./render/page";
+import { sitemapPaths, sitemapXml } from "./render/sitemap";
 import { handleAdmin, handleMedia } from "./admin/routes";
+import { handlePosts } from "./blog/routes";
 import type { Env } from "./admin/supabase";
 
 /**
@@ -61,6 +63,49 @@ function modelParam(url: URL, content: ShopContent): PdpContent | undefined {
   const slug = url.searchParams.get("model");
   if (!slug) return undefined;
   return (content.pdps ?? []).find((p) => p.slug === slug);
+}
+
+/**
+ * What the visitor configured on the product page, resolved against that
+ * model's own options.
+ *
+ * The buy column is a GET form (themes/studio/pdp.ts), so a press of
+ * "Povprašajte za ponudbo" arrives here as ?model=…&cfg0=…&barva=…&oprema=…
+ *
+ * ⚠️ EVERY VALUE IS MATCHED AGAINST THE CATALOGUE AND DROPPED IF IT DOES NOT
+ * MATCH. This is the same rule ?model= has always followed and it matters more
+ * here, because there are now six or seven parameters instead of one: a string
+ * off the wire must never become page text, and an enquiry printed back to a
+ * visitor is exactly the shape of page where reflected content would land.
+ * What survives is a pair of strings this repository wrote.
+ *
+ * The parameter names are positional (cfg0, cfg1) because the groups are —
+ * they are content, and a shop that renames a group should not break a link
+ * somebody bookmarked. A missing group simply contributes nothing.
+ */
+function chosenParams(
+  url: URL,
+  pdp: PdpContent | undefined,
+): readonly (readonly [string, string])[] {
+  if (!pdp) return [];
+  const out: [string, string][] = [];
+  pdp.cfg.forEach((g, gi) => {
+    const v = url.searchParams.get("cfg" + String(gi));
+    if (v && g[1].includes(v)) out.push([g[0], v]);
+  });
+  const shell = url.searchParams.get("barva");
+  if (shell && (pdp.finishes ?? []).includes(shell)) out.push(["Barva školjke", shell]);
+  const cabinet = url.searchParams.get("obloga");
+  if (cabinet && (pdp.cabinetFinishes ?? []).includes(cabinet)) {
+    out.push(["Barva obloge", cabinet]);
+  }
+  // The extras are one parameter repeated, so they collapse to one row —
+  // "Dodatna oprema: Termo pokrov, Stopnice" reads as a list, where five rows
+  // saying "Dodatna oprema" read as a rendering fault.
+  const offered = new Set((pdp.addons ?? []).map((a) => a.label));
+  const extras = url.searchParams.getAll("oprema").filter((v) => offered.has(v));
+  if (extras.length > 0) out.push(["Dodatna oprema", extras.join(", ")]);
+  return out;
 }
 
 function cap(s: string): string {
@@ -166,23 +211,11 @@ export function handleRequest(request: Request): Response {
   // sitemap.xml — only for live shops on their real domain.
   if (path === "/sitemap.xml") {
     if (!shop.live || dev) return new Response("Not found", { status: 404 });
-    // Every model page, not just the flagship. A catalogue whose sitemap
-    // lists one of nine is a catalogue eight of whose pages are only
-    // discoverable by crawl.
-    const urls = [
-      "/",
-      // The shop hub and every collection. These are the pages built to rank —
-      // "masažni bazen" and "swim spa" are different queries — so leaving them
-      // out of the sitemap would hide the two most important URLs after home.
-      ...((content.collections ?? []).length > 0 ? [shop!.routeSlugs["/products"]] : []),
-      ...(content.collections ?? []).map((c) => c.path),
-      ...(content.pdps ?? [content.pdp]).map((d) => shop!.routeSlugs["/product"] + "/" + d.slug),
-    ];
-    const body =
-      '<?xml version="1.0" encoding="UTF-8"?>' +
-      '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' +
-      urls.map((u) => "<url><loc>" + shop!.siteUrl + u + "</loc></url>").join("") +
-      "</urlset>";
+    // ⚠️ THE PATHS AND THE XML LIVE IN render/sitemap.ts, because the blog
+    // builds this document too — it has to add the posts, and it cannot ask a
+    // synchronous renderer what has been published. Two implementations of
+    // "which pages does this shop have" is how one of them ends up stale.
+    const body = sitemapXml(shop, sitemapPaths(shop, content));
     return new Response(body, {
       headers: { "content-type": "application/xml; charset=utf-8", ...baseHeaders },
     });
@@ -373,14 +406,10 @@ export function handleRequest(request: Request): Response {
       // real PdpContent or nothing at all, and a parameter a visitor typed can
       // never become page text. It is what lets an enquiry that started on a
       // product page arrive with a subject line.
-      bodyHtml: renderContentPage(
-        shop,
-        content,
-        q,
-        theme,
-        page,
-        modelParam(url, content),
-      ),
+      bodyHtml: (() => {
+        const about = modelParam(url, content);
+        return renderContentPage(shop, content, q, theme, page, about, chosenParams(url, about));
+      })(),
       jsonLd: [
         organizationJsonLd(shop),
         breadcrumbJsonLd(shop, [{ name: page.h1 }]),
@@ -451,6 +480,15 @@ export default {
       const path = new URL(request.url).pathname;
       if (path === "/admin" || path.startsWith("/admin/")) return await handleAdmin(request, env);
       if (path.startsWith("/media/")) return await handleMedia(request, env);
+      // THE BLOG IS THE ONE PART OF THE STOREFRONT THAT IS NOT IN THE BUNDLE.
+      //
+      // Posts are rows, read on the request, because publishing a post that
+      // appears at the next deploy is not publishing. handlePosts answers null
+      // for every path that is not its own — and for a request the storefront
+      // would have answered differently, a pre-live domain above all — so the
+      // line below cannot change any page that existed before it.
+      const post = await handlePosts(request, env);
+      if (post) return post;
       return handleRequest(request);
     } catch (err) {
       console.error(err);

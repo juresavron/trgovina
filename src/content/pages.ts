@@ -49,6 +49,18 @@ export type Block =
   | { kind: "prose"; h?: string; p: string[] }
   /** Numbered steps — delivery, ordering, returns. */
   | { kind: "steps"; h?: string; items: [string, string][] }
+  /**
+   * A plain bullet list.
+   *
+   * The one shape prose could not express. `steps` is an ordered procedure
+   * whose every entry carries a heading and a sentence, which is the wrong
+   * device for "what is in the box" — and a writer who wants five short
+   * points had to choose between five paragraphs and five numbered stages
+   * that imply an order the content does not have. The blog needs it most,
+   * because a post is written rather than composed, but the editorial pages
+   * are welcome to it.
+   */
+  | { kind: "list"; h?: string; items: string[] }
   /** Question and answer pairs; the theme may emit disclosure elements. */
   | { kind: "qa"; h?: string; items: [string, string][] }
   /** Term/definition rows — spec-like facts, legal definitions. */

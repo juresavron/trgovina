@@ -483,6 +483,69 @@ create policy reviews_public_read on public.reviews
     )
   );
 
+-- ---------------------------------------------------------------------------
+-- BLOG POSTS — the one piece of content read at request time.
+--
+-- Every other page on this site is a TypeScript module compiled into the
+-- Worker, which is right for a catalogue that changes when somebody changes
+-- code and wrong for a blog: publishing a post that appears at the next deploy
+-- is not publishing. So posts are rows, and src/blog/routes.ts reads them on
+-- the request behind the same async layer that serves /admin and /media.
+--
+-- body is jsonb holding {"source": "…"} — the text the operator typed, and
+-- nothing else. It is parsed into the theme's block vocabulary on every
+-- render (src/blog/post.ts) rather than stored as blocks or as HTML: as blocks
+-- there would be two records of one post that can disagree, and as HTML a
+-- taken admin account could serve script from the storefront. jsonb rather
+-- than text so a later field costs no migration.
+-- ---------------------------------------------------------------------------
+create table if not exists public.posts (
+  id           uuid primary key default gen_random_uuid(),
+  shop_id      text not null references public.shops(id),
+  slug         text not null,
+  title        text not null,
+  excerpt      text not null default '',
+  body         jsonb not null default '[]'::jsonb,
+  cover_url    text,
+  cover_alt    text not null default '',
+  status       text not null default 'draft',
+  published_at timestamptz,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now(),
+  unique (shop_id, slug)
+);
+
+create index if not exists posts_published_idx
+  on public.posts (shop_id, published_at desc)
+  where status = 'published';
+
+alter table public.posts enable row level security;
+
+-- What anyone in the world may read: a published post on a live shop.
+create policy posts_public_read on public.posts
+  for select using (
+    status = 'published'
+    and exists (select 1 from public.shops s where s.id = posts.shop_id and s.is_live)
+  );
+
+-- ⚠️ AND THE SAME AGAIN WITHOUT THE LIVE CHECK, FOR ANON ONLY, BECAUSE THE
+-- SHOP IS NOT LIVE YET. The storefront's own live gate already refuses to
+-- serve anything on a pre-live domain (src/worker.ts, and handlePosts applies
+-- it first), so this does not publish a blog on a closed domain — it is what
+-- lets the QA host show the operator what they just wrote. Drop it the day
+-- shops.is_live goes true for bazen.
+create policy posts_prelive_read on public.posts
+  for select to anon using (status = 'published');
+
+-- Writes are an admin's, through their own token — there is no service key in
+-- the Worker. Same shape as admins_write_product_media.
+create policy posts_admin_write on public.posts
+  for all to authenticated using (is_admin()) with check (is_admin());
+
+revoke select on public.posts from anon;
+grant select (id, shop_id, slug, title, excerpt, body, cover_url, cover_alt,
+              status, published_at, updated_at) on public.posts to anon;
+
 -- orders / order_items / order_events / rate_limits / page_events /
 -- shop_order_seq: deliberately NO anon policies. Service role only.
 

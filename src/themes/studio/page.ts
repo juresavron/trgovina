@@ -265,6 +265,28 @@ export const STUDIO_PAGE_CSS = `
   :root[data-theme="studio"] .st-page-rail {
     margin-block-start: clamp(40px, 4.4vw, 72px);
   }
+  /* THE 404 AND THE PLACEHOLDER ROUTES STILL WEAR THE KERNEL'S CARD, and its
+   * one button is .btn-fill: the accent colour with the accent's own
+   * foreground on it. On this shop's aqua that measures 3.51:1 — a fail of
+   * WCAG 1.4.3 at a 15px label — and it is the ONLY control a lost visitor
+   * has on the page. Found by scripts/audit-site.mjs the first time a route
+   * in routeSlugs had no synchronous handler and fell through to the 404.
+   *
+   * Studio's primary control is an ink fill everywhere else — the product
+   * page's buy button, the chrome's icon buttons — so the placeholder takes
+   * the same one. 16:1, and the one button on the site that did not look like
+   * this theme now does. */
+  :root[data-theme="studio"] .placeholder .btn-fill {
+    background: var(--ink-invert);
+    color: var(--on-invert);
+    border-color: var(--ink-invert);
+  }
+  :root[data-theme="studio"] .placeholder .btn-fill:hover {
+    filter: none;
+    background: var(--ink);
+    border-color: var(--ink);
+  }
+
   /* THE MEASURE LIVES HERE. Every block is running text until it says it is
    * not: a paragraph, a numbered procedure, a question and its answer all
    * read at 31rem, which is the width the note at the top of this file
@@ -395,6 +417,43 @@ export const STUDIO_PAGE_CSS = `
   }
   :root[data-theme="studio"] .st-page-p + .st-page-p { margin-block-start: clamp(12px, 1.2vw, 20px); }
   :root[data-theme="studio"] .st-page-p a { color: var(--ink); text-underline-offset: 3px; }
+
+  /* A PLAIN BULLET LIST, and the UA defaults reset for the same reason the
+   * numbered steps below reset theirs: ul ships 40px of padding-inline-start
+   * and 1em of margin-block, which would push every list 40px inside the
+   * reading column and add an off-scale gap the block rhythm is supposed to
+   * own. The marker is drawn rather than inherited, so its colour and its
+   * distance from the text are ours: an em dash at the reading colour, which
+   * is what the rest of this theme uses to open a line.
+   *
+   * The marker sits OUTSIDE the text column and the text hangs — a wrapped
+   * second line lines up under the first word, not under the dash. That is
+   * what makes a list of sentences readable rather than a block of text with
+   * dashes scattered down its left edge. */
+  :root[data-theme="studio"] .st-page-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  :root[data-theme="studio"] .st-page-li {
+    position: relative;
+    padding-inline-start: 1.35em;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+  }
+  :root[data-theme="studio"] .st-page-li::before {
+    content: "—";
+    position: absolute;
+    inset-inline-start: 0;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-page-li + .st-page-li {
+    margin-block-start: clamp(8px, 0.9vw, 14px);
+  }
 
   /* Numbered steps. The counter is the content — "third of five" is what a
    * reader planning a delivery day needs — so it is a real ordered list.
@@ -631,6 +690,40 @@ export const STUDIO_PAGE_CSS = `
     letter-spacing: var(--ls-body);
     line-height: var(--lh-body);
     color: var(--ink-body);
+  }
+  /* The configuration an enquiry arrived with. Reads as a receipt: quiet
+   * label, full-ink value, one row per choice, hairline between. Not the
+   * .st-page-facts device — that one is page reference material at the wide
+   * measure, and this is a short list about the visitor's own session. */
+  :root[data-theme="studio"] .st-page-chosen {
+    margin: clamp(14px, 1.4vw, 22px) 0 clamp(22px, 2.2vw, 34px);
+    padding: 0;
+    max-inline-size: 34rem;
+  }
+  :root[data-theme="studio"] .st-page-chosen-r {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding-block: clamp(8px, 0.8vw, 12px);
+    border-block-end: var(--bw-line) solid var(--line);
+  }
+  :root[data-theme="studio"] .st-page-chosen-r dt {
+    flex: 0 0 auto;
+    min-inline-size: 12rem;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-page-chosen-r dd {
+    flex: 1 1 12rem;
+    margin: 0;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink);
   }
   :root[data-theme="studio"] .st-page-about strong {
     font-weight: var(--w-body-med);
@@ -918,6 +1011,15 @@ function steps(b: Extract<Block, { kind: "steps" }>, id?: string): string {
   );
 }
 
+function list(b: Extract<Block, { kind: "list" }>, id?: string): string {
+  return (
+    h2(b.h, id) +
+    '<ul class="st-page-list">' +
+    b.items.map((t) => '<li class="st-page-li">' + esc(t) + "</li>").join("") +
+    "</ul>"
+  );
+}
+
 function qa(b: Extract<Block, { kind: "qa" }>, id?: string): string {
   return (
     h2(b.h, id) +
@@ -1005,10 +1107,25 @@ function contactActions(ctx: RenderCtx): string {
     const subject = ctx.about
       ? "Povpraševanje — " + ctx.about.title
       : "Povpraševanje";
+    // AND THE CONFIGURATION AS THE OPENING OF THE MESSAGE.
+    //
+    // The subject line alone was right while the product page could not take
+    // a choice. It can now, and an enquiry that names the model but not the
+    // colour, the connection or the extras sends the visitor back to remember
+    // them — in a mail client, where they can no longer see the page. Every
+    // line here is a pair of strings from this repository (see RenderCtx.
+    // chosen), so nothing a visitor typed reaches the mail body either.
+    const lines = (ctx.chosen ?? []).map(([k, v]) => k + ": " + v);
+    const body =
+      lines.length > 0
+        ? "Zanima me naslednja konfiguracija:\n\n" + lines.join("\n") + "\n\n"
+        : "";
     acts.push(
       '<a class="st-page-act' + (acts.length === 0 ? " st-page-act--lead" : "") +
         '" href="mailto:' + esc(c.email) + "?subject=" +
-        encodeURIComponent(subject) + '">Pišite nam</a>',
+        encodeURIComponent(subject) +
+        (body ? "&body=" + encodeURIComponent(body) : "") +
+        '">Pišite nam</a>',
     );
   }
   return acts.length === 0 ? "" : '<div class="st-page-acts">' + acts.join("") + "</div>";
@@ -1035,6 +1152,25 @@ function contact(ctx: RenderCtx, h?: string, id?: string): string {
     (ctx.about
       ? '<p class="st-page-about">Povpraševanje za <strong>' +
         esc(ctx.about.title) + "</strong> · " + esc(ctx.about.price) + "</p>"
+      : "") +
+    // WHAT THEY CHOSE, SAID BACK BEFORE THEY WRITE.
+    //
+    // Same reason the model's name is above it: a visitor who spent five
+    // minutes picking a colour and a connection, pressed the one button on
+    // the page and landed somewhere that shows no trace of any of it has to
+    // decide whether the form worked. A definition list rather than a
+    // sentence, because it is data — and it is the same list the mail body
+    // carries, so the two cannot disagree.
+    ((ctx.chosen ?? []).length > 0
+      ? '<dl class="st-page-chosen">' +
+        (ctx.chosen ?? [])
+          .map(
+            ([k, v]) =>
+              '<div class="st-page-chosen-r"><dt>' + esc(k) + "</dt>" +
+              "<dd>" + esc(v) + "</dd></div>",
+          )
+          .join("") +
+        "</dl>"
       : "") +
     contactActions(ctx) +
     facts(
@@ -1081,7 +1217,9 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
       ? prose(b, id)
       : b.kind === "steps"
         ? steps(b, id)
-        : b.kind === "qa"
+        : b.kind === "list"
+          ? list(b, id)
+          : b.kind === "qa"
           ? qa(b, id)
           : b.kind === "facts"
             ? facts(b.h, b.rows, false, id)
@@ -1154,6 +1292,25 @@ function onward(ctx: RenderCtx, page: Page): string {
       .join("") +
     "</ul></nav>"
   );
+}
+
+/**
+ * The block vocabulary, rendered without a page built around it.
+ *
+ * ⚠️ EXPORTED FOR THE BLOG, and for nothing else so far. A post is the same
+ * blocks under a different masthead — it has a date and a cover photograph
+ * and no table of contents — so themes/studio/blog.ts builds its own head and
+ * asks for the body here. The alternative was a second implementation of
+ * paragraphs, lists, questions and fact tables, which would have drifted from
+ * this one the first time either was touched, on a site whose editorial pages
+ * and whose posts are read one after the other.
+ *
+ * The ids are generated the same way, so an in-post anchor works the same as
+ * an in-page one.
+ */
+export function renderStudioBlocks(ctx: RenderCtx, blocks: readonly Block[]): string {
+  const ids = blocks.map((b, i) => ("h" in b && b.h ? sectionId(b.h, i) : ""));
+  return blocks.map((b, i) => block(ctx, b, ids[i] || undefined)).join("");
 }
 
 export function renderStudioPage(ctx: RenderCtx, page: Page): string {

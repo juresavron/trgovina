@@ -105,6 +105,10 @@ export const bazen: ShopConfig = {
     "/compare": "/primerjava",
     "/guide": "/vodnik",
     "/guides": "/vodniki",
+    // "blog" is the Slovenian word too, and it is what a reader looks for in
+    // a nav. /novice would be news and /nasveti would promise advice on every
+    // post; neither is what this is.
+    "/blog": "/blog",
     "/delivery": "/dostava-in-montaza",
     "/showroom": "/razstavni-salon",
     "/financing": "/financiranje",

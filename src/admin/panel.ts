@@ -68,14 +68,35 @@ code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 /* ---- chrome ---------------------------------------------------------- */
 
 .bar{position:sticky;top:0;z-index:9;background:var(--ink);color:#fff}
+/* The account and the sign-out travel together: on a narrow panel they drop
+   to a second line as a pair rather than the brand wrapping mid-phrase, which
+   is what "Nadzorna / plošča" was doing at 390. */
 .bar .in{max-width:1060px;margin:0 auto;padding:9px 20px;min-height:58px;
-  display:flex;align-items:center;gap:14px}
-.home{display:inline-flex;align-items:center;gap:10px;color:#fff;
-  text-decoration:none;font-weight:600;letter-spacing:.005em}
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px}
+/* 44px because it is a target like any other (WCAG 2.2 SC 2.5.8) — it was
+   23px tall, the only control in the panel under the floor. */
+.home{display:inline-flex;align-items:center;gap:10px;min-height:44px;
+  color:#fff;text-decoration:none;font-weight:600;letter-spacing:.005em;
+  white-space:nowrap}
 .mark{width:22px;height:22px;display:block;flex:none}
-.sp{margin-left:auto}
-.who{color:var(--on-dark-mute);font-size:13px;max-width:22ch;
+.acct{display:flex;align-items:center;gap:12px;margin-left:auto;min-width:0}
+.who{color:var(--on-dark-mute);font-size:13px;max-width:34ch;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Off the screen, still in the accessible name. */
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
+  overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+/* ⚠️ THE WORD GOES, THE ACCOUNT STAYS. At 390 the bar could not hold the
+   brand, the account and the sign-out, and what gave way was the brand — it
+   wrapped to "Nadzorna / plošča" and made the bar 105px of sticky chrome. The
+   account is the half that has to stay legible: it is how somebody notices
+   they are signed in as a colleague before they delete a colleague's
+   photographs. The mark still links home and the link still announces its
+   name; the phone simply does not print it. */
+@media (max-width:559px){
+  .home span{position:absolute;width:1px;height:1px;margin:-1px;padding:0;
+    border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .home{min-width:44px;justify-content:center}
+}
 .out{font:inherit;font-size:14px;min-height:36px;padding:7px 13px;cursor:pointer;
   background:transparent;color:#fff;border:1px solid var(--on-dark-mute);
   border-radius:var(--r-ctrl)}
@@ -92,13 +113,24 @@ h2{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
 .lede{color:var(--mute);margin:7px 0 0;max-width:60ch}
 /* A section heading with a control on its line. The h2's own margins move to
    the row, so the heading keeps its rhythm whether the control is there or
-   not — and it is only there when the model has photographs to clear. */
-.head-row{display:flex;align-items:center;justify-content:space-between;
-  gap:16px;flex-wrap:wrap;margin:38px 0 12px}
-.head-row h2{margin:0}
+   not — and it is only there when the model has photographs to clear.
+   ⚠️ NOT space-between: with two controls that put one of them in the middle
+   of the row, reading as an accident rather than as a pair. The heading takes
+   the slack and the controls stay together at the end. */
+.head-row{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;
+  margin:38px 0 12px}
+.head-row h2{margin:0 auto 0 0}
 .clear-all,.arrange{margin:0}
 /* Both controls share the heading's line; on a narrow panel they wrap
-   together rather than one dropping below the other. */
+   together rather than one dropping below the other — which is what they did
+   before they were a group, leaving the panel's one irreversible control alone
+   at the left margin of its own line, the loosest possible framing for it.
+
+   ⚠️ Same rule as the .file comment: no button label quoted here. The
+   stylesheet ships inside every page, and panel.test asserts that a model with
+   nothing to delete offers that control nowhere on it. */
+.head-acts{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin-left:auto}
 .head-row form{display:inline-block}
 .head{margin:0 0 24px}
 .back{display:inline-flex;align-items:center;gap:7px;min-height:24px;
@@ -110,7 +142,21 @@ h2{font-size:12px;font-weight:600;letter-spacing:.09em;text-transform:uppercase;
 .card{background:var(--card);border:1px solid var(--line);
   border-radius:var(--r-card);padding:18px}
 .muted{color:var(--mute);font-size:13px}
-.hint{color:var(--mute);font-size:13px;line-height:1.45;margin:7px 0 0}
+/* ⚠️ EVERY RUNNING PARAGRAPH IS CAPPED, and measured rather than guessed at.
+   The panel's column is 1020px wide; a 13px hint spanning it runs to 120–125
+   characters a line, which is half again the 85 an eye tracks back from
+   reliably. 56ch lands them at 65–75. The cap is on the paragraph and not on
+   the column because the CARDS want the full width — a photograph row uses
+   every pixel of it. */
+.hint{color:var(--mute);font-size:13px;line-height:1.45;margin:7px 0 0;
+  max-width:56ch}
+
+/* The card that shows a site slot as it stands. It was a 1020px card holding a
+   720px picture, so a third of it was blank paper and the caption underneath
+   ran the full width while the thing it captioned did not. The card is now the
+   width of its own contents. */
+.now{max-width:756px}
+.now img{display:block;width:100%;border-radius:var(--r-ctrl)}
 
 .note{display:block;padding:12px 14px;margin:0 0 20px;font-size:14px;
   border:1px solid;border-radius:var(--r-ctrl)}
@@ -150,7 +196,10 @@ input[type=file]::file-selector-button:hover{background:var(--paper)}
 
 .login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;
   padding:32px 20px}
-.login-in{width:100%;max-width:398px}
+/* 416 and not 398: the one paragraph of running text on this page — the note
+   about where accounts live — ran at 44 characters a line inside the narrower
+   card, one short of the floor. */
+.login-in{width:100%;max-width:416px}
 .brand{display:flex;align-items:center;justify-content:center;gap:10px;
   color:var(--ink);margin:0 0 20px}
 .brand .mark{width:30px;height:30px}
@@ -172,75 +221,238 @@ input[type=file]::file-selector-button:hover{background:var(--paper)}
 .model:hover{box-shadow:var(--lift);transform:translateY(-2px)}
 .model:has(a:focus-visible){box-shadow:var(--lift)}
 .model a{display:flex;flex-direction:column;height:100%;color:inherit;text-decoration:none}
-.cover{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;
+/* ⚠️ height:auto OR THE ASPECT-RATIO IS DEAD CODE. The tag carries
+   width="232" height="174" so the browser has a box before the picture
+   arrives; that height attribute is a presentational hint, so the height is
+   not auto, so aspect-ratio never applies. Every cover was locked to exactly
+   174px tall whatever the column was doing — 174 in a 241px column at 1440,
+   174 in a 305px column at 1920 — while the placeholder beside it, a span with
+   no attributes to override anything, obeyed the ratio and came out 181. Seven
+   pixels, and it was enough to knock the one model with no photograph out of
+   line with the rest of its row. */
+.cover{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;
   background:var(--paper);border-bottom:1px solid var(--line)}
-.cover--none{display:grid;place-items:center;aspect-ratio:4/3;
+.cover--none{display:grid;place-items:center;width:100%;aspect-ratio:4/3;
   background:var(--paper);border-bottom:1px solid var(--line);color:#c2c2c2}
 .cover--none .mark{width:34px;height:34px}
 .model .meta{display:block;flex:1;padding:13px 15px 15px}
 .model .name{display:block;font-weight:600;color:var(--ink);line-height:1.35}
-.model .count{display:block;color:var(--mute);font-size:13px;margin-top:3px}
+/* ⚠️ CLAMPED, because this is the SLOT'S OWN NOTE and one of them is 250
+   characters of cropping advice. Unclamped it made the hero card three times
+   the height of its neighbours and turned a row of six into a staircase. The
+   whole note is on the slot's page, one click away. */
+.model .count{display:block;color:var(--mute);font-size:13px;margin-top:3px;
+  overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;
+  -webkit-line-clamp:3;line-clamp:3}
+/* A phone is a list, not a contact sheet: six models at 350px wide is 3400px
+   of scrolling to reach the seventh thing on the page. Beside a 104px cover
+   the whole shop fits on one screen and the picture is still recognisable. */
+@media (max-width:559px){
+  .models{gap:10px}
+  .model a{flex-direction:row;align-items:center;gap:12px;padding:10px 12px}
+  /* Both dimensions given, so the cover keeps its 4:3 crop instead of being
+     stretched to whatever height the name happens to need — two lines of model
+     name were squeezing a landscape photograph into a portrait slot, and a
+     model with no cover at all made a card half the height of its neighbours. */
+  .cover,.cover--none{width:104px;height:78px;flex:none;
+    border:1px solid var(--line);border-radius:var(--r-ctrl)}
+  .cover--none .mark{width:26px;height:26px}
+  .model .meta{padding:0;min-width:0}
+}
+/* A section whose whole content is one sentence and one control. The models
+   and the site slots are grids of pictures; the blog is neither, and giving it
+   a picture card with nothing to put in it would have been a grid of one. */
+.row-card{display:flex;align-items:center;justify-content:space-between;
+  gap:14px 20px;flex-wrap:wrap}
+.row-card p{margin:0;color:var(--mute);font-size:14px;max-width:56ch}
+.key{color:var(--mute);font-size:13px;margin:26px 0 0}
 
 /* ---- upload ---------------------------------------------------------- */
 
 .up{display:grid;gap:18px}
-@media (min-width:760px){.up{grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+/* ⚠️ TWO COLUMNS ONLY WHEN TWO COLUMNS CAN BE READ. This split at 760px, which
+   left the picker's own hint running at 31 characters a line and the AI
+   disclosure at 41 — both well under the 45 a line needs before it starts
+   reading as a column of fragments. Below 900 the card is one column and every
+   paragraph in it gets the panel's full width, capped at 56ch. */
+@media (min-width:900px){.up{grid-template-columns:minmax(0,1fr) minmax(0,1fr);
   align-items:start}}
 /* The picker used to share the row with a column of description fields, so
    half the card was a form. There is no form left — the right-hand column is
    a progress report — so the picker takes the space it needs and the status
    sits beside it rather than opposite it. */
-@media (min-width:760px){.up--solo{grid-template-columns:minmax(0,320px) minmax(0,1fr)}}
+/* 430 and not 320: below it the picker's own hint — the line that becomes the
+   count and weight of the chosen set — ran at 31 to 41 characters. */
+@media (min-width:900px){.up--solo{grid-template-columns:minmax(0,430px) minmax(0,1fr)}}
 .drop{border:1px dashed var(--line-ctrl);border-radius:var(--r-card);
   padding:16px;background:#fbfbfb}
 .drop.is-over{border-color:var(--ink);background:var(--paper)}
 .note-ai{margin:16px 0 0;padding:11px 13px;border-left:2px solid var(--ink);
-  background:#fbfbfb;font-size:13px;line-height:1.45;color:var(--mute)}
-.picked{list-style:none;margin:0;padding:0;display:none;flex-direction:column;gap:12px}
+  background:#fbfbfb;font-size:13px;line-height:1.45;color:var(--mute);
+  max-width:56ch}
+/* The picker's own line: the format hint before anything is chosen, the count
+   and weight of the set afterwards. It had no rule at all on a model page —
+   the class was .fmeta and only .hint was styled — so it rendered at 15px in
+   body ink there and at 13px mute on the site page, the same sentence in two
+   different voices. */
+.fmeta{color:var(--mute);font-size:13px;line-height:1.45;margin:9px 0 0;
+  max-width:56ch}
+.picked{list-style:none;margin:0;padding:0;display:none;flex-direction:column;gap:10px}
 .picked.on{display:flex}
-.picked li{display:flex;gap:12px;align-items:flex-start}
-.picked img{width:64px;height:48px;object-fit:cover;border-radius:var(--r-ctrl);
+.picked li{display:flex;gap:12px;align-items:center}
+.picked img{width:72px;height:54px;object-fit:cover;border-radius:var(--r-ctrl);
   background:var(--paper);flex:none;border:1px solid var(--line)}
 .picked .grow{flex:1;min-width:0}
 .picked .nm{display:block;font-size:12px;color:var(--mute);margin:0 0 2px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* One line of state per file. The list is now the only progress report the
-   operator gets per picture, so it has to say where each one is. */
-.picked .rowst{display:block;font-size:13px;color:var(--ink)}
-.picked .rowst.ok{color:var(--ok,#1a7f37)}
-.picked .rowst.bad{color:var(--danger,#b42318)}
-.picked li{align-items:center}
-.stline{margin:10px 0 0;min-height:20px}
+   operator gets per picture, so it has to say where each one is — and the ONE
+   that is moving has to look different from the nine that are waiting. The run
+   is strictly sequential, so at any moment exactly one row is live. */
+.picked .rowst{display:block;font-size:13px;color:var(--ink);font-weight:500}
+.picked .rowst.wait{color:var(--mute);font-weight:400}
+.picked .rowst.ok{color:var(--ok)}
+.picked .rowst.bad{color:var(--danger)}
+.picked li.is-live{box-shadow:inset 2px 0 0 var(--ink);padding-left:10px;
+  margin-left:-10px}
+/* ⚠️ THE RUN'S STATE SITS ABOVE THE LIST, NOT BELOW IT. Ten files make the
+   list 600px tall, and the bar and the summary were underneath all of it —
+   the operator watched the rows and never saw either. */
+.runst{margin:0 0 14px}
+/* Nothing to report, no room taken: the empty bar and the empty status line
+   were 50px of permanent blank in the middle of the card. :has is already a
+   dependency here (see .model), and a browser without it simply gets the old
+   reserved space. */
+.runst:has(#st:empty){display:none}
+.stline{margin:6px 0 0;min-height:20px;font-size:13px;color:var(--mute);
+  max-width:60ch}
+.stline.is-bad{color:var(--danger);font-weight:500}
+.stline.is-warn{color:var(--ink);font-weight:500;padding:9px 11px;
+  border-left:2px solid var(--ink);background:var(--paper)}
 #prev{display:none;width:100%;aspect-ratio:4/3;object-fit:contain;
   background:var(--paper);border-radius:var(--r-ctrl);margin-bottom:12px}
 #prev.on{display:block}
-progress{width:100%;height:6px;margin-top:12px}
-#st{display:inline-block;margin-left:10px}
+progress{width:100%;height:8px;margin:0;display:block}
+progress[hidden]{display:none}
 
 /* ---- photographs ----------------------------------------------------- */
-
-.shots{display:grid;gap:16px;margin:0;padding:0;list-style:none;
-  grid-template-columns:repeat(auto-fill,minmax(288px,1fr))}
+/*
+ * ONE ROW PER PHOTOGRAPH, not a contact sheet.
+ *
+ * This was a card grid — auto-fill, minmax(288px, 1fr) — which meant the
+ * description field, the one control on this page anybody actually uses, was
+ * 283px wide at EVERY viewport from 390 to 1920. Measured: the ten sample
+ * descriptions want between 363px and 817px, so the operator was reading and
+ * editing a third of a sentence through a slot and scrolling the field
+ * sideways to check the rest. Three columns of that is not a working surface,
+ * it is a gallery with fields in it.
+ *
+ * As rows the field takes the whole column — 844px at 1440, 322px at 390 —
+ * and ten photographs are one screen of scrolling instead of two and a half.
+ *
+ * The grid areas are the same shape at both sizes and in the same order as
+ * the DOM, so nothing reads in one sequence and tabs in another:
+ *
+ *   narrow   thumb file      wide   thumb file
+ *            field field            thumb field
+ *            acts  acts             thumb acts
+ */
+.shots{display:grid;gap:10px;margin:0;padding:0;list-style:none}
 .shot{background:var(--card);border:1px solid var(--line);
-  border-radius:var(--r-card);overflow:hidden;display:flex;flex-direction:column}
-.shot figure{position:relative;margin:0}
-.shot img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;
-  background:var(--paper)}
-.badge{position:absolute;top:10px;left:10px;background:var(--ink);color:#fff;
-  font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;
-  padding:5px 9px;border-radius:99px}
-.shot .body{padding:14px 15px 15px;display:flex;flex-direction:column;gap:12px;flex:1}
-.shot .acts{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
-.shot .acts .btn{flex:1}
+  border-radius:var(--r-card);padding:12px 14px;
+  display:grid;gap:8px 14px;align-items:start;
+  grid-template-columns:auto minmax(0,1fr);
+  grid-template-areas:"thumb file" "field field" "acts acts"}
+@media (min-width:560px){
+  .shot{grid-template-areas:"thumb file" "thumb field" "thumb acts"}
+}
+/* The thumbnail is a LINK to the full picture. The panel tells the operator to
+   look at what the upscaler did ("po nalaganju jo poglejte") and then gave
+   them 288px to judge a 2K redraw by; now the row is compact and the whole
+   photograph is one click away, in its own tab so a half-typed description
+   survives the trip. */
+.thumb{grid-area:thumb;display:block;width:clamp(72px,11vw,158px);
+  border-radius:var(--r-ctrl);align-self:center}
+.thumb img{display:block;width:100%;height:auto;aspect-ratio:4/3;
+  object-fit:cover;background:var(--paper);border:1px solid var(--line);
+  border-radius:var(--r-ctrl)}
+.thumb:hover img{border-color:var(--ink)}
+.shot .fields{grid-area:field;min-width:0}
+.fhead{display:flex;align-items:baseline;gap:10px;margin:0 0 5px}
+.fhead label{margin:0}
+.badge{background:var(--ink);color:#fff;font-size:11px;font-weight:600;
+  letter-spacing:.07em;text-transform:uppercase;padding:4px 9px;
+  border-radius:99px;white-space:nowrap}
+.shot .acts{grid-area:acts;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* The order number reads on the button row rather than above it: a labelled
+   box stacked over 44px of input made every row 18px taller for a word. */
+.num{display:flex;align-items:center;gap:8px}
+.num label{margin:0;white-space:nowrap}
 .shot .gone{display:none}
-.shot .file{font-size:12px;color:var(--mute);word-break:break-all;margin:auto 0 0}
-.empty{color:var(--mute);margin:0}
+/*
+ * THE REFERENCE LINE, which had grown into four unrelated jobs run together in
+ * one grey sentence and was then broken mid-word by word-break:break-all — in
+ * a 288px card the path lost its last letter to the second line, the width
+ * list lost its last figure to the third and the shot name its last letter to
+ * the fourth.
+ *
+ * ⚠️ DO NOT QUOTE THE LINE ITSELF IN THIS COMMENT. The stylesheet is inlined
+ * into every admin page, so a sample of it here is a sample of it in the
+ * document — and panel.test asserts that a photograph the upscaler did NOT
+ * touch says so nowhere on the page. Same trap the site-image test names.
+ *
+ * The four are still one line, because the sort rule and the redraw both
+ * belong to this photograph and to nothing else, but each is its own span now.
+ * The filename carries the row's identity, so it is the part in body ink; the
+ * folder repeats on all ten rows and stays quiet; the redraw marker is a
+ * disclosure that those pixels were never photographed, so it is not grey
+ * filler either; and only the path may break mid-word, when there is nowhere
+ * else for it to go.
+ */
+.file{grid-area:file;font-size:12px;line-height:1.5;color:var(--mute);
+  margin:0;align-self:center}
+.file .path{overflow-wrap:anywhere}
+.file .fn{color:var(--ink-body);font-weight:500}
+/* ⚠️ THE FOLDER GOES ON A PHONE. It is shop/slug — the model whose page this
+   is, spelled out again on every one of its own rows — and at 390 those 21
+   characters are two thirds of the line, which forced the filename to break
+   mid-word to make room for a folder the operator is standing in. The exact
+   storage key is still on the row: it is the thumbnail's href. */
+@media (max-width:559px){.file .dir{display:none}}
+.file .w,.file .kind{white-space:nowrap}
+.file .ai{white-space:nowrap;color:var(--ink-body);font-weight:500}
+.empty{color:var(--mute);margin:0;max-width:56ch}
 
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important;animation:none !important}
   .model:hover{transform:none}
 }
 `;
+
+/**
+ * The stylesheet as it SHIPS: the rules, and not a word of the reasoning.
+ *
+ * ⚠️ THIS IS INLINED INTO EVERY ADMIN PAGE, which is what makes a comment in
+ * CSS different from a comment anywhere else in this project — it is not
+ * documentation, it is payload, and it is payload on every request. The
+ * commentary above is more than half the constant: 21.7 kB of stylesheet, of
+ * which 10.9 kB is rules. Stripped, each admin page carries the 10.9 kB and
+ * the source keeps all of it.
+ *
+ * There is a second reason and it is not about bytes. A CSS comment that
+ * quotes a piece of the interface — a button's label, a sample of a metadata
+ * line — puts that text into the DOCUMENT, where any assertion that searches
+ * the whole page for it finds it. panel.test asserts that a model with nothing
+ * to delete offers no way to delete it, and that a photograph the upscaler did
+ * not touch says so nowhere; both of those failed against a corrected page
+ * because a comment in here quoted the string. describe.test names the same
+ * trap. Stripping removes the trap along with the weight.
+ *
+ * Computed once at module load, not per request. Safe as a regular expression
+ * because this stylesheet has no string literals and no url() — nothing in it
+ * can contain the characters that end a comment.
+ */
+const CSS_OUT = CSS.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\n{2,}/g, "\n").trim();
 
 /* ---- document -------------------------------------------------------- */
 
@@ -253,7 +465,7 @@ function doc(title: string, body: string): string {
     '<link rel="icon" href="/favicon.svg" type="image/svg+xml">' +
     '<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">' +
     "<title>" + esc(title) + " — nadzorna plošča</title>" +
-    "<style>" + CSS + "</style></head><body>" + body + "</body></html>"
+    "<style>" + CSS_OUT + "</style></head><body>" + body + "</body></html>"
   );
 }
 
@@ -265,17 +477,56 @@ function doc(title: string, body: string): string {
  *   how you notice you are on a colleague's session before you delete their
  *   photographs.
  */
-function shell(title: string, body: string, who: string): string {
+/*
+ * ⚠️ EXPORTED SO A SECOND ADMIN PAGE CAN WEAR THE SAME CHROME.
+ *
+ * The blog editor lives in its own module — this file is already long and a
+ * post editor has nothing to do with photographs — but it must not draw its
+ * own bar, its own logout button and its own account label. Two admin pages
+ * whose chrome disagrees is how an operator stops trusting which session they
+ * are in, which is the exact thing the account label was added to prevent.
+ */
+export function shell(title: string, body: string, who: string): string {
   return doc(
     title,
     '<header class="bar"><div class="in">' +
+      // The word is in a span of its own so a narrow bar can drop it without
+      // dropping the link's accessible name with it.
       '<a class="home" href="/admin">' + brandMark("panel", "mark") +
       "<span>Nadzorna plošča</span></a>" +
-      '<span class="sp"></span>' +
+      // The account and the sign-out are one group, so a narrow bar drops the
+      // pair to a second line instead of hyphenating the brand.
+      '<div class="acct">' +
       (who ? '<span class="who">' + esc(who) + "</span>" : "") +
       '<form method="post" action="/admin/logout">' +
       '<button class="out" type="submit">Odjava</button></form>' +
+      "</div>" +
       '</div></header><main class="wrap">' + body + "</main>",
+  );
+}
+
+/**
+ * The banner that says what just happened.
+ *
+ * ⚠️ BOTH VARIANTS ANNOUNCE, and only one of them used to.
+ *
+ * Every notice in this panel arrives the same way: the handler redirects, the
+ * browser loads a fresh page, and the banner is sitting at the top of it. The
+ * failure carried role="alert" for exactly the reason given on loginPage — a
+ * screen-reader user is returned to a page that looks identical to the one
+ * they left and told nothing. The success case is the same page and the same
+ * silence. Somebody deletes a photograph, the list comes back one row shorter,
+ * and the only confirmation that the delete happened at all is a green bar
+ * they were never told about.
+ *
+ * So the failure keeps role="alert" (assertive: it interrupts) and the success
+ * gets role="status" (polite: it waits its turn). Both are announced.
+ */
+function noticeHtml(notice?: { kind: "ok" | "err"; text: string }): string {
+  if (!notice) return "";
+  return (
+    '<p class="note note--' + notice.kind + '" role="' +
+    (notice.kind === "err" ? "alert" : "status") + '">' + esc(notice.text) + "</p>"
   );
 }
 
@@ -408,6 +659,11 @@ export function indexPage(
     '<div class="head"><h1>' + esc(shopName) + "</h1>" +
       '<p class="lede">Izberite model in uredite njegove fotografije. ' +
       "Prva je tista, ki jo trgovina pokaže povsod.</p></div>" +
+      // The site slots below had a heading and the models above them did not,
+      // so the page's outline claimed everything before "Slike strani"
+      // belonged to the h1. Two lists, two headings, and a screen reader can
+      // jump between them.
+      "<h2>Modeli</h2>" +
       '<ul class="models">' +
       models
         .map(
@@ -424,6 +680,26 @@ export function indexPage(
         )
         .join("") +
       "</ul>" +
+
+      // THE POSTS, which had no way in from here at all. The editor was
+      // reachable only by typing /admin/blog, which means it was reachable
+      // only by the person who wrote it.
+      //
+      // It sits between the models and the site pictures because that is how
+      // often each is touched: photographs most days, a post now and then, a
+      // site slot almost never. And it is a peer of both, not a subordinate —
+      // the panel manages three things now, and the dashboard should say three.
+      //
+      // ⚠️ THE SENTENCE IS THERE BECAUSE THE RULE IS DIFFERENT HERE. Every
+      // other change this panel makes waits for the next deploy, and the model
+      // page says so at length. A post does not. An operator who has learned
+      // "nothing I do here shows up today" will publish one and then go
+      // looking for the deploy button.
+      "<h2>Blog</h2>" +
+      '<div class="card row-card">' +
+      "<p>Zapisi so na spletni strani takoj po objavi.</p>" +
+      '<a class="btn btn--ghost" href="/admin/blog">Uredi zapise</a>' +
+      "</div>" +
 
       // THE SITE'S OWN PICTURES, which had no way in here at all — so the
       // heaviest image on the storefront (a 2.7 MB PNG hero) was the one
@@ -445,8 +721,7 @@ export function indexPage(
             .join("") +
           "</ul>") +
 
-      '<p class="muted" style="margin-top:22px">Ključ trgovine: <code>' +
-      esc(shopKey) + "</code></p>",
+      '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>",
     who,
   );
 }
@@ -473,17 +748,16 @@ export function siteImagePage(
 ): string {
   return shell(
     label,
-    (notice
-      ? '<p class="note note--' + notice.kind + '"' +
-        (notice.kind === "err" ? ' role="alert"' : "") + ">" + esc(notice.text) + "</p>"
-      : "") +
+    noticeHtml(notice) +
       '<a class="back" href="/admin">← Vsi modeli</a>' +
       '<div class="head"><h1>' + esc(label) + "</h1>" +
       '<p class="lede">' + esc(note) + "</p></div>" +
 
       "<h2>Trenutna slika</h2>" +
-      '<div class="card"><img src="' + esc(src) + '" alt="" ' +
-      'style="display:block;width:100%;max-width:720px;border-radius:4px">' +
+      // The card is the width of the picture it holds — see .now. The inline
+      // style this used to carry was the only one in the panel, and it said
+      // in an attribute what the one stylesheet says everywhere else.
+      '<div class="card now"><img src="' + esc(src) + '" alt="">' +
       '<p class="hint">Nova slika zamenja to na istem naslovu. Na spletni ' +
       "strani se pokaže v nekaj minutah.</p></div>" +
 
@@ -511,7 +785,7 @@ export function siteImagePage(
       '<label for="f">Slika (JPEG, PNG, WebP)</label>' +
       '<input id="f" name="file" type="file" ' +
       'accept="image/webp,image/jpeg,image/png,image/avif" required>' +
-      '<p class="hint" id="fmeta">Sliko lahko tudi povlečete sem. V brskalniku ' +
+      '<p class="fmeta" id="fmeta">Sliko lahko tudi povlečete sem. V brskalniku ' +
       "se samodejno pretvori v WebP.</p>" +
       "</div>" +
       '<div class="side">' +
@@ -520,6 +794,12 @@ export function siteImagePage(
       // so a sentence collected here would never reach a page. The field that
       // used to sit here disabled — the whole showOneAlt mechanism — went with
       // the per-file description fields it existed to hide.
+      // THE RUN'S OWN STATE FIRST. It is the only thing on this column that
+      // changes while work is happening, and it used to sit under two
+      // paragraphs of standing disclosure.
+      '<div class="runst"><progress id="pr" max="100" value="0" hidden ' +
+      'aria-label="Napredek nalaganja"></progress>' +
+      '<p class="stline" id="stwrap" role="status"><span id="st"></span></p></div>' +
       '<ul class="picked" id="picked"></ul>' +
       '<p class="hint">Slika je okrasna — bralnik zaslona je ne prebere, zato ' +
       "opis ni potreben. Nalaganje se začne samo.</p>" +
@@ -534,8 +814,6 @@ export function siteImagePage(
       '<p class="note-ai">Ta slika se ne obdeluje z umetno inteligenco — ' +
       "naložimo jo tako, kot ste jo izbrali, samo pretvorjeno v WebP. " +
       "Priporočena širina 2000 px ali več.</p>" +
-      '<progress id="pr" max="100" value="0" hidden></progress>' +
-      '<p class="stline"><span class="muted" id="st"></span></p>' +
       '<p id="gowrap"><button class="btn" type="submit" id="go">Naloži</button></p>' +
       "</div></div></form>" +
       "<script>" + UPLOAD_JS + "</script>",
@@ -557,6 +835,110 @@ export interface MediaView {
   shot?: string | null;
 }
 
+/**
+ * One photograph, as a row of a working list.
+ *
+ * ⚠️ THIS WAS A CARD IN A THREE-COLUMN GRID, and the grid was the fault. The
+ * description field — the only control on this page anybody uses more than
+ * once — measured 283px wide at every viewport from 390 to 1920, while the ten
+ * descriptions in this catalogue want between 363 and 817. So the operator
+ * edited a third of a sentence at a time and scrolled the field sideways to
+ * check the rest of it. As a row the field takes the column: 844px at 1440.
+ *
+ * The four attributes at the foot are still one line, because all four belong
+ * to this photograph and nowhere else, but they are no longer one string with
+ * word-break:break-all through it. See .file in the stylesheet.
+ */
+function shotRow(base: string, m: MediaView, lead: boolean): string {
+  const id = esc(m.id);
+  const cut = m.url.lastIndexOf("/");
+  const dir = cut < 0 ? "" : m.url.slice(0, cut + 1);
+  const fileName = m.url.slice(cut + 1);
+  const kind = shotLabel(m.shot);
+  return (
+    '<li class="shot">' +
+    // The thumbnail opens the photograph itself. This page tells the operator
+    // to LOOK at what the upscaler did to a picture and then gave them 288px
+    // of it to judge by; a new tab so a half-typed description survives.
+    '<a class="thumb" href="/media/' + esc(m.url) + '" target="_blank" ' +
+    'rel="noopener" aria-label="Odpri sliko ' + esc(fileName) + ' v novem zavihku">' +
+    '<img src="/media/' + esc(m.url) + '" alt="" loading="lazy" ' +
+    'width="132" height="99"></a>' +
+    // The reference line: which file, which rungs, whether it was redrawn, and
+    // what the gallery sorts it as. The folder is the same on all ten rows, so
+    // the FILENAME is the part that carries this row's identity and the part
+    // that is not grey.
+    '<p class="file"><span class="path"><span class="dir">' + esc(dir) +
+    '</span><span class="fn">' + esc(fileName) + "</span></span> " +
+    (m.widths.length
+      ? '<span class="w">· širine: ' + m.widths.join(", ") + "</span>"
+      : '<span class="w">· ena širina</span>') +
+    // An enhanced picture is a REDRAWN one, and the person editing this
+    // catalogue is entitled to know which those are without having to remember
+    // the day it was uploaded. It is a disclosure, so it is not grey filler.
+    (m.enhanced ? ' <span class="ai">· 2K (obdelano z UI)</span>' : "") +
+    // The kind of shot, because the gallery is sorted by it and an order whose
+    // rule is invisible reads as an arbitrary one.
+    (kind ? ' <span class="kind">· ' + esc(kind) + "</span>" : "") +
+    "</p>" +
+    // Two forms, one row of buttons. A button carries the id of the form it
+    // submits, which is what lets Shrani and Izbriši sit side by side without
+    // nesting forms (illegal) or putting a destructive action inside the form
+    // that saves.
+    '<form class="fields" id="u-' + id + '" method="post" action="' +
+    esc(base) + '/update">' +
+    '<input type="hidden" name="id" value="' + id + '">' +
+    '<div class="fhead"><label for="a-' + id + '">Opis slike</label>' +
+    // The badge marks the row the storefront actually shows. It used to sit on
+    // the picture; on a 132px thumbnail the word would not fit, and beside the
+    // field label it is on the line the eye is already reading.
+    (lead ? '<span class="badge">Glavna</span>' : "") +
+    "</div>" +
+    '<input id="a-' + id + '" type="text" name="alt" ' +
+    'value="' + esc(m.alt) + '" maxlength="180" required>' +
+    "</form>" +
+    '<form class="gone" id="d-' + id + '" method="post" action="' +
+    esc(base) + '/delete" ' +
+    // ⚠️ THE CONFIRMATION NAMES THE PHOTOGRAPH. Ten rows carry ten buttons
+    // reading "Izbriši" and this dialog used to read "Izbrišem to
+    // fotografijo?" — which is true of all ten of them and identifies none.
+    // Same reasoning, and the same JSON.stringify quoting, as Izbriši vse.
+    "onsubmit=\"return confirm(" +
+    esc(JSON.stringify(
+      "Izbrišem to fotografijo?\n\n" + fileName + "\n" + m.alt +
+      "\n\nTega ni mogoče razveljaviti.",
+    )) + ")\">" +
+    '<input type="hidden" name="id" value="' + id + '">' +
+    "</form>" +
+    '<div class="acts">' +
+    // "Vrstni red" beside its box rather than above it: stacked, the label cost
+    // every one of these rows 18px of height for one word.
+    '<span class="num"><label for="s-' + id + '">Vrstni red</label>' +
+    '<input id="s-' + id + '" type="number" name="sort" form="u-' +
+    id + '" value="' + String(m.sort) + '" min="0" max="99"></span>' +
+    // ⚠️ THE ACCESSIBLE NAME SAYS WHICH ROW, and the aria-label goes BEFORE
+    // form= because panel.test pins that attribute against the button text.
+    // Ten buttons all announced as "Shrani" leave a screen-reader user with no
+    // way to tell which photograph they are about to delete.
+    '<button class="btn btn--ghost btn--sm" type="submit" ' +
+    'aria-label="Shrani — ' + esc(fileName) + '" form="u-' +
+    id + '">Shrani</button>' +
+    '<button class="btn btn--danger btn--sm" type="submit" ' +
+    'aria-label="Izbriši — ' + esc(fileName) + '" form="d-' +
+    id + '">Izbriši</button>' +
+    "</div></li>"
+  );
+}
+
+/** "Brez fotografij." / "1 fotografija." / "10 fotografij. Vrstni red …" */
+function ledeCount(n: number): string {
+  const c = photoCount(n);
+  return (
+    c.charAt(0).toUpperCase() + c.slice(1) +
+    (n > 1 ? ". Vrstni red določa številka; najmanjša je glavna." : ".")
+  );
+}
+
 export function modelPage(
   shop: string,
   slug: string,
@@ -574,14 +956,16 @@ export function modelPage(
 
   return shell(
     name,
-    (notice
-      ? '<p class="note note--' + notice.kind + '"' +
-        (notice.kind === "err" ? ' role="alert"' : "") + ">" + esc(notice.text) + "</p>"
-      : "") +
+    noticeHtml(notice) +
       '<a class="back" href="/admin">← Vsi modeli</a>' +
       '<div class="head"><h1>' + esc(name) + "</h1>" +
-      '<p class="lede">' + photoCount(media.length) +
-      ". Vrstni red določa številka; najmanjša je glavna.</p></div>" +
+      // ⚠️ A SENTENCE THAT STARTS WITH A COUNT STILL STARTS A SENTENCE. This
+      // read "brez fotografij. Vrstni red določa številka…" on every model
+      // with nothing in it — lower case, mid-thought, and then advice about
+      // ordering a set that does not exist. The count is capitalised, and the
+      // rule about ordering is only stated when there is more than one thing
+      // to order.
+      '<p class="lede">' + ledeCount(media.length) + "</p></div>" +
 
       "<h2>Nova fotografija</h2>" +
       // THE WHOLE CARD IS A FILE PICKER AND A PROGRESS BAR.
@@ -622,11 +1006,22 @@ export function modelPage(
       "</div>" +
 
       '<div class="side">' +
+      // ⚠️ THE RUN'S STATE SITS ABOVE THE LIST IT SUMMARISES.
+      //
+      // It used to sit below. Ten files make the list six hundred pixels tall,
+      // so the bar that says how far through the set we are, and the line that
+      // says which picture failed, were both off the bottom of the card while
+      // the operator watched the rows. The one thing that answers "how long is
+      // this going to take" was the one thing they could not see.
+      //
+      // role="status" because it is a live region now: the text changes
+      // without a page load, and a screen-reader user was told none of it.
+      '<div class="runst"><progress id="pr" max="100" value="0" hidden ' +
+      'aria-label="Napredek nalaganja"></progress>' +
+      '<p class="stline" id="stwrap" role="status"><span id="st"></span></p></div>' +
       // The chosen files, as thumbnails with a line of status each. No fields:
       // there is nothing here to fill in.
       '<ul class="picked" id="picked"></ul>' +
-      '<progress id="pr" max="100" value="0" hidden></progress>' +
-      '<p class="stline"><span class="muted" id="st"></span></p>' +
       // Without script nothing starts by itself, so the button is the whole
       // upload; with script it is a fallback nobody needs to press.
       '<p id="gowrap"><button class="btn" type="submit" id="go">Naloži</button></p>' +
@@ -664,7 +1059,8 @@ export function modelPage(
       // is exactly the memory this needs to interrupt.
       (media.length === 0
         ? ""
-        : '<form class="arrange" method="post" action="' + esc(base) + '/arrange">' +
+        : '<div class="head-acts">' +
+          '<form class="arrange" method="post" action="' + esc(base) + '/arrange">' +
           '<button class="btn btn--ghost btn--sm" type="submit"' +
           (describe ? "" : " disabled") + ">Razvrsti z UI</button>" +
           "</form>" +
@@ -684,7 +1080,7 @@ export function modelPage(
           )) + ")\">" +
           '<input type="hidden" name="count" value="' + String(media.length) + '">' +
           '<button class="btn btn--danger btn--sm" type="submit">Izbriši vse</button>' +
-          "</form>") +
+          "</form></div>") +
       "</div>" +
       // ⚠️ SAY WHEN THIS REACHES THE SHOP, because it is not now.
       //
@@ -706,51 +1102,7 @@ export function modelPage(
           "Do takrat trgovina prikaže risbo izdelka.</p></div>"
         : '<ul class="shots">' +
           media
-            .map(
-              (m) =>
-                '<li class="shot"><figure>' +
-                '<img src="/media/' + esc(m.url) + '" alt="" loading="lazy" ' +
-                'width="288" height="216">' +
-                (m.id === leadId ? '<span class="badge">Glavna</span>' : "") +
-                "</figure>" +
-                '<div class="body">' +
-                // Two forms, one row of buttons. A button carries the id of the
-                // form it submits, which is what lets Shrani and Izbriši sit
-                // side by side without nesting forms (illegal) or putting a
-                // destructive action inside the form that saves.
-                '<form id="u-' + esc(m.id) + '" method="post" action="' +
-                esc(base) + '/update">' +
-                '<input type="hidden" name="id" value="' + esc(m.id) + '">' +
-                '<label for="a-' + esc(m.id) + '">Opis slike</label>' +
-                '<input id="a-' + esc(m.id) + '" type="text" name="alt" ' +
-                'value="' + esc(m.alt) + '" maxlength="180" required>' +
-                "</form>" +
-                '<form class="gone" id="d-' + esc(m.id) + '" method="post" action="' +
-                esc(base) + '/delete" ' +
-                "onsubmit=\"return confirm('Izbrišem to fotografijo?')\">" +
-                '<input type="hidden" name="id" value="' + esc(m.id) + '">' +
-                "</form>" +
-                '<div class="acts">' +
-                '<span><label for="s-' + esc(m.id) + '">Vrstni red</label>' +
-                '<input id="s-' + esc(m.id) + '" type="number" name="sort" form="u-' +
-                esc(m.id) + '" value="' + String(m.sort) + '" min="0" max="99"></span>' +
-                '<button class="btn btn--ghost btn--sm" type="submit" form="u-' +
-                esc(m.id) + '">Shrani</button>' +
-                '<button class="btn btn--danger btn--sm" type="submit" form="d-' +
-                esc(m.id) + '">Izbriši</button>' +
-                "</div>" +
-                '<p class="file">' + esc(m.url) +
-                (m.widths.length ? " · širine: " + m.widths.join(", ") : " · ena širina") +
-                // An enhanced picture is a REDRAWN one, and the person editing
-                // this catalogue is entitled to know which those are without
-                // having to remember the day it was uploaded.
-                (m.enhanced ? " · 2K (obdelano z UI)" : "") +
-                // The kind of shot, because the gallery is sorted by it and an
-                // order whose rule is invisible reads as an arbitrary one.
-                (shotLabel(m.shot) ? " · " + esc(shotLabel(m.shot)) : "") +
-                "</p>" +
-                "</div></li>",
-            )
+            .map((m) => shotRow(base, m, m.id === leadId))
             .join("") +
           "</ul>") +
       "<script>" + UPLOAD_JS + "</script>",
@@ -798,9 +1150,22 @@ const UPLOAD_JS = `
      is a fallback nobody needs: the files go the moment they are chosen. */
   if (gowrap) gowrap.style.display = "none";
 
+  var stwrap = document.getElementById("stwrap");
+
   var urls = [];
   var rows = [];
+  var lis = [];
   var busy = false;
+  var total = 0;
+  /* WHERE THE RUN RESUMES, and it did not used to exist.
+
+     A failure on the fourth of ten stopped the loop, put the Naloži button
+     back and said "prvih 3 je naloženih". Pressing that button restarted at
+     zero — so the fix for a failed upload was to upload the three that had
+     already worked a second time, and the catalogue grew three duplicates
+     nobody asked for. The cursor survives the failure; choosing a new set is
+     what resets it. */
+  var cursor = 0;
 
   function slike(n){
     if (n === 0) return "brez fotografij";
@@ -813,15 +1178,45 @@ const UPLOAD_JS = `
     return n + " fotografij";
   }
 
+  /* The one line that speaks for the whole run. It is a role="status" region,
+     so setting it is also how a screen-reader user is told anything at all. */
+  function say(text, kind){
+    st.textContent = text;
+    if (stwrap) stwrap.className = "stline" + (kind ? " is-" + kind : "");
+  }
+
+  /* THE BAR MOVES WHILE ONE PICTURE IS BEING WORKED ON, not only between them.
+     It advanced once per completed file, so a single 6 MB photograph — decode,
+     a round trip to the upscaler, four canvas encodes, an upload — sat at 0%
+     for the whole of it and then jumped to 100. A set of one, which is the
+     common case for a replacement, had a progress bar that never progressed.
+     The fractions are honest orders of magnitude, not a fake animation. */
+  function step(frac){
+    if (!total) { pr.value = 0; return; }
+    pr.value = Math.round(((cursor + frac) / total) * 100);
+  }
+
+  /* "Slika 3 od 10 · nalagam …" — position and phase in one line, because the
+     per-file rows can be scrolled past and this one cannot. */
+  function phase(i, text, frac){
+    mark(i, text + " …");
+    say("Slika " + (i + 1) + " od " + total + " · " + text + " …", "");
+    step(frac);
+  }
+
   /* Show what was chosen. Thumbnails and a status line each — picking the
      wrong photograph and finding out only after it is uploaded is this
      panel's most annoying failure, and it is the ONLY thing this list is
      for now. There is nothing here to fill in. */
   function shown(){
     urls.forEach(URL.revokeObjectURL); urls = [];
-    rows = [];
+    rows = []; lis = [];
+    cursor = 0;
     picked.innerHTML = "";
     prev.className = ""; prev.removeAttribute("src");
+    say("", "");
+    pr.hidden = true; pr.value = 0;
+    if (go) go.textContent = "Naloži";
     var fs = file.files ? Array.prototype.slice.call(file.files) : [];
     if (!fs.length) { fmeta.textContent = hint; picked.className = "picked"; return; }
 
@@ -831,7 +1226,11 @@ const UPLOAD_JS = `
       ? fs[0].name
       : slike(fs.length)) + " · " + Math.round(kb / 1024) + " kB";
 
-    if (fs.length === 1) {
+    /* ⚠️ THE BIG PREVIEW IS SITE MODE ONLY. On a model page it drew the same
+       picture twice — a 320px preview above the picker and a 72px thumbnail
+       in the list below it — and shoved the file input down the card as it
+       appeared. There the list IS the preview, and it shows all of them. */
+    if (siteMode && fs.length === 1) {
       var u = URL.createObjectURL(fs[0]);
       urls.push(u); prev.src = u; prev.className = "on";
     }
@@ -845,20 +1244,26 @@ const UPLOAD_JS = `
       img.src = u; img.alt = "";
       var box = document.createElement("div"); box.className = "grow";
       var nm = document.createElement("span"); nm.className = "nm"; nm.textContent = f.name;
-      var stat = document.createElement("span"); stat.className = "rowst";
+      var stat = document.createElement("span"); stat.className = "rowst wait";
       stat.textContent = "čaka";
       box.appendChild(nm); box.appendChild(stat);
       li.appendChild(img); li.appendChild(box);
       picked.appendChild(li);
-      rows.push(stat);
+      rows.push(stat); lis.push(li);
     });
     return fs;
   }
 
+  /* One row's state. The run is strictly sequential — one picture is converted
+     or uploaded at a time, never two — so the row that is moving is marked as
+     such, and the nine that are waiting are not shouting the same ink at it. */
   function mark(i, text, cls){
     if (!rows[i]) return;
     rows[i].textContent = text;
     rows[i].className = "rowst" + (cls ? " " + cls : "");
+    lis.forEach(function(li, k){
+      li.className = k === i && !cls ? "is-live" : "";
+    });
   }
 
   /* Per file, so a set of ten shows which of them the upscaler took and which
@@ -945,7 +1350,7 @@ const UPLOAD_JS = `
 
   function enhanced(f, i){
     if (!doEnhance) return Promise.resolve(f);
-    mark(i, "izboljšujem …");
+    phase(i, "izboljšujem", .1);
     var fd = new FormData();
     fd.append("file", f, f.name);
     return fetch("/admin/enhance", { method: "POST", body: fd, credentials: "same-origin" })
@@ -968,9 +1373,11 @@ const UPLOAD_JS = `
      NO DESCRIPTION IS SENT. The server writes it, from the picture it has
      just been handed: see describe.ts, and standInAlt for what happens when
      there is no key or the model gives nothing back. */
-  function upload(f0, i, total){
+  /* The run's total is a closure variable, not an argument: this signature
+     shadowed it, and the two were always the same number anyway. */
+  function upload(f0, i){
     return enhanced(f0, i).then(function(f){
-      mark(i, "pretvarjam …");
+      phase(i, "pretvarjam", .4);
       return decode(f);
     }).then(function(bmp){
       var srcW = bmp.width || bmp.naturalWidth;
@@ -986,7 +1393,7 @@ const UPLOAD_JS = `
       var fd = new FormData();
       if (out.one) {
         fd.append("file", out.blobs[0], "site.webp");
-        st.textContent = "nalagam …";
+        phase(i, "nalagam", .7);
         return fetch(form.action, { method: "POST", body: fd, credentials: "same-origin" });
       }
       // The picture's position in this set, so a description the server has to
@@ -999,8 +1406,7 @@ const UPLOAD_JS = `
          ladder cannot answer it either — it is the same either way. */
       if (hit[i] === true) fd.append("enhanced", "1");
       out.blobs.forEach(function(b, k){ fd.append("w" + out.widths[k], b, out.widths[k] + ".webp"); });
-      mark(i, "nalagam …");
-      st.textContent = "nalagam " + (i + 1) + " od " + total + " …";
+      phase(i, "nalagam", .7);
       return fetch(form.action, { method: "POST", body: fd, credentials: "same-origin" });
     }).then(function(res){
       /* A redirect here is the server's own error path (?e=…): it answers a
@@ -1009,6 +1415,7 @@ const UPLOAD_JS = `
       if (!res.ok && !res.redirected) {
         return res.text().then(function(t){ throw new Error(t.slice(0, 200)); });
       }
+      step(1);
       markDone(i, hit[i] === true);
       return res;
     });
@@ -1020,41 +1427,56 @@ const UPLOAD_JS = `
     var fs = file.files ? Array.prototype.slice.call(file.files) : [];
     if (!fs.length || busy) return;
     if (!HTMLCanvasElement.prototype.toBlob) {
-      st.textContent = "ta brskalnik ne zna shraniti v WebP — poskusite v Chromu";
+      say("ta brskalnik ne zna shraniti v WebP — poskusite v Chromu", "bad");
       if (gowrap) gowrap.style.display = "";
       return;
     }
     busy = true;
+    total = fs.length;
     if (go) go.disabled = true;
-    pr.hidden = false; pr.value = 0;
+    pr.hidden = false;
+    say("Pripravljam " + slike(fs.length) + " …", "");
+    step(0);
 
-    var done = 0;
     (function next(){
-      if (done >= fs.length) {
+      if (cursor >= fs.length) {
         /* Say what happened before the page reloads under them. Reaching the
            list below with nothing said would leave "did it upscale?" as
-           unanswerable as it was before. */
+           unanswerable as it was before.
+
+           ⚠️ THIS IS THE ONE PLACE THE ANSWER IS EVER GIVEN. If the key is
+           missing or the model name has been retired, every enhance call
+           answers 204, every original uploads, and the panel's promise that
+           "slike se samodejno izboljšajo na 2K" is quietly untrue. It used to
+           be said in 13px grey and taken off the screen two and a half seconds
+           later; it is now the loud state of the status region, and it holds
+           long enough to be read. */
         if (doEnhance && upscaled === 0) {
-          st.textContent = "naloženo — nobene slike ni bilo mogoče izboljšati";
-          setTimeout(function(){ location.reload(); }, 2500);
+          say("Naloženo — nobene slike ni bilo mogoče izboljšati na 2K. " +
+            "Naložene so takšne, kot ste jih izbrali.", "warn");
+          setTimeout(function(){ location.reload(); }, 5000);
           return;
         }
         location.reload();
         return;
       }
-      upload(fs[done], done, fs.length)
+      upload(fs[cursor], cursor)
         .then(function(){
-          done++;
-          pr.value = Math.round((done / fs.length) * 100);
+          cursor++;
+          step(0);
           next();
         })
         .catch(function(e){
           busy = false;
-          if (go) go.disabled = false;
+          if (go) { go.disabled = false; go.textContent = "Poskusi znova"; }
           if (gowrap) gowrap.style.display = "";
-          mark(done, "napaka", "bad");
-          st.textContent = "napaka pri sliki " + (done + 1) + ": " + e.message +
-            (done > 0 ? " (prvih " + done + " je naloženih)" : "");
+          mark(cursor, "napaka", "bad");
+          /* Which one stopped, what stopped it, and — because pressing the
+             button again now RESUMES rather than restarting — what pressing it
+             will actually do. */
+          say("Napaka pri sliki " + (cursor + 1) + " od " + fs.length + ": " +
+            e.message + (cursor > 0 ? " · prvih " + cursor + " je naloženih" : "") +
+            " · »Poskusi znova« nadaljuje od " + (cursor + 1) + ".", "bad");
         });
     })();
   }

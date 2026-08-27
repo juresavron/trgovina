@@ -1736,6 +1736,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
       [s.routeSlugs["/delivery"], "Dostava in montaža"],
       [s.routeSlugs["/financing"], "Financiranje"],
       [s.routeSlugs["/guides"], "Vodniki"],
+      [s.routeSlugs["/blog"], "Blog"],
       [s.routeSlugs["/faq"], "Pogosta vprašanja"],
     ] as const) +
     col("st-foot-c3", "Podjetje", [

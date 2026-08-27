@@ -3,6 +3,9 @@ import type { Collection, PdpContent, ShopContent } from "../content/types";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
 import type { Page } from "../content/pages";
 import { renderStudioPage } from "../themes/studio/page";
+import { renderStudioBlogIndex, renderStudioBlogPost } from "../themes/studio/blog";
+import type { Post, PostCard } from "../blog/post";
+import type { Block } from "../content/pages";
 import { STUDIO_PRELOAD } from "../themes/studio/fonts";
 import { THEME_CATALOG, type ThemeKey } from "../themes/catalog";
 import { MAX_SECTIONS_PER_PAGE } from "../themes/shared/sections";
@@ -450,12 +453,89 @@ export function renderContentPage(
    * undefined, so an unknown parameter simply renders the ordinary page.
    */
   about?: PdpContent,
+  /** What that model was configured with, already matched — see chosenParams. */
+  chosen?: readonly (readonly [string, string])[],
 ): string {
   // Spread rather than assign, because exactOptionalPropertyTypes draws a
   // distinction between "absent" and "present and undefined" — and `about`
   // being absent is the ordinary case.
-  const ctx: RenderCtx = { ...buildCtx(shop, content, q), ...(about ? { about } : {}) };
+  const ctx: RenderCtx = {
+    ...buildCtx(shop, content, q),
+    ...(about ? { about } : {}),
+    ...(chosen && chosen.length > 0 ? { chosen } : {}),
+  };
   return renderStudioHeader(ctx) + renderStudioPage(ctx, page) + renderStudioFooter(ctx);
+}
+
+/**
+ * The blog index.
+ *
+ * Takes the posts rather than fetching them: this module renders, and the
+ * only code that talks to a database is under src/blog and src/admin. The
+ * router reads and this draws, which is what keeps every test in this file
+ * able to call a renderer with a literal.
+ */
+export function renderBlogIndex(
+  shop: ShopConfig,
+  content: ShopContent,
+  q: string,
+  h1: string,
+  lead: string,
+  posts: readonly PostCard[],
+): string {
+  const ctx = buildCtx(shop, content, q);
+  return (
+    renderStudioHeader(ctx) +
+    renderStudioBlogIndex(ctx, shop.routeSlugs["/blog"], h1, lead, posts) +
+    renderStudioFooter(ctx)
+  );
+}
+
+/** One post. */
+export function renderBlogPost(
+  shop: ShopConfig,
+  content: ShopContent,
+  q: string,
+  post: Post,
+  blocks: readonly Block[],
+  minutes: number,
+  others: readonly PostCard[],
+): string {
+  const ctx = buildCtx(shop, content, q);
+  return (
+    renderStudioHeader(ctx) +
+    renderStudioBlogPost(ctx, shop.routeSlugs["/blog"], "Blog", post, blocks, minutes, others) +
+    renderStudioFooter(ctx)
+  );
+}
+
+/**
+ * A post, for a search engine.
+ *
+ * ⚠️ NO AUTHOR AND NO PUBLISHER LOGO, on purpose. Article wants both, and
+ * both would have to be invented here: nobody signs these posts, and the
+ * shop's registered identity is still a placeholder (see organizationJsonLd,
+ * which omits every unset field for the same reason). A BlogPosting with a
+ * headline, a date and a URL is valid and true; one naming "Mediašped d.o.o."
+ * as a publisher before that name is in the config would be neither.
+ *
+ * datePublished is omitted rather than faked when a post has somehow reached
+ * the storefront without one — the storefront only ever renders published
+ * posts, so that is a shape the database should not produce.
+ */
+export function articleJsonLd(s: ShopConfig, post: Post, url: string): object {
+  const node: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+  };
+  if (post.excerpt) node["description"] = post.excerpt;
+  if (post.publishedAt) node["datePublished"] = post.publishedAt;
+  if (post.updatedAt) node["dateModified"] = post.updatedAt;
+  if (post.coverUrl) node["image"] = s.siteUrl + post.coverUrl;
+  return node;
 }
 
 export function renderPlaceholder(
