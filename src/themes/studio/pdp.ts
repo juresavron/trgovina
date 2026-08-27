@@ -2515,11 +2515,22 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   // where the shades can be seen instead, and it says the same thing the
   // panel below has always said: only seven of the ten apply to a given
   // model, and which seven is confirmed on order.
+  // ⚠️ THE SENTENCE ABOUT THE ENGLISH NAMES IS NOT FILLER. Reported as a
+  // missing translation, and it was half right: the cabinet colours were six
+  // plain English colour words on a Slovenian page and are now Slovenian. The
+  // shell names are the acrylic manufacturer's own — they identify a
+  // particular marbled sheet on an order, and nothing here knows what colour
+  // "Canyon" is, so translating them would either invent a description of
+  // goods nobody has seen or produce a name the supplier cannot match. Saying
+  // whose names they are is what turns the remaining English from an
+  // oversight into a fact about the product. See catalog/pola.ts.
   const swatchNote =
-    '<p class="st-pdp-swatch-note">Odtenkov ne slikamo — akril je marmoriran ' +
-    "in fotografija ga ne pokaže pošteno. Vzorčnik pošljemo na zahtevo, v " +
-    "salonu pa jih vidite v živo. Vsak model je na voljo v sedmih barvah " +
-    "školjke; katerih sedmih, potrdimo ob naročilu.</p>";
+    '<p class="st-pdp-swatch-note">Imena barv školjke so proizvajalčeva — ' +
+    "takšna so tudi na njegovi barvni karti, zato jih ne prevajamo. " +
+    "Odtenkov ne slikamo: akril je marmoriran in fotografija ga ne pokaže " +
+    "pošteno. Vzorčnik pošljemo na zahtevo, v salonu pa jih vidite v živo. " +
+    "Vsak model je na voljo v sedmih barvah školjke; katerih sedmih, " +
+    "potrdimo ob naročilu.</p>";
   const finishes =
     (d.finishes ?? []).length || (d.cabinetFinishes ?? []).length
       ? group("Barva školjke", "barva", d.finishes ?? [], 0, "st-pdp-fin", true) +

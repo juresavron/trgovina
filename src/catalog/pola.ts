@@ -460,14 +460,38 @@ export const SHELL_FINISHES: readonly string[] = [
   "Odyssey",
 ];
 
-/** Cabinet panel colours. The PS skirt, not the shell. */
+/**
+ * Cabinet panel colours. The PS skirt, not the shell.
+ *
+ * ⚠️ IN SLOVENIAN, AND THE SHELL NAMES ABOVE ARE NOT — the difference is what
+ * kind of string each list holds.
+ *
+ * These six are plain colour words. The supplier's sheet writes them in
+ * English because the sheet is in English, but "Light Grey" carries no
+ * information a translation could lose: it is grey, and light. Rendering it
+ * untranslated on a Slovenian storefront is not respect for a trade name, it
+ * is an untranslated string — which is exactly how it was reported.
+ *
+ * The shell finishes are the opposite. "Canyon", "Odyssey" and "Oyster Opal"
+ * are the acrylic manufacturer's names for particular marbled sheets; they
+ * identify the goods on an order, and nothing in this repository knows what
+ * colour "Canyon" actually is. Translating them would either invent a
+ * description of a product nobody here has seen — the same rule that stops us
+ * drawing a swatch for them — or produce a name the supplier would not
+ * recognise on a purchase order. So they stay as the chart prints them, and
+ * the note in the buy column says they are the manufacturer's own names so a
+ * reader can see that the English is deliberate.
+ *
+ * If the supplier ever publishes a Slovenian colour chart, this is where it
+ * lands and the note comes out.
+ */
 export const CABINET_FINISHES: readonly string[] = [
-  "Light Grey",
-  "Gold brown",
-  "Dark Grey",
-  "Brown",
-  "Black",
-  "Grey",
+  "Svetlo siva",
+  "Zlato rjava",
+  "Temno siva",
+  "Rjava",
+  "Črna",
+  "Siva",
 ];
 
 /**
