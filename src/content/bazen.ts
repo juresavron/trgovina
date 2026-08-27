@@ -7,6 +7,7 @@ import type {
   ShopContent,
 } from "./types";
 import { OWN_MEDIA } from "../themes/studio/own-media";
+import { GENERATED_REVIEWS } from "./reviews.generated";
 import type { SwimSpaModel } from "../catalog/swimspa";
 import {
   OFFERED_SWIMSPAS,
@@ -792,38 +793,23 @@ export const bazenContent: ShopContent = {
     // cuts this sentence and a numeral would be cut with it.
     claim: ["Bazen tehta tudi tisoč štiristo kilogramov. ", "Premaknemo ga mi."],
   },
-  // ⚠️ BOTH OF THESE ARE INVENTED, AND ARE FLAGGED AS SUCH.
+  // ⚠️ THE TWO INVENTED REVIEWS ARE GONE, AND THIS IS WHERE THEY WERE.
   //
-  // Nobody said these words. "Družina Novak" and "Sandra P." are not
-  // customers, and the two models they name — BAZEN RELAX 5 and PAKET TERASA
-  // — do not exist: this shop sells BAZEN 195/210/230 and SWIM 450/580. They
-  // were written as layout filler and then rendered under the heading
-  // "Preverjena mnenja strank" with a "Preverjen nakup" chip on each, which
-  // turns filler into a claim that these are verified purchases.
+  // "Družina Novak, Domžale" and "Sandra P., Koper" were written as layout
+  // filler and then rendered under a heading about customer opinion. They
+  // named BAZEN RELAX 5 and PAKET TERASA — models that have never existed —
+  // and they were flagged `placeholder: true`, which kept the chip off them
+  // and kept the shop from going live. Flagged filler is still filler on the
+  // page a customer reads.
   //
-  // That claim is on the Annex I blacklist of the Unfair Commercial Practices
-  // Directive (points 23b and 23c, added by Omnibus 2019/2161 and transposed
-  // in ZVPot-1) — banned outright, no balancing test. See ShopContent.reviews.
-  //
-  // They stay here, flagged, rather than being deleted, so the band still has
-  // something to lay out while the design is finished. `placeholder: true`
-  // keeps them off a live site: the launch gate refuses live: true while any
-  // review carries it. Replace them with real ones — quote, person and order
-  // — and drop the flag together.
-  reviews: [
-    {
-      q: "Ekipa je bazen prenesla čez ograjo terase brez ene praske. Zvečer smo že sedeli v topli vodi.",
-      who: "Družina Novak, Domžale",
-      model: "BAZEN 230",
-      placeholder: true,
-    },
-    {
-      q: "Ogled pred nakupom je rešil vse dileme — povedali so, kam ga postaviti in kaj mora pripraviti električar.",
-      who: "Sandra P., Koper",
-      model: "BAZEN 195",
-      placeholder: true,
-    },
-  ],
+  // Reviews come from the database now, written into
+  // content/reviews.generated.ts by scripts/sync-reviews.mjs on every deploy,
+  // and entered by the owner in /admin/mnenja from what customers actually
+  // sent. Until there is one, the band renders NOTHING — renderStudioTestimonials
+  // returns "" for an empty list, which is the honest state of a shop that has
+  // not been paid yet, and a far better one than two strangers who do not
+  // exist praising a product that does not either.
+  reviews: GENERATED_REVIEWS["bazen"] ?? [],
   guides: [
     ["Vodnik za nakup", "Masažni bazen na terasi: kaj preveriti pred nakupom?"],
     ["Cene 2026", "Koliko stane masažni bazen? Nakup in obratovanje."],
