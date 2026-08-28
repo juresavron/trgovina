@@ -1111,8 +1111,17 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     // has to resolve in the registry.
     const stem = parts[2] ?? "";
     const dyn = /^(barva|obloga)-([a-z0-9]+(?:-[a-z0-9]+)*)$/.exec(stem);
+    const registered = siteImageBySlug(stem);
+    // ⚠️ WHICH COLOUR THIS SLOT IS, if it is one — and it has to be read here,
+    // from the registry, because the slug cannot be turned back into a name.
+    // "silver-white-marble" does not tell you the chart prints "Silver white
+    // marble", and a purchase order quotes the chart. finishSlots() sets the
+    // slot's label to the name verbatim, so the registry is the only place
+    // that still knows it.
+    const finishHere: { kind: FinishKind; name: string } | null =
+      dyn && registered ? { kind: dyn[1] as FinishKind, name: registered.label } : null;
     const slot: SiteImage | undefined =
-      siteImageBySlug(stem) ??
+      registered ??
       (dyn
         ? {
             key: "site/" + stem + ".webp",
@@ -1170,6 +1179,32 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
           ? new Response("Shramba ni sprejela slike.", { status: 502 })
           : seeOther("/admin/site/" + stemOf(slot.key) + "?e=store");
       }
+
+      // ⚠️ STORING THE BYTES IS NOT THE SAME AS OFFERING THE COLOUR, and this
+      // route used to do only the first half.
+      //
+      // A colour is on the storefront because there is a row in `finishes`;
+      // the picture in the bucket is what that row renders as. The bulk drop
+      // zone posts through /admin/site-sort, which calls ensureFinish before
+      // sending the file here, so that path was always whole. This path — one
+      // swatch, uploaded from its own slot page — wrote the image and nothing
+      // else. The panel then showed the swatch on the slot page, the operator
+      // reasonably concluded the colour was in, and the colour list never
+      // heard about it. Two swatches went in that way and neither reached the
+      // product pages.
+      //
+      // ensureFinish is idempotent, so an upload that replaces an existing
+      // swatch just finds the row it already has.
+      if (finishHere) {
+        try {
+          await ensureFinish(api, "bazen", finishHere.kind, finishHere.name);
+        } catch {
+          return bulk
+            ? new Response("Slika je shranjena, barve pa ni bilo mogoče dodati na seznam.", { status: 502 })
+            : seeOther("/admin/site/" + stemOf(slot.key) + "?e=fin");
+        }
+      }
+
       return bulk
         ? new Response(null, { status: 204 })
         : seeOther("/admin/site/" + stemOf(slot.key) + "?m=uploaded");
@@ -1359,6 +1394,8 @@ const ERRORS: Record<string, string> = {
   // upload is no longer refused for want of a description.
   alt: "Opis slike je obvezen.",
   file: "Nobena slika ni bila izbrana.",
+  fin: "Vzorec je shranjen, barve pa ni bilo mogoče dodati na seznam barv. " +
+    "Poskusite znova; če se ponovi, jo naložite prek strani Barve.",
   // The panel converts every upload itself, in the browser, before it sends
   // anything — so this message is about the CONVERSION not having run, not
   // about the operator's file being the wrong kind. Naming JavaScript first

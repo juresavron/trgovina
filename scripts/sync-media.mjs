@@ -22,6 +22,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { wranglerVars } from "./wrangler-vars.mjs";
 
 /**
  * Where the project is, and which key opens it.
@@ -38,51 +39,6 @@ import path from "node:path";
  * is no reason to break that. Neither is required if SUPABASE_MEDIA_JSON is
  * given instead.
  */
-/**
- * wrangler.jsonc's vars, without a JSONC parser.
- *
- * ⚠️ SCANNED CHARACTER BY CHARACTER, because the obvious version is wrong in a
- * way that looks right: stripping block and line comments with two regexes cuts
- * "https://..." in half at the // inside the string, and the failure is a JSON
- * parse error thirty lines away from the cause. So this tracks whether it is
- * inside a string literal and only treats a comment marker as a comment when
- * it is not.
- *
- * Reading the file rather than being handed the values keeps the deploy from
- * having to restate configuration that already exists in one place — and both
- * values here are public by design, which is why they live in vars at all.
- */
-function wranglerVars() {
-  let src;
-  try {
-    src = fs.readFileSync(path.join(process.cwd(), "wrangler.jsonc"), "utf8");
-  } catch {
-    return {};
-  }
-  let out = "", inStr = false, esc = false;
-  for (let i = 0; i < src.length; i++) {
-    const c = src[i];
-    if (inStr) {
-      out += c;
-      if (esc) esc = false;
-      else if (c === "\\") esc = true;
-      else if (c === '"') inStr = false;
-      continue;
-    }
-    if (c === '"') { inStr = true; out += c; continue; }
-    if (c === "/" && src[i + 1] === "/") { while (i < src.length && src[i] !== "\n") i++; out += "\n"; continue; }
-    if (c === "/" && src[i + 1] === "*") { i += 2; while (i < src.length && !(src[i] === "*" && src[i + 1] === "/")) i++; i++; continue; }
-    out += c;
-  }
-  // Trailing commas are legal in JSONC and not in JSON.
-  out = out.replace(/,(\s*[}\]])/g, "$1");
-  try {
-    return JSON.parse(out).vars ?? {};
-  } catch {
-    return {};
-  }
-}
-
 const VARS = wranglerVars();
 
 /**
