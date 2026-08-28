@@ -947,6 +947,13 @@ export const bazenContent: ShopContent = {
   // returns "" for an empty list, which is the honest state of a shop that has
   // not been paid yet, and a far better one than two strangers who do not
   // exist praising a product that does not either.
+  // Describes the quotes, claims nothing beyond them: every review under
+  // this line is flagged verified, which is the statement being made, and
+  // the sentence says only that and where they came from. See reviewsLead
+  // in types.ts for why this field is fenced.
+  reviewsLead:
+    "Zapisali so jih stranke, ki so pri nas kupile bazen. Objavljena so " +
+    "tako, kot smo jih prejeli.",
   reviews: GENERATED_REVIEWS["bazen"] ?? [],
   // The fragments are the sections' derived ids on /vodniki — pinned by
   // structure.test.ts, which renders that page and fails the moment a

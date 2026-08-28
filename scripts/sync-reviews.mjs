@@ -55,7 +55,7 @@ if (!url || !key) {
  * product slug comes through the embed rather than a second request.
  */
 const query =
-  "select=id,author_name,body,verified,created_at,products(slug)" +
+  "select=id,author_name,author_role,rating,body,verified,created_at,products(slug)" +
   "&shop_id=eq." + encodeURIComponent(SHOP) +
   "&published=is.true" +
   "&order=created_at.asc" +
@@ -106,7 +106,14 @@ for (const r of rows) {
   if (!q || !who) continue; // a quote with no author is not a testimonial
   const slug = r.products?.slug ?? "";
   const model = names.get(slug) ?? "";
-  reviews.push({ q, who, model, verified: r.verified === true });
+  // A rating is carried only when it is a real 1–5. A row with a null or a
+  // nonsense value renders no stars rather than a default five: inventing a
+  // score nobody gave is the same class of claim as inventing the quote.
+  const rating = Number.isInteger(r.rating) && r.rating >= 1 && r.rating <= 5
+    ? r.rating
+    : undefined;
+  const role = String(r.author_role ?? "").trim() || undefined;
+  reviews.push({ q, who, model, rating, role, verified: r.verified === true });
 }
 
 const json = (v) => JSON.stringify(v);
@@ -117,6 +124,8 @@ const body = reviews
       "      q: " + json(r.q) + ",\n" +
       "      who: " + json(r.who) + ",\n" +
       "      model: " + json(r.model) + ",\n" +
+      (r.rating ? "      rating: " + r.rating + ",\n" : "") +
+      (r.role ? "      role: " + json(r.role) + ",\n" : "") +
       "      verified: " + (r.verified ? "true" : "false") + ",\n" +
       "    },",
   )
