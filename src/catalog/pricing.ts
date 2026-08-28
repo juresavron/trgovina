@@ -42,10 +42,66 @@
  * Not a shipping quote — the *measure* a shipping quote is billed against.
  */
 export interface UnitEnvelope {
-  /** Shell envelope, cubic metres: width × depth × height as quoted. */
+  /**
+   * The volume freight is billed on, cubic metres.
+   *
+   * ⚠️ THE CRATE, NOT THE SHELL, wherever the supplier's packing list states
+   * one — a forwarder measures what goes into the container, and on this
+   * catalogue the two differ by a lot more than rounding. Crating adds
+   * 22–34% to a hot tub (the ZR805 is a 3,12 m³ shell in a 4,19 m³ crate) and
+   * only 3–5% to a swim spa, whose crate is the shell plus 25 mm a side. So
+   * a shell-volume basis does not just run low, it runs low BY LINE: it
+   * under-freights every tub by about a quarter relative to every swim spa,
+   * which is the same shape of error the per-unit flat rate made one level
+   * up. See `pack` on PolaModel / SwimSpaModel for the stated figures.
+   */
   readonly m3: number;
-  /** Dry mass, tonnes. */
+  /**
+   * Dry mass, tonnes — the mass a crew handles, so the crate is NOT in it.
+   * Freight bills on the crate; the four people carrying the shell across a
+   * terrace do not carry the pallet it arrived on.
+   *
+   * The "weight or measure" rule (see freightTonnes) would strictly compare
+   * GROSS mass against the packed volume. It makes no difference anywhere in
+   * this catalogue and is left out rather than carried as a field that never
+   * changes an answer: measure governs by 3–12× on every model, and the
+   * closest case — the 1,53 t ZR7860 — is still 19,2 m³ against 1,53 t.
+   */
   readonly tonnes: number;
+}
+
+/**
+ * What the supplier's packing list states for one shell.
+ *
+ * A SECOND DOCUMENT, not a derivation of the price list, and the two disagree
+ * — see the ⚠️ in docs/SUPPLIER-POLA-2026.md. Everything here is transcribed
+ * as stated: `cbm` is the supplier's own figure rather than the product of
+ * `mm`, so a transcription slip in either shows up as a mismatch instead of
+ * being smoothed over.
+ */
+export interface PackedUnit {
+  /** Crate, millimetres, in the order the packing list gives them. */
+  readonly mm: readonly [number, number, number];
+  /**
+   * Cubic metres per crate.
+   *
+   * ⚠️ STATED ON THE HOT TUBS, DERIVED ON THE SWIM SPAS. The hot tub sheet
+   * carries its own CBM column and those figures are transcribed, which is
+   * what makes them a check on `mm` rather than a restatement of it (all four
+   * reconcile to the centimetre). The swim spa sheet has no such column, so
+   * there `cbm` is the product of `mm` and carries no independent authority.
+   * `packCbmStated` says which is which; nothing rounds or reconciles.
+   */
+  readonly cbm: number;
+  /**
+   * Whether `cbm` came off the packing list or was computed from `mm`.
+   * Recorded so a later reader does not mistake arithmetic for a source.
+   */
+  readonly cbmStated: boolean;
+  /** Net mass, kg — the goods alone, as the packing list states them. */
+  readonly netKg: number;
+  /** Gross mass, kg — goods plus crate. */
+  readonly grossKg: number;
 }
 
 /**
@@ -62,9 +118,16 @@ export interface UnitEnvelope {
 export function envelopeOf(
   mm: readonly [number, number, number],
   dryKg: number | undefined,
+  pack?: PackedUnit,
 ): UnitEnvelope | null {
   if (dryKg === undefined) return null;
-  return { m3: (mm[0] / 1000) * (mm[1] / 1000) * (mm[2] / 1000), tonnes: dryKg / 1000 };
+  // The crate where the supplier has stated one, the shell where it has not.
+  // Falling back to the shell is deliberately silent: it is what this module
+  // did for every model until the packing list arrived, and it is right in
+  // the sense that matters — a model with no packing list still prices,
+  // slightly low, rather than dropping to PRICE_UNSET.
+  const m3 = pack ? pack.cbm : (mm[0] / 1000) * (mm[1] / 1000) * (mm[2] / 1000);
+  return { m3, tonnes: dryKg / 1000 };
 }
 
 /**
@@ -92,9 +155,17 @@ export interface CostInputs {
   /**
    * Sea freight and marine insurance, EUR per freight tonne (see
    * freightTonnes). The forwarder quotes a container; this is that quote
-   * divided by the shell volume the business actually loads into one, so
-   * crating and the air around an awkward shape are already inside the rate.
-   * One shipment's invoice and packing list is enough to compute it exactly.
+   * divided by the crate volume the business actually loads into one.
+   *
+   * ⚠️ CRATING USED TO BE INSIDE THIS RATE AND NO LONGER IS. While the basis
+   * was shell volume, this number silently carried the packing as well, which
+   * only worked as long as every model crated the same — and they do not
+   * (22–34% on a tub against 3–5% on a swim spa). The supplier's packing list
+   * now states the crate per model, so the volume is measured and this is
+   * purely the RATE. Do not re-absorb crating into it.
+   *
+   * Still the assumption: the packing list settles the measure, a forwarder's
+   * invoice settles the rate. Both halves are needed to make this exact.
    */
   freightPerCbmEur: number;
   /**
@@ -164,19 +235,30 @@ export const COST_INPUTS: CostInputs | null = {
   // Set 2026-08-27 against the shelf prices of the category's established
   // Slovenian competitor (trgovina-jana.si, "Spa program" and swim-spa
   // pages, supplied by the owner as the pricing guideline). With these
-  // inputs the three tubs price at 6.490–7.790 € inside the competitor's
-  // 4.499–8.899 € band, the three swim spas at 16.690–21.590 € inside their
+  // inputs the three tubs price at 6.690–7.890 € inside the competitor's
+  // 4.499–8.899 € band, the three swim spas at 16.790–21.690 € inside their
   // 13.000–38.412 € band, and a $200 thermal cover at 390 € against the
   // competitor's 369 € — every family lands mid-band on a consistent ~2,4×
   // of FOB. The calibration is real; the DECOMPOSITION into the fields
   // below is assumption, and each is marked with what confirms it.
+  //
+  // ⚠️ RESTATED 2026-08-28, and the reason is a measure, not a decision.
+  // Freight billed on shell volume until the supplier's packing list arrived;
+  // it now bills on the crate, which is 22–34% larger on a tub and 3–5%
+  // larger on a swim spa. Nothing in this block changed — every one of the
+  // six offered models simply moved 100–200 € (+1,5–3%), and every family is
+  // still mid-band. The figures above are the post-change prices.
 
   /** ASSUMPTION — confirm against the rate the bank actually books. */
   eurPerUsd: 0.92,
   /**
    * ASSUMPTION — €60/m³ is a 40'HQ Guangzhou–Koper quote in the low
-   * thousands spread over the ~60 m³ of shell one actually loads. One
-   * forwarder invoice + packing list replaces it with the exact figure.
+   * thousands spread over the crate volume one actually loads.
+   *
+   * HALF SETTLED. The packing list states the crate per model, so the MEASURE
+   * this rate multiplies is now the supplier's figure rather than an
+   * estimate. The rate itself is still the assumption, and one forwarder
+   * invoice replaces it exactly.
    */
   freightPerCbmEur: 60,
   /**

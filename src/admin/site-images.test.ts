@@ -95,8 +95,12 @@ describe("site image slots", () => {
     // ones that came back contain.
     const contain = [
       "site/zgodba-detajl.webp",
-      "site/zakaj-mi-2.webp",
-      "site/zakaj-mi-3.webp",
+      // All FIVE benefit cards, since the row was made uniform: the tile
+      // paints object-fit: contain because this shop's photography is studio
+      // cutouts on a white sweep, and cover would crop a centred product
+      // against its own empty background.
+      "site/zakaj-mi.webp",
+      ...Array.from({ length: 4 }, (_, i) => "site/zakaj-mi-" + String(i + 2) + ".webp"),
       ...Array.from({ length: 6 }, (_, i) => "site/galerija-" + String(i + 1) + ".webp"),
     ];
     for (const key of contain) {

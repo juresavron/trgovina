@@ -75,7 +75,6 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
-import { statValue } from "./stat";
 import { arrowIcon } from "./icons";
 import { OWN_PHOTOS, decorativeImg, sitePhoto } from "./media";
 
@@ -244,11 +243,25 @@ export const STUDIO_EDITORIAL_CSS = `
    * AND taller (4/5 against 1/1), so with align-items:center it bleeds past
    * its neighbours top and bottom — the hero tile, without a single negative
    * margin that could open a horizontal scrollbar. */
+  /* FIVE EQUAL COLUMNS. The old template was 1fr / 1.22fr / 1fr — a centre
+   * tile deliberately larger than its neighbours, which is right for a
+   * three-part composition and wrong for a list where every item answers the
+   * same question. It steps 5 → 3 → 2 rather than stacking to one, because
+   * five full-width squares under one heading is 2.600px of scrolling. */
   :root[data-theme="studio"] .st-imp-row {
+    list-style: none;
+    margin: 0;
+    padding: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1.22fr) minmax(0, 1fr);
-    align-items: center;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: stretch;
     gap: var(--studio-card-gap);
+  }
+  @media (max-width: 1100px) {
+    :root[data-theme="studio"] .st-imp-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 700px) {
+    :root[data-theme="studio"] .st-imp-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
   :root[data-theme="studio"] .st-imp-tile {
     position: relative;
@@ -268,39 +281,7 @@ export const STUDIO_EDITORIAL_CSS = `
     display: grid;
     grid-template-rows: minmax(0, 1fr) auto;
   }
-  /* THE MIDDLE TILE, AND WHY IT NO LONGER PAINTS ITSELF GREY.
-   *
-   * --tile-mid (#a4a4a4) was never visible: the picture below covered the
-   * tile edge to edge, so the token was doing nothing but describing an
-   * intention. The intention was a full-bleed atmospheric crop, and this
-   * shop's photography cannot supply one — every file in the well is a studio
-   * cutout on a white sweep. Cover-crop a 900x900 cutout into a 4/5 portrait
-   * and what fills the tile is SWEEP: measured at 1440, a 500x627 tile
-   * holding a product about 390px across in a field of near-white, sitting on
-   * a white page with no edge of its own. Between a labelled tile and a
-   * stat tile it read as a hole in the row, not as the anchor of it.
-   *
-   * So the middle tile takes the same ground and the same seating as the
-   * labelled one — see .st-imp-quiet .st-imp-photo for the full reasoning:
-   * contain, so the product survives whatever aspect the file has, and
-   * multiply, so the sweep resolves into the ground instead of floating a
-   * white rectangle on it. It stays the anchor by SCALE — 1.22fr wide, 4/5
-   * tall against its neighbours' squares — rather than by a treatment the
-   * bucket cannot pay for. It carries no label, which is still what makes it
-   * the picture in a row of two panels.
-   *
-   * SQUARE, not 4/5, for the same reason. A portrait tile is a frame for a
-   * portrait photograph; contain a square cutout in one and the tile pays for
-   * the difference in empty ground — measured at 1440, a 500x627 tile with
-   * the product occupying its middle third and 150px of bare grey above and
-   * below. The tile is still the biggest thing in the row (1.22fr against two
-   * 1fr columns, so 500px against 412px) and still breaks its neighbours'
-   * baseline top and bottom, because align-items is center. The stagger is
-   * paid for by WIDTH, which the grid gives away for free, instead of by a
-   * ratio the photography cannot fill. */
-  :root[data-theme="studio"] .st-imp-hero {
-    aspect-ratio: 1 / 1;
-  }
+
 
   /* Photo-ready mass. Flatter and more neutral than zarja's lit scenes —
    * studio's grounds are white/grey, not gradient-lit. A real photograph drops
@@ -316,19 +297,7 @@ export const STUDIO_EDITORIAL_CSS = `
       color-mix(in srgb, var(--ink) 3%, transparent)
     );
   }
-  /* The hero tile's crop: the mass runs PAST the frame on three sides and is
-   * clipped by it, which is what makes the tile read as an oversized product
-   * photo cropped by its own edge rather than a picture placed inside a box. */
-  :root[data-theme="studio"] .st-imp-hero .st-imp-mass {
-    inset: -8% -12% -6%;
-    border-radius: var(--r-media);
-    background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--bg) 26%, transparent),
-      color-mix(in srgb, var(--ink) 12%, transparent)
-    );
-    border-color: color-mix(in srgb, var(--ink) 8%, transparent);
-  }
+
   :root[data-theme="studio"] .st-imp-floor {
     position: absolute;
     left: 50%; bottom: 11%;
@@ -368,14 +337,7 @@ export const STUDIO_EDITORIAL_CSS = `
      * tile, and the stat scrim above can only get MORE opaque under it. */
     mix-blend-mode: multiply;
   }
-  /* Seated exactly like the labelled tile, and for the same reason — the note
-   * on .st-imp-hero above has the measurement. The padding is smaller than
-   * the quiet tile's because nothing sits under this picture: no label row to
-   * clear, so the product gets the whole tile minus a frame of air. */
-  :root[data-theme="studio"] .st-imp-hero .st-imp-photo {
-    padding: 6% 8%;
-    object-fit: contain;
-  }
+
   /* The LABELLED tile is the exception, and it has to be: full-bleed cover
    * here would print "Ogled lokacije" straight across the middle of a hot
    * tub, and the shop's photography is studio cutouts on white — cover would
@@ -449,82 +411,10 @@ export const STUDIO_EDITORIAL_CSS = `
     color: var(--ink-body);
   }
 
-  /* THE STAT OVERLAY'S SCRIM IS A CONTRAST GATE, NOT A MOOD.
-   *
-   * A real photograph now sits under it, and every room export in the bundle
-   * peaks at pure white (blown-out windows; measured means 152–178 of 255). So
-   * the floor has to be computed against WHITE, not against the picture that
-   * happens to be there today: white text needs the composite ground at or
-   * below L 0.183, which over a white pixel means the scrim must be at least
-   * 0.587 alpha AT THE HEIGHT THE TEXT STARTS.
-   *
-   * The previous stops (92% / 60% at 44% / 0) resolved to ~0.50 where the
-   * value's cap-height begins — it read fine over the drawn placeholder and
-   * would have failed the day the photo landed. The 86%-at-44% revision that
-   * replaced them held ≥0.73 at the desktop text block but decayed to 0.63
-   * by the value's ascender line at 390px, where the panel is shorter and
-   * the text sits proportionally higher in the ramp: 5.4:1 composite over
-   * white — passing, but a third thinner than the floor the desktop tier
-   * was tuned to. Holding 86% down to the 50% line and starting the fade at
-   * 80% keeps every tier's text block at or above 0.71 alpha (7:1 over
-   * white, measured at the 390px ascender line) and still leaves the top
-   * fifth to fade, so the tile reads as a photograph rather than a plate. */
-  :root[data-theme="studio"] .st-imp-stat {
-    position: absolute;
-    z-index: 2;
-    inset: auto 0 0 0;
-    padding: clamp(48px, 6vw, 120px) clamp(16px, 1.8vw, 36px) clamp(16px, 1.8vw, 36px);
-    background: linear-gradient(
-      to top,
-      color-mix(in srgb, var(--ink-invert) 96%, transparent) 0%,
-      color-mix(in srgb, var(--ink-invert) 86%, transparent) 50%,
-      color-mix(in srgb, var(--ink-invert) 46%, transparent) 80%,
-      transparent 100%
-    );
-  }
-  /* The stat value. A number is not a heading, but it is display voice at
-   * poster size and the ramp has no "stat" role, so it takes the NEAREST rung
-   * whole: h2 (60/50/38) against the measured 58px. The trailing +/% is a real
-   * superscript, as in §4.8. */
-  :root[data-theme="studio"] .st-imp-v {
-    display: block;
-    font-family: var(--f-display);
-    font-weight: var(--w-display);
-    font-size: var(--t-h2);
-    letter-spacing: var(--ls-h2);
-    line-height: var(--lh-h2);
-    color: var(--on-invert);
-    font-variant-numeric: tabular-nums;
-    text-wrap: balance;
-  }
-  /* Proportional to whatever rung the value sits on, so this stays a relative
-   * multiplier rather than a ramp entry — the superscript has to track its own
-   * numeral, not a tier. The parent's --ls-h2 (0em) now carries, so the local
-   * tracking reset that cancelled the invented −0.02em is gone. */
-  :root[data-theme="studio"] .st-imp-v sup {
-    font-size: 0.44em;
-    font-weight: var(--w-display);
-    line-height: 0;
-    vertical-align: baseline;
-    position: relative;
-    top: -0.92em;
-  }
-  /* The caption under the value — a caption is the label role, so DM Sans 500
-   * at 14px with --ls-label and the tight label leading. Not uppercased: the
-   * source reserves tracked caps for chips and eyebrows, and this is a sentence.
-   * NOT --on-invert-mute: it is the smallest text on the tile and the only one
-   * held to the full 4.5:1, and the hierarchy is carried by the rungs
-   * (h2 : label), not by ink. */
-  :root[data-theme="studio"] .st-imp-c {
-    display: block;
-    margin-top: clamp(6px, 0.6vw, 12px);
-    font-family: var(--f-label);
-    font-size: var(--t-label);
-    font-weight: var(--w-label);
-    letter-spacing: var(--ls-label);
-    line-height: var(--lh-label-tight);
-    color: var(--on-invert);
-  }
+
+
+
+
 
   /* ================= §4.10 Dark testimonial ================= */
   :root[data-theme="studio"] .st-tst {
@@ -1175,7 +1065,9 @@ export const STUDIO_EDITORIAL_CSS = `
 
   /* ---- Below 860px: everything stacks (§4.9 "stacks on mobile") ---- */
   @media (max-width: 860px) {
-    :root[data-theme="studio"] .st-imp-row,
+    /* .st-imp-row is NOT here any more: it is a five-item list that steps
+     * 5 → 3 → 2 on its own rules above. Stacking it to one column put five
+     * 520px squares under a single heading. */
     :root[data-theme="studio"] .st-gd-row {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -1193,10 +1085,9 @@ export const STUDIO_EDITORIAL_CSS = `
      * which is why the ratios are cleared here rather than overridden. The
      * quiet tile's grid rows and the stat scrim are tile-relative and
      * follow the capped box. */
-    :root[data-theme="studio"] .st-imp-tile {
-      aspect-ratio: auto;
-      height: min(100vw - 2 * var(--studio-gutter), 520px);
-    }
+    /* The tiles keep their square aspect-ratio at every width now — the
+     * explicit height existed for the one-column stack this row no longer
+     * uses, and at two columns the square is already phone-sized. */
     :root[data-theme="studio"] .st-imp-sub { max-width: 100%; }
     /* No .st-imp-claim reset here: the chips are inline-block, so a claim
      * wider than a very narrow viewport wraps internally on its own, and a
@@ -1282,32 +1173,38 @@ function tileShot(ctx: RenderCtx, slot: string, cls: string, sizes: string): str
  * izberejo finsko savno") — the declension contract in tenants/types.ts exists
  * precisely so shared chrome can do this without producing broken Slovenian.
  */
-/** The impact tile's caption: the moat claim's own closing line, falling
- * back to the stat's caption for a shop whose claim has no second half. */
-function tileCaption(ctx: RenderCtx, fallback: string): string {
-  const end = ctx.content.moat.claim?.[1]?.trim().replace(/\.$/, "");
-  return end && end.length > 0 ? end.charAt(0).toLowerCase() + end.slice(1) : fallback;
-}
 
 export function renderStudioImpact(ctx: RenderCtx): string {
+  /* ⚠️ FIVE IDENTICAL CARDS, AND THE UNIFORMITY IS THE POINT.
+   *
+   * This band was three tiles of three different shapes: one labelled, one
+   * bare photograph ("the crop is the content"), one carrying a statistic.
+   * Read together they made no argument — a caption, a picture and a number
+   * — and the bare tile in the middle was the largest thing in a band whose
+   * job is to say why to buy here.
+   *
+   * The reference the owner set (bullfrogspas.com) does the same job with a
+   * row of five identical cards: small picture, title, two lines. What makes
+   * that work is not the count, it is that every card answers the SAME
+   * question, so the row reads as one list rather than three ideas.
+   *
+   * moat.steps already holds exactly that list, and it is the truest thing
+   * this shop can say: the five moves of the job it does, in order — ogled,
+   * priprava priklopa, dostava, priklop in zagon, predaja. No claim is
+   * introduced here that /dostava-in-montaza does not already make.
+   *
+   * The STATISTIC IS GONE from this band on purpose. It duplicated a cell in
+   * the stats row one screen below, and it is the tile whose figure and
+   * caption came apart when they were edited separately.
+   */
   const steps = ctx.content.moat.steps;
-  const label = steps[0];
-  // ⚠️ THE LAST STAT, AND IT IS NOT INTERCHANGEABLE. tileCaption() below does
-  // not read this stat's own label — it returns the MOAT CLAIM's second half,
-  // "premaknemo ga mi", which is a sentence about MASS. Pointed at stats[1]
-  // for one evening (to reduce a repetition with the row below) the home page
-  // read "94 — premaknemo ga mi": the jet count, captioned "we move it for
-  // you". The figure and the caption are one statement; changing either alone
-  // makes nonsense, so they move together or not at all.
-  const stat = ctx.content.stats[ctx.content.stats.length - 1] ?? ctx.content.stats[0];
   // Three short proof points read as one muted line under the head; more than
-  // three and the 21px sub starts competing with the tiles. Each claim is its
-  // own inline-block chip so the line breaks only at the gaps BETWEEN chips
-  // (CSS: .st-imp-claim), and the separator dot lives INSIDE the chip before
-  // it — an atomic inline's edges are wrap opportunities in their own right,
-  // so a dot placed between chips can open a wrapped line no matter what
-  // no-break space sits beside it (measured doing exactly that at 1000px).
-  // Claims are escaped individually; the joined string is emitted as markup.
+  // three and the sub starts competing with the cards. Each claim is its own
+  // inline-block chip so the line breaks only at the gaps BETWEEN chips, and
+  // the separator dot lives INSIDE the chip before it — an atomic inline's
+  // edges are wrap opportunities in their own right, so a dot placed between
+  // chips can open a wrapped line no matter what no-break space sits beside
+  // it (measured doing exactly that at 1000px).
   const claims = ctx.content.trust.slice(0, 3);
   const sub = claims
     .map(
@@ -1317,90 +1214,35 @@ export function renderStudioImpact(ctx: RenderCtx): string {
         // The dot is an ELEMENT so the phone tier can drop it: three wrapped
         // chips each ending in " ·" read as stray punctuation at 390px, and
         // a text-node dot cannot be styled away.
-        (i < claims.length - 1 ? '<span class="st-imp-sep"> ·</span>' : "") +
+        (i < claims.length - 1 ? '<span class="st-imp-sep"> ·</span>' : "") +
         "</span>",
     )
     .join(" ");
 
-  const quiet =
-    '<div class="st-imp-tile st-imp-quiet">' +
-    tileShot(ctx, "zakaj-mi-2", "st-imp-photo", "(max-width: 860px) 92vw, 30vw") +
-    (label
-      ? '<div class="st-imp-label"><h3 class="st-imp-t">' + esc(label[0]) + "</h3>" +
-        '<p class="st-imp-p">' + esc(label[1]) + "</p></div>"
-      : "") +
-    "</div>";
-
-  // ⚠️ THIS TILE NOW CARRIES A LABEL, and the note it replaces said the
-  // opposite: "no label by design — the crop is the content". That reasoning
-  // holds for the source theme, whose tiles are atmospheric interiors where
-  // the crop really is the content. This shop's photographs are white-sweep
-  // STUDIO CUTOUTS, so the tile rendered as a product floating in a grey box
-  // with nothing said about it — the largest tile in a "why buy from us"
-  // band, making no argument at all. It takes the second process step, so
-  // the row reads as the first two moves of the job rather than as a caption,
-  // a picture and a number.
-  //
-  // Offset 31, not 2: the head above this row names the hot tub ("Zakaj kupci
-  // izberejo masažni bazen") and offset 2 resolved, for the bazen key, to a
-  // SWIM SPA — the other product family — in landscape, so the 4/5 portrait
-  // cover also threw away 45% of its width. 31 lands on the flagship tub's
-  // lit-cladding side view: the named product, square, with tone of its own.
-  // Collision check against every pick(OWN_PHOTOS) offset on the page — 5
-  // (hero band), 13 (quiet tile), 17+i (testimonial discs), 22 (stat tile,
-  // below), 23/25 (statement), 25-30 (social strip) — all distinct from 31,
-  // so no photograph repeats because of it.
-  const second = steps[1];
-  const hero =
-    '<div class="st-imp-tile st-imp-hero">' +
-    tileShot(ctx, "zakaj-mi-3", "st-imp-photo", "(max-width: 860px) 92vw, 38vw") +
-    (second
-      ? '<div class="st-imp-label"><h3 class="st-imp-t">' + esc(second[0]) + "</h3>" +
-        '<p class="st-imp-p">' + esc(second[1]) + "</p></div>"
-      : "") +
-    "</div>";
-
-  // §4.9's third tile carried a borrowed room interior with the stat over it.
-  // It now carries one of the shop's own photographs, or none. The stat still
-  // reads either way: it sits on its own panel, not on the picture.
-  //
-  // Offset 22, not 9: the stat is the HOT TUB ladder ("3 modeli / od 195 do
-  // 230 cm") and offset 9 resolved to a swim spa. 22 lands on the flagship
-  // tub's top-down shell view — the one angle that shows what the number
-  // counts; its white sweep is exactly what the scrim below was computed
-  // against, and the multiply ground seats it. Distinct from every other
-  // pick offset on the page (5, 13, 17+i, 23, 25-30, 31 — the full list sits
-  // at the hero tile above).
-  // A NAMED SLOT, not offset 22. The comment above records why 22 was chosen
-  // and it stays true of the fallback — /media resolves that same offset until
-  // the owner uploads — but which picture anchors this tile is now theirs to
-  // decide in the panel rather than ours to compute.
-  const roomPhoto = OWN_PHOTOS.length > 0 ? sitePhoto("zakaj-mi") : undefined;
-  const room =
-    '<div class="st-imp-tile">' +
-    (roomPhoto
-      ? decorativeImg(roomPhoto, "st-imp-photo", "(max-width: 860px) 92vw, 30vw")
-      : "") +
-    (stat
-      ? '<div class="st-imp-stat">' +
-        '<span class="st-imp-v">' + statValue(stat[0]) + "</span>" +
-        // The CLAIM's own words as the caption, not the stat row's: the row
-        // one band below prints all four stats with their captions, so a
-        // tile repeating the row's cell verbatim made the page say the same
-        // sentence twice within a scroll. The claim is what this band
-        // argues; the figure is its evidence.
-        '<span class="st-imp-c">' + esc(tileCaption(ctx, stat[1])) + "</span></div>"
-      : "") +
-    "</div>";
+  const cards = steps
+    .map((step, i) => {
+      // The slot keys are frozen at "zakaj-mi*" — see the note in
+      // admin/site-images.ts on why a managed key can never be renamed.
+      const slot = i === 0 ? "zakaj-mi" : "zakaj-mi-" + String(i + 1);
+      return (
+        '<li class="st-imp-tile st-imp-quiet">' +
+        tileShot(ctx, slot, "st-imp-photo", "(max-width: 700px) 46vw, (max-width: 1100px) 30vw, 18vw") +
+        '<div class="st-imp-label">' +
+        '<h3 class="st-imp-t">' + esc(step[0]) + "</h3>" +
+        '<p class="st-imp-p">' + esc(step[1]) + "</p>" +
+        "</div></li>"
+      );
+    })
+    .join("");
 
   return (
     '<section class="st-imp"><div class="st-imp-in">' +
     '<div class="st-imp-head">' +
     // ⚠️ NOT "Zakaj kupci izberejo masažni bazen". That heading promises the
     // reasons somebody wants a hot tub — warmth, the evening, the back — and
-    // then every word under it is about US: delivery, the site visit, what we
-    // carry. A band whose head asks one question and whose body answers a
-    // different one reads as filler however good the parts are.
+    // then every word under it is about US. A band whose head asks one
+    // question and whose body answers a different one reads as filler
+    // however good the parts are.
     '<h2 class="st-imp-h">Zakaj ' + esc(ctx.shop.keyword.accusative) +
     " kupiti pri nas</h2>" +
     (sub ? '<p class="st-imp-sub">' + sub + "</p>" : "") +
@@ -1409,7 +1251,7 @@ export function renderStudioImpact(ctx: RenderCtx): string {
     '<p class="st-imp-more"><a href="' + esc(ctx.shop.routeSlugs["/delivery"] + ctx.q) +
     '">Kako potekata dostava in zagon</a></p>' +
     "</div>" +
-    '<div class="st-imp-row">' + quiet + hero + room + "</div>" +
+    '<ul class="st-imp-row">' + cards + "</ul>" +
     "</div></section>"
   );
 }

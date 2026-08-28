@@ -41,6 +41,67 @@ Prices are **USD, FOB Huangpu** — see "What this is not".
 asking the supplier whether it is discontinued or simply omitted, before a
 model number gets quoted that cannot be ordered.
 
+## Packing list (received 2026-08-28)
+
+A **second document** from the supplier, covering four of the nine models —
+including all three the shop offers. It states what actually goes into a
+container: the crate, its cubic volume, and net and gross mass.
+
+| Model | Crate (mm) | CBM | Net kg | Gross kg | Cover crate (mm) | CBM | Net | Gross |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| ZR801 | 2380 × 970 × 2460 | 5.68 | 470 | 560 | 1230 × 2360 × 360 | 1.05 | 23 | 43 |
+| ZR803 | 980 × 2210 × 2270 | **4.97** | 380 | 460 | 2150 × 1050 × 230 | 0.52 | 21 | 22 |
+| ZR804 | 970 × 2220 × 2280 | 4.91 | 380 | 480 | 2130 × 1050 × 230 | 0.51 | 20 | 21 |
+| ZR805 | 920 × 2080 × 2190 | 4.19 | 320 | 400 | 2130 × 1040 × 360 | 0.80 | 20 | 40 |
+
+Transcribed into `pack` and `packCover` on `PolaModel`. The first dimension is
+the crate's HEIGHT — the sheet leads with it, unlike the price list, which
+leads with footprint.
+
+**Crating is 22–34% of the shell's own volume**, and that is the reason this
+document changed the pricing. `envelopeOf` used to compute freight from shell
+dimensions; a forwarder bills the crate. The gap is not uniform — it is
+22–34% on these tubs against 3–5% on the swim spas, whose crate is the shell
+plus 25 mm a side — so a shell basis under-freighted the whole hot tub line by
+about a quarter *relative to* the swim spas. Freight now bills on `pack.cbm`.
+The six offered models each moved 100–200 € (+1.5–3%), all still inside the
+competitor band the inputs were calibrated against.
+
+**The covers ship as separate packages.** 0.51–1.05 m³ and 21–43 kg gross,
+each nearly a quarter of its tub's crate volume. `breakdownFor` prices an
+add-on with no freight line at all, on the reasoning that an option is fitted
+at the factory and travels inside the shell. That is true of a jet light and
+false of a cover. Recorded in `packCover`; not yet costed.
+
+### ⚠️ Open questions on the packing list
+
+1. **Net mass disagrees with the price list on every model.** The price list's
+   "dry" column against the packing list's net:
+
+   | Model | Price list dry | Packing list net | Gap |
+   | --- | --- | --- | --- |
+   | ZR801 | 410 kg | 470 kg | +15% |
+   | ZR803 | 370 kg | 380 kg | +3% |
+   | ZR804 | 370 kg | 380 kg | +3% |
+   | ZR805 | 300 kg | 320 kg | +7% |
+
+   Net mass on a packing list is the goods without the crate, which is what
+   "dry" ought to mean. Both are carried — `dryKg` is what the site publishes
+   as "prazen", `pack.netKg` is what shipping uses — and neither has been
+   edited to agree with the other. **Ask which is right**; the site prints the
+   lower figure today, and it prints it on a page where a customer is deciding
+   whether a terrace will hold the thing.
+
+2. **ZR803's stated CBM does not match its own stated dimensions.** 980 × 2210
+   × 2270 mm is 4.916 m³; the sheet says 4.97. The other three rows reconcile
+   to three decimals. Carried as stated, named as a known exception in
+   `pricing.test.ts`. ZR803 is not offered, so nothing prices off it — resolve
+   it before that changes.
+
+3. **Nothing states units per container.** The crate CBM is now known and the
+   forwarder's rate is not, so `freightPerCbmEur: 60` remains an assumption
+   with one half of its inputs settled. One forwarder invoice closes it.
+
 ### Jet breakdown
 
 | Model | 5″ | 3.5″ | 2.5″ | 2″ | 1″ | Total |

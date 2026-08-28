@@ -188,6 +188,13 @@ const CHROME_IMAGES: readonly SiteImage[] = [
  * page back. Each keeps its old offset as a FALLBACK, so nothing changes on
  * the site until somebody uploads. */
 
+/** One note for five identical cards — they differ only by which step. */
+const CARD_NOTE = (n: number): string =>
+  "Slika " + n + " od petih v pasu »Zakaj masažni bazen kupiti pri nas« na " +
+  "domači strani. Vseh pet je enako velikih, zato naj bodo posnete v " +
+  "podobnem slogu. Kvadratna, najbolje 900 × 900 px — slika se NE obreže, " +
+  "vidi se cela, zato je najbolje izdelek na čisti podlagi.";
+
 const HOME_IMAGES: readonly SiteImage[] = [
   {
     key: "site/zgodba.webp",
@@ -217,15 +224,19 @@ const HOME_IMAGES: readonly SiteImage[] = [
     // No ratio: this frame is object-fit: contain and shows the picture whole.
     maxWidth: 1200,
   },
+  /* ⚠️ THE FIVE CARDS OF THE BENEFIT ROW, and the KEYS ARE FROZEN even though
+   * the band they serve was rebuilt. A fixed key is the whole mechanism here
+   * (see the file header): rename one and any picture already uploaded to it
+   * is orphaned in the bucket while the page silently falls back. So the
+   * keys stay "zakaj-mi*" and the LABELS say what each card now is — the
+   * five steps of the job, in order, which is what the row renders. */
   {
     key: "site/zakaj-mi.webp",
     group: HOME,
-    label: "Zakaj mi — slika",
-    note: "Kvadratna slika v pasu s prednostmi na domači strani, ob številki. " +
-      "Kvadrat, najbolje 1200 × 1200 px." + HOME_NOTE_TAIL,
+    label: "Kako delamo — 1 (Ogled lokacije)",
+    note: CARD_NOTE(1),
     fallbackOffset: 22,
-    ratio: [1, 1],
-    maxWidth: 1200,
+    maxWidth: 900,
   },
   // ⚠️ THE OTHER TWO TILES IN THIS BAND ARE object-fit: contain AND THE FIRST
   // ONE IS NOT. Measured off the rendered page: the room tile is 407 × 407
@@ -237,20 +248,34 @@ const HOME_IMAGES: readonly SiteImage[] = [
   {
     key: "site/zakaj-mi-2.webp",
     group: HOME,
-    label: "Zakaj mi — druga slika",
-    note: "Druga slika v pasu s prednostmi. Ta se NE obreže — vidi se cela, " +
-      "v okvirju 3 : 2 ležeče. Najbolje 900 × 600 px.",
+    label: "Kako delamo — 2 (Priprava priklopa)",
+    note: CARD_NOTE(2),
     fallbackOffset: 13,
     maxWidth: 900,
   },
   {
     key: "site/zakaj-mi-3.webp",
     group: HOME,
-    label: "Zakaj mi — tretja slika",
-    note: "Tretja, največja slika v pasu s prednostmi. Ta se NE obreže — vidi " +
-      "se cela, v kvadratnem okvirju. Najbolje 1000 × 1000 px.",
+    label: "Kako delamo — 3 (Dostava na teraso)",
+    note: CARD_NOTE(3),
     fallbackOffset: 31,
-    maxWidth: 1000,
+    maxWidth: 900,
+  },
+  {
+    key: "site/zakaj-mi-4.webp",
+    group: HOME,
+    label: "Kako delamo — 4 (Priklop in zagon)",
+    note: CARD_NOTE(4),
+    fallbackOffset: 19,
+    maxWidth: 900,
+  },
+  {
+    key: "site/zakaj-mi-5.webp",
+    group: HOME,
+    label: "Kako delamo — 5 (Predaja)",
+    note: CARD_NOTE(5),
+    fallbackOffset: 21,
+    maxWidth: 900,
   },
 ];
 

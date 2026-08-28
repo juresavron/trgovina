@@ -21,7 +21,7 @@
  * freight class, separate buying question. See docs/SUPPLIER-SWIMSPA-2026.md.
  */
 
-import { displayPrice, displayPriceCents, envelopeOf } from "./pricing";
+import { displayPrice, displayPriceCents, envelopeOf, type PackedUnit } from "./pricing";
 import { jetsText } from "./count";
 
 /**
@@ -78,6 +78,29 @@ export interface PolaModel {
   filterSf: number;
   dryKg: number;
   filledKg: number;
+  /**
+   * What the supplier's packing list states for this model's crate, where it
+   * states one at all. Freight bills on this, not on `mm`.
+   *
+   * ⚠️ `pack.netKg` AND `dryKg` DISAGREE ON EVERY MODEL THE LIST COVERS, by
+   * 3% to 15%, and the disagreement is carried rather than resolved — the two
+   * numbers come from two supplier documents and nobody here can say which is
+   * right. `dryKg` stays what the site publishes as "prazen"; `pack` is used
+   * for freight and for the crate a customer has to get through a gate. See
+   * the ⚠️ in docs/SUPPLIER-POLA-2026.md for the question to put to Celina.
+   */
+  pack?: PackedUnit;
+  /**
+   * The thermal cover's own crate — it ships as a separate package, with its
+   * own volume and its own weight.
+   *
+   * Nothing costs it yet: `breakdownFor` prices an add-on as goods + duty +
+   * margin with no freight line, on the reasoning that an option is fitted at
+   * the factory and travels inside the shell. That is true of a jet light and
+   * false of a cover, which is a 0,5–1,05 m³ package in its own right. Stated
+   * here so the gap is visible and can be closed deliberately.
+   */
+  packCover?: PackedUnit;
   /** Balboa topside control panel. */
   topside: "TP600" | "TP500S";
   /** The options this model's page offers, in the supplier's own prices. */
@@ -210,6 +233,8 @@ export const POLA_MODELS: readonly PolaModel[] = [
     filterSf: 100,
     dryKg: 410,
     filledKg: 2210,
+    pack: { mm: [2380, 970, 2460], cbm: 5.68, cbmStated: true, netKg: 470, grossKg: 560 },
+    packCover: { mm: [1230, 2360, 360], cbm: 1.05, cbmStated: true, netKg: 23, grossKg: 43 },
     topside: "TP600",
     addons: [
       a("cover", 153),
@@ -304,6 +329,13 @@ export const POLA_MODELS: readonly PolaModel[] = [
     filterSf: 100,
     dryKg: 370,
     filledKg: 1870,
+    // ⚠️ 4,97 IS THE SHEET'S FIGURE AND IT DOES NOT MATCH THE SHEET'S OWN
+    // DIMENSIONS: 0,98 × 2,21 × 2,27 m is 4,916 m³. The other three rows
+    // reconcile exactly, so this is the supplier disagreeing with itself, not
+    // a slip here. Carried as stated. Not an offered model; ask before it
+    // becomes one. See the test that names it in pricing.test.ts.
+    pack: { mm: [980, 2210, 2270], cbm: 4.97, cbmStated: true, netKg: 380, grossKg: 460 },
+    packCover: { mm: [2150, 1050, 230], cbm: 0.52, cbmStated: true, netKg: 21, grossKg: 22 },
     topside: "TP500S",
     addons: [
       a("cover", 130),
@@ -332,6 +364,8 @@ export const POLA_MODELS: readonly PolaModel[] = [
     filterSf: 100,
     dryKg: 370,
     filledKg: 1870,
+    pack: { mm: [970, 2220, 2280], cbm: 4.91, cbmStated: true, netKg: 380, grossKg: 480 },
+    packCover: { mm: [2130, 1050, 230], cbm: 0.51, cbmStated: true, netKg: 20, grossKg: 21 },
     topside: "TP500S",
     addons: [
       a("cover", 130),
@@ -362,6 +396,8 @@ export const POLA_MODELS: readonly PolaModel[] = [
     filterSf: 100,
     dryKg: 300,
     filledKg: 1500,
+    pack: { mm: [920, 2080, 2190], cbm: 4.19, cbmStated: true, netKg: 320, grossKg: 400 },
+    packCover: { mm: [2130, 1040, 360], cbm: 0.8, cbmStated: true, netKg: 20, grossKg: 40 },
     topside: "TP500S",
     addons: [
       a("cover", 115),
@@ -555,7 +591,7 @@ export function metaLine(m: PolaModel): string {
 
 /** The display price for a model, or the unset dash. */
 export function modelPrice(m: PolaModel): string {
-  return displayPrice({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
+  return displayPrice({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg, m.pack) });
 }
 
 /**
@@ -580,5 +616,5 @@ export function addonPriceCents(x: Addon): number {
  * reasoning that already keeps Review schema off these pages.
  */
 export function modelPriceCents(m: PolaModel): number {
-  return displayPriceCents({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
+  return displayPriceCents({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg, m.pack) });
 }
