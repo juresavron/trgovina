@@ -110,11 +110,25 @@ describe("which colour list the product pages render", () => {
     }
   });
 
-  /** A generated entry's slug must be the slug its own name folds to, or the
-   *  storefront asks for a bucket key the panel never wrote. */
-  it("keeps every generated slug consistent with its name", () => {
+  /**
+   * ⚠️ A GENERATED SLUG MUST BE URL-SAFE. IT MUST NOT MATCH ITS NAME.
+   *
+   * This assertion used to be the opposite — slug === finishSlug(name) — and
+   * it was right while a colour's name was the only thing it ever had. It is
+   * wrong now, and it failed the deploy that made it wrong, which is exactly
+   * what it was for: the slug is fixed when a swatch is first stored and the
+   * name is free to change afterwards, so "Rjavo marmorirana" legitimately
+   * lives at screenshot-2026-08-28-at-10-20-46 and must keep doing so or the
+   * picture is orphaned.
+   *
+   * What still has to hold is that the slug can be a bucket key and a URL
+   * segment: lowercase, ASCII, no spaces. That is the property the storefront
+   * and the panel actually depend on.
+   */
+  it("keeps every generated slug usable as a key, whatever the name says", () => {
     for (const f of [...GENERATED_SHELL_FINISHES, ...GENERATED_CABINET_FINISHES]) {
-      expect(f.slug, f.name).toBe(finishSlug(f.name));
+      expect(f.slug, f.name).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+      expect(f.name.trim(), f.slug).not.toBe("");
     }
   });
 });

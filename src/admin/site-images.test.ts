@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
-import { SHELL_FINISHES, CABINET_FINISHES } from "../catalog/pola";
+import { CABINET_FINISH_ENTRIES, SHELL_FINISH_ENTRIES } from "../catalog/pola";
 import { finishSlug } from "../catalog/finish-image";
 
 /**
@@ -217,14 +217,18 @@ describe("slots that may legitimately be empty", () => {
  */
 describe("a finish slot still knows its colour's real name", () => {
   it("labels each swatch slot with the name, not the slug or a sentence", () => {
-    for (const [kind, names] of [
-      ["barva", SHELL_FINISHES],
-      ["obloga", CABINET_FINISHES],
+    // ⚠️ ADDRESSED BY THE SLUG THE ENTRY CARRIES, not by folding its name.
+    // A renamed colour keeps the stem its swatch was stored under, so folding
+    // the name looks up a slot that does not exist — and this assertion was
+    // the one that caught it, by failing the first deploy after a rename.
+    for (const [kind, list] of [
+      ["barva", SHELL_FINISH_ENTRIES],
+      ["obloga", CABINET_FINISH_ENTRIES],
     ] as const) {
-      for (const name of names) {
-        const slot = siteImageBySlug(kind + "-" + finishSlug(name));
-        expect(slot, kind + "-" + finishSlug(name)).toBeDefined();
-        expect(slot!.label, "label must be the name verbatim").toBe(name);
+      for (const f of list) {
+        const slot = siteImageBySlug(kind + "-" + f.slug);
+        expect(slot, kind + "-" + f.slug).toBeDefined();
+        expect(slot!.label, "label must be the name verbatim").toBe(f.name);
       }
     }
   });
