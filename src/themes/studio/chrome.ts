@@ -405,23 +405,44 @@ export const STUDIO_CHROME_CSS = `
     overflow: hidden;
   }
 
-  /* Nav gap is the source's 50px exactly (--chrome-nav-gap), not a clamp.
+  /* Nav gap is --chrome-nav-gap, one value at every width, not a clamp.
+   * (It is 24px and NOT the source's 50 — tokens.ts carries the whole
+   * arithmetic for why a five-item menu's gap does not fit a seven-item
+   * one.)
    *
    * It is also the bar's shock absorber. The nav is the only element here that
    * can lose width without losing meaning, so it is a scroll container at every
    * width: min-inline-size:0 lets the auto grid track shrink past max-content,
    * and the overflow is a swipeable/arrow-scrollable rail rather than a menu
-   * that runs off the page. With the SEVEN-item menu the rail is live through
-   * the whole 901–1060 band (the ≤1359 gap step and the 1560 tel threshold
-   * are sized off the same arithmetic — see those rules); at ≥1360 it never
-   * triggers. Either way the point holds: the page must never scroll
-   * sideways.
+   * that runs off the page. With the SEVEN-item menu and the 24px gap the
+   * rail is live below ~1300 and whole from 1360 up (the 1500 tel threshold
+   * is sized off the same arithmetic — see that rule). Either way the point
+   * holds: the page must never scroll sideways.
    *
    * The padding/margin pair is the same device as the links: it opens 10px of
    * room inside the SCROLL PORT so the 44px link boxes are not clipped by the
    * overflow, while the nav still contributes only the 24px line to the row. */
   :root[data-theme="studio"] .st-chrome-nav {
-    justify-self: center;
+    /* ⚠️ STRETCH, NOT CENTRE — and min-inline-size:0 does NOT substitute
+     * for it, which is why the rail ran under the buttons for a whole band.
+     *
+     * justify-self:center sizes a grid item to fit-content, and fit-content
+     * is min(max-content, max(MIN-content, available)). Every label in here
+     * is white-space:nowrap, so the flex row's min-content is its whole
+     * 662px — larger than the 587px track it was given at 1280 — and
+     * fit-content therefore resolved to 662 and overflowed. min-width:0
+     * lifts the minimum CONSTRAINT; it does not make the content narrower,
+     * so it never touched this. Measured at 1280: the rail ended at 1027 and
+     * the action cluster began at 1013, i.e. KONTAKT printed under the
+     * enquiry button. (Before the phone joined that cluster the same overlap
+     * fell on the phone disc instead, which is how it survived: a label
+     * crossing a 36px circle reads as tight spacing.)
+     *
+     * Stretched, the item is exactly its track and the overflow becomes what
+     * it was always meant to be — the fade-masked scroll rail below. The
+     * centring is not lost: it was never this property's job. The template
+     * is 1fr auto 1fr, so the TRACK is centred, and the item now fills it. */
+    justify-self: stretch;
     display: flex;
     align-items: center;
     gap: var(--chrome-nav-gap);
@@ -751,48 +772,65 @@ export const STUDIO_CHROME_CSS = `
   }
   :root[data-theme="studio"] .st-chrome-tel .st-ico { inline-size: 16px; block-size: 16px; }
 
-  /* ≥1560: THE NUMBER JOINS THE BAR. Below 900 it earns its place because the
+  /* ≥1500: THE NUMBER JOINS THE BAR. Below 900 it earns its place because the
    * two-row bar has a row to spend; on a wide desktop the single row has slack
    * instead, and a shop selling by enquiry hides its phone number at exactly
-   * the widths where showing it costs nothing. The bar's template grows a
-   * fourth track (mark | nav | tel | actions): the two outer 1fr tracks keep
-   * the middle pair optically centred.
+   * the widths where showing it costs nothing.
    *
-   * 1560 IS ARITHMETIC, NOT TASTE — and it was 1360 for one audit run, which
-   * caught it. Measured at 1440: mark 338px + seven-item nav 818px (labels
-   * ~518 + six 50px gaps) + number ~180 + disc + three column gaps ≈ 1448px
-   * against a 1360px container — so the number sat ON "Kontakt" and the
-   * wordmark ran under "Trgovina", and the contrast gate read the collisions
-   * as 1.13:1 and 2.65:1. The pixel audit is the regression test for this
-   * block: the sum fits from a 1480px container up, so the number waits for
-   * 1560 of viewport. Between 901 and 1559 the footer states it on every
-   * page, and the PDP and contact page carry it above the fold. */
-  /* 1240–1559: THE NUMBER AS A DISC. The full number needs ~180px this band
-   * does not have (its arithmetic is on the ≥1560 rule below), but the shop
-   * sells by enquiry and this is the laptop band — the header carrying no
-   * phone affordance at 1280px was the cost of the earlier fit fix. A 36px
-   * disc in the mark's own two-disc vocabulary fits from 1240 up (1088px of
-   * row + 36 + gaps against an 1160px container; at 1200 exactly it is 20px
-   * short, so the floor is 1240). Icon-only, like ≤460: the aria-label and
-   * the title carry the number, the tap carries the call. */
-  /* BOTH BANDS SHARE THE FOURTH TRACK, so it is stated once from 1240 up
-   * rather than copied into each — the size guard in render/size.test.ts is
-   * a duplicate-rule detector, and this pair was two of the three verbatim
-   * duplicates in the whole sheet.
+   * 1500 IS ARITHMETIC, NOT TASTE, and it has moved twice — 1360, then 1560,
+   * now here — each time because one of the three things it adds up changed
+   * size. What it adds up, at the tier where each is largest:
    *
-   * :has(), because the tel is only EMITTED when the phone is set: an
-   * unconditional four-track template put a three-child bar into it and
-   * parked the disc a quarter-screen from the gutter on any tenant with no
-   * number. */
+   *   wordmark      338   "Masažni bazeni Vrelec" at h6, nowrap
+   *   nav           662   seven labels ~518 + six 24px gaps
+   *   cluster       345   number 151 + 10 + enquiry button 184
+   *   column gaps    48   two, at --gap-lg
+   *                -----
+   *                 1393  against a container of min(1560, vw − 80)
+   *
+   * so the number needs 1473 of viewport and waits for 1500. The middle line
+   * is the one that moved: the nav gap was 50px here until it turned out that
+   * 50 is the SOURCE's gap for a FIVE-item menu and cost 156px we did not
+   * have (tokens.ts). At 24 the row is 156px narrower and the number arrives
+   * a whole tier earlier. Between 901 and 1499 the footer states it on every
+   * page, and the PDP and contact page carry it above the fold.
+   *
+   * ⚠️ THE PIXEL AUDIT IS THIS BLOCK'S REGRESSION TEST. When 1560 was 1360,
+   * the number sat ON "Kontakt" and the wordmark ran under "Trgovina", and
+   * the gate reported the collisions as contrast failures of 1.13:1 and
+   * 2.65:1 — which is what a layout bug looks like when only colour is being
+   * measured. Re-run it after touching any of the four numbers above. */
+  /* 1240–1499: THE NUMBER AS A DISC. The full number needs ~160px this band
+   * does not have, but the shop sells by enquiry and this is the laptop band
+   * — the header carrying no phone affordance at 1280px was the cost of an
+   * earlier fit fix. A 36px disc in the mark's own two-disc vocabulary fits
+   * from 1240 up. Icon-only, like ≤460: the aria-label and the title carry
+   * the number, the tap carries the call.
+   *
+   * It sits INSIDE the action cluster now, beside the enquiry button, and
+   * that is what stopped this band looking broken: as the bar's own child
+   * the disc's 115px of collapse went to the 1fr tracks either side, so a
+   * laptop saw menu, small circle, hundred-pixel hole, button. See the
+   * markup. */
+  /* ⚠️ NO FOURTH TRACK ANY MORE, and its removal is the fix.
+   *
+   * These two bands used to grow the bar's template to 1fr auto auto 1fr,
+   * because the tel was the bar's own third child. That put a variable-width
+   * element between the menu and the buttons, and in the disc band it varies
+   * by 115px — which the two 1fr tracks then dealt out as a hole between the
+   * disc and the enquiry button (measured at 1440: 1124 → 1216). The bar has
+   * three groups, not four; the phone belongs to the third. See the markup.
+   *
+   * So the template stays 1fr / auto / 1fr at every width and all this band
+   * does is SHOW the number. The :has() guard goes with the track it was
+   * guarding: a bar with no phone set simply renders one fewer child in the
+   * cluster, which needs no template of its own. */
   @media (min-width: 1240px) {
-    :root[data-theme="studio"] .st-chrome-bar:has(> .st-chrome-tel) {
-      grid-template-columns: 1fr auto auto 1fr;
-    }
     :root[data-theme="studio"] .st-chrome-tel { display: inline-flex; }
   }
 
   /* The disc's own dress, in its band only. */
-  @media (min-width: 1240px) and (max-width: 1559px) {
+  @media (min-width: 1240px) and (max-width: 1499px) {
     :root[data-theme="studio"] .st-chrome-tel {
       inline-size: 36px;
       min-inline-size: 36px;
@@ -1306,19 +1344,16 @@ export const STUDIO_CHROME_CSS = `
    * block padding halves for free; what does not scale is the 50px nav gap —
    * five items at 50px plus a wordmark and the icons stop fitting around
    * 1150px. 24px is the source's own next rung down and buys ~130px. */
-  /* ≤1559 (was ≤1199): the nav gap steps down to --gap-lg. The 50px gap is
-   * the transcribed source value for a FIVE-item menu; with seven items the
-   * arithmetic changes — labels ~518px + six 50px gaps + the 338px wordmark
-   * is 1244px, which fits a 1360px container and NOT the 1200–1324px band,
-   * where the mark ran under the first label. Six 24px gaps bring the row to
-   * 1088px, inside the container from 1200 of viewport up — and leave, from
-   * 1240 up, the ~60px the phone DISC below needs. The band's ceiling is
-   * 1559 because ≥1560 seats the full number beside 50px gaps (see the tel
-   * rule); the transcription fixed the gap for a menu it no longer
-   * describes, and the target floor and the fit outrank it. */
-  @media (max-width: 1559px) {
-    :root[data-theme="studio"] .st-chrome-nav { gap: var(--gap-lg); }
-  }
+  /* THE BAND THAT USED TO STEP THE GAP DOWN IS GONE — the step is now the
+   * token itself (tokens.ts), because there turned out to be no width at
+   * which the wide value fitted. It read: "≤1559 the nav gap steps down to
+   * --gap-lg, because ≥1560 seats the full number beside 50px gaps." The
+   * arithmetic behind that second half was for the number alone and never
+   * added the gaps back: 338 wordmark + 818 rail + 353 cluster + 48 of
+   * column gaps is 1552 against a container that stops at 1560, so the wide
+   * value bought 8px of slack at its very best and, below ~1630, silently
+   * bought a scroll rail. One value at every width is also one fewer band
+   * for the next person to reason about. */
   @media (max-width: 1199px) {
     /* The source's small header draws its icons at 34px. inset is (44 − 34) ÷ 2
      * so the target stays at --st-tap. Note what that costs: --chrome-pad-y is
@@ -1615,7 +1650,7 @@ export const STUDIO_CHROME_CSS = `
    * want the same thing, and a media query LIST is an OR, so they say it
    * once. (min-inline-size stays on the phone tier alone: the disc band sets
    * its own 36px above.) */
-  @media (max-width: 460px), (min-width: 1240px) and (max-width: 1559px) {
+  @media (max-width: 460px), (min-width: 1240px) and (max-width: 1499px) {
     :root[data-theme="studio"] .st-chrome-tel span { display: none; }
     :root[data-theme="studio"] .st-chrome-tel { justify-content: center; }
   }
@@ -1739,9 +1774,27 @@ export function renderStudioHeader(ctx: RenderCtx): string {
       )
       .join("") +
     "</nav>" +
-    // Before the icon cluster in the DOM because that is its order in the row
-    // it appears in — the two-row bar at ≤900px, which is the only place it is
-    // shown at all.
+    '<div class="st-chrome-actions">' +
+    // ⚠️ THE PHONE IS PART OF THE ACTION CLUSTER, and putting it anywhere else
+    // is what the owner was looking at when they said the bar was not laid
+    // out well.
+    //
+    // It used to be the bar's own third child, between the nav and the
+    // buttons, which grew the template a fourth track. That reads correctly
+    // only while the number is at full width. Between 1240 and 1499 the tel
+    // collapses to a 36px disc, the track collapses with it, and the ~115px
+    // it gave up went to the two 1fr tracks either side — so a laptop saw the
+    // menu, then a small unlabelled circle, then a hundred-pixel hole, then
+    // the CTA. Measured at 1440: nav ends 1064, disc 1088–1124, button starts
+    // 1216. The hole was not slack the layout had spent; it was slack it had
+    // nowhere to put.
+    //
+    // Inside the cluster the phone is what it actually is — one of the two
+    // things you can DO from the header, beside the enquiry button — so the
+    // bar has three groups again (name, menu, act), all of the slack falls in
+    // one place, and the disc shrinks against its neighbour instead of
+    // stranding itself. The ≤900 two-row bar already drew these two side by
+    // side, so that tier is unchanged by the move.
     // ONLY WHILE THERE IS A NUMBER TO CALL.
     //
     // The bar rendered this unconditionally, so on a phone the header carried
@@ -1752,14 +1805,13 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     // rather than restating); the header is the last place that was still
     // doing it.
     (isSetPhone(ctx.phoneDisplay)
-      ? // title as well as aria-label: in the disc band (1240–1559) the
+      ? // title as well as aria-label: in the disc band (1240–1499) the
         // digits are hidden, and the tooltip is how a pointer reads them
         // without committing to a call.
         '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
         esc(ctx.phoneDisplay) + '" title="' + esc(ctx.phoneDisplay) + '">' + icon("phone") +
         "<span>" + esc(ctx.phoneDisplay) + "</span></a>"
       : "") +
-    '<div class="st-chrome-actions">' +
     // THE MAGNIFIER IS GONE, and its own note explains why it had to be.
     //
     // It read "a real destination, not a dead control" — and that was the

@@ -61,9 +61,27 @@ const SHEET = `
 
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; scroll-padding-top: 96px; }
+  /* ⚠️ THE BASE SIZE IS A RAMP RUNG, NOT A ROUND-ISH NUMBER.
+   *
+   * This said 16.5px/1.6 — half a pixel above --t-body (16px) and a whole
+   * rung away from --lh-body (1.625em). Every element on the site that does
+   * NOT set its own size inherits from here, so a typography sweep found
+   * 16.5px rendering on all 26 routes as a size the ramp does not contain,
+   * sitting beside the same face at 16px wherever a rule DID name the token.
+   * Two body sizes half a pixel apart is not a design decision anyone made;
+   * it is what happens when the base is typed and the roles are tokenised.
+   *
+   * The fallbacks are the kernel's, and they matter: --t-body is declared on
+   * :root[data-theme="studio"], and the placeholder routes and the pre-live
+   * 503 screen render without that attribute. An undefined var() with no
+   * fallback makes the whole declaration invalid, which would leave those
+   * pages at the UA's 16px/normal — close enough to hide the bug and wrong
+   * enough to show it on a long paragraph. */
   body {
     margin: 0; background: var(--bg); color: var(--ink);
-    font-family: var(--f-body); font-size: 16.5px; line-height: 1.6;
+    font-family: var(--f-body);
+    font-size: var(--t-body, 16px);
+    line-height: var(--lh-body, 1.625);
     overflow-x: clip;
   }
   h1, h2, h3 { margin: 0; text-wrap: balance; }

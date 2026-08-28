@@ -25,6 +25,7 @@
 
 import type { Env } from "./supabase";
 import { SITE_IMAGES, stemOf, type SiteImage } from "./site-images";
+import { finishImageKey, finishSlug, type FinishKind } from "../catalog/finish-image";
 
 /**
  * One choice the classifier may make. Mostly a slot, but the six gallery
@@ -40,6 +41,15 @@ export interface SlotOption {
   readonly note: string;
   /** The concrete slots behind this option, in fill order. */
   readonly slots: readonly SiteImage[];
+  /**
+   * Filename slugs that identify this option OUTRIGHT, no model involved.
+   *
+   * Only the finish catalogue sets it, and it is the reason the colour
+   * sorter is trustworthy: a supplier's swatch folder is named by colour
+   * ("Canyon.jpg", "silver white marble.png"), so most of a drop sorts
+   * itself deterministically and the model is only asked about the leftovers.
+   */
+  readonly match?: readonly string[];
 }
 
 /** The bucket's id — also the stem prefix the gallery slots share. */
@@ -67,6 +77,124 @@ export function slotOptions(): SlotOption[] {
     });
   }
   return out;
+}
+
+/* ================= THE COLOUR SWATCHES =================
+ *
+ * A SECOND CATALOGUE, not a second uploader. The owner's ask was "for barve
+ * školjke I want that I upload all colors and AI sorts them correctly", and
+ * the machinery to do that already exists — classify(), assignSlots(), and
+ * the browser's crop-and-convert pipeline. What was missing is that asking
+ * the SITE catalogue to sort colour swatches is a question it cannot answer
+ * well:
+ *
+ *   * it offers ~46 options, of which 16 are the colours and 30 are the hero,
+ *     the gallery, the guide headers — so nine tenths of the prompt is noise
+ *     for this drop;
+ *   * the sixteen colour notes are near-identical by construction ("Vzorec
+ *     barve školjke »X«, kvadratna slika, 400 × 400 px"), so the model is
+ *     choosing between sixteen sentences that differ in one word.
+ *
+ * Narrowing the catalogue to one kind fixes both, and adds the thing that
+ * actually decides most of a real drop: the filename.
+ *
+ * ⚠️ WHAT WE STILL DO NOT KNOW. catalog/pola.ts is explicit that nothing in
+ * this repository knows what colour "Canyon" is — the shell finishes are the
+ * acrylic manufacturer's own names for marbled sheets, which is exactly why
+ * this project refused to draw invented swatches for them. That rule is not
+ * relaxed here and must not be. The model is never told what Canyon looks
+ * like, because we do not know; it is asked to match a filename first, and
+ * where the filename says nothing, to reason only from what a name means in
+ * ordinary language (dark, warm, chalky) and to answer "nizka" when it is
+ * guessing. Every answer is a PROPOSAL the operator sees with its reason
+ * before it becomes a stored picture — which is the difference between a
+ * guess a human confirms and a fact this codebase invented.
+ */
+
+/** The finish slots of one kind, as the classifier sees them. */
+export function finishOptions(
+  kind: FinishKind,
+  names: readonly string[],
+): SlotOption[] {
+  const out: SlotOption[] = [];
+  for (const name of names) {
+    const key = finishImageKey(kind, name);
+    const slot = SITE_IMAGES.find((s) => s.key === key);
+    // A name with no registered slot cannot be a destination. It should be
+    // impossible (site-images.ts derives the slots from these same arrays),
+    // and silently offering an id nothing can store would be worse than the
+    // colour simply not appearing in the list.
+    if (slot) out.push({ id: stemOf(key), label: name, note: "", slots: [slot], match: [finishSlug(name)] });
+  }
+  return out;
+}
+
+/**
+ * Which option a FILENAME names, or null when it names none or more than one.
+ *
+ * Pure, and the first thing the sorter asks — a drop whose files are named
+ * after the colours never reaches the model at all.
+ *
+ * ⚠️ LONGEST MATCH WINS, and both lists contain a pair that needs it:
+ * "Opal" is a substring of "Oyster Opal", and "Siva" of "Temno siva" and
+ * "Svetlo siva". Matching shortest-first would file every Oyster Opal sample
+ * under Opal and every grey under Siva — three colours quietly wrong out of
+ * sixteen, in a batch the operator dropped precisely because they trusted it
+ * to sort itself.
+ *
+ * Containment is checked on whole hyphen-delimited runs, so "opal" matches
+ * "oyster-opal-2" but not "opalescent".
+ */
+export function matchFilename(
+  filename: string,
+  options: readonly SlotOption[],
+): string | null {
+  // Strip the directory, the extension, and the copy-suffixes a download
+  // folder adds ("Canyon (1).jpg", "canyon-kopija.png").
+  const base = filename.replace(/^.*[\\/]/, "").replace(/\.[a-z0-9]+$/i, "");
+  const slug = finishSlug(base);
+  if (slug === "") return null;
+  const parts = slug.split("-");
+
+  let best: string | null = null;
+  let bestLen = 0;
+  let tied = false;
+  for (const o of options) {
+    for (const m of o.match ?? []) {
+      if (m === "") continue;
+      const run = m.split("-");
+      let hit = false;
+      for (let i = 0; i + run.length <= parts.length; i++) {
+        if (run.every((w, j) => parts[i + j] === w)) { hit = true; break; }
+      }
+      if (!hit) continue;
+      if (run.length > bestLen) { best = o.id; bestLen = run.length; tied = false; }
+      else if (run.length === bestLen && o.id !== best) tied = true;
+    }
+  }
+  // Two colours of the same specificity in one filename is not a match, it is
+  // a question — hand it to the model rather than pick the first.
+  return tied ? null : best;
+}
+
+/** The prompt for a colour swatch. Deliberately not the site prompt. */
+export function finishPrompt(kind: FinishKind, options: readonly SlotOption[]): string {
+  const what = kind === "barva" ? "školjke (akrilna kad)" : "obloge (stranska plošča)";
+  return (
+    "Si urednik slovenske spletne trgovine z masažnimi bazeni. Priložena je " +
+    "fotografija VZORCA BARVE " + what + ". Izberi, kateremu imenu barve s " +
+    "seznama ustreza.\n\n" +
+    "Imena so proizvajalčeva lastna imena za marmorirane akrilne plošče. " +
+    "Nihče ti ni pokazal uradne barvne karte, zato NE UGIBAJ na pamet: " +
+    "sklepaj samo iz tega, kaj ime pomeni v vsakdanjem jeziku (svetlost, " +
+    "barvni ton, vzorec), in iz tega, kar na sliki dejansko vidiš. Če si " +
+    "negotov, vrni zanesljivost »nizka« — vsak predlog urednik pred objavo " +
+    "potrdi.\n\nImena:\n" +
+    options.map((o) => "- " + o.id + ": " + o.label).join("\n") +
+    "\n- " + NONE + ": to ni vzorec barve (npr. cel bazen, prostor, dokument).\n\n" +
+    "Vrni izbrano ime (slot), drugo najboljše (alternate), zanesljivost in " +
+    "en kratek slovenski razlog — povej, kaj na sliki te je prepričalo."
+  );
 }
 
 /** What the model said about one picture. */
@@ -121,6 +249,12 @@ export async function classify(
    * name that is dead this minute may be redeployed the next.
    */
   dead?: Set<string>,
+  /**
+   * The question to ask, when it is not "where on the site does this go?".
+   * The colour sorter passes finishPrompt() — same schema, same enum, same
+   * fallback ladder; a different question.
+   */
+  promptText?: string,
 ): Promise<Classified | null> {
   if (typeof env.GEMINI_API_KEY !== "string" || env.GEMINI_API_KEY === "") return null;
 
@@ -129,7 +263,7 @@ export async function classify(
     contents: [
       {
         parts: [
-          { text: prompt(options) },
+          { text: promptText ?? prompt(options) },
           { inline_data: { mime_type: mime, data: b64(bytes) } },
         ],
       },

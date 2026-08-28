@@ -197,9 +197,26 @@ export const STUDIO_TOKENS = `
     --chrome-pad-y: 16px;
     --chrome-line: 24px;
     --chrome-h: calc(var(--chrome-line) + 2 * var(--chrome-pad-y));
-    /** Nav: 50px between top-level items, 8px between an item's icon and
-     *  its label. */
-    --chrome-nav-gap: 50px;
+    /** Nav: 24px between top-level items, 8px between an item's icon and
+     *  its label.
+     *
+     *  ⚠️ THE SOURCE SAYS 50px, AND THE SOURCE HAS FIVE ITEMS. That is the
+     *  transcription and it is recorded here rather than in the value,
+     *  because 50 does not survive contact with this menu: seven labels draw
+     *  ~518px, so six 50px gaps put the rail at 818px, and beside a 338px
+     *  wordmark and a 353px action cluster that needs 1552px of the 1560px
+     *  the container can ever offer — 8px of slack at ANY viewport, because
+     *  the container caps. Below ~1630 it does not fit at all, and what the
+     *  bar did instead was quietly turn the whole menu into a scroll rail
+     *  and fade its last item out, on every laptop.
+     *
+     *  At 24 the seven items draw 662px, which is whole and un-scrolled from
+     *  1440 up and leaves ~80px of real air on either side of the menu at
+     *  1920 — the bar finally looks composed rather than packed. A gap
+     *  transcribed for a five-item menu is a measurement of a different
+     *  design; keeping the number and losing two items of the menu behind a
+     *  fade would be transcription outranking the thing transcribed. */
+    --chrome-nav-gap: 24px;
     --chrome-item-gap: 8px;
     /* ⚠️ 1560px, up from the source's 1440.
      *

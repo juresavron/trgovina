@@ -757,7 +757,53 @@ export function indexPage(
       '<ul class="picked" id="sm-list"></ul>' +
       "</div>" +
 
-      // THE SITE'S OWN PICTURES, which had no way in here at all — so the
+// THE COLOUR SAMPLES — the owner's ask, in the owner's words: "for barve
+      // školjke I want that I upload all colors and AI sorts them correctly".
+      //
+      // Its own drop zone rather than a note on the one above, because it is
+      // a different question and the server answers it from a different
+      // catalogue (see the scope field on /admin/site-sort). Sixteen colour
+      // slots inside the site's 46-option prompt is not a list a model can
+      // choose from — the notes are identical but for the colour name — while
+      // ten shell finishes on their own, with the filenames read first, is.
+      //
+      // ⚠️ NO AI-UPSCALE CHECKBOX HERE, and that is deliberate. The enhancer
+      // redraws a picture larger; on a marbled acrylic sample the redraw is a
+      // new pattern in approximately that colour, which is the one thing a
+      // swatch must not be. These slots cap at 400px anyway.
+      "<h2>Barve školjke — naložite vse naenkrat</h2>" +
+      '<div class="card">' +
+      '<div class="drop" id="bv-drop">' +
+      '<label for="bv-f">Izberite ali povlecite vse vzorce barv školjke naenkrat</label>' +
+      '<input id="bv-f" type="file" multiple ' +
+      'accept="image/webp,image/jpeg,image/png,image/avif">' +
+      '<p class="fmeta">Naložite lahko vseh deset hkrati. Če se datoteka ' +
+      "imenuje po barvi (npr. Canyon.jpg, silver white marble.png), gre na svoje mesto brez " +
+      "ugibanja; za ostale AI pogleda sliko in predlaga barvo. Spodaj piše, " +
+      "kaj je šlo kam — preverite in po potrebi popravite na posamezni barvi." +
+      "</p>" +
+      "</div>" +
+      '<p class="stline" id="bv-stwrap" role="status"><span id="bv-st"></span></p>' +
+      '<ul class="picked" id="bv-list"></ul>' +
+      "</div>" +
+
+      "<h2>Barve obloge — naložite vse naenkrat</h2>" +
+      '<div class="card">' +
+      '<div class="drop" id="ob-drop">' +
+      '<label for="ob-f">Izberite ali povlecite vse vzorce barv obloge naenkrat</label>' +
+      '<input id="ob-f" type="file" multiple ' +
+      'accept="image/webp,image/jpeg,image/png,image/avif">' +
+      '<p class="fmeta">Naložite lahko vseh šest hkrati. Če se datoteka ' +
+      "imenuje po barvi (npr. Črna.jpg, temno-siva.png), gre na svoje mesto brez " +
+      "ugibanja; za ostale AI pogleda sliko in predlaga barvo. Spodaj piše, " +
+      "kaj je šlo kam — preverite in po potrebi popravite na posamezni barvi." +
+      "</p>" +
+      "</div>" +
+      '<p class="stline" id="ob-stwrap" role="status"><span id="ob-st"></span></p>' +
+      '<ul class="picked" id="ob-list"></ul>' +
+      "</div>" +
+
+            // THE SITE'S OWN PICTURES, which had no way in here at all — so the
       // heaviest image on the storefront (a 2.7 MB PNG hero) was the one
       // picture the panel's convert-to-WebP promise never reached.
       // GROUPED, IN THE ORDER THE SLOTS APPEAR ON THE PAGE. The groups are
@@ -812,6 +858,13 @@ export function siteImagePage(
   ratio?: readonly [number, number],
   /** The largest width worth storing — a cap, never a target to inflate to. */
   maxWidth = 2048,
+  /**
+   * …EXCEPT on a slot that declares itself exact, where maxWidth stops being
+   * a cap and becomes the stored size. Only the colour swatches do, so that
+   * one replaced by hand on this page comes out the same 400 × 400 as the
+   * fifteen the batch sorter stored. See `exact` on SiteImage.
+   */
+  exact = false,
   /** Whether GEMINI_API_KEY is set, so the upscale can even be offered. */
   canEnhance = false,
   // No enhance parameter. It used to take one and pass it to the form; a site
@@ -857,7 +910,8 @@ export function siteImagePage(
       // Absent on a frame that shows the picture whole (object-fit: contain),
       // where a crop would throw away the sides for nothing.
       (ratio ? ' data-ar="' + ratio[0] + ":" + ratio[1] + '"' : "") +
-      ' data-max="' + String(maxWidth) + '">' +
+      ' data-max="' + String(maxWidth) + '"' +
+      (exact ? ' data-exact="1"' : "") + ">" +
       '<div class="up">' +
       '<div class="drop" id="drop">' +
       '<img id="prev" alt="" width="400" height="300">' +
@@ -1239,13 +1293,26 @@ export function modelPage(
    couple every future change to both. The duplication is ~60 lines of
    canvas code and is priced in. */
 const SMART_JS = `
+/* MOUNTED THREE TIMES, not copied three times.
+ *
+ * This was one IIFE bound to the ids sm-f/sm-drop/sm-list. The colour
+ * sorter needs the SAME machinery — probe, classify, upscale-guard, crop,
+ * WebP, upload — pointed at a different catalogue, and the one thing that
+ * must not happen is a second copy of a pipeline this careful. So the ids
+ * take a prefix and the whole thing becomes mount(prefix, scope).
+ *
+ * The scope is what the server sorts against: "" is the site catalogue,
+ * "barva"/"obloga" the two colour lists. It also decides whether the
+ * original FILENAMES are sent, which is what settles most of a colour drop
+ * without asking a model anything. */
 (function(){
   "use strict";
-  var file = document.getElementById("sm-f");
+function mount(p, scope){
+  var file = document.getElementById(p + "-f");
   if (!file) return;
-  var drop = document.getElementById("sm-drop"), list = document.getElementById("sm-list"),
-      st = document.getElementById("sm-st"), stwrap = document.getElementById("sm-stwrap"),
-      ai = document.getElementById("sm-ai");
+  var drop = document.getElementById(p + "-drop"), list = document.getElementById(p + "-list"),
+      st = document.getElementById(p + "-st"), stwrap = document.getElementById(p + "-stwrap"),
+      ai = document.getElementById(p + "-ai");
   var rows = [], lis = [], urls = [], busy = false;
 
   function say(text, kind){
@@ -1296,14 +1363,27 @@ const SMART_JS = `
 
   /* Centre-crop to the slot's shape, capped at its width — the same cut the
      single-slot page makes, so the two roads store the same picture. */
-  function drawSlot(bmp, ar, maxW){
+  function drawSlot(bmp, ar, maxW, exact){
     var sw = bmp.width || bmp.naturalWidth, sh = bmp.height || bmp.naturalHeight;
     var sx = 0, sy = 0, cw = sw, ch = sh;
     if (ar > 0) {
       if (sw / sh > ar) { cw = Math.round(sh * ar); sx = Math.round((sw - cw) / 2); }
       else { ch = Math.round(sw / ar); sy = Math.round((sh - ch) / 2); }
     }
-    var w = Math.min(cw, maxW || 2048), h = Math.max(1, Math.round(ch * (w / cw)));
+    /* EXACT SLOTS ARE A SIZE, NOT A CEILING. The colour swatches paint as a
+       row of identical squares beside their names, and a row of squares is
+       only a picker if every square is the same square — so these store at
+       maxW × maxW whatever came in, scaling UP where the sample was small.
+       Safe precisely here: a flat colour sample has no detail to invent, so
+       bilinear scaling gives the same colour at a different size. Every
+       other slot keeps the ceiling (a photograph is served through a srcset
+       and its stored width is nobody's business). */
+    var w, h;
+    if (exact && maxW > 0) {
+      w = maxW; h = Math.max(1, Math.round(ar > 0 ? maxW / ar : maxW * (ch / cw)));
+    } else {
+      w = Math.min(cw, maxW || 2048); h = Math.max(1, Math.round(ch * (w / cw)));
+    }
     var c = document.createElement("canvas");
     c.width = w; c.height = h;
     c.getContext("2d").drawImage(bmp, sx, sy, cw, ch, 0, 0, w, h);
@@ -1320,7 +1400,14 @@ const SMART_JS = `
      MEASURABLY larger. Same guard as the single pages: a redraw that added
      no pixels is all risk and no benefit. */
   function maybeEnhance(f, srcW, maxW, i){
-    if (!ai.checked || !(srcW < maxW)) return Promise.resolve({ f: f, up: false });
+    /* ⚠️ NO CHECKBOX MEANS NO UPSCALE, and the colour zones deliberately
+       have none. The enhancer REDRAWS a picture larger, and on a marbled
+       acrylic sample that is not a sharper photograph of the colour — it is
+       a new pattern in roughly that colour. A swatch is the one slot on this
+       site where "not necessarily the same photograph any more" is a wrong
+       answer rather than a trade-off. They also cap at 400px, so there is
+       almost nothing to gain. */
+    if (!ai || !ai.checked || !(srcW < maxW)) return Promise.resolve({ f: f, up: false });
     mark(i, "povečujem z AI …");
     var fd = new FormData();
     fd.append("file", f, f.name || "slika");
@@ -1404,6 +1491,11 @@ const SMART_JS = `
     chain.then(function(){
       var fd = new FormData();
       probes.forEach(function(b, i){ fd.append("files", b, "p" + i + ".jpg"); });
+      /* Positional and parallel to files[]: the probes are downsampled JPEGs
+         named p0…pN, so the real names have to travel on their own. Sent for
+         every scope; only the colour catalogues read them. */
+      fs.forEach(function(f){ fd.append("names", f.name || ""); });
+      if (scope) fd.append("scope", scope);
       fs.forEach(function(_, i){ mark(i, "AI razvršča …"); });
       return fetch("/admin/site-sort", { method: "POST", body: fd, credentials: "same-origin" });
     }).then(function(res){
@@ -1438,7 +1530,7 @@ const SMART_JS = `
             return decode(e.f);
           }).then(function(bmp2){
             mark(i, it.label + " · obrezujem …");
-            return drawSlot(bmp2, ar, it.max || 2048);
+            return drawSlot(bmp2, ar, it.max || 2048, it.exact);
           }).then(function(r){
             mark(i, it.label + " · nalagam …");
             var fd = new FormData();
@@ -1484,6 +1576,11 @@ const SMART_JS = `
       ? Array.prototype.slice.call(e.dataTransfer.files) : [];
     if (fs.length) run(fs);
   });
+}
+
+  mount("sm", "");
+  mount("bv", "barva");
+  mount("ob", "obloga");
 })();
 `;
 
@@ -1693,14 +1790,23 @@ const UPLOAD_JS = `
 
      No crop at all when the frame does not crop — the small story frame is
      object-fit: contain and shows the picture whole. */
-  function drawSlot(bmp, ar, maxW){
+  function drawSlot(bmp, ar, maxW, exact){
     var sw = bmp.width || bmp.naturalWidth, sh = bmp.height || bmp.naturalHeight;
     var sx = 0, sy = 0, cw = sw, ch = sh;
     if (ar > 0) {
       if (sw / sh > ar) { cw = Math.round(sh * ar); sx = Math.round((sw - cw) / 2); }
       else { ch = Math.round(sw / ar); sy = Math.round((sh - ch) / 2); }
     }
-    var w = Math.min(cw, maxW), h = Math.max(1, Math.round(ch * (w / cw)));
+    /* Same rule as the batch uploader's copy: an exact slot stores AT maxW,
+       not under it, so one colour replaced by hand still matches the fifteen
+       sorted by the batch. Two copies of this arithmetic is one too many and
+       the reason they must not drift. */
+    var w, h;
+    if (exact && maxW > 0) {
+      w = maxW; h = Math.max(1, Math.round(ar > 0 ? maxW / ar : maxW * (ch / cw)));
+    } else {
+      w = Math.min(cw, maxW); h = Math.max(1, Math.round(ch * (w / cw)));
+    }
     var c = document.createElement("canvas");
     c.width = w; c.height = h;
     c.getContext("2d").drawImage(bmp, sx, sy, cw, ch, 0, 0, w, h);
@@ -1734,6 +1840,7 @@ const UPLOAD_JS = `
     return (isFinite(w) && isFinite(h) && h > 0) ? w / h : 0;
   })();
   var slotMax = parseInt(form.getAttribute("data-max") || "", 10) || MAX_W;
+  var slotExact = form.getAttribute("data-exact") === "1";
 
   /* ⚠️ READ AT SUBMIT TIME, NOT AT LOAD. The product forms carry
      data-enhance="on" and always upscale; a site slot offers a checkbox the
@@ -1818,7 +1925,7 @@ const UPLOAD_JS = `
     }).then(function(bmp){
       var srcW = bmp.width || bmp.naturalWidth;
       if (siteMode) {
-        return drawSlot(bmp, slotAr, slotMax).then(function(r){
+        return drawSlot(bmp, slotAr, slotMax, slotExact).then(function(r){
           /* WHAT WAS ACTUALLY STORED, AND WHY IT IS NOT BIGGER. An operator
              who drops a 1600 px picture into the 3840 px hero slot has no way
              of knowing it went in soft unless somebody says so, and the honest

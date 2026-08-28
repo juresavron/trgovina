@@ -258,6 +258,68 @@ export const STUDIO_EDITORIAL_CSS = `
   @media (max-width: 700px) {
     :root[data-theme="studio"] .st-imp-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
+  /* ---- Below 620px the square tile stops being a tile ------------------
+   *
+   * ⚠️ MEASURED, not guessed. At 390px the two-column square gave each tile
+   * a 158px box, and inside it clamp(16px,1.8vw,36px) of padding on both
+   * sides leaves 126px for the label — 32% of the viewport, running the
+   * body copy at NINE AND A HALF CHARACTERS PER LINE over four or five
+   * lines. Two columns is exactly one column too many, and the arithmetic
+   * says so at any width below roughly 620: (620 − 50 gutter − 24 gap) / 2
+   * − 32 padding = 241px, which is the last width at which this reads.
+   *
+   * Stacking to one SQUARE was already rejected above, and rightly: five
+   * full-width squares under one heading is ~2.600px of scrolling. So the
+   * tile turns on its side instead — picture left at a third of the width,
+   * label right, vertically centred. Five of those is ~800px, which is an
+   * ordinary phone section, and the label finally gets ~200px of the 340
+   * available instead of 126.
+   *
+   * This is the same markup: only the quiet tile's grid changes from two
+   * rows to two columns, and the label's bottom-alignment (which exists so
+   * five labels share a baseline ACROSS a row) becomes centring, because
+   * stacked there is no row to share a baseline with. */
+  @media (max-width: 619px) {
+    :root[data-theme="studio"] .st-imp-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    :root[data-theme="studio"] .st-imp-quiet {
+      grid-template-columns: minmax(0, 0.34fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      /* 15rem was the height of a stacked SQUARE. On its side the tile is
+       * as tall as its content wants, with a floor that keeps the picture
+       * from collapsing to a sliver when the label is one short line. */
+      min-block-size: 8.5rem;
+      align-items: center;
+    }
+    :root[data-theme="studio"] .st-imp-quiet .st-imp-photo {
+      grid-column: 1;
+      grid-row: 1;
+      /* Square, not 4:3: the picture column is narrow here and a landscape
+       * frame inside it letterboxes to almost nothing. */
+      aspect-ratio: 1 / 1;
+      padding: 12%;
+    }
+    :root[data-theme="studio"] .st-imp-label {
+      grid-column: 2;
+      grid-row: 1;
+      align-self: center;
+      padding: clamp(14px, 3.4vw, 20px) clamp(16px, 4vw, 24px) clamp(14px, 3.4vw, 20px) 0;
+    }
+    /* The fallback tile (no photograph uploaded) has no in-flow picture, so
+     * its grey mass and shadow are pinned to percentages of the WHOLE tile.
+     * Those percentages were drawn for a square with the label below it; on
+     * a landscape tile they run straight under the text. Confine them to
+     * the picture column's share of the width. */
+    :root[data-theme="studio"] .st-imp-quiet .st-imp-mass { inset: 14% 72% 14% 6%; }
+    :root[data-theme="studio"] .st-imp-quiet .st-imp-floor {
+      left: 20%; bottom: 8%; width: 22%;
+    }
+    /* h5 is 24px at this tier and the title is now in a ~200px column, so
+     * the display rung drops one step. h6 (22px) is barely a step; the body
+     * lead rung is the honest size for a card title at this width. */
+    :root[data-theme="studio"] .st-imp-t { font-size: var(--t-h6); }
+  }
   :root[data-theme="studio"] .st-imp-tile {
     position: relative;
     isolation: isolate;
