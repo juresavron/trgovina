@@ -1581,15 +1581,85 @@ function mount(p, scope){
        from. The whole picture is then the object, painted on its average. */
     for (var i = 1; i < k4.length; i++) if (far(k4[0], k4[i]) > 18) return whole;
 
-    var x0 = aw, y0 = ah, x1 = -1, y1 = -1, hits = 0;
+    /* The mask: everything that is not the ground. */
+    var mask = new Uint8Array(aw * ah), hits = 0;
     for (var y = 0; y < ah; y++) {
       for (var x = 0; x < aw; x++) {
         if (far(at(x, y), bg) <= 24) continue;
+        mask[y * aw + x] = 1;
         hits++;
-        if (x < x0) x0 = x;
-        if (x > x1) x1 = x;
-        if (y < y0) y0 = y;
-        if (y > y1) y1 = y;
+      }
+    }
+    if (hits === 0) return whole;
+
+    /* ⚠️ THE LARGEST CONNECTED BLOB, NOT THE BOUNDING BOX OF EVERYTHING.
+     *
+     * The owner uploaded screen captures from a supplier page that carry the
+     * shade name printed under the sample — "Black", "Pure White", "Grey" —
+     * and a box drawn around all non-background pixels swallows the caption
+     * with the panel. Three tiles then showed English words a Slovenian shop
+     * does not use, in a picker whose whole job is to show a colour.
+     *
+     * A caption is a separate island of ink; the sample is one solid mass. So
+     * this floods each island, keeps the biggest, and frames that. It costs
+     * one pass over a 240px grid and it also disposes of a watermark, a stray
+     * mark and a drop shadow that does not touch the sample.
+     *
+     * Text ON the sample survives, and has to: removing it would mean
+     * repainting pixels, and a swatch that has been painted over is not a
+     * photograph of the colour any more.
+     *
+     * The rail is a share of the ink: an island holding less than a quarter
+     * of it is not obviously the subject, so the old whole-mask box stands.
+     * Two chips photographed side by side land there, which is the right
+     * answer — better to frame both loosely than to drop one. */
+    var seen = new Uint8Array(aw * ah);
+    var stack = new Int32Array(aw * ah);
+    var bx0 = 0, by0 = 0, bx1 = -1, by1 = -1, best = 0;
+    for (var i0 = 0; i0 < mask.length; i0++) {
+      if (mask[i0] === 0 || seen[i0] === 1) continue;
+      var top = 0, n = 0;
+      var cx0 = aw, cy0 = ah, cx1 = -1, cy1 = -1;
+      stack[top++] = i0; seen[i0] = 1;
+      while (top > 0) {
+        var p0 = stack[--top];
+        var px = p0 % aw, py = (p0 - px) / aw;
+        n++;
+        if (px < cx0) cx0 = px;
+        if (px > cx1) cx1 = px;
+        if (py < cy0) cy0 = py;
+        if (py > cy1) cy1 = py;
+        /* Eight-connected: a caption's strokes touch diagonally, and letting
+           them count as one island keeps the caption from being counted as
+           several tiny ones that each clear no rail. */
+        for (var dy = -1; dy <= 1; dy++) {
+          for (var dx = -1; dx <= 1; dx++) {
+            if (dx === 0 && dy === 0) continue;
+            var qx = px + dx, qy = py + dy;
+            if (qx < 0 || qy < 0 || qx >= aw || qy >= ah) continue;
+            var q = qy * aw + qx;
+            if (mask[q] === 0 || seen[q] === 1) continue;
+            seen[q] = 1; stack[top++] = q;
+          }
+        }
+      }
+      if (n > best) { best = n; bx0 = cx0; by0 = cy0; bx1 = cx1; by1 = cy1; }
+    }
+
+    var x0, y0, x1, y1;
+    if (bx1 >= 0 && best >= hits * 0.25) {
+      x0 = bx0; y0 = by0; x1 = bx1; y1 = by1;
+      hits = best;
+    } else {
+      x0 = aw; y0 = ah; x1 = -1; y1 = -1;
+      for (var yy = 0; yy < ah; yy++) {
+        for (var xx = 0; xx < aw; xx++) {
+          if (mask[yy * aw + xx] === 0) continue;
+          if (xx < x0) x0 = xx;
+          if (xx > x1) x1 = xx;
+          if (yy < y0) y0 = yy;
+          if (yy > y1) y1 = yy;
+        }
       }
     }
     if (x1 < 0) return whole;
