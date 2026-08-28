@@ -79,6 +79,33 @@ for (const [file, path] of Object.entries(PAGES)) {
   writeFileSync(join(OUT, file), html[file]);
 }
 
+/* ------------------------------------------------------------- the theme */
+/**
+ * ⚠️ THE STYLESHEET, WITHOUT WHICH THIS SCRIPT SHOWS A PAGE NOBODY WILL SEE.
+ *
+ * The theme used to be inlined into every document, so a page written to disk
+ * was self-contained. It is now served from a content-addressed file (see
+ * render/assets.ts) and this script was never taught to emit it: every
+ * document asked for /assets/site-<hash>.css, the static server 404'd, and
+ * every screenshot this script has taken since was of an UNSTYLED page —
+ * block-stacked, full-bleed, nothing where the design puts it.
+ *
+ * audit-site.mjs hit this and carries the same fix with a longer note. The
+ * paths are read out of the rendered HTML rather than imported, so they
+ * cannot drift from what the documents actually request.
+ */
+const assetPaths = new Set();
+for (const doc of Object.values(html))
+  for (const m of doc.matchAll(/\/assets\/site-[0-9a-f]{8}\.(?:css|js)/g))
+    assetPaths.add(m[0]);
+if (assetPaths.size === 0) throw new Error("no /assets/ reference in any document — has the asset path changed?");
+mkdirSync(join(OUT, "assets"), { recursive: true });
+for (const a of assetPaths) {
+  const res = handleRequest(new Request("https://trgovina.worldfans.workers.dev" + a));
+  if (res.status !== 200) throw new Error("worker did not serve " + a + " (" + res.status + ")");
+  writeFileSync(join(OUT, a.replace(/^\//, "")), await res.text());
+}
+
 /* ------------------------------------------------------------ stand-ins */
 /** Every /media/ URL any page asks for. */
 const wanted = new Set();
