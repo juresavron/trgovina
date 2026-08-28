@@ -1466,7 +1466,8 @@ export const STUDIO_CHROME_CSS = `
      * unset, the note measured 718px and 96 characters at 768. */
     :root[data-theme="studio"] .st-foot-top { gap: 25px; }
     :root[data-theme="studio"] .st-foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    :root[data-theme="studio"] .st-foot-brand { grid-column: 1 / -1; }
+    /* No .st-foot-brand rule: this tier is inside ≤1359, which already spans
+     * the brand block across every column with the same value. */
   }
 
   /* THE FADE WITHOUT THE TIMELINE.

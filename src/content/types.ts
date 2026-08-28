@@ -322,6 +322,20 @@ export interface ShopContent {
     readonly h: string;
     readonly p: readonly string[];
   }[];
+  /**
+   * Three short proofs shown IN the hero, under the call to action.
+   *
+   * ⚠️ EVERY ITEM HERE IS A CLAIM IN THE MOST PROMINENT PLACE THE SITE HAS,
+   * above the fold on the landing page, so the bar is the highest on the
+   * site: it goes in only if the shop has confirmed it and another page
+   * backs it up. `trust` (the ticker) is NOT the same list and must not be
+   * reused for this — two of its four entries are claims still waiting on
+   * the owner, and the hero is the last place to put an unconfirmed one.
+   *
+   * Kept to three because this row sits between the CTA and the fold: a
+   * fourth pushes the button off a phone.
+   */
+  heroTrust?: readonly [string, string, string];
   moat: {
     h2: string;
     steps: [string, string][];

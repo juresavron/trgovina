@@ -80,6 +80,7 @@ import { productImg } from "./media";
 import { helpIcon, returnIcon, shieldIcon, truckIcon } from "./icons";
 import { renderStudioTestimonials } from "./editorial";
 import { ADDON_GROUP_ORDER } from "../../catalog/pola";
+import { finishImageUrl, type FinishKind } from "../../catalog/finish-image";
 import { formatEur } from "../../catalog/pricing";
 
 export const STUDIO_PDP_CSS = `
@@ -848,6 +849,82 @@ export const STUDIO_PDP_CSS = `
     list-style: none; margin: clamp(12px, 1.1vw, 22px) 0 0; padding: 0;
     display: flex; flex-wrap: wrap;
     gap: clamp(8px, 0.7vw, 14px);
+  }
+
+  /* ---- the finish swatches -------------------------------------------
+   *
+   * A colour is the one option on this page that a NAME cannot carry.
+   * "Canyon" and "Odyssey" are the acrylic manufacturer's own words for
+   * particular marbled sheets, and the note under this group has been
+   * apologising for exactly that; a photograph of the sample is the answer.
+   *
+   * AUTO-FIT, so the row fills whatever the buy column gives it — three
+   * across on a phone, five or six beside the gallery — without a breakpoint
+   * per tier. minmax(0, 1fr) rather than a fixed tile: sixteen swatches must
+   * never be the thing that makes the column scroll sideways.
+   *
+   * ⚠️ THE PICTURE IS var(--sw), SET INLINE PER OPTION, and the tile is
+   * designed to be correct WITHOUT it — see the swatch note in the group()
+   * renderer. Un-uploaded, --sw resolves to nothing, the ground stays, and
+   * the tile reads as the named chip it replaced. */
+  :root[data-theme="studio"] .st-pdp-sws {
+    list-style: none; margin: clamp(12px, 1.1vw, 22px) 0 0; padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+    gap: clamp(10px, 0.9vw, 16px);
+  }
+  :root[data-theme="studio"] .st-pdp-sws > li { min-inline-size: 0; }
+  :root[data-theme="studio"] .st-pdp-sw {
+    display: grid;
+    gap: 7px;
+    min-inline-size: 0;
+    cursor: pointer;
+  }
+  :root[data-theme="studio"] .st-pdp-sw-img {
+    display: block;
+    aspect-ratio: 1 / 1;
+    border-radius: var(--r-media);
+    /* The ground a colour nobody has photographed yet shows. Not white: a
+     * white square beside a white column reads as a missing image rather
+     * than as a swatch waiting for one. */
+    background-color: var(--wash);
+    background-image: var(--sw);
+    background-size: cover;
+    background-position: center;
+    box-shadow: 0 0 0 var(--bw-line) var(--line);
+    transition: box-shadow 0.2s ease;
+  }
+  :root[data-theme="studio"] .st-pdp-sw-n {
+    font-family: var(--f-body);
+    /* 13px is a literal because the ramp has no rung below --t-body (16):
+     * this is a caption under a 76px tile, and sixteen of them at 16px would
+     * set the names taller than the colours they describe. Same licence the
+     * arrow glyph and the print sheet take, and stated for the same reason. */
+    font-size: 13px;
+    line-height: 1.3;
+    color: var(--ink-mute);
+    text-wrap: pretty;
+    /* "Mediterranean" is one character wider than an 86px tile. */
+    overflow-wrap: break-word;
+  }
+  /* CHOSEN: a ring the swatch wears, and the name in full ink. The tick the
+   * option rows use would sit on top of the colour it is describing. */
+  :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-sw .st-pdp-sw-img {
+    box-shadow: 0 0 0 2px var(--ink-invert);
+  }
+  :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-sw .st-pdp-sw-n {
+    color: var(--ink);
+    font-weight: var(--w-body-med);
+  }
+  :root[data-theme="studio"] .st-pdp-sw:hover .st-pdp-sw-img {
+    box-shadow: 0 0 0 var(--bw-line) var(--line-strong);
+  }
+  :root[data-theme="studio"] .st-pdp-radio:focus-visible + .st-pdp-sw .st-pdp-sw-img {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-pdp-sw-img { transition: none; }
   }
   /* ROUND (§9), and the LABEL rung: a pill is a chip, which is label copy.
    * Sentence case though, not uppercase — these labels are product copy
@@ -2442,16 +2519,39 @@ export function renderStudioPdp(ctx: RenderCtx): string {
      * replaces.
      */
     inBar = false,
+    /**
+     * Paint each option as a photographed SWATCH rather than a named pill.
+     *
+     * ⚠️ THE PICTURE IS A CSS BACKGROUND, NOT AN <img>, and that is what makes
+     * this safe to ship before a single swatch has been uploaded. The
+     * storefront renders synchronously and cannot ask the bucket what exists;
+     * an <img> at a path with nothing behind it is a broken-image icon on the
+     * page where somebody is choosing a colour. A background that 404s simply
+     * does not paint, so the tile keeps its neutral ground and its NAME —
+     * which is precisely the pill this replaces. The page is correct today
+     * and better the day the photographs land, with no deploy in between.
+     *
+     * The URL is the only thing that varies per option, so it rides in as a
+     * custom property and every rule that uses it stays in the stylesheet.
+     */
+    swatch: FinishKind | null = null,
   ): string => {
     if (options.length === 0) return "";
     const labelId = idBase + "-h";
-    const pills = usesPills(options);
+    const pills = !swatch && usesPills(options);
     const rows = options
       .map((o, i) => {
         const id = idBase + "-" + String(i);
         const input =
           '<input class="st-pdp-radio" type="radio" id="' + id + '" name="' + esc(name) +
           '" value="' + esc(o) + '"' + (i === selected ? " checked" : "") + ">";
+        if (swatch) {
+          return "<li>" + input +
+            '<label class="st-pdp-sw" for="' + id + '">' +
+            '<span class="st-pdp-sw-img" style="--sw:url(&quot;' +
+            esc(finishImageUrl(swatch, o)) + '&quot;)"></span>' +
+            '<span class="st-pdp-sw-n">' + esc(o) + "</span></label></li>";
+        }
         return pills
           ? "<li>" + input +
             '<label class="st-pdp-pill" for="' + id + '">' + esc(o) + "</label></li>"
@@ -2464,7 +2564,7 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       .join("");
     return (
       '<div><h2 class="st-pdp-glabel" id="' + labelId + '">' + esc(label) + "</h2>" +
-      '<ul class="' + (pills ? "st-pdp-pills" : "st-pdp-opts") +
+      '<ul class="' + (swatch ? "st-pdp-sws" : pills ? "st-pdp-pills" : "st-pdp-opts") +
       '" role="radiogroup"' + (inBar ? " data-st-bar" : "") +
       ' aria-labelledby="' + labelId + '">' + rows + "</ul></div>"
     );
@@ -2650,13 +2750,27 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   // goods nobody has seen or produce a name the supplier cannot match. Saying
   // whose names they are is what turns the remaining English from an
   // oversight into a fact about the product. See catalog/pola.ts.
+  // ⚠️ THIS NOTE USED TO SAY "Odtenkov ne slikamo" — we do not photograph the
+  // shades — which is the exact opposite of what the group above it now does.
+  // It is written to be true in BOTH states the page can be in: before any
+  // swatch is uploaded ("kjer imamo posnet vzorec" covers none of them) and
+  // after. What it must never become is a promise that every colour has a
+  // picture, because the slots fill one upload at a time.
+  //
+  // The caveat it replaces is still the honest one and stays: a marbled
+  // acrylic photographed under one light, shown on an uncalibrated screen,
+  // is a guide and not a binding shade. Saying so is what lets the swatch
+  // exist at all — a colour is a main characteristic of the goods, and a
+  // picture of it is a statement about them.
   const swatchNote =
     '<p class="st-pdp-swatch-note">Imena barv školjke so proizvajalčeva — ' +
     "takšna so tudi na njegovi barvni karti, zato jih ne prevajamo. " +
-    "Odtenkov ne slikamo: akril je marmoriran in fotografija ga ne pokaže " +
+    "Kjer imamo posnet vzorec, ga vidite ob imenu barve; akril je marmoriran " +
+    "in vsak zaslon barvo prikaže nekoliko drugače, zato je posnetek v pomoč " +
+    "pri izbiri in ne zavezujoč odtenek. " +
     // "v salonu pa jih vidite v živo" — there is no salon. The sample book
     // is the real offer, and now the only one made.
-    "pošteno. Vzorčnik pošljemo na zahtevo. " +
+    "Vzorčnik pošljemo na zahtevo. " +
     "Proizvajalčeva barvna karta našteva deset odtenkov, specifikacija " +
     "modela pa sedem; kateri veljajo za vaš model, potrdimo ob naročilu.</p>";
   const finishes =
@@ -2668,8 +2782,8 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       // seven of the ten shades apply to your model, a default finish is a
       // choice the buyer did not make; an untouched radio group contributes
       // nothing to the enquiry, which is the honest reading of untouched.
-      ? group("Barva školjke", "barva", d.finishes ?? [], -1, "st-pdp-fin", true) +
-        group("Barva obloge", "obloga", d.cabinetFinishes ?? [], -1, "st-pdp-cab", true) +
+      ? group("Barva školjke", "barva", d.finishes ?? [], -1, "st-pdp-fin", true, "barva") +
+        group("Barva obloge", "obloga", d.cabinetFinishes ?? [], -1, "st-pdp-cab", true, "obloga") +
         swatchNote
       : "";
 

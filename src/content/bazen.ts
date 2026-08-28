@@ -809,6 +809,28 @@ export const bazenContent: ShopContent = {
   cta: "Izberite svoj bazen",
   metaDescription:
     "Masažni bazeni za 5 ali 6 oseb, 35–50 šob, akrilna školjka in ogrevanje. Ogled lokacije, dostava na teraso in zagon po vsej Sloveniji.",
+  // ⚠️ THREE CONFIRMED PROOFS, CHOSEN BY WHAT IS SETTLED RATHER THAN BY WHAT
+  // SELLS BEST.
+  //
+  // `trust` below reads well in a ticker and could NOT be reused here: two of
+  // its four entries — the service network and the 36 instalments — are among
+  // the claims still waiting on the owner, and the hero is the last surface on
+  // the site where an unconfirmed one belongs.
+  //
+  // What is left is stronger than it looks, because each is checkable by the
+  // visitor within one click:
+  //   - the price floor is DERIVED from the offered models, so it cannot drift
+  //     from the figures on their own pages, and it says the quiet part out
+  //     loud on a six-thousand-euro purchase;
+  //   - the free site visit is the shop's real differentiator and has a whole
+  //     page behind it;
+  //   - delivery-and-commissioning is the promise every product page,
+  //     /dostava-in-montaza and the terms already make.
+  heroTrust: [
+    "Modeli od " + modelPrice(OFFERED_MODELS[0]!) + " z DDV",
+    "Brezplačen ogled lokacije pred nakupom",
+    "Dostava, priklop in zagon po vsej Sloveniji",
+  ],
   trust: [
     "Dostava in zagon po vsej Sloveniji",
     "Ogled lokacije pred ponudbo",

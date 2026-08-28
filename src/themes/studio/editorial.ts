@@ -1292,13 +1292,14 @@ function tileCaption(ctx: RenderCtx, fallback: string): string {
 export function renderStudioImpact(ctx: RenderCtx): string {
   const steps = ctx.content.moat.steps;
   const label = steps[0];
-  // stats[1], and the reason is what the NEXT band shows: the stats row
-  // prints ALL FOUR figures, so any figure here repeats — the choice is only
-  // which repetition sits closest. The last stat is the row's neighbouring
-  // cell (back-to-back with this tile); the second — the jet count — is the
-  // one figure whose row-mate sits farthest from the tile, and it evidences
-  // the same band ("zakaj pri nas") from the product side.
-  const stat = ctx.content.stats[1] ?? ctx.content.stats[0];
+  // ⚠️ THE LAST STAT, AND IT IS NOT INTERCHANGEABLE. tileCaption() below does
+  // not read this stat's own label — it returns the MOAT CLAIM's second half,
+  // "premaknemo ga mi", which is a sentence about MASS. Pointed at stats[1]
+  // for one evening (to reduce a repetition with the row below) the home page
+  // read "94 — premaknemo ga mi": the jet count, captioned "we move it for
+  // you". The figure and the caption are one statement; changing either alone
+  // makes nonsense, so they move together or not at all.
+  const stat = ctx.content.stats[ctx.content.stats.length - 1] ?? ctx.content.stats[0];
   // Three short proof points read as one muted line under the head; more than
   // three and the 21px sub starts competing with the tiles. Each claim is its
   // own inline-block chip so the line breaks only at the gaps BETWEEN chips
@@ -1330,8 +1331,15 @@ export function renderStudioImpact(ctx: RenderCtx): string {
       : "") +
     "</div>";
 
-  // The hero tile carries no label by design — the crop is the content, so it
-  // is the one tile that genuinely needs a picture rather than tolerating one.
+  // ⚠️ THIS TILE NOW CARRIES A LABEL, and the note it replaces said the
+  // opposite: "no label by design — the crop is the content". That reasoning
+  // holds for the source theme, whose tiles are atmospheric interiors where
+  // the crop really is the content. This shop's photographs are white-sweep
+  // STUDIO CUTOUTS, so the tile rendered as a product floating in a grey box
+  // with nothing said about it — the largest tile in a "why buy from us"
+  // band, making no argument at all. It takes the second process step, so
+  // the row reads as the first two moves of the job rather than as a caption,
+  // a picture and a number.
   //
   // Offset 31, not 2: the head above this row names the hot tub ("Zakaj kupci
   // izberejo masažni bazen") and offset 2 resolved, for the bazen key, to a
@@ -1342,9 +1350,14 @@ export function renderStudioImpact(ctx: RenderCtx): string {
   // (hero band), 13 (quiet tile), 17+i (testimonial discs), 22 (stat tile,
   // below), 23/25 (statement), 25-30 (social strip) — all distinct from 31,
   // so no photograph repeats because of it.
+  const second = steps[1];
   const hero =
     '<div class="st-imp-tile st-imp-hero">' +
     tileShot(ctx, "zakaj-mi-3", "st-imp-photo", "(max-width: 860px) 92vw, 38vw") +
+    (second
+      ? '<div class="st-imp-label"><h3 class="st-imp-t">' + esc(second[0]) + "</h3>" +
+        '<p class="st-imp-p">' + esc(second[1]) + "</p></div>"
+      : "") +
     "</div>";
 
   // §4.9's third tile carried a borrowed room interior with the stat over it.
@@ -1383,7 +1396,13 @@ export function renderStudioImpact(ctx: RenderCtx): string {
   return (
     '<section class="st-imp"><div class="st-imp-in">' +
     '<div class="st-imp-head">' +
-    '<h2 class="st-imp-h">Zakaj kupci izberejo ' + esc(ctx.shop.keyword.accusative) + "</h2>" +
+    // ⚠️ NOT "Zakaj kupci izberejo masažni bazen". That heading promises the
+    // reasons somebody wants a hot tub — warmth, the evening, the back — and
+    // then every word under it is about US: delivery, the site visit, what we
+    // carry. A band whose head asks one question and whose body answers a
+    // different one reads as filler however good the parts are.
+    '<h2 class="st-imp-h">Zakaj ' + esc(ctx.shop.keyword.accusative) +
+    " kupiti pri nas</h2>" +
     (sub ? '<p class="st-imp-sub">' + sub + "</p>" : "") +
     // The band made three claims about delivery and service and offered no
     // way to read more — /dostava-in-montaza is where all three live.
