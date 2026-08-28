@@ -174,14 +174,18 @@ export function finishListPage(
       "preberemo iz imena datoteke.</p></div>" +
       noticeHtml(n) +
       '<div class="fin-how">' +
-      "<p><b>Poimenujte datoteke po barvah in jih spustite v okno spodaj.</b> " +
-      "Tako, kot piše na proizvajalčevi barvni karti — " +
-      "<code>Oyster Opal.jpg</code>, <code>Silver white marble.png</code>, " +
-      "<code>Črna.jpg</code>. Vsaka datoteka postane ena barva.</p>" +
-      "<p>Velikih in malih črk ne popravljamo, ker se ime navaja na " +
-      "naročilnici: karta piše <i>Silver white marble</i> in <i>Oyster Opal</i>, " +
-      "vsako po svoje, in tako tudi ostane. Po nalaganju lahko vsako barvo " +
-      "tukaj preimenujete ali odstranite s seznama.</p>" +
+      "<p><b>Vzorce spustite v okno spodaj — ime dobijo sami.</b> " +
+      "Če datoteko poimenujete po barvi, tako kot piše na proizvajalčevi " +
+      "barvni karti (<code>Oyster Opal.jpg</code>, " +
+      "<code>Silver white marble.png</code>, <code>Črna.jpg</code>), " +
+      "obdržimo prav to ime — velikih in malih črk ne popravljamo, ker se ime " +
+      "navaja na naročilnici.</p>" +
+      "<p>Kadar ime datoteke ničesar ne pove — <code>Screenshot 2026-08-28 " +
+      "at 10.20.46</code>, <code>IMG_4821</code> — barvo pogleda umetna " +
+      "inteligenca in jo poimenuje po odtenku, ki ga vidi: " +
+      "<i>Temno siva</i>, <i>Peščeno bež</i>. To je opis tega, kar je na " +
+      "sliki, in ne proizvajalčeva oznaka — te ne ugibamo, ker bi napačno ime " +
+      "pristalo na naročilnici. Vsako lahko spodaj popravite.</p>" +
       "</div>" +
       group(
         "Barve školjke",

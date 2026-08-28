@@ -83,6 +83,7 @@ import {
 } from "./assign";
 import type { FinishKind } from "../catalog/finish-image";
 import { enhance, enhanceAvailable } from "./enhance";
+import { looksLikeColourName, nameColour, uniqueColourName } from "./name-colour";
 import { describe, describeAvailable } from "./describe";
 import { arrange } from "./shots";
 import { blogEditPage, blogListPage } from "./blog-panel";
@@ -662,9 +663,61 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     // said plainly: rename it after the colour and drop it again.
     if (kind) {
       const api: Api = { env, token: admin.token };
+
+      // ⚠️ THE FILENAME FIRST, THE MODEL ONLY WHERE IT CARRIES NOTHING.
+      //
+      // Somebody who names a file "Oyster Opal.jpg" is reading the
+      // manufacturer's chart, and this code is not: their name is better than
+      // any description a model can give and is kept untouched. The model is
+      // asked about "Screenshot 2026-08-28 at 10.20.46" and its like — which
+      // is what actually landed here, six times, and put six screenshot
+      // filenames on the product pages as colour names.
+      //
+      // What comes back is a DESCRIPTION of the pixels, never a guess at a
+      // trade name; admin/name-colour.ts says why that line is drawn where it
+      // is. When the model is unreachable the filename stands, which is the
+      // behaviour this replaces.
+      const proposed: string[] = files.map((_, i) => {
+        const fromFile = nameFromFilename(names[i] ?? "");
+        return looksLikeColourName(fromFile) ? fromFile : "";
+      });
+
+      // ⚠️ FOUR AT A TIME, NOT SIXTY IN A ROW. The colour ceiling is 60 files
+      // because a colour drop was a pure filename read and cost no round
+      // trip; naming makes each unnamed file one. Sixty sequential model
+      // calls is a minute of wall clock inside one request and sixty
+      // subrequests before a single row is written — an isolate limit, not a
+      // slow page. Four at a time keeps the whole batch to about fifteen
+      // rounds and leaves subrequest headroom for the writes that follow.
+      const need = proposed.map((n, i) => (n === "" ? i : -1)).filter((i) => i >= 0);
+      for (let k = 0; k < need.length; k += 4) {
+        const slice = need.slice(k, k + 4);
+        const got = await Promise.all(
+          slice.map(async (i) => {
+            const f = files[i]!;
+            try {
+              return await nameColour(env, await f.arrayBuffer(), f.type || "image/jpeg", kind);
+            } catch {
+              return null;
+            }
+          }),
+        );
+        slice.forEach((i, j) => {
+          // The filename is still the fallback — it is a poor name, not no name.
+          proposed[i] = got[j] ?? nameFromFilename(names[i] ?? "");
+        });
+      }
+
+      // Names claimed earlier in this same drop. Two greys both described as
+      // "Temno siva" fold to one slug and the second overwrites the first —
+      // one colour where the operator uploaded two.
+      const taken = new Set<string>();
       const items = [];
       for (let i = 0; i < files.length; i++) {
-        const name = nameFromFilename(names[i] ?? "");
+        const raw = proposed[i] ?? "";
+        const name = raw === "" ? "" : uniqueColourName(raw, taken);
+        if (name !== "") taken.add(name.trim().toLowerCase());
+        const named = name !== "" && !looksLikeColourName(nameFromFilename(names[i] ?? ""));
         const finish = name === "" ? null : await ensureFinish(api, "bazen", kind, name);
         items.push(
           finish
@@ -675,7 +728,11 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
                 ar: "1:1",
                 max: 400,
                 exact: true,
-                reason: 'Barva "' + finish.name + '" po imenu datoteke.',
+                // Which road the name came down, because an operator who sees
+                // a name they did not write should be told who wrote it.
+                reason: named
+                  ? 'Barva "' + finish.name + '" po odtenku na sliki.'
+                  : 'Barva "' + finish.name + '" po imenu datoteke.',
               }
             : {
                 i,
@@ -684,8 +741,9 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
                 ar: null,
                 max: null,
                 exact: false,
-                reason: "Iz imena datoteke ni bilo mogoče razbrati imena barve — " +
-                  "preimenujte jo po barvi (npr. »Oyster Opal.jpg«) in poskusite znova.",
+                reason: "Imena barve ni bilo mogoče določiti — ne iz imena " +
+                  "datoteke ne iz same slike. Datoteko poimenujte po barvi " +
+                  "(npr. »Oyster Opal.jpg«) in poskusite znova.",
               },
         );
       }

@@ -588,8 +588,10 @@ export function finishDropCard(
     esc(what) + " naenkrat</label>" +
     '<input id="' + prefix + '-f" type="file" multiple ' +
     'accept="image/webp,image/jpeg,image/png,image/avif">' +
-    '<p class="fmeta">Ena datoteka = ena barva. Vzorec obrežemo na sredini ' +
-    "in shranimo 400 × 400 px.</p>" +
+    '<p class="fmeta">Ena datoteka = ena barva. Ime vzamemo iz imena ' +
+    "datoteke; če to ničesar ne pove, barvo poimenuje umetna inteligenca po " +
+    "odtenku, ki ga vidi. Vzorec sami poiščemo na sliki, ga postavimo na " +
+    "sredino in shranimo 400 × 400 px.</p>" +
     "</div>" +
     // ⚠️ ON THE OWNER'S EXPLICIT INSTRUCTION, AGAINST THE ADVICE ABOVE IT.
     //

@@ -2792,8 +2792,23 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   // exist at all — a colour is a main characteristic of the goods, and a
   // picture of it is a statement about them.
   const swatchNote =
-    '<p class="st-pdp-swatch-note">Imena barv školjke so proizvajalčeva — ' +
-    "takšna so tudi na njegovi barvni karti, zato jih ne prevajamo. " +
+    '<p class="st-pdp-swatch-note">' +
+    // ⚠️ WHOSE NAMES THESE ARE DEPENDS ON WHICH LIST IS LIVE, and saying the
+    // wrong one is not a style problem.
+    //
+    // While the list is the transcription of the supplier's chart, the names
+    // ARE the manufacturer's and the sentence is a fact about the product.
+    // Once the shop uploads its own swatches the names are written here — by
+    // whoever named the file, or, where the file carried nothing, by a model
+    // describing the colour it can see (admin/name-colour.ts). Telling a
+    // buyer those are the manufacturer's names would be false, and it is the
+    // kind of false that reaches a purchase order: somebody would quote
+    // "Peščeno bež" to a supplier who has never heard of it.
+    (SHELL_FINISHES_ARE_PHOTOGRAPHED
+      ? "Barve školjke so posnete pri nas in poimenovane po odtenku, ki ga " +
+        "vidite; proizvajalčevo oznako iz barvne karte potrdimo ob naročilu. "
+      : "Imena barv školjke so proizvajalčeva — takšna so tudi na njegovi " +
+        "barvni karti, zato jih ne prevajamo. ") +
     "Kjer imamo posnet vzorec, ga vidite ob imenu barve; akril je marmoriran " +
     "in vsak zaslon barvo prikaže nekoliko drugače, zato je posnetek v pomoč " +
     "pri izbiri in ne zavezujoč odtenek. " +
