@@ -488,7 +488,7 @@ export const POLA_MODELS: readonly PolaModel[] = [
  * Ask the supplier which seven per model, and for swatch images, before this
  * becomes a colour picker.
  */
-const TRANSCRIBED_SHELL_FINISHES: readonly string[] = [
+export const TRANSCRIBED_SHELL_FINISHES: readonly string[] = [
   "Midnight",
   "Canyon",
   "Silver white marble",
@@ -526,7 +526,7 @@ const TRANSCRIBED_SHELL_FINISHES: readonly string[] = [
  * If the supplier ever publishes a Slovenian colour chart, this is where it
  * lands and the note comes out.
  */
-const TRANSCRIBED_CABINET_FINISHES: readonly string[] = [
+export const TRANSCRIBED_CABINET_FINISHES: readonly string[] = [
   "Svetlo siva",
   "Zlato rjava",
   "Temno siva",
@@ -579,6 +579,8 @@ export const CABINET_FINISHES: readonly string[] =
  * the shop's own swatches it is no longer true or needed.
  */
 export const SHELL_FINISHES_ARE_PHOTOGRAPHED = GENERATED_SHELL_FINISHES.length > 0;
+export const CABINET_FINISHES_ARE_PHOTOGRAPHED =
+  GENERATED_CABINET_FINISHES.length > 0;
 
 
 /**

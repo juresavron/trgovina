@@ -21,6 +21,7 @@ import { noticeHtml, shell } from "./panel";
 import { esc } from "../render/sections";
 import { finishImageUrl } from "../catalog/finish-image";
 import type { Finish } from "./finishes";
+import { finishSlug, type FinishKind } from "../catalog/finish-image";
 
 const CSS = `<style>
 .fin-group{margin-top:26px}
@@ -29,20 +30,24 @@ const CSS = `<style>
 .fin{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);
   padding:12px;display:flex;gap:12px;align-items:flex-start}
 .fin .sw{inline-size:64px;block-size:64px;flex:none;border-radius:8px;
-  border:1px solid var(--line);background:var(--bg2) center/cover no-repeat}
+  border:1px solid var(--line);background:var(--paper) center/cover no-repeat}
 .fin .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
 .fin form{display:flex;gap:6px;flex-wrap:wrap}
 .fin input[type=text]{flex:1;min-width:0;min-height:34px;padding:5px 8px;font:inherit;
-  border:1px solid var(--line);border-radius:var(--r-ctrl);background:#fff;color:var(--ink)}
+  border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl);background:#fff;color:var(--ink)}
 .fin .slug{font-size:12px;color:var(--mute);word-break:break-all}
 .fin .btn{min-height:34px;padding:0 10px;font-size:13px}
-.fin-empty{color:var(--mute);margin:12px 0 0}
+.fin-state{color:var(--mute);font-size:14px;margin:8px 0 0;max-width:52ch}
+.fin--todo{align-items:stretch}
+.fin--todo .sw--none{background:repeating-linear-gradient(45deg,#fff,#fff 5px,var(--line) 5px,var(--line) 10px)}
+.fin--todo .nm{font-weight:600;color:var(--ink)}
+.fin--todo .btn{align-self:flex-start;margin-block-start:auto}
 .fin-how{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);
   padding:16px 18px;margin-top:14px}
 .fin-how p{margin:0 0 8px}
 .fin-how p:last-child{margin:0}
 .fin-how code{font-family:ui-monospace,Menlo,monospace;font-size:13px;
-  background:var(--bg2);padding:1px 5px;border-radius:4px}
+  background:var(--paper);padding:1px 5px;border-radius:4px}
 </style>`;
 
 /** Slovenian plural on the LAST TWO DIGITS, never n % 10. */
@@ -76,15 +81,70 @@ function card(f: Finish): string {
   );
 }
 
-function group(title: string, note: string, rows: readonly Finish[]): string {
+/**
+ * A colour that is LIVE ON THE SITE but has no row here: one of the names
+ * transcribed from the supplier's chart, which catalog/pola.ts falls back to
+ * while nothing has been uploaded.
+ *
+ * ⚠️ THIS EXISTS BECAUSE THE PAGE LIED BY OMISSION. It listed only uploaded
+ * colours, so on a shop that has uploaded none it said "0 barv" and offered
+ * a sentence pointing somewhere else — while every product page was, at that
+ * moment, showing ten shell colours and six cabinet ones from the fallback.
+ * An operator who came here to edit the colours they could see on their own
+ * site found an empty page. That is a worse failure than a missing feature:
+ * it makes the panel look broken and the site look unmanaged.
+ *
+ * Each one links to its own upload page, which already exists — SITE_IMAGES
+ * derives a slot per transcribed name — so "edit" from here is one click.
+ */
+function fallbackCard(kind: FinishKind, name: string): string {
+  const slug = finishSlug(name);
+  return (
+    '<li class="fin fin--todo">' +
+    '<span class="sw sw--none" aria-hidden="true"></span>' +
+    '<span class="grow">' +
+    '<span class="nm">' + esc(name) + "</span>" +
+    '<span class="slug">iz dobaviteljeve karte · še brez vzorca</span>' +
+    '<a class="btn btn--ghost" href="/admin/site/' + esc(kind) + "-" + esc(slug) +
+    '">Naložite vzorec</a>' +
+    "</span></li>"
+  );
+}
+
+function group(
+  title: string,
+  note: string,
+  kind: FinishKind,
+  rows: readonly Finish[],
+  fallback: readonly string[],
+  photographed: boolean,
+): string {
+  // What the site is ACTUALLY showing right now, which is not the same
+  // question as what is in the table. pola.ts reads a list baked in at build
+  // time (finishes.generated.ts), so a swatch uploaded five minutes ago is a
+  // row here and still not on the product page. Three states, three
+  // sentences — an operator who uploads a colour and then looks at the shop
+  // needs to be told which one they are in.
+  const live = rows.length > 0;
+  const state = !live
+    ? "Na strani modela se zdaj prikazuje " + esc(finishCount(fallback.length)) +
+      " iz dobaviteljeve barvne karte. Ko naložite prvi vzorec, seznam " +
+      "prevzamejo vaše barve."
+    : photographed
+      ? "Na strani modela se prikazuje teh " + esc(finishCount(rows.length)) +
+        " — vaši vzorci."
+      : "Naloženih je " + esc(finishCount(rows.length)) + ". Na strani modela " +
+        "se do naslednje posodobitve strani še prikazuje " +
+        esc(finishCount(fallback.length)) + " iz dobaviteljeve barvne karte.";
   return (
     '<div class="fin-group"><h2>' + esc(title) + "</h2>" +
     '<p class="lede">' + esc(note) + "</p>" +
-    (rows.length === 0
-      ? '<p class="fin-empty">Nobene barve še ni. Naložite vzorce na strani ' +
-        "»Slike strani« — vsaka datoteka postane barva s svojim imenom.</p>"
-      : '<ul class="fins">' + rows.map(card).join("") + "</ul>") +
-    "</div>"
+    '<p class="fin-state">' + state + "</p>" +
+    '<ul class="fins">' +
+    (live
+      ? rows.map(card).join("")
+      : fallback.map((n) => fallbackCard(kind, n)).join("")) +
+    "</ul></div>"
   );
 }
 
@@ -92,16 +152,23 @@ export function finishListPage(
   rows: readonly Finish[],
   who: string,
   n?: { kind: "ok" | "err"; text: string },
+  fallback: {
+    shell: readonly string[];
+    cabinet: readonly string[];
+    shellPhotographed: boolean;
+    cabinetPhotographed: boolean;
+  } = { shell: [], cabinet: [], shellPhotographed: false, cabinetPhotographed: false },
 ): string {
   const shellF = rows.filter((f) => f.kind === "barva");
   const cab = rows.filter((f) => f.kind === "obloga");
+  const shown = (shellF.length > 0 ? shellF.length : fallback.shell.length) +
+    (cab.length > 0 ? cab.length : fallback.cabinet.length);
   return shell(
     "Barve",
     CSS +
-      '<div class="head">' +
-      "<h1>Barve</h1>" +
+      '<div class="head"><h1>Barve</h1>' +
       '<p class="lede">Barve, ki jih trgovina lahko pokaže. Na strani modela se ' +
-      "prikažejo prav te — " + esc(finishCount(rows.length)) + " skupaj. " +
+      "prikažejo prav te — " + esc(finishCount(shown)) + " skupaj. " +
       "Spremembe se pokažejo ob naslednji posodobitvi strani.</p></div>" +
       noticeHtml(n) +
       '<div class="fin-how">' +
@@ -109,19 +176,27 @@ export function finishListPage(
       "po barvi, tako kot piše na proizvajalčevi barvni karti — " +
       "<code>Oyster Opal.jpg</code>, <code>Silver white marble.png</code>, " +
       "<code>Črna.jpg</code> — in jo povlecite na ustrezno polje na strani " +
-      "»Slike strani«.</p>" +
+      '<a href="/admin/slike">Slike strani</a>.</p>' +
       "<p>Ime barve preberemo iz imena datoteke in ga ne popravljamo: velike in " +
       "male črke ostanejo takšne, kot ste jih napisali, ker se ime navaja na " +
-      "naročilnici. Spodaj ga lahko popravite, če se je zatipkalo.</p>" +
-      "<p>Dokler ni naložena nobena barva, stran pokaže prepisano barvno karto " +
-      "dobavitelja. Ko naložite prvo, prevzame seznam tisto, kar ste naložili.</p>" +
+      "naročilnici. Ko je barva vaša, jo lahko tukaj preimenujete ali odstranite.</p>" +
       "</div>" +
       group(
         "Barve školjke",
         "Akrilne školjke. Imena so proizvajalčeva in jih ne prevajamo.",
+        "barva",
         shellF,
+        fallback.shell,
+        fallback.shellPhotographed,
       ) +
-      group("Barve obloge", "Stranske plošče. Ta imena so slovenska.", cab),
+      group(
+        "Barve obloge",
+        "Stranske plošče. Ta imena so slovenska.",
+        "obloga",
+        cab,
+        fallback.cabinet,
+        fallback.cabinetPhotographed,
+      ),
     who,
     "barve",
   );

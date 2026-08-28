@@ -22,7 +22,13 @@
  *   * /media is public and read-only, and can only ever proxy the one bucket.
  */
 
-import { OFFERED_MODELS } from "../catalog/pola";
+import {
+  CABINET_FINISHES_ARE_PHOTOGRAPHED,
+  OFFERED_MODELS,
+  SHELL_FINISHES_ARE_PHOTOGRAPHED,
+  TRANSCRIBED_CABINET_FINISHES,
+  TRANSCRIBED_SHELL_FINISHES,
+} from "../catalog/pola";
 import { OFFERED_SWIMSPAS } from "../catalog/swimspa";
 import { aliasTarget, encodeBucketKey } from "../media-aliases";
 import { SHOPS } from "../tenants";
@@ -755,7 +761,18 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
               : undefined) ?? "Shranjeno.",
         } as const)
       : undefined;
-    return page(finishListPage(await listFinishes(api, shopKey), admin.email, notice));
+    // The fallback lists go WITH the rows, because the page has to describe
+    // what the storefront is showing, not what the table holds. On a shop
+    // that has uploaded nothing those are two different answers: the table is
+    // empty and every product page is rendering the transcription.
+    return page(
+      finishListPage(await listFinishes(api, shopKey), admin.email, notice, {
+        shell: TRANSCRIBED_SHELL_FINISHES,
+        cabinet: TRANSCRIBED_CABINET_FINISHES,
+        shellPhotographed: SHELL_FINISHES_ARE_PHOTOGRAPHED,
+        cabinetPhotographed: CABINET_FINISHES_ARE_PHOTOGRAPHED,
+      }),
+    );
   }
 
   // --- enquiries ---
