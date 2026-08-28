@@ -275,11 +275,47 @@ export const STUDIO_EDITORIAL_CSS = `
    * exactly that); the dead declaration is removed and the selector now does
    * real work: two grid rows, picture then label, so the two can NEVER
    * collide — the row boundary is the fix for the overlap measured at 1000px
-   * (see .st-imp-quiet .st-imp-photo). minmax(0, 1fr) so a long label shrinks
-   * the picture row rather than overflowing the tile. */
+   * (see .st-imp-quiet .st-imp-photo).
+   *
+   * ⚠️ THE PICTURE ROW IS A FIXED FRACTION, NOT THE LEFTOVER. It was
+   * minmax(0, 1fr) then auto, which sounds right — a long label shrinks the
+   * picture rather than overflowing — and produced a row of five tiles whose
+   * pictures were five different sizes. The label row was auto, so its
+   * height is its text, and the five labels do not have the same text: four
+   * of the five headings wrap to two lines and "Predaja" does not. That one
+   * spare line went to the picture above it, which is object-fit: contain
+   * and duly grew into it, ending up half again the size of its neighbours.
+   *
+   * Shot at 1440 the effect was not subtle, and it was worse than uneven: the
+   * labels had eaten so much of the square that the picture row was ~33px in
+   * a 256px tile — a photograph rendered as a strip.
+   *
+   * ⚠️ AND THE SQUARE IS WHY, so the quiet tile gives it up. Splitting the
+   * square 40/60 was tried first and put the label THROUGH the picture: at
+   * 1440 these columns are ~256px, and a two-line heading over three lines of
+   * body needs about 184px of that — 72% of the tile, not 60%. Any fixed
+   * split either starves the picture or overflows the label, because the tile
+   * was square for the old three-tile composition, where the image was the
+   * content and the label was a caption. Here the label IS the content.
+   *
+   * So: row 1 is the picture at its own 4:3, row 2 is everything left, and
+   * the tile's height is whatever those two need. The five columns are equal
+   * (repeat(5, 1fr)) and the grid stretches every tile to the tallest, so
+   * five pictures come out identical whatever the copy does — which is the
+   * property the fixed split was reaching for — and none of them is a strip.
+   * The label sits at the BOTTOM of what remains (§4.9's bottom-left label),
+   * so the five labels share a baseline even where their titles wrap
+   * differently.
+   *
+   * min-block-size is for the OTHER state: with no photographs uploaded,
+   * tileShot emits the grey mass instead, which is absolutely positioned on
+   * percentage insets and has no in-flow height at all. Without a floor the
+   * fallback tile would collapse to its label. */
   :root[data-theme="studio"] .st-imp-quiet {
     display: grid;
-    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-rows: auto minmax(0, 1fr);
+    aspect-ratio: auto;
+    min-block-size: 15rem;
   }
 
 
@@ -364,6 +400,17 @@ export const STUDIO_EDITORIAL_CSS = `
   :root[data-theme="studio"] .st-imp-quiet .st-imp-photo {
     position: static;
     grid-row: 1;
+    /* The picture's box is its OWN 4:3 of the column width, not the space the
+     * label happens to leave. That is what makes five tiles carry five
+     * identically sized pictures while their labels run to different lengths.
+     * contain, not cover: these slots carry no ratio in the admin registry,
+     * so nothing tells an operator what will be cropped — see the
+     * never-crops-a-frame-that-shows-the-picture-whole test in
+     * admin/site-images.test.ts. A picture that is not 4:3 letterboxes onto
+     * the tile's own ground, which is the honest result. */
+    inline-size: 100%;
+    block-size: auto;
+    aspect-ratio: 4 / 3;
     padding: 7% 12% 4%;
     object-fit: contain;
   }
@@ -380,6 +427,12 @@ export const STUDIO_EDITORIAL_CSS = `
     position: relative;
     z-index: 2;
     grid-row: 2;
+    /* Bottom of its row, not stretched to fill it — the row is now a fixed
+     * 60% rather than the label's own height, so without this a two-line
+     * title and a one-line title would start at the same y and end at
+     * different ones. Bottom-aligned, the five labels share a baseline and
+     * the wrapping difference falls where nobody reads. */
+    align-self: end;
     padding: 0 clamp(16px, 1.8vw, 36px) clamp(16px, 1.8vw, 36px);
   }
   /* The tile's title — a card title on a large card, so the h5 rung
