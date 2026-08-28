@@ -850,7 +850,6 @@ export const bazenContent: ShopContent = {
     "Dostava in zagon po vsej Sloveniji",
     "Ogled lokacije pred ponudbo",
     "Servisna mreža in rezervni deli",
-    "Do 36 mesečnih obrokov",
   ],
   // Every figure here is the supplier's own — the previous set led with a
   // temperature the price list does not state.

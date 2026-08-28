@@ -517,9 +517,8 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     // is doing something other than matching a catalogue. The price is on
     // every model's page either way, so the question would buy nothing.
     '<p class="st-fnd-note">Vprašanja o proračunu namenoma ni. Cena vsakega ' +
-    "modela je napisana na njegovi strani in je za vse obiskovalce enaka, " +
-    'načini plačila pa so opisani v <a href="' +
-    esc(shop.routeSlugs["/financing"]) + '">financiranju</a>.</p>' +
+    "modela je napisana na njegovi strani in je za vse obiskovalce enaka; " +
+    "zavezujoča cena za vašo konfiguracijo pride v pisni ponudbi.</p>" +
     "</div>" +
     "</div>"
   );

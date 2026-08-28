@@ -104,8 +104,8 @@ export const FAQ: Page = {
         ],
         [
           "Ali je mogoče plačilo na obroke?",
-          "Da, do 36 mesečnih obrokov. Pogoji so odvisni od zneska in ponudnika financiranja; " +
-            "izračun pripravimo ob ponudbi.",
+          "Obročnega plačila in financiranja ne ponujamo. Plačilni pogoji so zapisani v " +
+            "pisni ponudbi, ki jo dobite po ogledu lokacije.",
         ],
       ],
     },
@@ -115,8 +115,8 @@ export const FAQ: Page = {
       items: [
         [
           "Kakšna je garancija?",
-          "Od dveh do petih let, odvisno od sklopa; rok in obseg sta navedena v garancijskem " +
-            "listu, ki ga dobite ob predaji. Garancija je prostovoljna zaveza proizvajalca. " +
+          "Tri leta. Obseg je naveden v garancijskem listu, ki ga dobite ob " +
+            "predaji. Garancija je prostovoljna zaveza proizvajalca. " +
             "Ločeno od nje in poleg nje imate kot potrošnik zakonske pravice pri neskladnosti " +
             "blaga: za neskladnost, ki se pokaže v dveh letih od dobave, odgovarjamo mi kot " +
             "prodajalec.",

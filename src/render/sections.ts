@@ -448,7 +448,6 @@ export function renderFooter(ctx: RenderCtx): string {
       [s.routeSlugs["/products"], c.nav[0]],
       [s.routeSlugs["/compare"], "Primerjava modelov"],
       [s.routeSlugs["/guides"], "Vodniki"],
-      [s.routeSlugs["/financing"], "Financiranje"],
     ]) +
     col("Pomoč", [
       [s.routeSlugs["/delivery"], "Dostava in montaža"],

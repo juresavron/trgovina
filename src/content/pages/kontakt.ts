@@ -154,10 +154,6 @@ export const CONTACT: Page = {
           "Priprave podlage in elektroinštalacije na vaši strani. Za priklop dobite pisna " +
             "navodila za svojega električarja; če ga nimate, izvedbo prevzame naš partner.",
         ],
-        [
-          "Plačilo na obroke",
-          "Do 36 mesečnih obrokov, če to želite. Izračun pripravimo skupaj s ponudbo.",
-        ],
       ],
     },
     {

@@ -118,13 +118,12 @@ export const PRIVACY: Page = {
           "računovodskemu servisu za račune ter ponudniku gostovanja spletne strani in " +
           "ponudniku podatkovne baze, v kateri se povpraševanja shranijo. Vsak od " +
           "njih obdeluje podatke po naših navodilih in zgolj za navedeni namen.",
-        // Deliberately OUT of the po-naših-navodilih sentence: financiranje.ts
-        // says in the shop's own words that the credit is a second contract
-        // the lender decides on its own assessment — that is an independent
-        // controller with its own notice, not a processor under instruction.
-        "Če se odločite za financiranje, podatke, ki jih zahteva ponudnik financiranja, " +
-          "posredujete njemu; ponudnik financiranja je samostojni upravljavec, o vlogi odloča " +
-          "po lastni presoji in obdelavo pojasnjuje v svoji izjavi o zasebnosti.",
+        // The paragraph about a financing provider is GONE with the offer it
+        // described. It named an independent controller — a lender deciding a
+        // credit application on its own assessment — and this shop does not
+        // offer instalments, so there is no such recipient. A privacy notice
+        // that lists a recipient nobody sends data to is inaccurate in the
+        // direction that matters least, and still inaccurate.
         "Kadar kakšen od teh ponudnikov podatke obdeluje zunaj Evropskega gospodarskega " +
           "prostora, to poteka le na podlagi jamstev, ki jih zahteva splošna uredba o varstvu " +
           "podatkov — na primer standardnih pogodbenih določil ali sklepa o ustreznosti.",

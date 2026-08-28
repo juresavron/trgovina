@@ -198,7 +198,6 @@ import { DELIVERY } from "./pages/dostava";
 import { GUIDES } from "./pages/vodniki";
 import { FAQ } from "./pages/faq";
 import { COMPARE } from "./pages/primerjava";
-import { FINANCING } from "./pages/financiranje";
 import { SHOWROOM } from "./pages/salon";
 import { CART, CHECKOUT } from "./pages/kosarica";
 import { TERMS } from "./pages/pogoji";
@@ -213,7 +212,7 @@ import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
  * tenants/bazen.ts where the rest of the routing lives.
  */
 export const PAGES: readonly Page[] = [
-  ABOUT, CONTACT, DELIVERY, GUIDES, FAQ, COMPARE, FINANCING, SHOWROOM,
+  ABOUT, CONTACT, DELIVERY, GUIDES, FAQ, COMPARE, SHOWROOM,
   CART, CHECKOUT, TERMS, PRIVACY, COOKIES, WITHDRAWAL,
 ];
 

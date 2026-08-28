@@ -144,7 +144,7 @@ export const ABOUT: Page = {
         ],
         [
           "Kakšna je garancija?",
-          "Od dveh do petih let, odvisno od sklopa; rok in obseg sta v garancijskem listu, ki " +
+          "Tri leta. Obseg je naveden v garancijskem listu, ki " +
             "ga dobite ob predaji. To je prostovoljna zaveza proizvajalca. Ločeno od nje imate " +
             "kot potrošnik zakonske pravice pri neskladnosti blaga: za neskladnost, ki se pokaže " +
             "v dveh letih od dobave, odgovarjamo mi kot prodajalec.",

@@ -35,7 +35,8 @@
  *     survive the photography" describes.
  *   - The sidebar filtered nothing. This Worker has no query-parameter
  *     filtering, so the device rendered as links to /trgovina, /primerjava,
- *     /vodniki, /financiranje — four destinations the chrome nav and the
+ *     /vodniki and /financiranje (a route that no longer exists) — all of
+ *     them destinations the chrome nav and the
  *     footer already carry, wearing checkbox and pill costumes that promise a
  *     control they are not.
  *
