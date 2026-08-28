@@ -27,6 +27,7 @@ import {
   GENERATED_CABINET_FINISHES,
   GENERATED_SHELL_FINISHES,
 } from "./finishes.generated";
+import { finishSlug, type FinishKind } from "./finish-image";
 
 /**
  * An option the supplier prices separately from the shell.
@@ -561,15 +562,62 @@ export const TRANSCRIBED_CABINET_FINISHES: readonly string[] = [
  * not reach Supabase: sync-finishes fails soft and leaves the generated file
  * alone, exactly as sync-reviews does.
  */
-export const SHELL_FINISHES: readonly string[] =
-  GENERATED_SHELL_FINISHES.length > 0
-    ? GENERATED_SHELL_FINISHES.map((f) => f.name)
-    : TRANSCRIBED_SHELL_FINISHES;
+/**
+ * ⚠️ THE NAME AND THE KEY ARE TWO DIFFERENT THINGS, AND TREATING THEM AS ONE
+ * BLANKED EVERY RENAMED SWATCH.
+ *
+ * A colour's slug is fixed when its swatch is first stored, and its name is
+ * free to change afterwards — the panel has a rename field, and the automatic
+ * naming rewrites it outright. Deriving the bucket key from the NAME therefore
+ * works exactly until somebody renames a colour, at which point the page asks
+ * for site/barva-rjavo-marmorirana.webp while the file sits at
+ * site/barva-screenshot-2026-08-28-at-10-20-46.webp. Nothing errors: the
+ * swatch is painted as a CSS background, so the tile just goes blank.
+ *
+ * The data always carried both — the finishes table stores name and slug in
+ * separate columns and finishes.generated.ts writes them as a pair — and the
+ * code re-derived one from the other anyway. So the pair is what is exported
+ * now, and everything that needs a key reads the slug rather than folding the
+ * name again. renameFinish stays cheap and safe: it changes a label and can
+ * never orphan a picture.
+ */
+export interface FinishEntry {
+  /** As it is printed beside the swatch, and on the order. */
+  readonly name: string;
+  /** The stem the swatch is stored under. Fixed at upload; never re-derived. */
+  readonly slug: string;
+}
 
-export const CABINET_FINISHES: readonly string[] =
+export const SHELL_FINISH_ENTRIES: readonly FinishEntry[] =
+  GENERATED_SHELL_FINISHES.length > 0
+    ? GENERATED_SHELL_FINISHES
+    : TRANSCRIBED_SHELL_FINISHES.map((n) => ({ name: n, slug: finishSlug(n) }));
+
+export const CABINET_FINISH_ENTRIES: readonly FinishEntry[] =
   GENERATED_CABINET_FINISHES.length > 0
-    ? GENERATED_CABINET_FINISHES.map((f) => f.name)
-    : TRANSCRIBED_CABINET_FINISHES;
+    ? GENERATED_CABINET_FINISHES
+    : TRANSCRIBED_CABINET_FINISHES.map((n) => ({ name: n, slug: finishSlug(n) }));
+
+/** Just the labels, for the places that only print them. */
+export const SHELL_FINISHES: readonly string[] = SHELL_FINISH_ENTRIES.map((f) => f.name);
+export const CABINET_FINISHES: readonly string[] = CABINET_FINISH_ENTRIES.map((f) => f.name);
+
+/**
+ * The stored stem for a colour the page knows only by name.
+ *
+ * The storefront's option lists are plain name arrays — that is what a radio
+ * group renders — so the renderer needs a way back to the key. Looking it up
+ * beats re-folding the name, which is the bug this whole pair exists to stop.
+ *
+ * The fallback folds the name, for a colour the live list does not carry: a
+ * page built from a stale generated file, or a caller passing something that
+ * was never in the list. That is the old behaviour, and for a name that has
+ * never been renamed it is also the right answer.
+ */
+export function finishSlugOf(kind: FinishKind, name: string): string {
+  const list = kind === "barva" ? SHELL_FINISH_ENTRIES : CABINET_FINISH_ENTRIES;
+  return list.find((f) => f.name === name)?.slug ?? finishSlug(name);
+}
 
 /**
  * Whether a kind's list came from uploaded photographs rather than the

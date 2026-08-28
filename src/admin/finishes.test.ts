@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { nameFromFilename } from "./finishes";
-import { finishSlug } from "../catalog/finish-image";
+import { finishImageKey, finishSlug } from "../catalog/finish-image";
 import {
   CABINET_FINISHES,
+  CABINET_FINISH_ENTRIES,
+  finishSlugOf,
   SHELL_FINISHES,
+  SHELL_FINISH_ENTRIES,
   TRANSCRIBED_CABINET_FINISHES,
   TRANSCRIBED_SHELL_FINISHES,
 } from "../catalog/pola";
@@ -197,5 +200,80 @@ describe("the colour page, on a shop that has uploaded nothing", () => {
     // And that the framing is NOT the model's doing, so an operator who
     // unticks the box does not think their tiles will go crooked again.
     expect(withAi).toContain("brez modela");
+  });
+});
+
+/**
+ * ⚠️ A RENAME MUST NOT MOVE THE PICTURE, and for one deploy it did — in the
+ * only direction that leaves no trace.
+ *
+ * The owner pressed "Poimenuj z AI" and six swatches went blank. renameFinish
+ * changes the NAME and deliberately not the slug, so the file stays where it
+ * was written; but every reader — the admin card, the product page, the upload
+ * registry — rebuilt the key by folding the NAME again. After a rename the
+ * page asked for site/barva-rjavo-marmorirana.webp while the file sat at
+ * site/barva-screenshot-2026-08-28-at-10-20-46.webp.
+ *
+ * Nothing errored. A swatch is painted as a CSS background, so a missing file
+ * is a tile with no colour in it and no broken-image icon, and /media answers
+ * an optional slot with a transparent pixel and a 200. Silent by three
+ * separate mechanisms.
+ */
+describe("a colour's stored key survives being renamed", () => {
+  it("keys off the slug the row carries, never off its current name", () => {
+    // A row as it exists after a rename: the name is Slovenian, the slug is
+    // still the screenshot filename it was uploaded under.
+    const renamed = { kind: "barva" as const, slug: "screenshot-2026-08-28-at-10-20-46" };
+    expect(finishImageKey(renamed.kind, renamed.slug)).toBe(
+      "site/barva-screenshot-2026-08-28-at-10-20-46.webp",
+    );
+    // The name it now carries must NOT be what the key is built from.
+    expect(finishImageKey(renamed.kind, finishSlug("Rjavo marmorirana"))).not.toBe(
+      finishImageKey(renamed.kind, renamed.slug),
+    );
+  });
+
+  /**
+   * ⚠️ THE DECISIVE ONE: the card the owner was looking at.
+   *
+   * finishImageKey() folding a string that is already a slug is a no-op, so
+   * asserting on it alone would have passed before the fix too. What actually
+   * broke is that the CARD passed f.name. This renders one and looks at the
+   * URL it painted.
+   */
+  it("paints the admin card from the row's slug, not from its new name", () => {
+    const page = finishListPage(
+      [
+        {
+          id: "1",
+          kind: "barva",
+          name: "Rjavo marmorirana",
+          slug: "screenshot-2026-08-28-at-10-20-46",
+          position: 0,
+        },
+      ],
+      "ana@example.com",
+    );
+    expect(page).toContain("/media/site/barva-screenshot-2026-08-28-at-10-20-46.webp");
+    expect(page).not.toContain("/media/site/barva-rjavo-marmorirana.webp");
+    // The name is still what the operator reads and edits.
+    expect(page).toContain('value="Rjavo marmorirana"');
+  });
+
+  /** The storefront reaches the key through the entry list, by name. */
+  it("looks a live colour's slug up rather than folding its name", () => {
+    for (const [kind, list] of [
+      ["barva", SHELL_FINISH_ENTRIES],
+      ["obloga", CABINET_FINISH_ENTRIES],
+    ] as const) {
+      for (const f of list) {
+        expect(finishSlugOf(kind, f.name), f.name).toBe(f.slug);
+      }
+    }
+  });
+
+  /** A name the live list has never heard of still resolves to something. */
+  it("falls back to folding the name for a colour not in the list", () => {
+    expect(finishSlugOf("barva", "Nekaj Čisto Drugega")).toBe("nekaj-cisto-drugega");
   });
 });

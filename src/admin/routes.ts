@@ -863,7 +863,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         if (!nameColourAvailable(env)) return seeOther("/admin/barve?e=fin-noai");
         const url2 =
           env.SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" +
-          encodeBucketKey(finishImageKey(row.kind, row.name));
+          encodeBucketKey(finishImageKey(row.kind, row.slug));
         let bytes: ArrayBuffer;
         try {
           const r = await fetch(url2);

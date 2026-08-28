@@ -1518,31 +1518,39 @@ function mount(p, scope){
 
   /* FIND THE SWATCH IN THE PICTURE, so a row of tiles is a row of tiles.
 
-     The owner's report: "when i upload the image i want all to be centered
-     and look the same and not like one a bit higher one a bit lower." Six
-     screen captures of a supplier chart put the sample in six different
-     places at six different sizes; a centre crop keeps whatever happened to
-     be in the middle, so one tile sat high, one sat low, one was clipped at
-     the bottom, and the row read as six mistakes rather than one picker.
+     The owner's report, twice: "i want all to be centered and look the same
+     and not like one a bit higher one a bit lower", then "one image cannot be
+     different as here". Screen captures of a supplier chart put the sample in
+     different places at different sizes; a centre crop keeps whatever happened
+     to be in the middle, so tiles sat high, low and clipped.
 
-     This is a bounding box, not a generator. It reads the four corners to
-     learn the background, walks the image for everything that is not that
-     background, and returns the smallest square holding it with a little
-     air. Deterministic, so the same file always frames the same way, and the
-     colour that comes out is the colour that went in — which is the whole
-     requirement for a swatch somebody orders a shell from.
+     ⚠️ THIS RETURNS THE OBJECT, NOT A CROP, and the first version returned a
+     crop — which is why the second report happened.
 
-     ⚠️ EVERY RAIL HERE EXISTS FOR ONE SAMPLE: "Silver white marble" is very
-     nearly the white it is photographed against. A trim that trusted its own
-     answer would find almost nothing and crop the sample away to a speck. So
-     the corners have to agree with each other about what the background even
-     is, and the box has to be a believable size; anything outside those
-     bounds falls back to the plain centre crop, which is today's behaviour.
-     Failing back to a slightly-off tile beats failing forward to a tile that
-     is not the colour. */
+     That version picked a square around the sample and let drawSlot cut it
+     out. A cut-out has to fit INSIDE the picture, so it was clamped twice:
+     the side was capped at min(w, h), and the origin was pushed back inside
+     the frame. A sample near an edge, or one whose box is wider than the
+     picture is tall, therefore came out neither centred on itself nor at the
+     same scale as its neighbours — which is exactly the row of three cabinet
+     swatches that was reported, all three uploaded after that version
+     shipped.
+
+     Composing cannot be clamped. drawSlot paints the ground, then draws this
+     box scaled so its LONGEST side is a fixed fraction of the tile, centred.
+     Every swatch then has identical padding and identical centring by
+     construction, whatever shape or position it arrived in.
+
+     ⚠️ AND IT NEVER RETURNS NOTHING. Falling back to a plain centre crop was
+     the other way one tile ended up unlike the rest: a sample that fills its
+     frame, or one too close to its ground to find (Silver white marble is
+     very nearly the white it is photographed against), took a different road
+     and came out framed differently. Where the sample cannot be found the
+     whole picture IS the object — same road, same padding, nothing lost. */
   function frameSwatch(bmp){
     var w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight;
-    if (!(w > 8 && h > 8)) return null;
+    var whole = { x: 0, y: 0, w: w, h: h, bg: "#ffffff" };
+    if (!(w > 8 && h > 8)) return whole;
     /* Analysed small: 240px is enough to find an edge, and keeps a
        twelve-megapixel screen capture from locking the tab. */
     var aw = Math.min(w, 240), ah = Math.max(1, Math.round(h * (aw / w)));
@@ -1551,24 +1559,27 @@ function mount(p, scope){
     var ctx = c.getContext("2d", { willReadFrequently: true });
     ctx.drawImage(bmp, 0, 0, aw, ah);
     var d;
-    try { d = ctx.getImageData(0, 0, aw, ah).data; } catch (e) { return null; }
+    try { d = ctx.getImageData(0, 0, aw, ah).data; } catch (e) { return whole; }
 
     function at(x, y){ var i = (y * aw + x) * 4; return [d[i], d[i + 1], d[i + 2]]; }
     function far(p, q){
       var dr = p[0] - q[0], dg = p[1] - q[1], db = p[2] - q[2];
       return Math.sqrt(dr * dr + dg * dg + db * db);
     }
-    /* The background, from the four corners. They must agree: a photograph
-       with a busy edge has no background to trim, and guessing one would
-       carve into the picture. */
+    /* The ground, from the four corners — used both to find the sample and to
+       paint the tile around it, so the padding is the colour the photograph
+       already had rather than an invented white. */
     var m = 2;
     var k4 = [at(m, m), at(aw - 1 - m, m), at(m, ah - 1 - m), at(aw - 1 - m, ah - 1 - m)];
-    for (var i = 1; i < k4.length; i++) if (far(k4[0], k4[i]) > 18) return null;
     var bg = [
-      (k4[0][0] + k4[1][0] + k4[2][0] + k4[3][0]) / 4,
-      (k4[0][1] + k4[1][1] + k4[2][1] + k4[3][1]) / 4,
-      (k4[0][2] + k4[1][2] + k4[2][2] + k4[3][2]) / 4,
+      Math.round((k4[0][0] + k4[1][0] + k4[2][0] + k4[3][0]) / 4),
+      Math.round((k4[0][1] + k4[1][1] + k4[2][1] + k4[3][1]) / 4),
+      Math.round((k4[0][2] + k4[1][2] + k4[2][2] + k4[3][2]) / 4),
     ];
+    whole.bg = "rgb(" + bg[0] + "," + bg[1] + "," + bg[2] + ")";
+    /* Corners that disagree mean there is no ground to separate the sample
+       from. The whole picture is then the object, painted on its average. */
+    for (var i = 1; i < k4.length; i++) if (far(k4[0], k4[i]) > 18) return whole;
 
     var x0 = aw, y0 = ah, x1 = -1, y1 = -1, hits = 0;
     for (var y = 0; y < ah; y++) {
@@ -1581,42 +1592,61 @@ function mount(p, scope){
         if (y > y1) y1 = y;
       }
     }
-    if (x1 < 0) return null;
+    if (x1 < 0) return whole;
     var area = (x1 - x0 + 1) * (y1 - y0 + 1);
     /* ⚠️ DENSITY, NOT AREA, IS THE RAIL THAT WORKS. A 4% area floor was the
        first attempt and it refused a real case: a 120px sample inside a
-       900x600 screen capture is 2.7% of the frame and framed nothing, so
-       that tile stayed as crooked as before. What actually separates a
-       sample from a speck of noise is that a sample FILLS its own bounding
-       box — scattered dark pixels give a huge box with almost nothing in it.
-       Hence the 60% fill test, with a much lower area floor behind it. */
-    if (hits < area * 0.6) return null;       /* scattered, not one object */
-    if (area < aw * ah * 0.005) return null;  /* too small to be the sample */
-    if (area > aw * ah * 0.96) return null;   /* nothing to trim */
+       900x600 screen capture is 2.7% of the frame. What separates a sample
+       from scattered noise is that a sample FILLS its own bounding box. */
+    if (hits < area * 0.6) return whole;
+    if (area < aw * ah * 0.005) return whole;
 
-    /* Back to full-resolution coordinates, then a square around the box's
-       centre with a little air, clamped inside the picture. Square because
-       the slot is square: framing here and centre-cropping again downstream
-       would shift it back off centre. */
     var kk = w / aw;
-    var bx = x0 * kk, by = y0 * kk, bw = (x1 - x0 + 1) * kk, bh = (y1 - y0 + 1) * kk;
-    var side = Math.min(Math.max(bw, bh) * 1.12, Math.min(w, h));
-    var cx = bx + bw / 2, cy = by + bh / 2;
-    var sx = Math.round(Math.min(Math.max(cx - side / 2, 0), w - side));
-    var sy = Math.round(Math.min(Math.max(cy - side / 2, 0), h - side));
-    return { x: sx, y: sy, w: Math.round(side), h: Math.round(side) };
+    return {
+      x: Math.round(x0 * kk),
+      y: Math.round(y0 * kk),
+      w: Math.max(1, Math.round((x1 - x0 + 1) * kk)),
+      h: Math.max(1, Math.round((y1 - y0 + 1) * kk)),
+      bg: whole.bg,
+    };
   }
 
   /* Centre-crop to the slot's shape, capped at its width — the same cut the
      single-slot page makes, so the two roads store the same picture. */
-  function drawSlot(bmp, ar, maxW, exact, rect){
+  /* How much of the tile the sample fills, along its longest side. One
+     constant, applied to every swatch, is the whole of "they must all look
+     the same": the padding around a sample is then a property of the tile
+     rather than of whatever the photographer framed. */
+  var SWATCH_FILL = 0.84;
+
+  function drawSlot(bmp, ar, maxW, exact, frame){
     var sw = bmp.width || bmp.naturalWidth, sh = bmp.height || bmp.naturalHeight;
+    /* ⚠️ A SWATCH IS COMPOSED, NOT CUT OUT. Everything else on the site is a
+       photograph somebody framed, and the right thing to do with it is take
+       the middle. A swatch is a sample on a plain ground, and the right thing
+       is to put it in the same place at the same size as every other sample —
+       which a crop cannot promise, because a crop has to fit inside the
+       picture and gets clamped when the sample sits near an edge. */
+    if (frame && exact && maxW > 0) {
+      var c0 = document.createElement("canvas");
+      c0.width = maxW; c0.height = maxW;
+      var g0 = c0.getContext("2d");
+      g0.fillStyle = frame.bg || "#ffffff";
+      g0.fillRect(0, 0, maxW, maxW);
+      var k = (maxW * SWATCH_FILL) / Math.max(frame.w, frame.h);
+      var dw = Math.max(1, Math.round(frame.w * k)), dh = Math.max(1, Math.round(frame.h * k));
+      g0.imageSmoothingQuality = "high";
+      g0.drawImage(bmp, frame.x, frame.y, frame.w, frame.h,
+        Math.round((maxW - dw) / 2), Math.round((maxW - dh) / 2), dw, dh);
+      return toBlob(c0, "image/webp", 0.9).then(function(blob){
+        return blob.arrayBuffer().then(function(buf){
+          if (!isWebp(buf)) throw new Error("ta brskalnik ne zna shraniti v WebP — poskusite v Chromu ali posodobite Safari");
+          return { blob: blob, w: maxW, h: maxW };
+        });
+      });
+    }
     var sx = 0, sy = 0, cw = sw, ch = sh;
-    /* A rect from frameSwatch is already the slot's shape and already
-       centred on the sample, so it replaces the centre crop rather than
-       being cropped a second time. */
-    if (rect) { sx = rect.x; sy = rect.y; cw = rect.w; ch = rect.h; }
-    else if (ar > 0) {
+    if (ar > 0) {
       if (sw / sh > ar) { cw = Math.round(sh * ar); sx = Math.round((sw - cw) / 2); }
       else { ch = Math.round(sw / ar); sy = Math.round((sh - ch) / 2); }
     }

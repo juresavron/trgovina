@@ -62,7 +62,8 @@ export function finishCount(n: number): string {
 }
 
 function card(f: Finish): string {
-  const src = finishImageUrl(f.kind, f.name) + "?v=" + String(Date.now());
+  // f.slug, not f.name: the stored key never moves when a colour is renamed.
+  const src = finishImageUrl(f.kind, f.slug) + "?v=" + String(Date.now());
   return (
     '<li class="fin">' +
     // The swatch itself, so a wrong name beside a picture is obvious at a

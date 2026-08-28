@@ -56,15 +56,20 @@ describe("site image slots", () => {
     // registry does not carry that exact key the panel offers no way to fill
     // it and the swatch can never appear. Both sides derive the key from
     // catalog/finish-image.ts, and this proves they meet.
-    const { SHELL_FINISHES, CABINET_FINISHES } = await import("../catalog/pola");
+    // ⚠️ BY SLUG, NOT BY NAME. The key is fixed when a swatch is first
+    // stored and the name is free to change afterwards, so folding the name
+    // again asks for a file that stops existing the moment anybody renames a
+    // colour — and the swatch is a CSS background, so the tile just goes
+    // blank. See FinishEntry in catalog/pola.ts.
+    const { SHELL_FINISH_ENTRIES, CABINET_FINISH_ENTRIES } = await import("../catalog/pola");
     const { finishImageKey } = await import("../catalog/finish-image");
     const keys = new Set(SITE_IMAGES.map((s) => s.key));
     const missing: string[] = [];
-    for (const n of SHELL_FINISHES) {
-      if (!keys.has(finishImageKey("barva", n))) missing.push("barva:" + n);
+    for (const f of SHELL_FINISH_ENTRIES) {
+      if (!keys.has(finishImageKey("barva", f.slug))) missing.push("barva:" + f.name);
     }
-    for (const n of CABINET_FINISHES) {
-      if (!keys.has(finishImageKey("obloga", n))) missing.push("obloga:" + n);
+    for (const f of CABINET_FINISH_ENTRIES) {
+      if (!keys.has(finishImageKey("obloga", f.slug))) missing.push("obloga:" + f.name);
     }
     expect(missing).toEqual([]);
   });
@@ -75,7 +80,9 @@ describe("site image slots", () => {
     const { finishImageKey, finishSlug } = await import("../catalog/finish-image");
     expect(finishSlug("Črna")).toBe("crna");
     expect(finishSlug("Silver white marble")).toBe("silver-white-marble");
-    expect(finishImageKey("obloga", "Zlato rjava")).toBe("site/obloga-zlato-rjava.webp");
+    expect(finishImageKey("obloga", finishSlug("Zlato rjava"))).toBe(
+      "site/obloga-zlato-rjava.webp",
+    );
     for (const s of SITE_IMAGES) {
       expect(s.key, s.key + " is not URL-safe").toMatch(/^site\/[a-z0-9][a-z0-9/_-]*\.webp$/);
     }

@@ -81,7 +81,7 @@ import { productImg } from "./media";
 import { helpIcon, returnIcon, shieldIcon, truckIcon } from "./icons";
 import { renderStudioTestimonials } from "./editorial";
 import { ADDON_GROUP_ORDER } from "../../catalog/pola";
-import { SHELL_FINISHES_ARE_PHOTOGRAPHED } from "../../catalog/pola";
+import { finishSlugOf, SHELL_FINISHES_ARE_PHOTOGRAPHED } from "../../catalog/pola";
 import { finishImageUrl, type FinishKind } from "../../catalog/finish-image";
 import { formatEur } from "../../catalog/pricing";
 
@@ -1383,9 +1383,55 @@ export const STUDIO_PDP_CSS = `
    * — the step above them is therefore a band-to-band step rather than a
    * device-to-device one. See renderStudioPdp for the measurement that moved
    * them. */
+  /* ⚠️ TWO COLUMNS, BECAUSE ONE COLUMN WASTED SIXTY PER CENT OF THE ROW.
+   *
+   * Measured at 1440: each panel's rule ran 40 to 1400 while the paragraph
+   * under it stopped at 584 — a 1360px hairline closing 544px of text, on
+   * every panel of every product page. It is the same fault the content
+   * pages had (see page.ts), and it needed the opposite fix, because the
+   * cause is the opposite: there the track was too wide for its measure and
+   * the answer was to give the document a width; here the measure is right
+   * and there is simply room for two of them.
+   *
+   * So the panels lay out two across and the running text keeps its 34rem.
+   * The width gets used, the line length does not move, and nothing is
+   * stranded.
+   *
+   * auto-fit with a min of 32rem rather than a breakpoint: two columns
+   * appear the moment two fit and the layout collapses to one below that,
+   * which is the same idiom the compare grid and the guide grid in this file
+   * already use. No new tier to keep in step with the rest of the theme.
+   *
+   * The row borders still line up across the columns. Grid items stretch to
+   * their row's height, so opening one panel grows the whole row and both
+   * bottom rules stay on one line — the objection to two columns, answered
+   * by the layout rather than by a script. */
   :root[data-theme="studio"] .st-pdp-panels {
     margin-top: clamp(34px, 3.4vw, 64px);
     border-top: var(--bw-line) solid var(--line);
+    /* ⚠️ AN EXPLICIT TIER, NOT auto-fit, because the two tiers want different
+     * things. auto-fit gave two columns above ~1150 and one column below —
+     * correct — but the single column then inherited the full band, so at
+     * 1024 the rule was 974px around 544px of text and the fault was simply
+     * back at a narrower window. One column has to be capped; two do not.
+     *
+     * And the grid itself caps at 76rem, the width the content pages settled
+     * on. Uncapped, each column grew with the viewport and the gap between
+     * the rule and the text opened up again at 1920 (752px columns around
+     * the same 544px measure). At 76rem the columns hold near 580 at every
+     * width above it, which the 34rem measure very nearly fills. */
+    max-inline-size: 76rem;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: clamp(26px, 3vw, 56px);
+  }
+  @media (max-width: 1159px) {
+    :root[data-theme="studio"] .st-pdp-panels { max-inline-size: 40rem; }
+  }
+  @media (min-width: 1160px) {
+    :root[data-theme="studio"] .st-pdp-panels {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
   }
   :root[data-theme="studio"] .st-pdp-panel {
     border-bottom: var(--bw-line) solid var(--line);
@@ -2578,7 +2624,7 @@ export function renderStudioPdp(ctx: RenderCtx): string {
           return "<li>" + input +
             '<label class="st-pdp-sw" for="' + id + '">' +
             '<span class="st-pdp-sw-img" style="--sw:url(&quot;' +
-            esc(finishImageUrl(swatch, o)) + '&quot;)"></span>' +
+            esc(finishImageUrl(swatch, finishSlugOf(swatch, o))) + '&quot;)"></span>' +
             '<span class="st-pdp-sw-n">' + esc(o) + "</span></label></li>";
         }
         return pills
