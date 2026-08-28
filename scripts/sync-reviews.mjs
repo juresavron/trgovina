@@ -29,22 +29,33 @@
 
 import fs from "node:fs";
 import path from "node:path";
+import { supabaseConfig } from "./wrangler-vars.mjs";
 
 const OUT = path.join("src", "content", "reviews.generated.ts");
 const SHOP = process.env.SYNC_SHOP ?? "bazen";
 
-const url = process.env.SUPABASE_URL;
-const key =
-  process.env.SUPABASE_ANON_KEY ??
-  process.env.SUPABASE_PUBLISHABLE_KEY ??
-  process.env.SUPABASE_SERVICE_KEY;
+// ⚠️ THE ENVIRONMENT FIRST, wrangler.jsonc SECOND — and the second half is
+// the whole point. This script read only the environment, and the deploy
+// workflow sets neither variable, so in CI it took the branch below on every
+// single run: exit 0, one line on stderr, a green build, and a generated file
+// that had never once been rebuilt from the database. See
+// scripts/wrangler-vars.mjs.
+const { url, key } = supabaseConfig();
 
 if (!url || !key) {
+  // ⚠️ NON-ZERO, UNLIKE EVERY OTHER FAILURE IN THIS SCRIPT, because this one
+  // cannot fix itself. An unreachable database is weather: the next deploy
+  // may well succeed, so it exits 0 and ships the committed file. Missing
+  // configuration is a broken build that will go on silently shipping stale
+  // data forever, which is exactly what happened here. The deploy step keeps
+  // continue-on-error so an outage still cannot block a release — but this
+  // one turns the step red, which is the whole point.
   console.error(
-    "sync-reviews: SUPABASE_URL and SUPABASE_ANON_KEY are not set — leaving " +
-      OUT + " as it is.",
+    "sync-reviews: no SUPABASE_URL/SUPABASE_ANON_KEY in the environment or in " +
+      "wrangler.jsonc — leaving " + OUT + " as it is. THIS IS A BROKEN BUILD, " +
+      "not a transient failure: nothing will rebuild this file until it is fixed.",
   );
-  process.exit(0);
+  process.exit(1);
 }
 
 /**

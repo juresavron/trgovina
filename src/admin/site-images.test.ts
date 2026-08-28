@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
+import { SHELL_FINISHES, CABINET_FINISHES } from "../catalog/pola";
+import { finishSlug } from "../catalog/finish-image";
 
 /**
  * The slots the panel manages, and the one property prose could not hold.
@@ -189,6 +191,34 @@ describe("slots that may legitimately be empty", () => {
     for (const s of optional) {
       expect(s.legacy, s.key).toBeUndefined();
       expect(s.fallbackOffset, s.key).toBeUndefined();
+    }
+  });
+});
+
+/**
+ * ⚠️ A FINISH SLOT'S LABEL IS THE COLOUR'S NAME, VERBATIM — and the upload
+ * route now depends on it.
+ *
+ * Uploading a swatch from its own slot page has to record the colour, not
+ * just the picture, or the storefront never learns the colour exists (that
+ * was a real bug: two swatches went in and neither reached a product page).
+ * Recording it needs the NAME, and the slug cannot be turned back into one —
+ * "silver-white-marble" does not tell you the chart prints "Silver white
+ * marble", and a purchase order quotes the chart. The registry's label is
+ * the only place that still knows, so it must stay the name and nothing else:
+ * no "Vzorec barve …" prefix, no title-casing, no decoration.
+ */
+describe("a finish slot still knows its colour's real name", () => {
+  it("labels each swatch slot with the name, not the slug or a sentence", () => {
+    for (const [kind, names] of [
+      ["barva", SHELL_FINISHES],
+      ["obloga", CABINET_FINISHES],
+    ] as const) {
+      for (const name of names) {
+        const slot = siteImageBySlug(kind + "-" + finishSlug(name));
+        expect(slot, kind + "-" + finishSlug(name)).toBeDefined();
+        expect(slot!.label, "label must be the name verbatim").toBe(name);
+      }
     }
   });
 });
