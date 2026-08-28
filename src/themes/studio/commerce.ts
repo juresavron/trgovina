@@ -312,11 +312,6 @@ export const STUDIO_COMMERCE_CSS = `
      * sides is what made every boundary twice the source's. */
     padding-block: 0 var(--studio-rhythm);
   }
-  :root[data-theme="studio"] .st-shop-in {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
-  }
   /* Left-aligned AT THE GUTTER (§4.7) — the grid heading is never centred.
    *
    * The space beneath it is now on the token scale at both ends — --gap-lg to
@@ -1098,9 +1093,6 @@ export const STUDIO_COMMERCE_CSS = `
     margin-block: -10px;
   }
   :root[data-theme="studio"] .st-cat-head {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
     margin-bottom: clamp(28px, 3.4vw, 68px);
   }
   :root[data-theme="studio"] .st-cat-head .st-sec-h {
@@ -1128,9 +1120,7 @@ export const STUDIO_COMMERCE_CSS = `
    * item and what .st-cat-card's height: 100% is written against. */
   :root[data-theme="studio"] .st-cat-row {
     list-style: none;
-    margin: 0 auto;
-    padding-inline: var(--studio-gutter);
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
+    margin-block: 0;
     display: flex;
     flex-wrap: wrap;
     gap: clamp(16px, 1.6vw, 32px);
@@ -1266,9 +1256,6 @@ export const STUDIO_COMMERCE_CSS = `
   }
   /* Centred heading (§4.4) — the counterpoint to §4.7's gutter-left one. */
   :root[data-theme="studio"] .st-rail-head {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
     text-align: center;
     margin-bottom: clamp(28px, 3.4vw, 68px);
   }

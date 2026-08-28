@@ -220,9 +220,6 @@ export const STUDIO_PDP_CSS = `
      * bar's inner box repeats the same calc so the two bands line up.
      * (This comment used to name "--studio-container (1560px)" as the cap
      * itself, which is the one number this declaration never produces.) */
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
   }
   /* FLEX, not grid, and the reason is the sticky gallery's width cap below.
    *
@@ -1437,10 +1434,11 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-panel-b p { margin: 0; max-inline-size: 62ch; }
 
   /* ---- "ostali modeli" ------------------------------------------------- */
+  /* Block padding only — the inline half is layout.ts's. It was a padding
+   * SHORTHAND, which would have reset the shared padding-inline back to the
+   * gutter and quietly taken this band off the container above the cap. */
   :root[data-theme="studio"] .st-also {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding: var(--studio-rhythm) var(--studio-gutter) 0;
+    padding-block: var(--studio-rhythm) 0;
   }
   /* The same rung as "Primerjajte modele" (.st-cmp-h): both are secondary
    * section heads over supporting material, and this one was set centred at
@@ -1879,9 +1877,6 @@ export const STUDIO_PDP_CSS = `
     border-top: 1px solid color-mix(in srgb, var(--on-invert) 10%, transparent);
   }
   :root[data-theme="studio"] .st-pdp-bar-in {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
     min-height: var(--chrome-h);
     display: flex; align-items: center;
     gap: clamp(10px, 1.4vw, 28px);

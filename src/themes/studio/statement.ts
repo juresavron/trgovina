@@ -102,12 +102,13 @@ function glyph(k: GlyphKey): string {
 }
 
 export const STUDIO_STATEMENT_CSS = `
-  /* ---- Values this module owns that tokens.ts does not carry ---- */
-  :root[data-theme="studio"] {
-    /* Consumes the theme's gutter rather than restating it. The fallback is
-     * only for the case where this module is used outside the theme sheet. */
-    --studio-statement-gutter: var(--studio-gutter, 40px);
-  }
+  /* --studio-statement-gutter is GONE. It aliased --studio-gutter with a hard
+   * 40px fallback "for the case where this module is used outside the theme
+   * sheet" — a case that cannot arise, since the selector it hung off is
+   * :root[data-theme="studio"]. What it could do is disagree: had the
+   * fallback ever fired, this band would hold a 40px gutter while every
+   * neighbour held the tablet tier's 25px. Both bands take layout.ts's
+   * container now, like every other. */
 
   /* ================= §4.3 Statement + story ================= */
   :root[data-theme="studio"] .st-statement {
@@ -126,11 +127,11 @@ export const STUDIO_STATEMENT_CSS = `
    * cap exactly as it does in commerce.ts and editorial.ts. Same number, same
    * pattern ⇒ this section's gutter-left statement lines up with the section
    * above and below it. */
-  :root[data-theme="studio"] .st-statement-in {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-statement-gutter);
-  }
+  /* .st-statement-in's container is layout.ts's. --studio-statement-gutter
+   * went with it: it aliased --studio-gutter with a hard 40px fallback, so if
+   * the fallback ever fired this band held a 40px gutter while its neighbours
+   * held the tablet tier's 25px — an alias whose only possible effect was to
+   * disagree with the token it aliased. */
 
   /* The section's dominant type and a real <h2>, set in the display face, so
    * it takes the h2 rung whole (§1, §4.3). 1015px is the source's own
@@ -391,9 +392,6 @@ export const STUDIO_STATEMENT_CSS = `
     overflow: clip;
   }
   :root[data-theme="studio"] .st-stats-in {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-statement-gutter);
     text-align: center;
   }
   /* Baseline §3's "pill tag", exactly: 50px radius, 1px --line, 6px 20px.
