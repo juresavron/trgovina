@@ -783,7 +783,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         cabinet: TRANSCRIBED_CABINET_FINISHES,
         shellPhotographed: SHELL_FINISHES_ARE_PHOTOGRAPHED,
         cabinetPhotographed: CABINET_FINISHES_ARE_PHOTOGRAPHED,
-      }),
+      }, enhanceAvailable(env)),
     );
   }
 
