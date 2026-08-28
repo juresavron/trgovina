@@ -170,6 +170,37 @@ export const STUDIO_PAGE_CSS = `
        * below), so widening the track costs it nothing and lets the things
        * that SHOULD span — a photograph, a fact table, a compare table, a
        * row of question hairlines — reach the band's own right edge. */
+      /* ⚠️ THE DOCUMENT HAS A WIDTH. It used to have the viewport's.
+       *
+       * The track is 1fr, so the wide blocks — a fact table, a compare
+       * table, a photograph — grew with the window while the prose beside
+       * them kept its 38rem measure, as prose must. Measured: the gap
+       * between where a paragraph ends and where the table under it ends
+       * was 438px at 1440 and 619px at 1920. It TRACKED THE VIEWPORT, so
+       * the page looked more broken the bigger the screen, which is why it
+       * kept being reported after each fix.
+       *
+       * 76rem is the cap: 16rem of rail, 80px of gutter and 54rem of body.
+       * The gap between the two edges is then ~294px at every width above
+       * it instead of growing without limit, and the leftover becomes page
+       * margin — which is what a document with a definite width looks like.
+       *
+       * ⚠️ AND IT IS ON THE GRID, NOT THE TRACK. An earlier pass capped the
+       * track at 56rem and was reverted because the widest thing on the page
+       * then stopped 368px before the band it sat in — a strip of content in
+       * a wide frame. The difference is that the band now ends where the
+       * document ends: nothing is left hanging inside a wrapper that runs on
+       * past it. justify-content stays start, so the h1 keeps the left edge
+       * the wordmark and the footer are on. */
+      max-inline-size: 76rem;
+      /* ⚠️ 0, NOT auto. The single-column rule above sets margin-inline:auto
+       * to centre a 38rem page on a phone, and that declaration survives into
+       * this tier — where, the moment the grid gained a cap, it started
+       * CENTRING the document. Measured at 1920: the body began at 685 while
+       * the wordmark above it and the footer below it began at 180. The cap
+       * would have reintroduced, on its first render, the exact misalignment
+       * the justify-content note below was written to fix. */
+      margin-inline: 0;
       grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
       column-gap: clamp(48px, 4vw, 80px);
       /* ⚠️ start, NOT center — this is the second half of the alignment the
@@ -401,6 +432,38 @@ export const STUDIO_PAGE_CSS = `
    * structure and carry their measure on the text inside them. */
   :root[data-theme="studio"] .st-page-list {
     max-inline-size: 38rem;
+  }
+  /* ⚠️ AND ON THE BLOCK AGAIN — the note above argued the opposite, and the
+   * rendered page has now refuted it twice.
+   *
+   * The argument was sound in the abstract: a hairline is not a sentence, so
+   * structure spans the track while the words inside keep their measure.
+   * That is what an editorial column does — when the track is a little wider
+   * than the measure. Here the track is 1fr, so at 1440 it is 1046px against
+   * a 608px measure: 1.72x. A rule that runs 438px past its own last word
+   * does not read as an editorial column, it reads as an unfinished one, and
+   * it did that on every heading, every question row and every step on
+   * fifteen routes. Measured with scripts/_edges.mjs: one spread of 438px per
+   * block, on eleven of eleven content pages.
+   *
+   * So the block carries the measure and the DATA blocks opt out — which is
+   * what --wide has always meant. The page still reaches its band's right
+   * edge wherever it has something to put there (a fact table, a compare
+   * table, a photograph); where it has only sentences, it ends where the
+   * sentences end. Two right edges, both deliberate, instead of one right
+   * edge and one ragged one. */
+  :root[data-theme="studio"] .st-page-block {
+    max-inline-size: 38rem;
+  }
+  :root[data-theme="studio"] .st-page-block--wide {
+    max-inline-size: none;
+  }
+  /* The enquiry form is wide because its two-up rows need room — 44rem, not
+   * the whole band. Capping the block to the same 44rem is what puts the
+   * heading, the lead-in and the form itself on one right edge instead of
+   * three (1400 / 962 / 1058, measured at 1440). */
+  :root[data-theme="studio"] .st-page-block--wide:has(> .st-enq) {
+    max-inline-size: 44rem;
   }
   /* ---- the photograph band (kind: "figure") ----
    * The FRAME owns the shape: aspect-ratio reserves the box before any bytes
@@ -1295,6 +1358,10 @@ export const STUDIO_PAGE_CSS = `
     background: var(--bg-alt);
   }
   :root[data-theme="studio"] .st-page-cta-h {
+    /* The same 38rem the paragraph under it carries. Uncapped, the heading
+     * ran the full 960px panel while the sentence beneath it stopped at 608
+     * — the panel that closes every one of these pages, ragged. */
+    max-inline-size: 38rem;
     font-family: var(--f-display);
     font-weight: var(--w-display);
     font-size: var(--t-h5);
@@ -2082,15 +2149,22 @@ function isWide(b: Block): boolean {
     // A row of links is navigation laid out across the column, not a sentence
     // to read at the measure — same reason onward() spans the body.
     b.kind === "links" ||
-    // ⚠️ STEPS AND Q&A ARE STRUCTURE, and they were the two blocks that made
-    // these pages look narrow. Both draw rules across their whole width — a
-    // numbered ordered list with a disc per row, a stack of disclosure
-    // hairlines with a chevron at the end — and both had that structure cut
-    // off at the reading measure while the band around them ran on for
-    // another 600px. The PROSE inside each still stops at 38rem; what spans
-    // now is the rule, the disc column and the chevron.
-    b.kind === "steps" ||
-    b.kind === "qa" ||
+    // ⚠️ STEPS AND Q&A ARE NOT DATA, and listing them here is what made the
+    // question rows ragged.
+    //
+    // The note this replaces widened them so their rules would span the
+    // track rather than stop at the reading measure — the band ran on for
+    // another 600px either way, and a rule that stopped early looked like
+    // the narrow strip that was being reported. True, and it fixed the wrong
+    // half: it left a hairline running 438px past its own answer, and on
+    // /pogosta-vprasanja, which is nothing but question rows, that is the
+    // entire page.
+    //
+    // Marking them wide also kept the TRACK wide, since the grid narrows
+    // itself on a page carrying no wide block. So a Q&A-only page now gets
+    // the narrow track and reads as one clean column, rule and text ending
+    // together — which is what the earlier note wanted and could not get
+    // while these two were claiming to be tables.
     // A photograph is a band, not a paragraph: at the reading measure it
     // would be a small picture in a wide column, which is neither.
     b.kind === "figure" ||
