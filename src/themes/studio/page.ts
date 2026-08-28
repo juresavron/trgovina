@@ -25,6 +25,10 @@ import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 import type { Block, Page } from "../../content/pages";
 import { decorativeImg, sitePhoto } from "./media";
 import { contactIcon, type IconKey } from "./icons";
+// ⚠️ THE CONSENT SENTENCE IS IMPORTED, NEVER RETYPED. The same string is
+// written to the enquiries row, and a page that printed different words
+// would make the stored record evidence of consent to something else.
+import { CONSENT_TEXT } from "../../enquiry/submit";
 
 /* ------------------------------------------------------------------ CSS */
 
@@ -1336,6 +1340,265 @@ export const STUDIO_PAGE_CSS = `
   @media (max-width: 700px) {
     :root[data-theme="studio"] .st-page-frow { grid-template-columns: minmax(0, 1fr); gap: 4px; }
   }
+
+  /* ================= THE ENQUIRY FORM =================
+   *
+   * ⚠️ IT REUSES THE PAGE'S OWN CONTROLS RATHER THAN GROWING A FORM
+   * VOCABULARY. The submit button is .st-page-act--lead — the same filled
+   * dark control every other page ends on — because a form that invents its
+   * own primary button is the fifteenth button style on a site that already
+   * had fourteen. What is new here is only what genuinely did not exist: an
+   * input, a textarea and a consent row.
+   *
+   * The inputs take --line-ctrl and not --line. WCAG 1.4.11 holds the
+   * boundary of an INTERACTIVE control to 3:1, and --line (#dfdfdf, 1.33:1)
+   * is the decorative hairline between surfaces. A text field whose only
+   * boundary is a 1.33:1 line is a field a low-vision reader cannot find —
+   * and this is the one form on the site that stands between a visitor and
+   * a €3–10k purchase. tokens.ts declares --line-ctrl for exactly this. */
+  :root[data-theme="studio"] .st-enq-lead {
+    max-inline-size: 38rem;
+  }
+  :root[data-theme="studio"] .st-enq {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(18px, 1.8vw, 26px);
+    margin-block-start: clamp(20px, 2vw, 30px);
+    /* The form is a --wide block so its two-up rows have room, but a single
+     * column of fields running 56rem wide is a shape nobody fills in. */
+    max-inline-size: 44rem;
+  }
+  /* Two-up above 620px, one column under it. The pairs are deliberate:
+   * name/phone and e-mail/place, so a reader filling the left column top to
+   * bottom still gets a name and a way to be reached. */
+  :root[data-theme="studio"] .st-enq-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(18px, 1.8vw, 26px);
+  }
+  @media (max-width: 619px) {
+    :root[data-theme="studio"] .st-enq-grid { grid-template-columns: minmax(0, 1fr); }
+  }
+  :root[data-theme="studio"] .st-enq-f {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-xs);
+    margin: 0;
+  }
+  :root[data-theme="studio"] .st-enq-l,
+  :root[data-theme="studio"] .st-enq-fs legend {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  /* The asterisk is not the only marker: every required field also carries
+   * the required attribute, so a screen reader announces it whatever this
+   * glyph does. It is here for the sighted scan. */
+  :root[data-theme="studio"] .st-enq-req { color: var(--acc-text); }
+  :root[data-theme="studio"] .st-enq-in {
+    inline-size: 100%;
+    /* 52px — the control height every button on these pages draws. */
+    min-block-size: 52px;
+    padding: 13px 16px;
+    border: var(--bw-line) solid var(--line-ctrl);
+    border-radius: var(--r-ctrl);
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    /* Inputs do NOT inherit the page font by default, and on Safari the
+     * difference is a 13px system face inside a 16px form. */
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  :root[data-theme="studio"] .st-enq-ta {
+    min-block-size: 0;
+    resize: vertical;
+  }
+  :root[data-theme="studio"] .st-enq-in:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 1px;
+    border-color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-enq-hint {
+    font-family: var(--f-body);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-enq-fs {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  :root[data-theme="studio"] .st-enq-radios {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--gap-lg);
+    margin-block-start: var(--gap-sm);
+  }
+  :root[data-theme="studio"] .st-enq-r {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--gap-xs);
+    /* The label is the target as much as the dot is, and both together must
+     * clear the 44px floor this project holds itself to. */
+    min-block-size: var(--st-tap);
+  }
+  :root[data-theme="studio"] .st-enq-r label,
+  :root[data-theme="studio"] .st-enq-consent label {
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-enq-r input,
+  :root[data-theme="studio"] .st-enq-consent input {
+    inline-size: 20px;
+    block-size: 20px;
+    flex: none;
+    accent-color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-enq-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-sm);
+    margin: 0;
+    padding: clamp(14px, 1.4vw, 20px);
+    border-radius: var(--r-card);
+    background: var(--bg-alt);
+  }
+  /* The consent sentence sits a rung down from the fields — it is a
+   * condition of sending, not another question — but never below the muted
+   * rung that clears 4.5:1 on the panel grey (tokens.ts: --ink-mute is
+   * 4.54:1 there, which is the floor, so the sentence takes --ink-body). */
+  :root[data-theme="studio"] .st-enq-consent label { font-size: 0.9375rem; }
+  :root[data-theme="studio"] .st-enq-consent input { margin-block-start: 3px; }
+  :root[data-theme="studio"] .st-enq-act { margin: 0; }
+  :root[data-theme="studio"] .st-enq-act .st-page-act { inline-size: auto; }
+
+  /* WHAT THEY CONFIGURED, RESTATED. Every string in here came out of the
+   * catalogue — the router matches ?model= and every option against what the
+   * shop actually sells and drops the rest — so this block is a receipt, not
+   * an echo of the query string. */
+  :root[data-theme="studio"] .st-enq-about {
+    margin-block-start: clamp(20px, 2vw, 30px);
+    padding: clamp(16px, 1.6vw, 24px);
+    border: var(--bw-line) solid var(--line);
+    border-radius: var(--r-card);
+    max-inline-size: 44rem;
+  }
+  :root[data-theme="studio"] .st-enq-about-h {
+    margin: 0;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-enq-about-m {
+    margin: var(--gap-xs) 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--gap-sm);
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h6);
+    line-height: var(--lh-h6);
+    color: var(--ink);
+  }
+  /* The price is a fact beside the name, not part of it — body face, body
+   * size, so the model reads as the heading of this card and the figure as
+   * its annotation. */
+  :root[data-theme="studio"] .st-enq-about-p {
+    font-family: var(--f-body);
+    font-weight: var(--w-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-enq-cfg {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: var(--gap-xs) var(--gap-md);
+    margin: var(--gap-md) 0 0;
+  }
+  :root[data-theme="studio"] .st-enq-cfg dt {
+    font-family: var(--f-body);
+    font-size: 0.9375rem;
+    color: var(--ink-mute);
+  }
+  :root[data-theme="studio"] .st-enq-cfg dd {
+    margin: 0;
+    font-family: var(--f-body);
+    font-size: 0.9375rem;
+    font-weight: var(--w-body-med);
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-enq-about-n {
+    margin: var(--gap-md) 0 0;
+    font-family: var(--f-body);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--ink-mute);
+  }
+
+  /* The failure and the success. Both are ink-and-rule rather than a red or
+   * green plate: the palette has no status colours, and inventing two here
+   * would be two more grounds nobody has measured against the text on them.
+   * The accent rule carries the alarm; role="alert" carries it to everyone
+   * else. */
+  :root[data-theme="studio"] .st-enq-err {
+    margin: clamp(16px, 1.6vw, 24px) 0 0;
+    padding-inline-start: var(--gap-md);
+    border-inline-start: 3px solid var(--acc);
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink);
+    max-inline-size: 38rem;
+  }
+  :root[data-theme="studio"] .st-enq-done {
+    margin-block-start: clamp(20px, 2vw, 30px);
+    padding: clamp(20px, 2vw, 32px);
+    border-radius: var(--r-card);
+    background: var(--bg-alt);
+    max-inline-size: 44rem;
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
+  }
+  :root[data-theme="studio"] .st-enq-done-h {
+    margin: 0 0 var(--gap-sm);
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h6);
+    line-height: var(--lh-h6);
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-enq-done p { margin: 0; }
+
+  /* THE HONEYPOT. Off-screen rather than display:none, because some bots
+   * skip what is display:none and fill what is merely positioned away —
+   * which is the entire point of the field. aria-hidden and tabindex="-1"
+   * on the markup keep it away from anyone real. */
+  :root[data-theme="studio"] .st-enq-hp {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
 `;
 
 /* -------------------------------------------------------------- render */
@@ -1666,32 +1929,20 @@ function contact(
     // an enquiry turns into a closed tab: the page looks like the wrong one.
     // The title comes from the catalogue, so this can only ever name a real
     // model.
-    (ctx.about
-      ? '<p class="st-page-about">Povpraševanje za <strong>' +
-        esc(ctx.about.title) + "</strong> · " + esc(ctx.about.price) +
-        // The one price on the site that lacked its qualifier. Only beside a
-        // real figure — a dash with "z DDV" after it would be nonsense.
-        (ctx.about.price.includes("€") ? " z DDV" : "") + "</p>"
-      : "") +
-    // WHAT THEY CHOSE, SAID BACK BEFORE THEY WRITE.
+    // ⚠️ THE MODEL AND THE CONFIGURATION USED TO BE RESTATED HERE, AND ARE
+    // NOT ANY MORE. This block carried "Povpraševanje za BAZEN 210 · 6.990 €
+    // z DDV" and a definition list of the chosen colours, and it was right to:
+    // a visitor who spent five minutes picking a colour, pressed the one
+    // button on the page and landed somewhere showing no trace of it has to
+    // decide whether the form worked.
     //
-    // Same reason the model's name is above it: a visitor who spent five
-    // minutes picking a colour and a connection, pressed the one button on
-    // the page and landed somewhere that shows no trace of any of it has to
-    // decide whether the form worked. A definition list rather than a
-    // sentence, because it is data — and it is the same list the mail body
-    // carries, so the two cannot disagree.
-    ((ctx.chosen ?? []).length > 0
-      ? '<dl class="st-page-chosen">' +
-        (ctx.chosen ?? [])
-          .map(
-            ([k, v]) =>
-              '<div class="st-page-chosen-r"><dt>' + esc(k) + "</dt>" +
-              "<dd>" + esc(v) + "</dd></div>",
-          )
-          .join("") +
-        "</dl>"
-      : "") +
+    // The enquiry form below now says exactly that, ~600px lower on the same
+    // screen, where it is not a reassurance but a RECEIPT — it is beside the
+    // fields, and it describes what pressing the button will actually send.
+    // Two copies of one statement on one screen is the duplication this pass
+    // exists to remove, and of the two this was the one that could not be
+    // acted on. The price went with it into the form's own card so nothing
+    // is lost.
     contactActions(ctx) +
     // THE CHANNELS AS CARDS, NOT AS A DEFINITION LIST.
     //
@@ -1832,7 +2083,171 @@ function isWide(b: Block): boolean {
     b.kind === "qa" ||
     // A photograph is a band, not a paragraph: at the reading measure it
     // would be a small picture in a wide column, which is neither.
-    b.kind === "figure"
+    b.kind === "figure" ||
+    // A form is a grid of labelled controls, not a sentence. At the 31rem
+    // measure the two-up rows collapse and the message box is a slot.
+    b.kind === "enquiry"
+  );
+}
+
+/**
+ * THE ENQUIRY FORM.
+ *
+ * ⚠️ IT WORKS WITH NO JAVASCRIPT, and everything below follows from that.
+ * A plain POST to the page's own URL, answered by the same renderer with
+ * ctx.enquiry set — so there is no fetch, no JSON, no spinner and no state
+ * that can be lost by a refresh. On a €3–10k enquiry the failure mode of a
+ * clever form is a lead that silently never arrived.
+ *
+ * WHAT IT ASKS FOR, AND WHAT IT DOES NOT. Every required field on a lead form
+ * is a lead that does not arrive, so exactly two things are required: a name,
+ * and one way to reach them. Everything else — where, access, the message —
+ * is offered because answering it gets a better reply, and skipping it still
+ * sends. The three optional questions are the three the shop's own contact
+ * page already says it needs (kraj, the narrowest passage, the distance to
+ * the electrics); this form asks them where the visitor is already typing
+ * rather than hoping they read the paragraph.
+ *
+ * WHAT IT ALREADY KNOWS. ctx.about and ctx.chosen are the model and the
+ * configuration the product page's GET form carried here, already matched
+ * against the catalogue — so the enquiry arrives saying "Srednji 210,
+ * Midnight, LED paket" instead of "(no subject)". They are printed as a
+ * summary and travel as hidden fields the SERVER re-resolves; nothing the
+ * visitor could edit becomes an enquiry about a product this shop does not
+ * sell.
+ */
+function enquiry(
+  ctx: RenderCtx,
+  b: Extract<Block, { kind: "enquiry" }>,
+  id?: string,
+): string {
+  const head =
+    (b.h ? '<h2 class="st-page-h2"' + (id ? ' id="' + esc(id) + '"' : "") + ">" + esc(b.h) + "</h2>" : "") +
+    (b.p ? '<p class="st-page-p st-enq-lead">' + esc(b.p) + "</p>" : "");
+
+  // DONE. The form is REPLACED, not merely captioned: leaving a filled form
+  // under a success message invites a second submission of the same enquiry,
+  // and the visitor cannot tell whether the first one counted.
+  if (ctx.enquiry?.done) {
+    return (
+      head +
+      '<div class="st-enq-done" role="status">' +
+      '<p class="st-enq-done-h">Povpraševanje je oddano.</p>' +
+      "<p>Odgovorimo v enem delovnem dnevu. Če se mudi, pokličite — številka je " +
+      "v nogi strani.</p>" +
+      "</div>"
+    );
+  }
+
+  const about = ctx.about;
+  const chosen = ctx.chosen ?? [];
+  // The summary is a RESTATEMENT of what the visitor chose a page ago. It is
+  // shown because an enquiry form that silently carries hidden state is a
+  // form nobody can check, and every one of these strings came out of the
+  // catalogue rather than off the wire.
+  const summary = about
+    ? '<div class="st-enq-about">' +
+      '<p class="st-enq-about-h">Povprašujete za</p>' +
+      '<p class="st-enq-about-m">' + esc(about.title) +
+      // The price rides along because the contact block above no longer
+      // states it — see the note there. Qualified only beside a real figure:
+      // a dash followed by "z DDV" is nonsense.
+      (about.price
+        ? '<span class="st-enq-about-p">' + esc(about.price) +
+          (about.price.includes("€") ? " z DDV" : "") + "</span>"
+        : "") +
+      "</p>" +
+      (chosen.length > 0
+        ? "<dl class=\"st-enq-cfg\">" +
+          chosen
+            .map(([k, v]) => "<dt>" + esc(k) + "</dt><dd>" + esc(v) + "</dd>")
+            .join("") +
+          "</dl>"
+        : "") +
+      '<p class="st-enq-about-n">Podatki potujejo z obrazcem. Če želite kaj drugega, ' +
+      "napišite v sporočilo.</p>" +
+      "</div>"
+    : "";
+
+  const err = ctx.enquiry?.error
+    ? '<p class="st-enq-err" role="alert">' + esc(ctx.enquiry.error) + "</p>"
+    : "";
+
+  const field = (
+    name: string,
+    label: string,
+    type: string,
+    opts: { req?: boolean; hint?: string; auto?: string; mode?: string } = {},
+  ): string =>
+    '<p class="st-enq-f">' +
+    '<label class="st-enq-l" for="enq-' + name + '">' + esc(label) +
+    (opts.req ? ' <span class="st-enq-req">*</span>' : "") + "</label>" +
+    '<input class="st-enq-in" id="enq-' + name + '" name="' + name + '" type="' + type + '"' +
+    (opts.req ? " required" : "") +
+    (opts.auto ? ' autocomplete="' + opts.auto + '"' : "") +
+    (opts.mode ? ' inputmode="' + opts.mode + '"' : "") +
+    ">" +
+    (opts.hint ? '<span class="st-enq-hint">' + esc(opts.hint) + "</span>" : "") +
+    "</p>";
+
+  return (
+    head +
+    err +
+    summary +
+    // METHOD POST, ACTION EMPTY. An empty action posts to the current URL
+    // INCLUDING its query string, which is what carries ?model= and the
+    // configuration through a failed submission — an action of "/kontakt"
+    // would drop them and the visitor would lose their configuration by
+    // mistyping their e-mail.
+    '<form class="st-enq" method="post" novalidate>' +
+    // The honeypot. Hidden from sight AND from assistive technology, and
+    // never autofilled — a browser that helpfully fills it would lock a real
+    // person out of the form, which is the one way this device can do harm.
+    '<div class="st-enq-hp" aria-hidden="true">' +
+    '<label for="enq-website">Ne izpolnjujte tega polja</label>' +
+    '<input id="enq-website" name="website" type="text" tabindex="-1" autocomplete="off">' +
+    "</div>" +
+    '<input type="hidden" name="od" value="' + esc(ctx.path ?? "") + '">' +
+    '<div class="st-enq-grid">' +
+    field("ime", "Ime in priimek", "text", { req: true, auto: "name" }) +
+    field("telefon", "Telefon", "tel", { auto: "tel", mode: "tel" }) +
+    field("eposta", "E-pošta", "email", { auto: "email" }) +
+    field("kraj", "Kraj ali poštna številka", "text", {
+      auto: "postal-code",
+      hint: "Po njem izračunamo dostavo.",
+    }) +
+    "</div>" +
+    '<p class="st-enq-f">' +
+    '<label class="st-enq-l" for="enq-dostop">Dostop do mesta postavitve</label>' +
+    '<textarea class="st-enq-in st-enq-ta" id="enq-dostop" name="dostop" rows="3"></textarea>' +
+    '<span class="st-enq-hint">Širina najožjega prehoda, stopnice ali škarpa na poti, ' +
+    "razdalja do električne omarice. S temi tremi podatki lahko povemo, ali je model " +
+    "izvedljiv, še preden pridemo na ogled.</span>" +
+    "</p>" +
+    '<p class="st-enq-f">' +
+    '<label class="st-enq-l" for="enq-sporocilo">Vaše sporočilo</label>' +
+    '<textarea class="st-enq-in st-enq-ta" id="enq-sporocilo" name="sporocilo" rows="4"></textarea>' +
+    "</p>" +
+    '<fieldset class="st-enq-fs">' +
+    '<legend class="st-enq-l">Kako naj se oglasimo?</legend>' +
+    '<span class="st-enq-radios">' +
+    '<span class="st-enq-r"><input type="radio" id="enq-k-t" name="kanal" value="telefon">' +
+    '<label for="enq-k-t">Po telefonu</label></span>' +
+    '<span class="st-enq-r"><input type="radio" id="enq-k-e" name="kanal" value="e-posta">' +
+    '<label for="enq-k-e">Po e-pošti</label></span>' +
+    "</span></fieldset>" +
+    // ⚠️ NOT PRE-TICKED, AND THE SENTENCE IS THE ONE THAT GETS STORED.
+    // A pre-ticked box is not consent (GDPR art. 4(11); Planet49 C-673/17),
+    // and a page that printed different words from the ones written to the
+    // row would make the stored record evidence of something else. The text
+    // is imported, not retyped.
+    '<p class="st-enq-consent">' +
+    '<input type="checkbox" id="enq-soglasje" name="soglasje" value="1" required>' +
+    '<label for="enq-soglasje">' + esc(CONSENT_TEXT) + "</label>" +
+    "</p>" +
+    '<p class="st-enq-act"><button class="st-page-act st-page-act--lead" type="submit">' +
+    "Pošljite povpraševanje</button></p>" +
+    "</form>"
   );
 }
 
@@ -1885,6 +2300,8 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
                 ? imprint(ctx, b.h, id)
                 : b.kind === "figure"
                   ? figure(b)
+                  : b.kind === "enquiry"
+                    ? enquiry(ctx, b, id)
                   : '<div class="st-page-cta">' +
                   '<h2 class="st-page-cta-h">' + esc(b.h) + "</h2>" +
                   '<p class="st-page-cta-p">' + esc(b.p) + "</p>" +

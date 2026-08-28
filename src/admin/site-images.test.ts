@@ -119,3 +119,35 @@ describe("site image slots", () => {
     }
   });
 });
+
+/**
+ * ⚠️ `exact` WITHOUT `ratio` IS A HALF-DECLARED CONTRACT. It fixes the
+ * stored WIDTH at maxWidth; the height then comes from the frame's shape,
+ * and with no shape declared there is nothing to compute it from — the
+ * panel would fall back to the source's own proportions and store sixteen
+ * squares of sixteen different heights, which is the exact defect the flag
+ * exists to prevent.
+ */
+describe("slots that declare an exact stored size", () => {
+  const exact = SITE_IMAGES.filter((s) => s.exact);
+
+  it("always declare the shape that gives them their second dimension", () => {
+    for (const s of exact) expect(s.ratio, s.key).toBeDefined();
+  });
+
+  it("covers every finish swatch and nothing else", () => {
+    // The swatches are the only slots painted as a ROW of identical tiles.
+    // If another slot ever wants this, it is a deliberate decision that
+    // should show up here as a failing test first.
+    expect(exact.map((s) => s.key).every((k) => /^site\/(barva|obloga)-/.test(k))).toBe(true);
+    const swatches = SITE_IMAGES.filter((s) => /^site\/(barva|obloga)-/.test(s.key));
+    expect(exact).toHaveLength(swatches.length);
+  });
+
+  it("stores a square small enough that sixteen of them are not a page weight", () => {
+    for (const s of exact) {
+      expect(s.ratio, s.key).toEqual([1, 1]);
+      expect(s.maxWidth, s.key).toBeLessThanOrEqual(600);
+    }
+  });
+});

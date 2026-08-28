@@ -122,6 +122,32 @@ export interface SiteImage {
    * adds no detail, only bytes, and makes the LCP worse to fix a number.
    */
   readonly maxWidth: number;
+  /**
+   * Store this slot at EXACTLY maxWidth, never merely under it.
+   *
+   * ⚠️ THE DEFAULT IS A CEILING, AND FOR THE SWATCHES A CEILING IS WRONG.
+   * Everywhere else maxWidth means "do not store more than this": a 4000px
+   * hero comes down to 3840 and a 1200px one is stored as it is, because a
+   * photograph in a fluid frame is served through a srcset and its stored
+   * width is nobody's business. The sixteen colour swatches are the
+   * opposite. They are painted as a ROW of identical squares beside their
+   * names, and a row of squares is only a colour picker if the squares are
+   * the same square. Uploaded from a supplier folder they will not be:
+   * "Canyon.jpg" at 1200px stores at 400, "Opal.png" at 240px stores at 240,
+   * and the picker renders one crisp tile beside one soft one.
+   *
+   * With this set the panel emits maxWidth × (maxWidth / ratio) every time,
+   * scaling UP where it has to. Upscaling is normally something this panel
+   * refuses to do silently — but a flat colour sample has no detail to
+   * invent: bilinear scaling of a marbled acrylic is the same colour at a
+   * different size, which is exactly what the tile needs. That is also why
+   * these slots do not get the AI enhancer, which would redraw the marble
+   * into a NEW pattern of roughly that colour (see panel.ts).
+   *
+   * Only meaningful with `ratio`, since without one there is no second
+   * dimension to fix. site-images.test.ts enforces the pairing.
+   */
+  readonly exact?: true;
 }
 
 const CHROME = "Slike strani";
@@ -434,13 +460,18 @@ function finishSlots(
     group,
     label: name,
     note:
-      "Vzorec barve " + what + " »" + name + "«. Kvadratna slika, najbolje " +
-      "400 × 400 px — posnetek vzorca od blizu, čim bolj enakomerno osvetljen " +
-      "in brez sence. Prikaže se kot majhen kvadratek ob imenu barve na strani " +
-      "modela; dokler je ne naložite, je tam samo ime.",
+      "Vzorec barve " + what + " »" + name + "«. Posnetek vzorca od blizu, čim " +
+      "bolj enakomerno osvetljen in brez sence. Sliko sami obrežemo na sredini " +
+      "in shranimo natanko 400 × 400 px, da so vsi kvadratki v vrsti enaki — " +
+      "naložite lahko karkoli, le da je vzorec v sredini. Prikaže se kot majhen " +
+      "kvadratek ob imenu barve na strani modela; dokler je ne naložite, je tam " +
+      "samo ime.",
     optional: true,
     ratio: [1, 1],
     maxWidth: 400,
+    // Every swatch exactly 400 × 400 — see `exact` on SiteImage for why a
+    // ceiling is the wrong contract for a row of colour tiles.
+    exact: true,
   }));
 }
 

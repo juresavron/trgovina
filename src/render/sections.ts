@@ -73,6 +73,23 @@ export interface RenderCtx {
    * Pairs of [what was chosen, the choice], in the column's own order.
    */
   chosen?: readonly (readonly [string, string])[];
+  /**
+   * How the enquiry form's last submission went — set only on the POST that
+   * answers one, absent on every ordinary GET.
+   *
+   * ⚠️ THE FORM IS RENDERED BY THE SAME CODE EITHER WAY. A POST answers with
+   * the contact page itself, so a failure re-renders the page with the reason
+   * above the form and a success re-renders it with the form replaced by an
+   * acknowledgement. No redirect, no flash cookie, no second template: the
+   * page a visitor sees after pressing the button is the page they were
+   * already on, which is also what keeps it working with no JavaScript at
+   * all.
+   *
+   * `error` is a SENTENCE, not a field name — enquiry/submit.ts maps its own
+   * problem codes to the words a visitor reads, so nothing here has to know
+   * what went wrong, only what to print.
+   */
+  enquiry?: { readonly done?: boolean; readonly error?: string };
 }
 
 /* Product art — duotone scenes; colors ride the theme CSS vars. Redrawn

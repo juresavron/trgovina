@@ -52,7 +52,18 @@ import {
 } from "./panel";
 import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn, readCookie, SESSION_COOKIE } from "./auth";
 import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
-import { assignSlots, classify, slotOptions } from "./assign";
+import { deleteEnquiry, isStatus, listEnquiries, updateEnquiry } from "./enquiries";
+import { enquiryListPage } from "./enquiries-panel";
+import {
+  assignSlots,
+  classify,
+  finishOptions,
+  finishPrompt,
+  matchFilename,
+  slotOptions,
+} from "./assign";
+import { CABINET_FINISHES, SHELL_FINISHES } from "../catalog/pola";
+import type { FinishKind } from "../catalog/finish-image";
 import { enhance, enhanceAvailable } from "./enhance";
 import { describe, describeAvailable } from "./describe";
 import { arrange } from "./shots";
@@ -536,12 +547,55 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       return json({ error: "Celoten izbor sme meriti do 24 MB." }, 413);
     }
 
-    const options = slotOptions();
-    const classified = [];
+    // WHICH CATALOGUE. Default is the whole site — the flow this endpoint was
+    // built for. "barva"/"obloga" narrow it to one colour list, which is a
+    // different and much easier question: sixteen near-identical slot notes
+    // inside a 46-option prompt is not a catalogue a model can choose from,
+    // and the owner drops the colour samples as their own batch anyway.
+    const scope = form.get("scope");
+    const kind: FinishKind | null =
+      scope === "barva" ? "barva" : scope === "obloga" ? "obloga" : null;
+    const options = kind
+      ? finishOptions(kind, kind === "barva" ? SHELL_FINISHES : CABINET_FINISHES)
+      : slotOptions();
+    if (options.length === 0) return json({ error: "Ni barvnih mest." }, 400);
+
+    // THE FILENAMES, sent alongside because the probes are not the originals.
+    // The client downsamples each picture to a ~200 KB JPEG before posting,
+    // and names those p0.jpg…pN.jpg so the server can answer by position — so
+    // the one piece of evidence that settles most of a colour drop outright
+    // has to travel separately. Positional, same length as `files`, and only
+    // read when a colour list is in play.
+    const names = form.getAll("names").map((v) => (typeof v === "string" ? v : ""));
+
+    const classified: (Awaited<ReturnType<typeof classify>>)[] = [];
     const deadModels = new Set<string>();
-    for (const f of files) {
+    const promptText = kind ? finishPrompt(kind, options) : undefined;
+    for (let i = 0; i < files.length; i++) {
+      // ⚠️ THE FILENAME WINS, AND COSTS NOTHING. A supplier's swatch folder is
+      // named after the colours, so this settles most of a real drop with no
+      // network call at all — and settles it exactly right, which no amount
+      // of looking at a marbled acrylic can promise. Only the leftovers are
+      // worth a model's opinion.
+      const byName = kind ? matchFilename(names[i] ?? "", options) : null;
+      if (byName) {
+        classified.push({
+          option: byName,
+          alternate: null,
+          confidence: "visoka",
+          reason: "Ime datoteke se ujema z imenom barve.",
+        });
+        continue;
+      }
       classified.push(
-        await classify(env, await f.arrayBuffer(), f.type || "image/jpeg", options, deadModels),
+        await classify(
+          env,
+          await files[i]!.arrayBuffer(),
+          files[i]!.type || "image/jpeg",
+          options,
+          deadModels,
+          promptText,
+        ),
       );
     }
     const assigned = assignSlots(classified, options);
@@ -552,9 +606,60 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         label: a.slot ? a.slot.label : null,
         ar: a.slot?.ratio ? a.slot.ratio[0] + ":" + a.slot.ratio[1] : null,
         max: a.slot ? a.slot.maxWidth : null,
+        // Whether `max` is a ceiling or the exact stored size — the colour
+        // swatches are the only slots that say the latter, and it is what
+        // makes the finished row one set of identical squares.
+        exact: a.slot?.exact === true,
         reason: a.reason,
       })),
     });
+  }
+
+  // --- enquiries ---
+  //
+  // READ AND WORK, NEVER EDIT. What the customer wrote is text on this page,
+  // not a field: an enquiry is a record of what somebody sent, and a back
+  // office that can rewrite it is a back office whose records prove nothing.
+  // The two writes are a status and a private note, plus deletion — which is
+  // also how the erasure right (GDPR art. 17) is actually exercised, since
+  // the scheduled two-year purge is the floor and not the only way out.
+  //
+  // ⚠️ THE PANEL DOES NOT WRITE ENQUIRIES EITHER. A visitor's submission
+  // goes through public.submit_enquiry, the one function the anon role may
+  // execute; this route reads and patches AS THE SIGNED-IN ADMIN, so the
+  // database decides what an operator may see rather than this code being
+  // trusted to only ask for the right rows.
+  if (parts[1] === "povprasevanja") {
+    const shopKey = "bazen";
+    const id = parts[2];
+
+    if (id && request.method === "POST") {
+      if (parts[3] === "izbris") {
+        await deleteEnquiry(api, shopKey, id);
+        return seeOther("/admin/povprasevanja?m=enq-deleted");
+      }
+      const form = await request.formData();
+      const statusRaw = String(form.get("status") ?? "");
+      await updateEnquiry(api, shopKey, id, {
+        // An unknown status is DROPPED rather than defaulted: a select whose
+        // value did not survive the round trip should leave the row alone,
+        // not quietly move it to "nova".
+        ...(isStatus(statusRaw) ? { status: statusRaw } : {}),
+        note: String(form.get("note") ?? ""),
+      });
+      return seeOther("/admin/povprasevanja?m=enq-saved");
+    }
+
+    const notice = url.searchParams.get("m")
+      ? ({
+          kind: "ok",
+          text:
+            (Object.hasOwn(NOTICES, url.searchParams.get("m")!)
+              ? NOTICES[url.searchParams.get("m")!]
+              : undefined) ?? "Shranjeno.",
+        } as const)
+      : undefined;
+    return page(enquiryListPage(await listEnquiries(api, shopKey), admin.email, notice));
   }
 
   // --- customer reviews ---
@@ -886,6 +991,10 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         admin.email,
         slot.ratio,
         slot.maxWidth,
+        // …and whether that width is a cap or the stored size. Only the
+        // colour swatches say "the size", so the sixteen tiles stay one row
+        // of identical squares whichever road an upload took.
+        slot.exact === true,
         enhanceAvailable(env),
       ),
     );
@@ -1084,6 +1193,8 @@ const NOTICES: Record<string, string> = {
   // Not an error: the operator asked for an empty set and the set is empty.
   "deleted-none": "Ta model ni imel fotografij.",
   "post-saved": "Zapis je shranjen.",
+  "enq-saved": "Povpraševanje je posodobljeno.",
+  "enq-deleted": "Povpraševanje je izbrisano.",
   "post-published": "Zapis je objavljen in je na spletni strani.",
   "post-unpublished": "Zapis je umaknjen s spletne strani.",
   "post-deleted": "Zapis je izbrisan.",

@@ -30,3 +30,9 @@ dist/
 # and hold deliberately uncommittable rehearsal state (e.g. a local live:true
 # flip with stand-in identity values). Never repository content.
 /.claude/
+
+# Scratch harnesses. Audits in this repo are written as throwaway scripts that
+# bundle the worker, serve it and drive Chromium — and two of them were swept
+# into a commit by `git add -A` while they were still being written. Anything
+# a probe needs lives in scripts/audit-*.mjs once it earns a name.
+scripts/_*.mjs

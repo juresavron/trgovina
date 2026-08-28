@@ -48,11 +48,24 @@ export const PRIVACY: Page = {
       kind: "facts",
       h: "Kaj obdelujemo in zakaj",
       rows: [
+        // ⚠️ THIS ROW NOW DESCRIBES A FORM THAT ACTUALLY STORES SOMETHING.
+        // It was written while /kontakt offered a telephone number and an
+        // e-mail address, where "podatki, ki nam jih sporočite" meant a
+        // message in an inbox. There is a form now, and it writes a row —
+        // so the notice has to say what is written, where it is kept and for
+        // how long, and the period has to be the SAME NUMBER the consent
+        // sentence beside the tick box promises (enquiry/submit.ts) and the
+        // database enforces (purge_old_enquiries). A privacy notice that
+        // says "as long as is sensible" beside a checkbox that says "24
+        // months" is two different promises about one row.
         [
           "Povpraševanje",
-          "Ime, telefon, e-naslov in podatki o lokaciji, ki nam jih sporočite. Namen: odgovor " +
+          "Ime, telefon ali e-naslov, kraj, opis dostopa in vaše sporočilo — ter model in " +
+            "barve, ki ste jih izbrali na strani izdelka, če ste prišli od tam. Namen: odgovor " +
             "na vaše povpraševanje in priprava ponudbe. Pravna podlaga: izvedba ukrepov na " +
-            "vašo zahtevo pred sklenitvijo pogodbe.",
+            "vašo zahtevo pred sklenitvijo pogodbe. Podatki se shranijo v našo bazo pri " +
+            "ponudniku podatkovnih storitev v EU; ob oddaji shranimo tudi besedilo soglasja, " +
+            "ki ste ga potrdili, in čas oddaje.",
         ],
         [
           "Naročilo in dostava",
@@ -87,10 +100,10 @@ export const PRIVACY: Page = {
       kind: "prose",
       h: "Kako dolgo hranimo",
       p: [
-        "Povpraševanja, iz katerih ne nastane naročilo, hranimo, dokler so za odgovor še " +
-          "smiselna, nato jih izbrišemo. Podatke o sklenjenih poslih hranimo, dokler trajajo " +
-          "obveznosti iz pogodbe, jamstva za skladnost blaga in garancije. Račune hranimo " +
-          "toliko časa, kolikor zahtevajo davčni predpisi — praviloma deset let.",
+        "Povpraševanja, iz katerih ne nastane naročilo, hranimo 24 mesecev od oddaje, nato " +
+          "jih izbrišemo. Podatke o sklenjenih poslih hranimo, dokler trajajo obveznosti iz " +
+          "pogodbe, jamstva za skladnost blaga in garancije. Račune hranimo toliko časa, " +
+          "kolikor zahtevajo davčni predpisi — praviloma deset let.",
         "Podatke ob povpraševanju daste prostovoljno in vam jih ni treba dati — brez njih pa " +
           "ne moremo odgovoriti, pripraviti ponudbe ali izvesti dostave in montaže. Ko je " +
           "naročilo sklenjeno, so podatki, ki jih zahtevajo pogodba in davčni predpisi (na " +
@@ -102,7 +115,8 @@ export const PRIVACY: Page = {
       h: "Komu jih posredujemo",
       p: [
         "Samo tistim, ki so potrebni za izvedbo posla: prevozniku in montažni ekipi za dostavo, " +
-          "računovodskemu servisu za račune in ponudniku gostovanja spletne strani. Vsak od " +
+          "računovodskemu servisu za račune ter ponudniku gostovanja spletne strani in " +
+          "ponudniku podatkovne baze, v kateri se povpraševanja shranijo. Vsak od " +
           "njih obdeluje podatke po naših navodilih in zgolj za navedeni namen.",
         // Deliberately OUT of the po-naših-navodilih sentence: financiranje.ts
         // says in the shop's own words that the credit is a second contract

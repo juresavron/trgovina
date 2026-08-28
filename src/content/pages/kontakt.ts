@@ -45,6 +45,22 @@ export const CONTACT: Page = {
         address: "Sedež podjetja. Razstavnega salona nimamo.",
       },
     },
+    // ⚠️ THE FORM COMES FIRST, ABOVE THE PROSE THAT USED TO STAND IN FOR IT.
+    //
+    // The product page's configurator resolves a model, a shell colour, a
+    // cabinet colour and the options, and carries them here in the query
+    // string. Until this block existed the visitor met a telephone number and
+    // three paragraphs, and everything they had just chosen was theirs to
+    // retype. The paragraphs below are still worth reading — they say WHAT to
+    // tell us — but they are now the note beside the form rather than the
+    // only way to answer it.
+    {
+      kind: "enquiry",
+      h: "Povprašajte za ponudbo",
+      p:
+        "Odgovorimo v enem delovnem dnevu. Obvezna sta samo ime in en stik; " +
+        "vse drugo pomaga, da je prvi odgovor uporaben.",
+    },
     {
       kind: "prose",
       h: "Kaj nam poveste",

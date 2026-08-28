@@ -363,10 +363,41 @@ export interface ShopContent {
    * let a shop go live while any review is flagged. Delete the flag only
    * when the quote, the person and the order behind it are all real.
    */
+  /**
+   * One line beside the testimonial heading.
+   *
+   * ⚠️ IT MAY DESCRIBE THE REVIEWS AND NOTHING ELSE. This sits at the top of
+   * the band that carries the Annex I 23b claim, so a sentence here saying
+   * how satisfied customers are, or how many there have been, is that claim
+   * enlarged — and unlike the chip nothing checks it. Say what the quotes
+   * are and where they came from; the quotes do the persuading.
+   *
+   * Optional: absent, the intro column is the heading and the link.
+   */
+  reviewsLead?: string;
   reviews: {
     q: string;
     who: string;
     model: string;
+    /**
+     * Stars, 1–5, as the customer gave them. Rendered as a row of glyphs
+     * with the number in the accessible name — a screen reader hears "5 od
+     * 5 zvezdic", not five bullet characters.
+     *
+     * Optional because a review with no rating is still a review; the row
+     * simply does not draw. Nothing INFERS a rating: a missing one is
+     * missing, never five.
+     */
+    rating?: number;
+    /**
+     * The line under the name — "Aktivni športnik", "Lastnika spa-ja".
+     *
+     * ⚠️ CONTEXT, NEVER A CLAIM. It says who the person is, not anything
+     * about their purchase: `verified` carries that and is the only thing
+     * that earns the chip. A role reading "preverjen kupec" would be the
+     * Annex I 23b claim smuggled in as a job title.
+     */
+    role?: string;
     /** True for content nobody wrote. The launch gate refuses live while set. */
     placeholder?: boolean;
     /**

@@ -258,6 +258,68 @@ export const STUDIO_EDITORIAL_CSS = `
   @media (max-width: 700px) {
     :root[data-theme="studio"] .st-imp-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
+  /* ---- Below 620px the square tile stops being a tile ------------------
+   *
+   * ⚠️ MEASURED, not guessed. At 390px the two-column square gave each tile
+   * a 158px box, and inside it clamp(16px,1.8vw,36px) of padding on both
+   * sides leaves 126px for the label — 32% of the viewport, running the
+   * body copy at NINE AND A HALF CHARACTERS PER LINE over four or five
+   * lines. Two columns is exactly one column too many, and the arithmetic
+   * says so at any width below roughly 620: (620 − 50 gutter − 24 gap) / 2
+   * − 32 padding = 241px, which is the last width at which this reads.
+   *
+   * Stacking to one SQUARE was already rejected above, and rightly: five
+   * full-width squares under one heading is ~2.600px of scrolling. So the
+   * tile turns on its side instead — picture left at a third of the width,
+   * label right, vertically centred. Five of those is ~800px, which is an
+   * ordinary phone section, and the label finally gets ~200px of the 340
+   * available instead of 126.
+   *
+   * This is the same markup: only the quiet tile's grid changes from two
+   * rows to two columns, and the label's bottom-alignment (which exists so
+   * five labels share a baseline ACROSS a row) becomes centring, because
+   * stacked there is no row to share a baseline with. */
+  @media (max-width: 619px) {
+    :root[data-theme="studio"] .st-imp-row {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    :root[data-theme="studio"] .st-imp-quiet {
+      grid-template-columns: minmax(0, 0.34fr) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+      /* 15rem was the height of a stacked SQUARE. On its side the tile is
+       * as tall as its content wants, with a floor that keeps the picture
+       * from collapsing to a sliver when the label is one short line. */
+      min-block-size: 8.5rem;
+      align-items: center;
+    }
+    :root[data-theme="studio"] .st-imp-quiet .st-imp-photo {
+      grid-column: 1;
+      grid-row: 1;
+      /* Square, not 4:3: the picture column is narrow here and a landscape
+       * frame inside it letterboxes to almost nothing. */
+      aspect-ratio: 1 / 1;
+      padding: 12%;
+    }
+    :root[data-theme="studio"] .st-imp-label {
+      grid-column: 2;
+      grid-row: 1;
+      align-self: center;
+      padding: clamp(14px, 3.4vw, 20px) clamp(16px, 4vw, 24px) clamp(14px, 3.4vw, 20px) 0;
+    }
+    /* The fallback tile (no photograph uploaded) has no in-flow picture, so
+     * its grey mass and shadow are pinned to percentages of the WHOLE tile.
+     * Those percentages were drawn for a square with the label below it; on
+     * a landscape tile they run straight under the text. Confine them to
+     * the picture column's share of the width. */
+    :root[data-theme="studio"] .st-imp-quiet .st-imp-mass { inset: 14% 72% 14% 6%; }
+    :root[data-theme="studio"] .st-imp-quiet .st-imp-floor {
+      left: 20%; bottom: 8%; width: 22%;
+    }
+    /* h5 is 24px at this tier and the title is now in a ~200px column, so
+     * the display rung drops one step. h6 (22px) is barely a step; the body
+     * lead rung is the honest size for a card title at this width. */
+    :root[data-theme="studio"] .st-imp-t { font-size: var(--t-h6); }
+  }
   :root[data-theme="studio"] .st-imp-tile {
     position: relative;
     isolation: isolate;
@@ -475,10 +537,40 @@ export const STUDIO_EDITORIAL_CSS = `
   :root[data-theme="studio"] .st-tst-in {
     position: relative;
   }
-  :root[data-theme="studio"] .st-tst-head {
+  /* ⚠️ TWO COLUMNS: what the band IS on the left, what people said on the
+   * right. The heading used to be centred over a full-width carousel; a
+   * centred title over a grid of cards reads as a poster, and it wasted the
+   * one place on this band where a reader will accept being told something.
+   *
+   * 26rem on the intro because the lead sets at ~55 characters there, and
+   * because below that the cards drop under two columns and the whole thing
+   * is one column anyway. */
+  :root[data-theme="studio"] .st-tst-grid {
     position: relative;
-    text-align: center;
-    margin-bottom: clamp(36px, 4.4vw, 88px);
+    display: grid;
+    gap: clamp(32px, 4vw, 72px);
+  }
+  @media (min-width: 1000px) {
+    :root[data-theme="studio"] .st-tst-grid {
+      grid-template-columns: minmax(0, 26rem) minmax(0, 1fr);
+      align-items: start;
+      gap: clamp(48px, 5vw, 96px);
+    }
+    /* The intro rides down with the cards on a long band. top is the chrome
+     * plus a breath; it is only sticky where there is room to be. */
+    :root[data-theme="studio"] .st-tst-intro {
+      position: sticky;
+      top: calc(var(--chrome-h) + clamp(24px, 3vw, 56px));
+    }
+  }
+  :root[data-theme="studio"] .st-tst-intro { position: relative; }
+  :root[data-theme="studio"] .st-tst-lead {
+    margin: clamp(14px, 1.4vw, 22px) 0 clamp(22px, 2.2vw, 34px);
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--on-invert-mute);
+    max-inline-size: 34rem;
   }
   /* The band motif is the source's own eye raster, not a shape we draw. It is
    * a dark-ground image, so mix-blend-mode: screen drops its background into
@@ -554,182 +646,95 @@ export const STUDIO_EDITORIAL_CSS = `
    * zoomed-in reader away from a resting position between two cards; a slide
    * here is exactly 100% of the scrollport, so there is no useful position
    * between two of them to protect. */
-  :root[data-theme="studio"] .st-tst-track {
-    position: relative;
-    z-index: 1;
-    /* The scrollport is the STAGE, not the container: bounding it here is what
-     * centres the two-part composition instead of stranding a 620px quote at
-     * the far left of a 1360px row with half a screen of empty band between it
-     * and the medallion. Every slide is 100% of this, so the snap geometry and
-     * behaviour.ts's measured step follow it without knowing it exists. */
-    max-inline-size: var(--studio-tst-stage);
-    margin-inline: auto;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-  }
-  :root[data-theme="studio"] .st-tst-track::-webkit-scrollbar { display: none; }
-  :root[data-theme="studio"] .st-tst-list {
-    display: flex;
-    gap: clamp(24px, 3vw, 64px);
+  /* ---- the cards ------------------------------------------------------
+   *
+   * Two across above 620, one below. Not auto-fit: these are four to six
+   * items of very uneven length, and auto-fit would strand the last one at
+   * half width the way it does everywhere else. Two fixed tracks with the
+   * items stretching means a short quote and a long one sit side by side at
+   * equal height, which is what makes the pair read as a set. */
+  :root[data-theme="studio"] .st-tst-cards {
     list-style: none;
     margin: 0;
     padding: 0;
-  }
-  :root[data-theme="studio"] .st-tst-slide {
-    flex: 0 0 100%;
-    scroll-snap-align: start;
-    /* One quote per flick: without this a fast swipe can skate past two. */
-    scroll-snap-stop: always;
-  }
-  /* The slides take focus programmatically (tabindex="-1") when an anchor
-   * lands on them; the ring must announce that, and must not be clipped by the
-   * scroll container, hence the inset offset rather than an outward one. */
-  :root[data-theme="studio"] .st-tst-slide:focus { outline: none; }
-  :root[data-theme="studio"] .st-tst-slide:focus-visible {
-    outline: 2px solid var(--on-invert);
-    outline-offset: -2px;
-    border-radius: var(--r-card);
-  }
-
-  /* quote | medallion, and the row is TWO parts on purpose.
-   *
-   * §4.10 measured three — portrait, quote, circle — and the portrait slot is
-   * gone for good: it held stock faces of strangers standing in for people who
-   * had written the reviews beside them, which is the one image on this page
-   * that must never be borrowed. What was left behind was worse than the hole
-   * it filled. An auto-sized track holding nothing still collects a gap, so
-   * the three-part template indented every quote 46px from the container edge
-   * (measured at 1440) and left the band reading as a composition missing a
-   * limb. Two named areas, two real columns, no ghost track.
-   *
-   * The columns are DERIVED from --studio-tst-stage, so 1fr resolves to
-   * exactly the reading measure the stage was built from (--studio-read,
-   * 863px, once the band is wide enough to pay for it) and the gap is the
-   * token the stage was built from — change the stage and the row still
-   * adds up.
-   *
-   * Named areas rather than source order, because <figcaption> must be a
-   * direct child of <figure> to be its caption — it cannot live inside the
-   * quote column's wrapper, so the grid puts it there instead. */
-  /* ONE COLUMN, because the medallion is gone — see renderStudioTestimonials.
-   * The quote used to share the row with a product photograph picked by
-   * offset; it now has the band to itself and takes a reading measure rather
-   * than whatever was left beside a 300px disc. */
-  :root[data-theme="studio"] .st-tst-fig {
     display: grid;
-    grid-template-areas:
-      "body"
-      "cap";
-    row-gap: clamp(16px, 1.8vw, 36px);
+    gap: clamp(14px, 1.4vw, 24px);
+  }
+  @media (min-width: 620px) {
+    :root[data-theme="studio"] .st-tst-cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  /* A panel on the dark band, not a bordered box: --on-invert-08 is the
+   * faintest lift that still separates a card from the ground, and a border
+   * would put eight hairlines across a band whose whole job is to be quiet
+   * around the words. */
+  :root[data-theme="studio"] .st-tst-card {
+    display: flex;
+    background: var(--on-invert-08, color-mix(in srgb, var(--on-invert) 7%, transparent));
+    border-radius: var(--r-media);
+    padding: clamp(20px, 2vw, 32px);
+  }
+  :root[data-theme="studio"] .st-tst-card > figure {
     margin: 0;
-    max-inline-size: 46rem;
+    display: flex;
+    flex-direction: column;
+    /* The caption sits at the BOTTOM of the card whatever the quote's length,
+     * so the names line up across a row and the eye can read them as a list
+     * of people rather than as four unrelated blocks. */
+    block-size: 100%;
+    inline-size: 100%;
   }
-  /* THE TWO TEXT ROWS MUST TOUCH, and centring them individually is why they
-   * did not. The medallion spans both rows and is taller than the quote, so
-   * grid distributes the surplus EQUALLY over the two spanned tracks (the spec
-   * says equally, which is what makes the rest of this reliable): measured at
-   * 1440, 288px of medallion over a 106px quote and a 31px attribution grew
-   * each row by 62px, and with align-items:center both items sat in the middle
-   * of their own inflated track — 88px of black between a sentence and the
-   * name signing it, which read as two unrelated blocks.
-   *
-   * Pinning the quote to the BOTTOM of the first row and the attribution to
-   * the TOP of the second leaves only the row-gap between them, and because
-   * the surplus is split evenly the pair lands optically centred against the
-   * medallion for free. When the quote is the taller of the two the tracks
-   * never grow and the same two rules are simply inert. */
-  :root[data-theme="studio"] .st-tst-body { grid-area: body; align-self: end; }
-  :root[data-theme="studio"] .st-tst-cap { grid-area: cap; align-self: start; }
-
-  :root[data-theme="studio"] .st-tst-body { min-width: 0; }
-  /* The oversized opening glyph, one ramp step DOWN from where it was.
-   *
-   * It was h1 (92/64/44) against a lead-xl quote, a ratio of about 1.9:1. The
-   * quote is now the calm lead rung (20/16/18), and 92px of punctuation over
-   * 20px of prose is 4.6:1 — the mark becomes the loudest thing in the band
-   * and the reader's eye never reaches the sentence. h2 (60/50/38) restores
-   * roughly the 3:1 the source sets its own mark at: still unmistakably a
-   * display flourish, no longer the headline.
-   *
-   * Its LEADING stays the one deliberate departure in this file: it is
-   * decorative punctuation (aria-hidden), and at --lh-h2 its em box would open
-   * a 68px hole above the quote. 0.6 is a layout device on a glyph nobody
-   * reads, not an invented type step. */
-  :root[data-theme="studio"] .st-tst-glyph {
-    display: block;
-    font-family: var(--f-display);
-    font-weight: var(--w-display);
-    font-size: var(--t-h2);
-    letter-spacing: var(--ls-h2);
-    line-height: 0.6;
-    color: color-mix(in srgb, var(--on-invert) 42%, transparent);
-    user-select: none;
+  /* ---- the stars ----
+   * --star is its own token rather than --acc: the accent is this theme's
+   * interaction colour (focus rings, links) and a row of five accent glyphs
+   * at the top of a card reads as five controls. A rating is a fact, and the
+   * convention for it is gold. Measured on --ink-invert: 8.6:1, well past
+   * the 3:1 a non-text indicator needs, and it is not carrying the value
+   * anyway — the visually-hidden span does that. */
+  :root[data-theme="studio"] .st-tst-stars {
+    margin: 0 0 clamp(12px, 1.2vw, 18px);
+    /* ⚠️ 18px, NOT 15. The owner asked for the reference site's star row
+     * twice, and the second time was looking at a build that had it — the
+     * device was there and simply did not READ as one. A ★ glyph carries far
+     * less ink than a letter of the same em, so a rating set at the body
+     * size lands somewhere under a caption in the visual order, below the
+     * name it is supposed to lead. The reference draws its row at roughly
+     * the lead rung and it is the first thing in the card.
+     *
+     * The tracking goes up with it: five glyphs at 0.14em read as one word
+     * at 15px and as five stars at 0.18em, which is what a rating has to be
+     * before anyone counts it. */
+    font-size: 18px;
+    letter-spacing: 0.18em;
+    line-height: 1;
   }
-  /* The quote drops a whole rung, from lead-xl to lead (20/16/18).
-   *
-   * lead-xl put it at 48px on a 1440 desktop — four lines of 48px white type
-   * on a black band, which is a headline pretending to be a sentence, and the
-   * source sets the same sentence at about 16px. A testimonial is not the
-   * band's headline; the heading above it is, and two display-scale voices in
-   * one band is why this one shouted. --t-lead is the prose ramp's own rung
-   * for prose set a step above body — the calm register the source uses —
-   * with --lh-lead (1.5em) as its partner leading rather than lead-xl's
-   * tighter 1.3em, because leading has to open up as type gets smaller.
-   *
-   * THE RUNG CHANGE MOVES THE CONTRAST FLOOR. At 48px/500 this was WCAG "large
-   * text" and answerable to 3:1; at 20px/500 it is ordinary text and owes the
-   * full 4.5:1. The ink is unchanged and unaffected either way — pure
-   * --on-invert on --ink-invert is 18.26:1 — but the muted rung a smaller
-   * quote might have invited is not available to it, and that is why this
-   * stays white.
-   *
-   * No max-width of its own any more: the grid column IS the measure. It
-   * resolves to --studio-read (863px, about 80 characters at this size) by
-   * construction wherever the band can pay for the whole stage, and to
-   * whatever the band leaves when it cannot; the old min(100%, max(18rem,
-   * 40vw)) would fight it — at 1440 that formula gave 576px inside a 620px
-   * column, so the measure was set twice and neither number knew about the
-   * other. Capping the text here instead would put the difference back into
-   * the row as a void between the sentence and the medallion, which is the
-   * hole the portrait left and the reason the stage exists. */
+  :root[data-theme="studio"] .st-tst-star-on { color: #e8b53c; }
+  :root[data-theme="studio"] .st-tst-star-off {
+    color: color-mix(in srgb, var(--on-invert) 22%, transparent);
+  }
+  /* The quote. Body rung, not the display face: at four to a band these are
+   * read, not declaimed, and the old 1-up carousel set them at h4 because it
+   * had a whole stage to fill. */
   :root[data-theme="studio"] .st-tst-q {
-    max-width: 100%;
-    margin: var(--gap-sm) 0 0;
+    margin: 0 0 clamp(18px, 1.8vw, 26px);
     font-family: var(--f-body);
-    font-size: var(--t-lead);
-    font-weight: var(--w-body-med);
-    letter-spacing: var(--ls-body);
-    line-height: var(--lh-lead);
+    font-size: var(--t-body);
+    font-weight: var(--w-body);
+    line-height: var(--lh-body);
     color: var(--on-invert);
-    text-wrap: pretty;
-    overflow-wrap: break-word;
+    /* Flex child, so it takes the slack and pins the caption to the floor. */
+    flex: 1 1 auto;
   }
   :root[data-theme="studio"] .st-tst-cap {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--gap-sm) var(--gap-md);
-    min-width: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
   }
-  /* Both caption items are content this module does not write and cannot
-   * predict the length of — a place name, a model code, whatever the reviews
-   * turn out to carry. A flex item's automatic minimum size is its content, so
-   * one long unbroken token would push the row past a 320px phone rather than
-   * wrap inside it. These two lines are the whole guard. */
-  :root[data-theme="studio"] .st-tst-who,
-  :root[data-theme="studio"] .st-tst-chip {
-    min-width: 0;
-    max-inline-size: 100%;
-    overflow-wrap: break-word;
-  }
-  /* The attribution name — uppercase tracked meta, i.e. the label role: DM Sans
-   * 500 at 14px, --ls-label (0.06em, the source's widest tracking — the 0.12em
-   * here was double it) and the tight label leading for a single line. Ink is
-   * --on-invert-mute, tokens.ts's on-dark muted rung for TEXT (7.33:1); the
-   * motif's opacity above is capped so that stays true wherever a slide lands. */
+  /* The name, at the label rung in caps — the one place on the card where
+   * this theme's chrome voice belongs, because it is an attribution and not
+   * a sentence. */
   :root[data-theme="studio"] .st-tst-who {
     font-family: var(--f-label);
     font-size: var(--t-label);
@@ -737,35 +742,23 @@ export const STUDIO_EDITORIAL_CSS = `
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
+    color: var(--on-invert);
+  }
+  /* The role. Sentence case and muted: it describes a person, and a second
+   * line of tracked caps under the first would compete with the name it is
+   * meant to qualify. --on-invert-mute is 7.33:1 on this band. */
+  :root[data-theme="studio"] .st-tst-role {
+    font-family: var(--f-body);
+    font-size: var(--t-label);
+    line-height: var(--lh-body);
     color: var(--on-invert-mute);
   }
-  /* The chip beside the attribution — ROUND (§3): pills and chips are round,
-   * buttons sharp. Still the label row whole, and still the same size; what
-   * changes is its WEIGHT.
-   *
-   * It was a crisp 1px outline, 36px tall and 264px wide at 1440, sitting
-   * beside a 14px name. Against a 48px quote it was merely busy; against the
-   * calm 20px quote it read as a BUTTON — the only outlined rectangle on the
-   * band, competing with the medallion's edge and with the two controls that
-   * really are buttons. The source's attribution is one quiet line of tracked
-   * caps and nothing else. So the outline goes and a low white fill takes its
-   * place: --on-invert-16 is tokens.ts's quietest on-dark white, the shape
-   * survives, and nothing on the band has a hard edge except the things that
-   * can be pressed.
-   *
-   * The fill moves the ground under the text, so the ratio is recomputed
-   * rather than inherited: #ffffff14 over #151515 flattens to #272727, and
-   * --on-invert-mute (#a4a4a4) on that is 5.9:1 — past the 4.5:1 floor this
-   * 14px text is held to. Padding drops with the border because a fill needs
-   * less room to read than an outline does.
-   *
-   * The text inside is content's, not this module's: whatever the chip ends up
-   * saying, it is one short run of tracked caps and this rule does not care. */
+  /* The Annex I 23b claim, and the only thing on the card that makes one. */
   :root[data-theme="studio"] .st-tst-chip {
-    display: inline-block;
+    margin-block-start: 8px;
+    padding: 4px 12px;
     border-radius: var(--r-pill);
     background: var(--on-invert-16);
-    padding: clamp(5px, 0.4vw, 8px) clamp(10px, 0.9vw, 16px);
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -774,102 +767,16 @@ export const STUDIO_EDITORIAL_CSS = `
     text-transform: uppercase;
     color: var(--on-invert-mute);
   }
-  /* The same run of tracked caps WITHOUT the pill, for a quote that is not a
-   * verified purchase. The pill is what reads as a badge, and a badge is a
-   * claim — see quoteBlock. Naming the model is context and stays. */
+  /* A model with no verified claim behind it: the same line, no ground, so it
+   * cannot be mistaken for the chip. */
   :root[data-theme="studio"] .st-tst-model {
-    min-width: 0;
-    max-inline-size: 100%;
-    overflow-wrap: break-word;
+    margin-block-start: 8px;
     font-family: var(--f-label);
     font-size: var(--t-label);
-    font-weight: var(--w-label);
     letter-spacing: var(--ls-label);
     line-height: var(--lh-label-tight);
     text-transform: uppercase;
     color: var(--on-invert-mute);
-  }
-
-  /* ⚠️ THE CIRCULAR MEDALLION AND ITS THREE INTERIORS ARE GONE — about 90
-   * lines of stylesheet, including a long note arguing how to light a
-   * white-sweep cutout inside a 216px circle. Every word of it was right
-   * about a problem the band no longer has: a review is words and who said
-   * them, and a product photograph picked by offset was decoration standing
-   * where evidence belongs. See renderStudioTestimonials. */
-
-  /* The two circular controls, TUCKED UNDER THE MEDALLION (§4.10). 64px square
-   * with a 2px ring — --ctrl-circle-size and --bw-ctrl are tokens.ts's own
-   * entries for exactly this control and had, until now, no consumer. 64px is
-   * comfortably past WCAG 2.5.8's 44px target (and past 2.5.5 AAA's), so the
-   * geometry is the hit area; no padding trickery is needed.
-   *
-   * WHERE THEY SIT IS THE POINT. Flush to the container's right edge they
-   * floated in the band's bottom-right corner with nothing above or beside
-   * them — 1360px wide of nav holding 138px of buttons, aligned to an edge no
-   * other element on the band touched. Now the nav is the same stage as the
-   * scrollport, so it ends where the medallion ends, and the inner group is
-   * exactly the medallion's width with the pair centred in it: the controls
-   * hang on the vertical axis of the circle they page. Two rules, both
-   * expressed in the same two custom properties the row above is built from,
-   * so nothing can drift out of alignment. */
-  :root[data-theme="studio"] .st-tst-nav {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    justify-content: flex-end;
-    max-inline-size: var(--studio-tst-stage);
-    margin-inline: auto;
-    margin-top: clamp(24px, 3vw, 60px);
-  }
-  :root[data-theme="studio"] .st-tst-nav-in {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--gap-sm);
-  }
-  /* THE RING IS THE CONTROL'S BOUNDARY, so WCAG 1.4.11's 3:1 applies to it:
-   * --on-invert-mute is 7.33:1 on the band, with headroom to spare, and the
-   * glyph inside is the full --on-invert rung. Hover/focus inverts the whole
-   * disc — the theme's existing idiom (commerce.ts's .st-util-go does the
-   * same) rather than a new one invented for this band. */
-  :root[data-theme="studio"] .st-tst-go {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    inline-size: var(--ctrl-circle-size);
-    block-size: var(--ctrl-circle-size);
-    border: var(--bw-ctrl) solid var(--on-invert-mute);
-    border-radius: var(--r-circle);
-    background: transparent;
-    color: var(--on-invert);
-    text-decoration: none;
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-  }
-  :root[data-theme="studio"] .st-tst-go:hover,
-  :root[data-theme="studio"] .st-tst-go:focus-visible {
-    background: var(--on-invert);
-    border-color: var(--on-invert);
-    color: var(--ink-invert);
-  }
-  :root[data-theme="studio"] .st-tst-go:focus-visible {
-    outline: 2px solid var(--on-invert);
-    outline-offset: 3px;
-  }
-  /* icons.ts draws the arrow inside its own STADIUM outline, because on the
-   * rail that outline IS the button — there is no other boundary. Here the
-   * 64px ring is the boundary, and painting both would be the circle-around-a-
-   * stadium that commerce.ts's note warns about. So the geometry still comes
-   * from icons.ts, unmodified, and the frame half of it is switched off in CSS:
-   * the stadium is the only path in that glyph carrying a stroke. */
-  :root[data-theme="studio"] .st-tst-go .st-arrow-svg { display: block; }
-  :root[data-theme="studio"] .st-tst-go .st-arrow-svg path[stroke] { display: none; }
-  /* A control that cannot do anything must not look like it can, and must not
-   * take a click. aria-disabled rather than the disabled attribute because
-   * these are anchors, and an anchor that stops being focusable mid-scroll
-   * would move the reader's focus somewhere unrelated. */
-  :root[data-theme="studio"] .st-tst-go[aria-disabled="true"] {
-    opacity: 0.3;
-    pointer-events: none;
   }
 
   /* ================= §4.11 Blog cards ================= */
@@ -1088,19 +995,6 @@ export const STUDIO_EDITORIAL_CSS = `
     :root[data-theme="studio"] {
       --studio-tst-stage: min(100%, var(--studio-read-narrow));
     }
-    :root[data-theme="studio"] .st-tst-fig {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-areas:
-        "disc"
-        "body"
-        "cap";
-      justify-items: start;
-      row-gap: clamp(20px, 2.4vw, 32px);
-    }
-    /* The controls join that left edge rather than hanging off the right of a
-     * block they are no longer under. */
-    :root[data-theme="studio"] .st-tst-nav { justify-content: flex-start; }
-    :root[data-theme="studio"] .st-tst-nav-in { inline-size: auto; }
   }
 
   /* ---- Below 860px: everything stacks (§4.9 "stacks on mobile") ---- */
@@ -1148,21 +1042,12 @@ export const STUDIO_EDITORIAL_CSS = `
      * on their own, and neither is motion. */
     :root[data-theme="studio"] .st-gd-photo,
     :root[data-theme="studio"] .st-gd-arrow,
-    :root[data-theme="studio"] .st-gd-go,
-    :root[data-theme="studio"] .st-tst-go { transition: none; }
+    :root[data-theme="studio"] .st-gd-go { transition: none; }
     :root[data-theme="studio"] .st-gd-card:hover .st-gd-photo,
     :root[data-theme="studio"] .st-gd-card:focus-visible .st-gd-photo,
     :root[data-theme="studio"] .st-gd-card:hover .st-gd-arrow,
     :root[data-theme="studio"] .st-gd-card:focus-visible .st-gd-arrow {
       transform: none;
-    }
-    /* The slider keeps its scrollability and loses only its motion: snapping
-     * and smooth scrolling are the whole of it, and an anchor still lands on
-     * its quote — instantly. behaviour.ts reads the same media query and steps
-     * with behavior:"auto" for the same reason. */
-    :root[data-theme="studio"] .st-tst-track {
-      scroll-snap-type: none;
-      scroll-behavior: auto;
     }
   }
 `;
@@ -1312,137 +1197,22 @@ function motif(): string {
   return "";
 }
 
-/**
- * One quote: the body column plus the figure's caption, emitted as SIBLINGS —
- * <figcaption> is only a caption when it is a direct child of <figure>, so the
- * grid (not the source tree) is what places it under the quote.
- *
- * The oversized glyph is the low Slovenian opening quote „ — decorative
- * punctuation, so it is aria-hidden and the quote text itself is NOT wrapped
- * in a second pair of marks.
- *
- * THE CHIP IS OPTIONAL, AND THE LAYOUT DOES NOT NOTICE EITHER WAY. It names
- * the model the review is about, and a review that does not name one must not
- * render a chip trailing a separator with nothing after it. So `model` is an
- * optional field here and an empty one renders no element at all: the caption
- * is a flex row whose gap only exists between items that exist, and the
- * attribution stands alone with no hole beside it. Nothing in the stylesheet
- * is conditioned on the chip's presence or on what it says.
- */
-function quoteBlock(r: {
-  q: string;
-  who: string;
-  model?: string;
-  placeholder?: boolean;
-  verified?: boolean;
-}): string {
-  // ⚠️ A PLACEHOLDER NEVER WEARS THE CHIP.
-  //
-  // ShopContent.reviews states the rule — "the renderer must not dress it as
-  // verified" — and this function was ignoring it: the chip printed whenever
-  // a model was set, so the two known-invented quotes rendered "Preverjen
-  // nakup · BAZEN 230" on every page view. Claiming a review is a checked
-  // purchase when nobody wrote it is Annex I 23b/23c of the Unfair Commercial
-  // Practices Directive, banned outright.
-  //
-  // The launch gate already refuses live: true while any review is flagged,
-  // but a gate on a config flag is one flip away from publishing the claim,
-  // and the QA host renders it in the meantime. The model still shows — it is
-  // useful context — as a plain caption that asserts nothing.
-  // ⚠️ THE CHIP IS EARNED, NOT INFERRED. It used to print for anything that
-  // was not a placeholder, which made "not invented" the same thing as
-  // "checked against a real order" — so a genuine quote nobody had verified
-  // would have claimed a verified purchase the moment the flag came off. The
-  // claim now comes from `verified` alone, which the operator ticks in the
-  // panel against an order number and nothing else sets.
-  // ⚠️ THE CHIP DOES NOT DEPEND ON A MODEL, and coupling the two hid the
-  // claim on every review that names no pool.
-  //
-  // This read `!r.model ? "" : …`, so a verified review with no model
-  // rendered no chip at all — which is most of them, because a customer
-  // writing about their spa rarely names the SKU and sync-reviews.mjs only
-  // prints a model it can match against the catalogue. The band's heading
-  // switches to "Preverjena mnenja strank" as soon as one review is
-  // verified, so the page ended up asserting at the top what none of the
-  // quotes underneath repeated.
-  //
-  // They are two different facts and they separate cleanly. "Preverjen
-  // nakup" is the Annex I 23b claim and comes from `verified` alone. The
-  // model is context, appended to the chip when there is one and standing
-  // as a plain caption when the review is not verified. A placeholder still
-  // wears nothing, which is the rule that has not moved.
-  const verified = r.verified === true && !r.placeholder;
-  const chip = verified
-    ? '<span class="st-tst-chip">Preverjen nakup' +
-      (r.model ? " · " + esc(r.model) : "") + "</span>"
-    : r.model
-      ? '<span class="st-tst-model">' + esc(r.model) + "</span>"
-      : "";
-  return (
-    '<div class="st-tst-body">' +
-    '<span class="st-tst-glyph" aria-hidden="true">„</span>' +
-    '<blockquote class="st-tst-q">' + esc(r.q) + "</blockquote>" +
-    "</div>" +
-    '<figcaption class="st-tst-cap">' +
-    '<span class="st-tst-who">' + esc(r.who) + "</span>" +
-    chip +
-    "</figcaption>"
-  );
-}
 
 /**
- * The two circular controls (§4.10), bottom right.
+ * §4.10 — the inverted testimonial band.
  *
- * They are ANCHORS to the first and last quote, which is the whole no-JS
- * story: before behaviour.ts runs they jump to an end of the scroller and move
- * focus into that quote; after it runs the module intercepts the click and
- * steps by exactly one, then keeps `aria-disabled` in sync with the scroll
- * position. Either way both controls always act.
+ * ⚠️ THE SLIDER IS GONE. This was a one-at-a-time carousel wired to
+ * behaviour.ts's generic upgrade; the markup contract it needed
+ * (data-st-slider, data-st-scroll, data-st-item, the prev/next controls) is
+ * no longer emitted here, and behaviour.ts finds nothing to upgrade, which
+ * is a no-op rather than an error. The other slider on the site — the social
+ * strip's ticker — is untouched and still owns that machinery.
  *
- * Icon-only by design, so there is no visible label for WCAG 2.5.3 to
- * contradict: the aria-label IS the accessible name, and it names where the
- * link actually goes rather than a scroll step an anchor cannot promise. The
- * glyph is aria-hidden inside icons.ts.
+ * What replaced it is a grid, because a slider hides three quarters of the
+ * only thing this band contains. Several different people saying several
+ * different things IS the persuasive content; one quote and two arrows is a
+ * control asking to be pressed by a reader who has no reason to press it.
  *
- * No `data-st-dots`: pagination is a device for a rail of many cards, and
- * commerce.ts's rail has it. A band that shows one quote at a time with two
- * reviews per shop would render two dots beside two arrows saying the same
- * thing, and §4.10 has no dot row in it.
- *
- * The glyph comes from icons.ts unmodified — verbatim source geometry, one
- * declaration site. It ships its own stadium frame because on the rail that
- * frame IS the button; here the 64px ring already is, so the frame half is
- * switched off in CSS rather than by forking the path data.
- */
-function sliderNav(last: string): string {
-  return (
-    // The inner span is the ALIGNMENT, not decoration: the <nav> spans the
-    // stage so it ends where the medallion ends, and this group is the
-    // medallion's own width so the two controls centre on the circle's
-    // vertical axis instead of hanging off the band's right edge. Both
-    // measurements come from the same custom properties the row above uses.
-    '<nav class="st-tst-nav" aria-label="Pomik po mnenjih">' +
-    '<span class="st-tst-nav-in">' +
-    '<a class="st-tst-go st-arrow st-arrow--prev" data-st-prev href="#st-tst-1"' +
-    ' aria-label="Prejšnje mnenje">' + arrowIcon("left") + "</a>" +
-    '<a class="st-tst-go st-arrow" data-st-next href="' + esc(last) + '"' +
-    ' aria-label="Naslednje mnenje">' + arrowIcon("right") + "</a>" +
-    "</span></nav>"
-  );
-}
-
-/**
- * §4.10 — the inverted testimonial band, as a real slider.
- *
- * One quote per view: glyph + quote + attribution left, the circular product
- * medallion right, the two circular controls centred beneath the medallion.
- * The markup is the behaviour contract and nothing more — `data-st-slider` on the
- * section, `data-st-scroll` on the scroller, `data-st-item` per quote,
- * `data-st-prev`/`data-st-next` on the controls — so behaviour.ts's generic
- * slider upgrades it and this module writes no JavaScript at all.
- *
- * With a single review there is nothing to move between, so the controls are
- * not rendered; the scroller still holds the one quote and reads identically.
  * A shop with no reviews renders nothing — an empty dark band would read as a
  * loading failure, and fabricating a quote is out of the question.
  */
@@ -1450,32 +1220,6 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
   const reviews = ctx.content.reviews;
   if (!reviews.length) return "";
 
-  const slides = reviews
-    .map((r, i) => {
-      // The id is the anchor target the controls fall back to, and tabindex=-1
-      // is what lets that anchor move focus into a quote that is not itself
-      // interactive.
-      const id = "st-tst-" + String(i + 1);
-      // ⚠️ NO MEDALLION. It held a product photograph picked by offset — a
-      // picture of a hot tub beside a sentence about the delivery crew, which
-      // is decoration standing where evidence belongs. A review is words and
-      // who said them; the picture added nothing a reader could check, and it
-      // took a third of the band to say it.
-      //
-      // Asked for directly, and it is the right call on its own: what makes a
-      // testimonial persuasive is that it reads like a person, and a stock
-      // product shot beside it reads like an advertisement. The quote now has
-      // the full measure.
-      return (
-        '<li class="st-tst-slide" data-st-item id="' + esc(id) + '" tabindex="-1">' +
-        '<figure class="st-tst-fig">' +
-        quoteBlock(r) +
-        "</figure></li>"
-      );
-    })
-    .join("");
-
-  const nav = reviews.length < 2 ? "" : sliderNav("#st-tst-" + String(reviews.length));
 
   // The heading makes the same claim the chip does, so it answers to the same
   // rule: it may say "verified" only when every quote under it is real.
@@ -1486,18 +1230,86 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
     ? "Preverjena mnenja strank"
     : "Mnenja strank";
 
+  // ⚠️ A GRID, NOT A SLIDER, and the reason is what a testimonial band is for.
+  //
+  // This was a one-at-a-time carousel: four reviews, three of them behind a
+  // control nobody presses. A reader deciding on a EUR 7.000 purchase wants
+  // to see that several different people said several different things —
+  // that is the whole persuasive content of the section, and a slider hides
+  // three quarters of it by construction.
+  //
+  // Capped at six. Beyond that the band becomes a page of its own, and there
+  // is no "all reviews" route to send anyone to; when there is, this is where
+  // the link goes.
+  const cards = reviews.slice(0, 6).map(quoteCard).join("");
+
   return (
-    '<section class="st-tst" data-st-slider aria-labelledby="st-tst-h">' +
+    '<section class="st-tst" aria-labelledby="st-tst-h">' +
     '<div class="st-tst-in">' +
-    '<div class="st-tst-head">' +
+    '<div class="st-tst-grid">' +
+    '<div class="st-tst-intro">' +
     motif() +
     '<h2 class="st-tst-h" id="st-tst-h">' + esc(heading) + "</h2>" +
+    (ctx.content.reviewsLead
+      ? '<p class="st-tst-lead">' + esc(ctx.content.reviewsLead) + "</p>"
+      : "") +
+    '<a class="st-btn-light" href="' +
+    esc(ctx.shop.routeSlugs["/contact"] + ctx.q) +
+    '">Povprašajte za ponudbo</a>' +
     "</div>" +
-    '<div class="st-tst-track" data-st-scroll>' +
-    '<ul class="st-tst-list">' + slides + "</ul>" +
-    "</div>" +
-    nav +
-    "</div></section>"
+    '<ul class="st-tst-cards">' + cards + "</ul>" +
+    "</div></div></section>"
+  );
+}
+
+/**
+ * The stars.
+ *
+ * ⚠️ THE NUMBER IS IN THE ACCESSIBLE NAME, NOT IN THE GLYPHS. Five ★ read
+ * aloud is "black star black star black star black star black star", which is
+ * noise; the row is aria-hidden and the rating is announced once as words.
+ *
+ * Empty stars are drawn too, so a four is visibly a four rather than "one
+ * fewer glyph than the card above it" — the comparison a reader makes is
+ * against five, and it only works if five positions are shown.
+ */
+function stars(rating: number): string {
+  const n = Math.max(1, Math.min(5, Math.round(rating)));
+  return (
+    '<p class="st-tst-stars">' +
+    '<span class="st-vh">' + n + " od 5 zvezdic</span>" +
+    '<span aria-hidden="true">' +
+    '<span class="st-tst-star-on">' + "★".repeat(n) + "</span>" +
+    (n < 5 ? '<span class="st-tst-star-off">' + "★".repeat(5 - n) + "</span>" : "") +
+    "</span></p>"
+  );
+}
+
+/** One review as a card: stars, quote, then who said it. */
+function quoteCard(r: {
+  q: string;
+  who: string;
+  model?: string;
+  rating?: number;
+  role?: string;
+  placeholder?: boolean;
+  verified?: boolean;
+}): string {
+  const verified = r.verified === true && !r.placeholder;
+  return (
+    '<li class="st-tst-card"><figure>' +
+    (r.rating ? stars(r.rating) : "") +
+    '<blockquote class="st-tst-q">' + esc(r.q) + "</blockquote>" +
+    '<figcaption class="st-tst-cap">' +
+    '<span class="st-tst-who">' + esc(r.who) + "</span>" +
+    (r.role ? '<span class="st-tst-role">' + esc(r.role) + "</span>" : "") +
+    (verified
+      ? '<span class="st-tst-chip">Preverjen nakup' +
+        (r.model ? " · " + esc(r.model) : "") + "</span>"
+      : r.model
+        ? '<span class="st-tst-model">' + esc(r.model) + "</span>"
+        : "") +
+    "</figcaption></figure></li>"
   );
 }
 
