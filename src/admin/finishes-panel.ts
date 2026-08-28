@@ -115,6 +115,7 @@ function group(
   rows: readonly Finish[],
   fallback: readonly string[],
   photographed: boolean,
+  ai: boolean,
 ): string {
   // What the site is ACTUALLY showing right now, which is not the same
   // question as what is in the table. pola.ts reads a list baked in at build
@@ -137,7 +138,7 @@ function group(
   return (
     '<div class="fin-group"><h2>' + esc(title) + "</h2>" +
     '<p class="lede">' + esc(note) + "</p>" +
-    finishDropCard(prefix, what) +
+    finishDropCard(prefix, what, ai) +
     '<p class="fin-state">' + state + "</p>" +
     (live ? '<ul class="fins">' + rows.map(card).join("") + "</ul>"
           : fallbackChips(fallback)) +
@@ -155,6 +156,9 @@ export function finishListPage(
     shellPhotographed: boolean;
     cabinetPhotographed: boolean;
   } = { shell: [], cabinet: [], shellPhotographed: false, cabinetPhotographed: false },
+  // Whether GEMINI_API_KEY is set. A checkbox that cannot reach the model is
+  // worse than no checkbox: it promises a step that silently does not run.
+  ai = false,
 ): string {
   const shellF = rows.filter((f) => f.kind === "barva");
   const cab = rows.filter((f) => f.kind === "obloga");
@@ -187,6 +191,7 @@ export function finishListPage(
         shellF,
         fallback.shell,
         fallback.shellPhotographed,
+        ai,
       ) +
       group(
         "Barve obloge",
@@ -196,6 +201,7 @@ export function finishListPage(
         cab,
         fallback.cabinet,
         fallback.cabinetPhotographed,
+        ai,
       ) +
       "<script>" + SMART_JS + "</script>",
     who,

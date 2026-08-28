@@ -565,16 +565,22 @@ export function shell(title: string, body: string, who: string, current = ""): s
  * the shop actually shows is what customers see — no list to keep in step
  * with a folder of samples, because they are the same act.
  *
- * ⚠️ NO AI-UPSCALE OPTION, unlike the site uploader. The enhancer redraws a
- * picture larger; on a marbled acrylic sample the redraw is a new pattern in
- * approximately that colour, which is the one thing a swatch must not be.
- * These slots cap at 400 px square anyway.
+ * ⚠️ THE AI UPSCALE IS HERE ON THE OWNER'S INSTRUCTION, against the advice
+ * given when they asked. See the note at the checkbox: the enhancer redraws
+ * rather than sharpens, and on marbled acrylic a redraw is a new pattern in
+ * approximately that colour. It stays guarded — only a sample narrower than
+ * the 400px slot is ever sent, so on a normal photograph or screen capture
+ * the box does nothing at all.
  *
  * Mounted by SMART_JS via mount(prefix, scope) — the same probe, crop, WebP
  * and upload pipeline the site uploader runs, pointed at the colour
  * catalogue. The prefix is what binds the markup to the script.
  */
-export function finishDropCard(prefix: "bv" | "ob", what: string): string {
+export function finishDropCard(
+  prefix: "bv" | "ob",
+  what: string,
+  ai: boolean,
+): string {
   return (
     '<div class="card">' +
     '<div class="drop" id="' + prefix + '-drop">' +
@@ -585,6 +591,35 @@ export function finishDropCard(prefix: "bv" | "ob", what: string): string {
     '<p class="fmeta">Ena datoteka = ena barva. Vzorec obrežemo na sredini ' +
     "in shranimo 400 × 400 px.</p>" +
     "</div>" +
+    // ⚠️ ON THE OWNER'S EXPLICIT INSTRUCTION, AGAINST THE ADVICE ABOVE IT.
+    //
+    // This zone shipped without an upscale on purpose, and the argument has
+    // not changed: the enhancer REDRAWS a picture larger, so on a marbled
+    // acrylic sample what comes back is a new pattern in roughly that
+    // colour. A swatch is the one slot on this site where "not necessarily
+    // the same photograph any more" is a wrong answer rather than a
+    // trade-off, because somebody orders a 7,000 EUR shell from it. That was
+    // put to the owner, who asked for it anyway; it is their shop and their
+    // call, so the control is here — labelled with what it actually does,
+    // not with a euphemism.
+    //
+    // It stays GUARDED, exactly as it is everywhere else: maybeEnhance()
+    // fires only when the source is narrower than the slot's 400px. A
+    // photograph or a screen capture of a colour chart is almost always
+    // wider than that, so for most files this box is a no-op — which is the
+    // honest outcome, since there is nothing to add to a sample that already
+    // has more pixels than the square it is stored in.
+    (ai
+      ? '<label class="ai-opt" for="' + prefix + '-ai">' +
+        '<input type="checkbox" id="' + prefix + '-ai" checked>' +
+        "<span>Premajhne vzorce povečaj z umetno inteligenco</span></label>" +
+        '<p class="note-ai">Velja samo za vzorce, ožje od 400 px — večjih ne ' +
+        "spreminjamo. Model vzorec PONOVNO NARIŠE večji: pri marmoriranem " +
+        "akrilu to ni ostrejša fotografija iste barve, ampak nov vzorec v " +
+        "približno tej barvi. Po nalaganju vsakega poglejte in ga primerjajte " +
+        "z vzorcem v roki — ime barve gre na naročilnico. Če model ne vrne " +
+        "večje slike, obdržimo vašo.</p>"
+      : "") +
     '<p class="stline" id="' + prefix + '-stwrap" role="status">' +
     '<span id="' + prefix + '-st"></span></p>' +
     '<ul class="picked" id="' + prefix + '-list"></ul>' +
@@ -1516,13 +1551,14 @@ function mount(p, scope){
      MEASURABLY larger. Same guard as the single pages: a redraw that added
      no pixels is all risk and no benefit. */
   function maybeEnhance(f, srcW, maxW, i){
-    /* ⚠️ NO CHECKBOX MEANS NO UPSCALE, and the colour zones deliberately
-       have none. The enhancer REDRAWS a picture larger, and on a marbled
-       acrylic sample that is not a sharper photograph of the colour — it is
-       a new pattern in roughly that colour. A swatch is the one slot on this
-       site where "not necessarily the same photograph any more" is a wrong
-       answer rather than a trade-off. They also cap at 400px, so there is
-       almost nothing to gain. */
+    /* ⚠️ NO CHECKBOX MEANS NO UPSCALE — which is still how a zone opts out,
+       and is no longer how the colour zones behave: the owner asked for the
+       upscale there and finishDropCard now renders the box. The reasoning
+       against it is written out at that call site.
+       The guard is unchanged and is what keeps the answer sane: a redraw
+       runs only when the source is NARROWER than the slot, and the result is
+       kept only when it comes back measurably larger. A redraw that added no
+       pixels is all risk and no benefit. */
     if (!ai || !ai.checked || !(srcW < maxW)) return Promise.resolve({ f: f, up: false });
     mark(i, "povečujem z AI …");
     var fd = new FormData();

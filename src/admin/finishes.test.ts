@@ -170,4 +170,29 @@ describe("the colour page, on a shop that has uploaded nothing", () => {
     expect(page).toContain('mount("bv", "barva")');
     expect(page).toContain('mount("ob", "obloga")');
   });
+
+  /**
+   * ⚠️ THE UPSCALE BOX IS ONLY OFFERED WHERE IT CAN RUN.
+   *
+   * mount() reads <prefix>-ai and skips the redraw when it is absent, so a
+   * box rendered without GEMINI_API_KEY set would be a control that promises
+   * a step and silently does not take it — the operator ticks it, the sample
+   * uploads unchanged, and nothing anywhere says why.
+   */
+  it("offers the upscale only when the model is reachable", () => {
+    for (const prefix of ["bv", "ob"]) {
+      expect(page, prefix).not.toContain('id="' + prefix + '-ai"');
+    }
+    const withAi = finishListPage([], "ana@example.com", undefined, {
+      shell: TRANSCRIBED_SHELL_FINISHES,
+      cabinet: TRANSCRIBED_CABINET_FINISHES,
+      shellPhotographed: false,
+      cabinetPhotographed: false,
+    }, true);
+    for (const prefix of ["bv", "ob"]) {
+      expect(withAi, prefix).toContain('id="' + prefix + '-ai"');
+    }
+    // And it says what the redraw actually does, rather than "izboljšaj".
+    expect(withAi).toContain("PONOVNO NARIŠE");
+  });
 });
