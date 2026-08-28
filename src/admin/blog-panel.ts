@@ -133,7 +133,7 @@ export function blogListPage(
   return shell(
     "Blog",
     CSS +
-      '<div class="head"><a class="back" href="/admin">Nazaj na izdelke</a>' +
+      '<div class="head">' +
       "<h1>Blog</h1>" +
       '<p class="lede">Zapisi so na spletni strani takoj po objavi — ' +
       "za to ni potrebna nobena posodobitev trgovine.</p></div>" +
@@ -143,6 +143,7 @@ export function blogListPage(
       '<a class="btn blog-new" href="/admin/blog/nov">Nov zapis</a></div>' +
       rows,
     who,
+    "blog",
   );
 }
 
@@ -253,6 +254,7 @@ export function blogEditPage(
       cover +
       (post ? "<script>" + COVER_JS + "</script>" : ""),
     who,
+    "blog",
   );
 }
 

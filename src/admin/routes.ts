@@ -42,6 +42,7 @@ import {
 } from "./supabase";
 import {
   indexPage,
+  sitePage,
   loginPage,
   modelPage,
   notConfiguredPage,
@@ -699,6 +700,29 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         reason: a.reason,
       })),
     });
+  }
+
+  // --- the storefront's own pictures ---
+  //
+  // Lifted off the dashboard, which had grown to seven unrelated jobs in one
+  // scroll. Everything that puts a picture on a public page is here: the
+  // batch uploader, the two colour drop zones, and every managed slot.
+  if (parts[1] === "slike") {
+    return page(
+      sitePage(
+        "bazen",
+        admin.email,
+        SITE_IMAGES.map(
+          (x): SiteSlot => ({
+            stem: stemOf(x.key),
+            label: x.label,
+            note: x.note,
+            src: "/media/" + x.key,
+            group: x.group,
+          }),
+        ),
+      ),
+    );
   }
 
   // --- colours ---

@@ -98,7 +98,7 @@ export function finishListPage(
   return shell(
     "Barve",
     CSS +
-      '<div class="head"><a class="back" href="/admin">Nazaj na izdelke</a>' +
+      '<div class="head">' +
       "<h1>Barve</h1>" +
       '<p class="lede">Barve, ki jih trgovina lahko pokaže. Na strani modela se ' +
       "prikažejo prav te — " + esc(finishCount(rows.length)) + " skupaj. " +
@@ -123,5 +123,6 @@ export function finishListPage(
       ) +
       group("Barve obloge", "Stranske plošče. Ta imena so slovenska.", cab),
     who,
+    "barve",
   );
 }

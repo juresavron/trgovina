@@ -107,7 +107,7 @@ export function reviewListPage(
   return shell(
     "Mnenja strank",
     CSS +
-      '<div class="head"><a class="back" href="/admin">Nazaj na izdelke</a>' +
+      '<div class="head">' +
       "<h1>Mnenja strank</h1>" +
       '<p class="lede">Prepisana mnenja kupcev. Objavljena se pokažejo na ' +
       "domači strani in na straneh izdelkov ob naslednji posodobitvi strani.</p></div>" +
@@ -117,6 +117,7 @@ export function reviewListPage(
       '<a class="btn rv-new" href="/admin/mnenja/novo">Dodaj mnenje</a></div>' +
       rows,
     who,
+    "mnenja",
   );
 }
 
@@ -215,5 +216,6 @@ export function reviewEditPage(
           '/delete" id="delrv" hidden></form>'
         : ""),
     who,
+    "mnenja",
   );
 }
