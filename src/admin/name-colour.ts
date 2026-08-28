@@ -45,7 +45,11 @@ import type { Env } from "./supabase";
  * is invisible — every colour would quietly fall back to its filename and
  * nothing would say why. A second name costs one request on the rare path.
  */
-const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash"];
+const MODELS = [
+  "gemini-flash-latest",
+  "gemini-2.5-flash",
+  "gemini-2.0-flash",
+];
 
 /** A colour name is a label, not a sentence. */
 export const NAME_MAX = 40;
@@ -219,9 +223,23 @@ export async function nameColour(
     ],
     generationConfig: {
       temperature: 0,
-      // A colour name is a handful of tokens. A ceiling this low is also the
-      // cheapest guard against an answer that turns into a paragraph.
-      maxOutputTokens: 400,
+      // ⚠️ 2048, NOT 400, AND THE LOW CEILING IS WHY THIS SHIPPED BROKEN.
+      //
+      // "A colour name is a handful of tokens, so a small ceiling is also a
+      // guard against an answer that turns into a paragraph" — true of the
+      // ANSWER and wrong about the budget. gemini-2.5-flash is a thinking
+      // model: it spends output tokens reasoning before it emits any text, so
+      // a 400 ceiling is hit DURING the thinking and the candidate comes back
+      // with no text part at all. firstText() returns null, ask() returns
+      // null, and every colour silently falls back to its filename — which is
+      // exactly what happened: six swatches uploaded after the deploy that
+      // added this, and six colours still called "Screenshot 2026-08-28 at
+      // 10.20.46".
+      //
+      // describe.ts has run against these models for months at 2048. Matching
+      // it is the fix; the guard against a paragraph belongs in
+      // tidyColourName(), where it already is.
+      maxOutputTokens: 2048,
     },
   });
   const models = env.GEMINI_TEXT_MODEL ? [env.GEMINI_TEXT_MODEL] : MODELS;

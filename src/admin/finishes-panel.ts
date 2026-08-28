@@ -39,7 +39,7 @@ const CSS = `<style>
   border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl);background:#fff;color:var(--ink)}
 .fin .slug{font-size:12px;color:var(--mute);word-break:break-all;margin-block-start:-2px}
 .fin .btn{min-height:36px;padding:0 12px;font-size:13px}
-.fin .rm{margin-block-start:auto}
+.fin .acts{margin-block-start:auto;display:flex;gap:6px;flex-wrap:wrap}
 .fin-state{color:var(--mute);font-size:14px;margin:8px 0 0;max-width:52ch}
 .chips{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
 .chips li{border:1px solid var(--line);border-radius:999px;padding:5px 12px;
@@ -75,9 +75,19 @@ function card(f: Finish): string {
     '<button class="btn" type="submit">Shrani</button>' +
     "</form>" +
     '<span class="slug">' + esc(f.kind) + "-" + esc(f.slug) + ".webp</span>" +
-    '<form class="rm" method="post" action="/admin/barve/' + esc(f.id) + '/izbris">' +
-    '<button class="btn btn--ghost" type="submit">Odstrani iz ponudbe</button>' +
+    // ⚠️ NAMING AN EXISTING COLOUR, because the alternative was
+    // delete-everything-and-drag-it-again. A swatch that came in before the
+    // automatic naming existed — or on a run where the model could not
+    // answer — is sitting right here with its picture; asking the model to
+    // look at that picture is one button, not a re-upload.
+    '<div class="acts">' +
+    '<form method="post" action="/admin/barve/' + esc(f.id) + '/ime">' +
+    '<button class="btn btn--ghost" type="submit">Poimenuj z AI</button>' +
     "</form>" +
+    '<form method="post" action="/admin/barve/' + esc(f.id) + '/izbris">' +
+    '<button class="btn btn--ghost" type="submit">Odstrani</button>' +
+    "</form>" +
+    "</div>" +
     "</li>"
   );
 }
