@@ -2,6 +2,7 @@ import type { RenderCtx } from "../../render/sections";
 import type { SectionKey } from "../shared/sections";
 import { STUDIO_TOKENS } from "./tokens";
 import { STUDIO_EFFECTS_CSS } from "./effects";
+import { STUDIO_LAYOUT_CSS } from "./layout";
 import { STUDIO_CHROME_CSS, renderStudioHeader, renderStudioFooter } from "./chrome";
 import {
   STUDIO_HERO_CSS,
@@ -48,6 +49,10 @@ export const STUDIO_CSS =
   // stylesheet rather than adding to one (scripts/vendor-fonts.mjs).
   STUDIO_FONT_FACE_CSS +
   STUDIO_TOKENS +
+  // ⚠️ STRAIGHT AFTER THE TOKENS AND BEFORE EVERY SECTION. layout.ts holds the
+  // one container rule the whole theme shares; a section module that needs to
+  // override it deliberately must be able to, and must be seen to.
+  STUDIO_LAYOUT_CSS +
   STUDIO_CHROME_CSS +
   STUDIO_HERO_CSS +
   STUDIO_COMMERCE_CSS +

@@ -117,10 +117,12 @@ export const STUDIO_CLOSING_CSS = `
    * container while the strip below it runs edge to edge. --ink-mute is the
    * AA-safe muted rung (5.17:1 on white); the handle itself steps up to --ink
    * because it is the name being claimed. */
+  /* ⚠️ WAS 80px NARROW. This capped at --studio-container and then padded
+   * INSIDE that cap, so with border-box the gutter came out of the measure
+   * and this label sat 40px inboard of every band above it above a 1560px
+   * viewport. layout.ts adds the gutter back. */
   :root[data-theme="studio"] .st-soc-label {
-    max-inline-size: var(--studio-container);
-    margin: 0 auto clamp(18px, 2vw, 36px);
-    padding-inline: var(--studio-gutter);
+    margin-block: 0 clamp(18px, 2vw, 36px);
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
@@ -369,11 +371,8 @@ export const STUDIO_CLOSING_CSS = `
     padding-block: clamp(56px, 6.5vw, 120px);
     background: var(--ink-invert-2);
   }
+  /* Same 80px narrowing as .st-soc-label — see the note there. */
   :root[data-theme="studio"] .st-mem-in {
-    inline-size: 100%;
-    max-inline-size: var(--studio-container);
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -109,10 +109,10 @@ export const STUDIO_PAGE_CSS = `
    * renderer puts on the data blocks that opt out. The measure itself is
    * unchanged and its calibration note above still stands: 64 median
    * characters, 73 at worst, re-measure if --t-body or the body face moves. */
-  :root[data-theme="studio"] .st-page-in {
-    max-inline-size: min(var(--studio-container), calc(100% - 2 * var(--studio-gutter)));
-    margin-inline: auto;
-  }
+  /* .st-page-in is layout.ts's container like every band. It used to say the
+   * same thing a third way — min(container, 100% - 2*gutter) — which agrees
+   * with the shared arithmetic at every viewport but had to be re-derived by
+   * anyone checking whether the content pages line up with the home page. */
   /* Below the two-column tier this is simply the old single column: the grid
    * is inert, and the max-inline-size is the same 31rem the container used to
    * carry, so a phone and a tablet get exactly the page they had. */

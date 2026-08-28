@@ -28,10 +28,11 @@ import { renderStudioHeader, renderStudioFooter } from "./chrome";
 
 export const STUDIO_FINDER_CSS = `
   /* ================= §4.x Guided choice ================= */
+  /* Same 80px narrowing as closing.ts's two bands, and the same fix: the
+   * container is layout.ts's, and only the block padding is the page's own.
+   * A padding SHORTHAND here would reset the shared inline padding. */
   :root[data-theme="studio"] .st-fnd {
-    max-inline-size: var(--studio-container);
-    margin-inline: auto;
-    padding: clamp(40px, 6vw, 96px) var(--studio-gutter) clamp(64px, 8vw, 128px);
+    padding-block: clamp(40px, 6vw, 96px) clamp(64px, 8vw, 128px);
   }
   /* Centred, like every other solo-column page (/blog, a railless content
    * page): the column sat pinned to the left gutter, which at 1440 left

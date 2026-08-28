@@ -162,11 +162,6 @@ export const STUDIO_EDITORIAL_CSS = `
      * sideways because of it (§6). */
     overflow: clip;
   }
-  :root[data-theme="studio"] .st-imp-in {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
-  }
   :root[data-theme="studio"] .st-imp-head {
     text-align: center;
     margin-bottom: clamp(28px, 3.4vw, 68px);
@@ -479,9 +474,6 @@ export const STUDIO_EDITORIAL_CSS = `
   }
   :root[data-theme="studio"] .st-tst-in {
     position: relative;
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
   }
   :root[data-theme="studio"] .st-tst-head {
     position: relative;
@@ -889,11 +881,6 @@ export const STUDIO_EDITORIAL_CSS = `
      * sides is what made every boundary twice the source's. */
     padding-block: 0 var(--studio-rhythm);
     overflow: clip;
-  }
-  :root[data-theme="studio"] .st-gd-in {
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
   }
   /* Centred section heading (§4.11) — the h2 rung, same as the two bands
    * above it, so the page has one heading voice and not three. */

@@ -193,12 +193,7 @@ export const STUDIO_CHROME_CSS = `
    * worker.ts — and the offset rules it described were removed with it.) */
 
   :root[data-theme="studio"] .st-chrome-bar {
-    /* --studio-container is the CONTENT measure and box-sizing is border-box,
-     * so the cap is widened by the two gutters — the content between them is
-     * then exactly --studio-container. */
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
+    /* Cap, centring and gutter come from layout.ts's one container rule. */
     /* The source's header box, verbatim: 16px block padding around a single
      * 24px label line (8px at the small tier). The row is an EXPLICIT
      * --chrome-line track rather than an auto one, which is what holds the two
@@ -849,13 +844,8 @@ export const STUDIO_CHROME_CSS = `
      * are --studio-gutter, so only the block values are stated here. */
     padding-block: 140px 30px;
   }
-  :root[data-theme="studio"] .st-foot-in {
-    /* Same content-measure arithmetic as the bar: the gutter sits OUTSIDE the
-     * 1440px measure, so the giant wordmark starts where the bar's does. */
-    max-width: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding-inline: var(--studio-gutter);
-  }
+  /* The footer's measure is the bar's, which is every band's — layout.ts.
+   * That is what starts the giant footer wordmark where the bar's starts. */
 
   /* Source: the footer's container is one column with an 80px gap between its
    * three blocks (top / bottom / copyright), 40px on a phone. */

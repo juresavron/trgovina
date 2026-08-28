@@ -184,10 +184,8 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-hero-foot {
     position: relative; z-index: 4;
     align-self: end;
-    inline-size: 100%;
-    max-inline-size: calc(var(--studio-container) + 2 * var(--studio-gutter));
-    margin-inline: auto;
-    padding: 0 var(--studio-gutter) clamp(34px, 6vh, 76px);
+    /* Container from layout.ts; only the block padding is the hero's own. */
+    padding-block: 0 clamp(34px, 6vh, 76px);
     display: flex;
     flex-direction: column;
     align-items: flex-start;
@@ -533,17 +531,56 @@ export const STUDIO_HERO_CSS = `
    * the PAGE can never scroll sideways. Tracking and leading are NOT invented
    * with it — they come from the h1 row, which is the nearest role, and the
    * measured pass's −0.03em is gone: the source never tracks display negative. */
+  /* ⚠️ THE WORDMARK AND THE FOOT ARE ON THE HOUSE CONTAINER, and the band is
+   * not. The band keeps its full-bleed ground — the gradient is meant to run
+   * edge to edge — while the two things inside it that are CONTENT take the
+   * same measure as every other band, so the shop name starts on the same
+   * left edge as the header above it and the section below it. It did not:
+   * .st-band was the one band with a gutter and no cap, so above 1640 its
+   * contents kept spreading while everything around them had stopped.
+   *
+   * The two children are capped rather than a wrapper being added, because
+   * the ground is an absolutely positioned sibling (.st-band-photo) and a
+   * wrapper would have to be threaded past it. */
+  :root[data-theme="studio"] .st-band-word,
+  :root[data-theme="studio"] .st-band-foot {
+    inline-size: 100%;
+    max-inline-size: var(--studio-container);
+    margin-inline: auto;
+  }
   :root[data-theme="studio"] .st-band-word {
     position: relative; z-index: 1;
-    margin: 0 0 clamp(28px, 3.6vw, 72px);
+    margin-block: 0 clamp(28px, 3.6vw, 72px);
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: clamp(2.5rem, 7.6vw, 9rem);
+    /* ⚠️ 7.5rem, AND THE CEILING IS SIZED TO THE CONTAINER, NOT PICKED.
+     *
+     * It was 9rem, and the vw term stops growing there at a ~1895px viewport
+     * while the band it sat in kept widening — so on a 2560px display the
+     * name filled 70% of the band and left a 777px hole down the right. That
+     * is the defect this pass started from. At 1440 it fills 94% and looks
+     * correct, which is why it survived: the fault only exists above ~1900px.
+     *
+     * Now the content is capped at --studio-container (1560px), so the
+     * ceiling has to be the largest size at which the LONGEST shop name still
+     * sets on one line inside 1560. Measured: this name runs 1783px at 144px,
+     * so it needs 126px or less; 7.5rem (120px) gives 1486px, which is the
+     * same 95% of its container that the vw term produces at 1440. A longer
+     * name than this shop's wraps instead of overflowing — overflow-wrap
+     * below is the belt, and the band is min-height so a second line fits. */
+    font-size: clamp(2.5rem, 7.6vw, 7.5rem);
     letter-spacing: var(--ls-h1);
     line-height: var(--lh-h1);
     text-transform: uppercase;
     color: var(--on-invert);
-    max-width: 100%;
+    /* max-width: 100% WAS HERE and had to go: it is the same property as the
+     * max-inline-size the container rule above sets, it is declared later, so
+     * it won — the wordmark kept spreading to the band's full bleed while the
+     * foot beneath it had already taken the house measure. Measured at 1920:
+     * the name started at x=40 and every other element on the page, including
+     * its own foot row, started at x=180. The cap upstream is 1560px, which
+     * is narrower than 100% at every viewport that matters, so nothing is
+     * lost by dropping it. */
     overflow-wrap: break-word;
     hyphens: none;
   }

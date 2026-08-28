@@ -243,7 +243,18 @@ const browser = await chromium.launch({
   executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome",
   args: ["--no-sandbox"],
 });
-for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile", { width: 390, height: 844 }]]) {
+// ⚠️ THE WIDE TIER IS NOT OPTIONAL, and its absence is why a real layout
+// fault shipped. This ran at 1440 and 390 only. Every container on the site
+// holds a 1560px content cap, so at 1440 and 390 the cap never engages and
+// every band trivially agrees — the three bands whose arithmetic took the
+// gutter OUT of that cap were 80px narrow at every viewport past 1560, and
+// the audit could not see a width where they differed. 1920 is the first
+// common size past the cap; edge-drift below is measured at all three.
+for (const [label, size] of [
+  ["wide", { width: 1920, height: 1000 }],
+  ["desktop", { width: 1440, height: 900 }],
+  ["mobile", { width: 390, height: 844 }],
+]) {
   // ⚠️ reducedMotion IS WHAT MAKES THE CONTRAST PASS MEANINGFUL, not a
   // courtesy. The theme's reveals are SCROLL-DRIVEN (animation-timeline:
   // view() — see themes/studio/effects.ts), so an element's opacity and
@@ -304,6 +315,38 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
       const seen = new Set();
       for (const el of document.querySelectorAll("[id]")) {
         if (seen.has(el.id)) out.dupIds.push(el.id); else seen.add(el.id);
+      }
+      // ---- ONE LEFT EDGE PER PAGE ------------------------------------
+      //
+      // Every band on this site is supposed to start on the same vertical
+      // line. Twenty selectors each declared that separately until layout.ts
+      // collapsed them, and three of them were doing the arithmetic wrong —
+      // capping at --studio-container and then padding INSIDE that cap, so
+      // with border-box the gutter came out of the measure and those bands
+      // sat 40px inboard of their neighbours at any viewport past 1560.
+      //
+      // Nobody saw it, because it is invisible at 1440 and this audit only
+      // ever looked at 1440 and 390. So the check is geometric and runs at
+      // every width the audit visits: read the content-box left edge of every
+      // shared container and assert there is exactly one value.
+      //
+      // The content edge, not the border-box edge: these containers pad by
+      // the gutter, so x alone would report the band's bleed, not the line
+      // its text starts on.
+      out.edges = {};
+      for (const sel of [
+        ".st-chrome-bar", ".st-foot-in", ".st-hero-foot", ".st-statement-in",
+        ".st-stats-in", ".st-shop-in", ".st-cat-head", ".st-cat-row",
+        ".st-rail-head", ".st-imp-in", ".st-tst-in", ".st-gd-in", ".st-pdp-in",
+        ".st-also", ".st-pdp-bar-in", ".st-page-in", ".st-soc-label",
+        ".st-mem-in", ".st-fnd", ".st-band-word", ".st-band-foot",
+      ]) {
+        const el = document.querySelector(sel);
+        if (!el) continue;
+        const b = el.getBoundingClientRect();
+        if (b.width < 2) continue;
+        const edge = Math.round(b.x + parseFloat(getComputedStyle(el).paddingLeft));
+        (out.edges[edge] = out.edges[edge] || []).push(sel);
       }
       let last = 0;
       for (const h of document.querySelectorAll("h1,h2,h3,h4,h5,h6")) {
@@ -556,6 +599,16 @@ for (const [label, size] of [["desktop", { width: 1440, height: 900 }], ["mobile
     }
 
     if (r.overflow > 0) add("ERROR", route, "h-overflow", label + ": page scrolls " + r.overflow + "px horizontally");
+    // One left edge, or name every offender and the line it sits on.
+    const edgeKeys = Object.keys(r.edges || {});
+    if (edgeKeys.length > 1) {
+      const worst = edgeKeys
+        .sort((a, b) => r.edges[b].length - r.edges[a].length)
+        .map((k) => k + "px: " + r.edges[k].join(" "))
+        .join("  |  ");
+      add("ERROR", route, "edge-drift", label + ": containers start on " + edgeKeys.length +
+        " different left edges — " + worst);
+    }
     for (const s of r.noAlt) add("ERROR", route, "img-alt", label + ": <img> with no alt attribute: " + s);
     for (const s of new Set(r.brokenImgs)) add("ERROR", route, "img-broken", label + ": did not load: " + s);
     for (const s of new Set(r.dupIds)) add("ERROR", route, "dup-id", label + ": duplicate id " + s);
