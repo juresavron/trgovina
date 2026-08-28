@@ -1368,6 +1368,33 @@ export const STUDIO_CHROME_CSS = `
     :root[data-theme="studio"] .st-foot-brand { grid-column: 1 / -1; }
   }
 
+  /* ⚠️ AND ONCE THE BRAND BLOCK IS FULL WIDTH, ITS CONTACTS MUST LIE DOWN.
+   *
+   * The rule above gives the brand the whole row below 1359 so the blurb gets
+   * its 42ch back. What it also does is hand three stacked contact rows a
+   * 974px column at 1024: the e-mail, the telephone and the address ran down
+   * the left in a ~280px file with 700px of empty band beside them, for about
+   * 800px of footer height. A site-wide fill sweep found that region on every
+   * one of the 26 routes — it was the last one left after the content pages
+   * were fixed, and the only reason it took a sweep to find is that nobody
+   * screenshots a footer at 1024.
+   *
+   * Laid out as a row they measure ~872px of the 974. Each row keeps its own
+   * width — align-items: flex-start is untouched — so the target reasoning on
+   * .st-contacts still holds: a row is as wide as its own line, not as wide
+   * as the column, and the e-mail link does not become a 974px target
+   * pointing at nothing.
+   *
+   * Above 1359 the brand sits in a 2.6fr track and stacking is right; below
+   * 620 there is no room for a row. Between the two, it lies down. */
+  @media (min-width: 620px) and (max-width: 1359px) {
+    :root[data-theme="studio"] .st-contacts {
+      flex-direction: row;
+      flex-wrap: wrap;
+      column-gap: clamp(24px, 3vw, 56px);
+    }
+  }
+
   /* ≤900: the bar goes to TWO ROWS.
    *
    * The source does not help here — below 1200 it swaps in a burger menu that

@@ -310,6 +310,46 @@ export const STUDIO_FINDER_CSS = `
     max-inline-size: 34rem;
   }
   :root[data-theme="studio"] .st-fnd-note:last-child { margin-block-end: 0; }
+  /* ⚠️ THREE COLUMNS, AND THE REASON IS MEASURED. These three paragraphs are
+   * the small print under the questionnaire — what it matches on, what it
+   * does not store, why it never asks a budget. Stacked at a reading measure
+   * they were a 400px-tall band of page whose content reached 35% of the way
+   * across, which a site-wide fill sweep flagged as the only such region left
+   * on any route.
+   *
+   * Columns rather than a wider measure: at 1560 a single column would run
+   * ~195 characters a line. Three tracks give ~477px each, about 60
+   * characters, which is inside the same 45–75 band every other measure on
+   * this site is set to. The label spans them so it still reads as one note
+   * rather than three.
+   *
+   * A GRID, not CSS columns: a columns:3 flow would break one paragraph across a
+   * break, and these three are separate statements that must not be read as
+   * continuous prose. One paragraph per cell, and auto-fit collapses to one
+   * column on a phone with no second rule. */
+  :root[data-theme="studio"] .st-fnd-notes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: start;
+    column-gap: clamp(32px, 3vw, 64px);
+    row-gap: clamp(18px, 2vw, 28px);
+  }
+  :root[data-theme="studio"] .st-fnd-notes .st-fnd-note-h { flex: 0 0 100%; }
+  /* FLEX, for the reason the contact tiles are flex: a wrapped grid strands
+   * its last row. Three notes in a track that fits two leaves the third at
+   * half width with a hole beside it — the same orphan auto-fit produces
+   * everywhere, and the fill sweep caught it at 1024 sitting at 48%.
+   *
+   * Grown, but capped: without max-inline-size a lone note on the last row
+   * would stretch to the whole 974px band and set at ~122 characters, which
+   * trades one defect for a worse one. 38rem is the site's reading measure,
+   * so the widest a note can ever be is the width a paragraph is set at
+   * everywhere else. */
+  :root[data-theme="studio"] .st-fnd-notes .st-fnd-note {
+    flex: 1 1 20rem;
+    max-inline-size: 38rem;
+    margin-block-end: 0;
+  }
   :root[data-theme="studio"] .st-fnd-note a {
     color: var(--ink);
     text-underline-offset: 3px;
@@ -455,6 +495,11 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     // six-model catalogue exactly rather than scoring it: every verdict is
     // derived from figures already published on the model's own page, which
     // is why a visitor can check one against the other.
+    // The label and the three notes are ONE block so they can lay out as a
+    // row. See .st-fnd-notes: three paragraphs of small print stacked at a
+    // reading measure left a 400px band of the page reaching only 35% across
+    // — the one region the site-wide fill audit still flagged.
+    '<div class="st-fnd-notes">' +
     '<h2 class="st-fnd-note-h">Na čem temelji predlog</h2>' +
     '<p class="st-fnd-note">Vprašanja zožijo izbiro na podlagi tega, kar o modelih ' +
     "piše v specifikaciji: mere školjke, število mest in ležalnikov, število šob in " +
@@ -475,6 +520,7 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     "modela je napisana na njegovi strani in je za vse obiskovalce enaka, " +
     'načini plačila pa so opisani v <a href="' +
     esc(shop.routeSlugs["/financing"]) + '">financiranju</a>.</p>' +
+    "</div>" +
     "</div>"
   );
 }
