@@ -39,7 +39,7 @@ import { renderStudioFinder } from "./themes/studio/finder";
 import { handleAdmin, handleMedia } from "./admin/routes";
 import { handlePosts } from "./blog/routes";
 import type { Env } from "./admin/supabase";
-import { PROBLEM_TEXT, parseEnquiry, submitEnquiry } from "./enquiry/submit";
+import { PROBLEM_FIELD, PROBLEM_TEXT, parseEnquiry, submitEnquiry } from "./enquiry/submit";
 
 /**
  * The product a ?model= parameter names, or nothing.
@@ -180,6 +180,7 @@ export function handleRequest(
     readonly error?: string;
     /** What was typed, when the submission was refused. See sections.ts. */
     readonly sent?: Readonly<Record<string, string>>;
+    readonly field?: string | null;
   },
 ): Response {
   const url = new URL(request.url);
@@ -716,7 +717,12 @@ function typedBack(form: FormData): Record<string, string> {
 async function handleEnquiry(
   request: Request,
   env: Env,
-): Promise<{ done?: boolean; error?: string; sent?: Record<string, string> } | null> {
+): Promise<{
+  done?: boolean;
+  error?: string;
+  sent?: Record<string, string>;
+  field?: string | null;
+} | null> {
   if (request.method !== "POST") return null;
   const url = new URL(request.url);
   const shop = resolveShop(request.headers.get("host") ?? url.hostname);
@@ -729,7 +735,10 @@ async function handleEnquiry(
   try {
     form = await request.formData();
   } catch {
-    return { error: PROBLEM_TEXT.dolzina };
+    // The whole body failed to parse — too large, or malformed. That is not
+    // "one field is too long", which is what this used to borrow; it belongs
+    // to no field, so the page shows it and marks nothing invalid.
+    return { error: "Obrazca ni bilo mogoče prebrati. Poskusite znova." };
   }
 
   // ⚠️ THE MODEL AND THE CONFIGURATION ARE RE-RESOLVED FROM THE URL, not read
@@ -751,7 +760,11 @@ async function handleEnquiry(
     // can reach this branch, because the field is off-screen, aria-hidden and
     // never autofilled.
     if (parsed.why === "robot") return { done: true };
-    return { error: PROBLEM_TEXT[parsed.why], sent: typedBack(form) };
+    return {
+      error: PROBLEM_TEXT[parsed.why],
+      field: PROBLEM_FIELD[parsed.why],
+      sent: typedBack(form),
+    };
   }
 
   const ip =

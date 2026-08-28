@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { CONSENT_TEXT, PROBLEM_TEXT, parseEnquiry } from "./submit";
+import {
+  CONSENT_TEXT,
+  PROBLEM_FIELD,
+  PROBLEM_TEXT,
+  parseEnquiry,
+  type EnquiryProblem,
+} from "./submit";
 import { handleRequest } from "../worker";
 import { STUDIO_CSS } from "../themes/studio";
 
@@ -90,14 +96,26 @@ describe("what counts as an enquiry", () => {
     }
   });
 
-  it("refuses a field longer than the column that stores it", () => {
+  // ⚠️ AND IT SAYS WHICH FIELD. It used to answer a single "dolzina" for all
+  // four, so the page could only print "one of the fields is too long" —
+  // which is the sentence WCAG SC 3.3.1 exists to forbid, on a form with
+  // fourteen controls.
+  it("refuses a field longer than the column that stores it, and names it", () => {
     expect(parseEnquiry(body({ ...ok, sporocilo: "x".repeat(4001) }))).toEqual({
       ok: false,
-      why: "dolzina",
+      why: "dolzina-sporocilo",
     });
     expect(parseEnquiry(body({ ...ok, ime: "x".repeat(121) }))).toEqual({
       ok: false,
-      why: "dolzina",
+      why: "dolzina-ime",
+    });
+    expect(parseEnquiry(body({ ...ok, telefon: "1".repeat(65) }))).toEqual({
+      ok: false,
+      why: "dolzina-telefon",
+    });
+    expect(parseEnquiry(body({ ...ok, dostop: "x".repeat(4001) }))).toEqual({
+      ok: false,
+      why: "dolzina-dostop",
     });
   });
 
@@ -135,9 +153,30 @@ describe("what counts as an enquiry", () => {
     expect(r.ok && r.value.prefer).toBeNull();
   });
 
+  // ⚠️ DERIVED FROM THE TABLE, NOT LISTED AGAIN. The list used to be typed
+  // out here, so splitting "dolzina" into one problem per field left the new
+  // ones untested while the suite stayed green.
   it("has a sentence for every problem it can report", () => {
-    for (const why of ["ime", "stik", "eposta", "soglasje", "dolzina", "robot"] as const) {
+    const problems = Object.keys(PROBLEM_TEXT) as EnquiryProblem[];
+    expect(problems.length).toBeGreaterThan(5);
+    for (const why of problems) {
       expect(PROBLEM_TEXT[why].length, why).toBeGreaterThan(10);
+    }
+  });
+
+  /**
+   * SC 3.3.1 asks that an error identify the item in error. The page can only
+   * do that if every problem knows which control it is about — so the two
+   * tables must stay in step, and a problem added to one and not the other is
+   * a message the page cannot point anywhere.
+   */
+  it("knows which field every problem is about", () => {
+    for (const why of Object.keys(PROBLEM_TEXT) as EnquiryProblem[]) {
+      expect(PROBLEM_FIELD, why).toHaveProperty(why);
+    }
+    expect(PROBLEM_FIELD.robot, "no human reaches the honeypot").toBeNull();
+    for (const why of Object.keys(PROBLEM_FIELD) as EnquiryProblem[]) {
+      if (why !== "robot") expect(PROBLEM_FIELD[why], why).toBeTruthy();
     }
   });
 });
@@ -406,5 +445,78 @@ describe("the price on the enquiry summary", () => {
     const html = await (await at("model=mali-195")).text();
     expect(html).not.toContain("NaN");
     expect(html).not.toMatch(/st-enq-about-p">\s*€/);
+  });
+});
+
+/**
+ * ⚠️ SC 3.3.1 AND 1.3.1 ON THE SITE'S ONLY TRANSACTION.
+ *
+ * /kosarica and /blagajna are placeholders — "spletno naročanje še ni odprto".
+ * So this form is the entire mechanism by which anyone can buy anything here,
+ * and until now a refused submission put a sentence in a role="alert" above
+ * fourteen controls with nothing tying it to any of them: no id on the
+ * paragraph, no aria-invalid, no aria-describedby, no focus move. The form
+ * carries novalidate, so the browser's own per-field identification was
+ * suppressed as well — there was no other channel.
+ *
+ * The hints had the same shape of problem: visible text, no id, nothing
+ * pointing at them, so the three measurements the business needs on the
+ * access field were never announced at the control.
+ */
+describe("a refused enquiry identifies the field it is about", () => {
+  const refused = (field: string, error = "Vpišite ime, da vas znamo nagovoriti.") =>
+    handleRequest(new Request("https://trgovina.workers.dev/kontakt?shop=bazen"), {
+      error,
+      field,
+    });
+
+  it("marks that field invalid, describes it by the message, and focuses it", async () => {
+    const html = await (await refused("ime")).text();
+    expect(html).toContain('id="enq-err"');
+    const input = /<input[^>]*id="enq-ime"[^>]*>/.exec(html)?.[0] ?? "";
+    expect(input, "the field the message names").toContain('aria-invalid="true"');
+    expect(input).toContain("autofocus");
+    expect(input).toMatch(/aria-describedby="[^"]*enq-err/);
+  });
+
+  it("leaves the other fields alone", async () => {
+    const html = await (await refused("ime")).text();
+    const other = /<input[^>]*id="enq-eposta"[^>]*>/.exec(html)?.[0] ?? "";
+    expect(other).not.toContain("aria-invalid");
+    expect(other).not.toContain("autofocus");
+  });
+
+  /** Consent and the two textareas are built outside the field() helper. */
+  it("reaches the controls that are not built by the shared helper", async () => {
+    for (const [name, tag] of [
+      ["soglasje", "input"],
+      ["dostop", "textarea"],
+      ["sporocilo", "textarea"],
+    ] as const) {
+      const html = await (await refused(name)).text();
+      const el = new RegExp("<" + tag + "[^>]*id=\"enq-" + name + "\"[^>]*>").exec(html)?.[0] ?? "";
+      expect(el, name).toContain('aria-invalid="true"');
+      expect(el, name).toContain("autofocus");
+    }
+  });
+
+  it("announces every hint at its own control", async () => {
+    const html = await (await handleRequest(
+      new Request("https://trgovina.workers.dev/kontakt?shop=bazen"),
+    )).text();
+    for (const name of ["kraj", "dostop"]) {
+      expect(html, name).toContain('id="enq-' + name + '-hint"');
+      const el = new RegExp("<(?:input|textarea)[^>]*id=\"enq-" + name + "\"[^>]*>").exec(html)?.[0] ?? "";
+      expect(el, name).toMatch(new RegExp('aria-describedby="[^"]*enq-' + name + '-hint'));
+    }
+  });
+
+  /** Nothing is marked invalid on a form nobody has submitted yet. */
+  it("marks nothing on a first visit", async () => {
+    const html = await (await handleRequest(
+      new Request("https://trgovina.workers.dev/kontakt?shop=bazen"),
+    )).text();
+    expect(html).not.toContain("aria-invalid");
+    expect(html).not.toContain("autofocus");
   });
 });

@@ -495,6 +495,7 @@ export function renderContentPage(
     readonly done?: boolean;
     readonly error?: string;
     readonly sent?: Readonly<Record<string, string>>;
+    readonly field?: string | null;
   },
 ): string {
   // Spread rather than assign, because exactOptionalPropertyTypes draws a

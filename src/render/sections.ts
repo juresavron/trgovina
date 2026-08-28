@@ -108,6 +108,8 @@ export interface RenderCtx {
      * a fair price; two hundred characters is not.
      */
     readonly sent?: Readonly<Record<string, string>>;
+    /** Which control the error is about, by form field name. See PROBLEM_FIELD. */
+    readonly field?: string | null;
   };
 }
 

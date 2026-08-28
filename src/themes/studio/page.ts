@@ -848,6 +848,15 @@ export const STUDIO_PAGE_CSS = `
    * rotated chevron poked through it. Same 2px --acc at 3px offset as
    * everything else; measured 3.51:1 against the page white, above the 3:1
    * that WCAG 1.4.11 asks of a state indicator. */
+  /* ⚠️ THE PAGE'S ONLY INTERACTION HAD NO HOVER. Measured on
+   * /pogosta-vprasanja, /kontakt and /o-nas: cursor:pointer, a focus ring for
+   * the keyboard, and — under a pointer — colour, background, border and
+   * decoration all identical. On a page that is nothing but disclosure rows,
+   * nothing told a reader the row was a control. The chevron already exists
+   * and already rotates on open; nudging it on hover reuses that vocabulary
+   * instead of inventing a second one. */
+  :root[data-theme="studio"] .st-page-q:hover { color: var(--acc-text); }
+  :root[data-theme="studio"] .st-page-q:hover::after { transform: translateY(2px); }
   :root[data-theme="studio"] .st-page-q:focus-visible {
     outline: var(--bw-ctrl) solid var(--acc);
     outline-offset: 3px;
@@ -2283,14 +2292,32 @@ function enquiry(
       "</div>"
     : "";
 
+  // ⚠️ AN ERROR HAS TO IDENTIFY THE FIELD IT IS ABOUT — SC 3.3.1.
+  //
+  // This was a sentence in a role="alert" above a form with fourteen
+  // controls, and nothing tied it to any of them: no id on the paragraph, no
+  // aria-invalid, no aria-describedby, no focus move. A screen-reader user
+  // heard "Vpišite ime" and was left to find which of the fourteen that was.
+  // The form also carries novalidate, so the browser's own per-field
+  // identification is suppressed too — there was no other channel.
+  const badField = ctx.enquiry?.field ?? null;
   const err = ctx.enquiry?.error
-    ? '<p class="st-enq-err" role="alert">' + esc(ctx.enquiry.error) + "</p>"
+    ? '<p class="st-enq-err" id="enq-err" role="alert">' + esc(ctx.enquiry.error) + "</p>"
     : "";
 
   // What the visitor typed on a refused attempt. Escaped on the way back out,
   // like every other string this renderer prints — it is their own text, but
   // it has been round-tripped through a request and is not trusted for that.
   const sent = (n: string): string => ctx.enquiry?.sent?.[n] ?? "";
+
+  /** The message and the hint, whichever of them this field has. */
+  const describedBy = (name: string, hasHint: boolean): string => {
+    const ids = [
+      ...(badField === name ? ["enq-err"] : []),
+      ...(hasHint ? ["enq-" + name + "-hint"] : []),
+    ];
+    return ids.length > 0 ? ' aria-describedby="' + ids.join(" ") + '"' : "";
+  };
 
   const field = (
     name: string,
@@ -2304,10 +2331,22 @@ function enquiry(
     '<input class="st-enq-in" id="enq-' + name + '" name="' + name + '" type="' + type + '"' +
     (sent(name) ? ' value="' + esc(sent(name)) + '"' : "") +
     (opts.req ? " required" : "") +
+    // The field the message is about: marked invalid, pointed at the message,
+    // and focused, so a refused submission lands the visitor ON the problem
+    // rather than at the top of the form. autofocus rather than a script,
+    // because this form works with JavaScript off and so must its recovery.
+    (badField === name ? ' aria-invalid="true" autofocus' : "") +
+    // ⚠️ THE HINT WAS NEVER ANNOUNCED. It carried no id and nothing referred
+    // to it, so "Po njem izračunamo dostavo" — and, on the access field, the
+    // three measurements the business actually needs — were visible text a
+    // screen-reader user never heard at the control. SC 1.3.1.
+    describedBy(name, opts.hint !== undefined) +
     (opts.auto ? ' autocomplete="' + opts.auto + '"' : "") +
     (opts.mode ? ' inputmode="' + opts.mode + '"' : "") +
     ">" +
-    (opts.hint ? '<span class="st-enq-hint">' + esc(opts.hint) + "</span>" : "") +
+    (opts.hint
+      ? '<span class="st-enq-hint" id="enq-' + name + '-hint">' + esc(opts.hint) + "</span>"
+      : "") +
     "</p>";
 
   return (
@@ -2339,15 +2378,19 @@ function enquiry(
     "</div>" +
     '<p class="st-enq-f">' +
     '<label class="st-enq-l" for="enq-dostop">Dostop do mesta postavitve</label>' +
-    '<textarea class="st-enq-in st-enq-ta" id="enq-dostop" name="dostop" rows="3">' +
+    '<textarea class="st-enq-in st-enq-ta" id="enq-dostop" name="dostop" rows="3"' +
+    (badField === "dostop" ? ' aria-invalid="true" autofocus' : "") +
+    describedBy("dostop", true) + ">" +
     esc(sent("dostop")) + "</textarea>" +
-    '<span class="st-enq-hint">Širina najožjega prehoda, stopnice ali škarpa na poti, ' +
+    '<span class="st-enq-hint" id="enq-dostop-hint">Širina najožjega prehoda, stopnice ali škarpa na poti, ' +
     "razdalja do električne omarice. S temi tremi podatki lahko povemo, ali je model " +
     "izvedljiv, še preden pridemo na ogled.</span>" +
     "</p>" +
     '<p class="st-enq-f">' +
     '<label class="st-enq-l" for="enq-sporocilo">Vaše sporočilo</label>' +
-    '<textarea class="st-enq-in st-enq-ta" id="enq-sporocilo" name="sporocilo" rows="4">' +
+    '<textarea class="st-enq-in st-enq-ta" id="enq-sporocilo" name="sporocilo" rows="4"' +
+    (badField === "sporocilo" ? ' aria-invalid="true" autofocus' : "") +
+    describedBy("sporocilo", false) + ">" +
     esc(sent("sporocilo")) + "</textarea>" +
     "</p>" +
     '<fieldset class="st-enq-fs">' +
@@ -2366,7 +2409,9 @@ function enquiry(
     // row would make the stored record evidence of something else. The text
     // is imported, not retyped.
     '<p class="st-enq-consent">' +
-    '<input type="checkbox" id="enq-soglasje" name="soglasje" value="1" required>' +
+    '<input type="checkbox" id="enq-soglasje" name="soglasje" value="1" required' +
+    (badField === "soglasje" ? ' aria-invalid="true" autofocus' : "") +
+    describedBy("soglasje", false) + ">" +
     '<label for="enq-soglasje">' + esc(CONSENT_TEXT) + "</label>" +
     "</p>" +
     '<p class="st-enq-act"><button class="st-page-act st-page-act--lead" type="submit">' +

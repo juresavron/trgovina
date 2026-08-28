@@ -306,7 +306,14 @@ export const STUDIO_TOKENS = `
       --t-h5: 26px;
       --t-h6: 19px;
       --t-lead-xl: 44px;
-      --t-lead: 16px;
+      /* ⚠️ 18px, NOT 16. At 16 this matched --t-body exactly, so on every
+       * 810-1199px laptop the standfirst WAS body copy and the hierarchy the
+       * lede exists to create disappeared. Measured across 390/768/1024/1440/
+       * 1920 the ramp read [18, 18, 16, 20, 20] — the only non-monotonic
+       * entry in the scale, and it dipped below the PHONE tier, which sets
+       * 18. Six components read this token: .st-page-lead, .st-shop-intro,
+       * .st-util-p, .st-story-copy, .st-pdp-sub, .st-fnd-lead. */
+      --t-lead: 18px;
     }
   }
 
