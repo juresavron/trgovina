@@ -37,9 +37,19 @@ export function finishSlug(name: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
-/** The bucket key: "site/barva-midnight.webp". */
-export function finishImageKey(kind: FinishKind, name: string): string {
-  return "site/" + kind + "-" + finishSlug(name) + ".webp";
+/**
+ * The bucket key: "site/barva-midnight.webp".
+ *
+ * ⚠️ IT TAKES A SLUG, NOT A NAME, and it used to take a name. A colour's slug
+ * is fixed when its swatch is first stored; its name is free to change after
+ * that — the panel renames, and the automatic naming rewrites outright. So
+ * folding the name again produced a key for a file that does not exist the
+ * moment anybody renamed anything, and the swatch is a CSS background, so the
+ * tile simply went blank with nothing logged anywhere. See FinishEntry in
+ * catalog/pola.ts.
+ */
+export function finishImageKey(kind: FinishKind, slug: string): string {
+  return "site/" + kind + "-" + slug + ".webp";
 }
 
 /**
@@ -52,6 +62,6 @@ export function finishImageKey(kind: FinishKind, name: string): string {
  * There is no broken-image icon and no fallback photograph to arrange, which
  * is why these slots are the ones marked `optional` in the registry.
  */
-export function finishImageUrl(kind: FinishKind, name: string): string {
-  return "/media/" + finishImageKey(kind, name);
+export function finishImageUrl(kind: FinishKind, slug: string): string {
+  return "/media/" + finishImageKey(kind, slug);
 }

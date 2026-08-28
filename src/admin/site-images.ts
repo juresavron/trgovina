@@ -29,7 +29,11 @@
  */
 
 import { OWN_PHOTOS, pick } from "../themes/studio/media";
-import { CABINET_FINISHES, SHELL_FINISHES } from "../catalog/pola";
+import {
+  CABINET_FINISH_ENTRIES,
+  SHELL_FINISH_ENTRIES,
+  type FinishEntry,
+} from "../catalog/pola";
 import { finishImageKey, type FinishKind } from "../catalog/finish-image";
 
 const MEDIA_PREFIX = "/media/";
@@ -451,12 +455,14 @@ const PAGE_IMAGES: readonly SiteImage[] = [
  * the heaviest thing on it by an order of magnitude. */
 function finishSlots(
   kind: FinishKind,
-  names: readonly string[],
+  entries: readonly FinishEntry[],
   group: string,
   what: string,
 ): readonly SiteImage[] {
-  return names.map((name) => ({
-    key: finishImageKey(kind, name),
+  return entries.map(({ name, slug }) => ({
+    // slug, not name: a renamed colour keeps the key its swatch was stored
+    // under, so the slot the panel offers is the slot the storefront reads.
+    key: finishImageKey(kind, slug),
     group,
     label: name,
     note:
@@ -476,8 +482,8 @@ function finishSlots(
 }
 
 const FINISH_IMAGES: readonly SiteImage[] = [
-  ...finishSlots("barva", SHELL_FINISHES, "Barve školjke", "školjke"),
-  ...finishSlots("obloga", CABINET_FINISHES, "Barve obloge", "obloge"),
+  ...finishSlots("barva", SHELL_FINISH_ENTRIES, "Barve školjke", "školjke"),
+  ...finishSlots("obloga", CABINET_FINISH_ENTRIES, "Barve obloge", "obloge"),
 ];
 
 export const SITE_IMAGES: readonly SiteImage[] = [
