@@ -364,6 +364,42 @@ export const STUDIO_CHROME_CSS = `
     outline-offset: -2px;
     border-radius: var(--r-ctrl);
   }
+
+  /* ⚠️ THE POINTER HAD NOTHING WHERE THE KEYBOARD HAD A RING.
+   *
+   * Both of these carry :focus-visible above and neither changed anything at
+   * all under a pointer — measured on all fourteen routes, the full computed
+   * subtree identical before and after hover. The wordmark is the way home
+   * and the number is the shop's most direct conversion, and both looked
+   * inert to a mouse. Opacity rather than colour: they sit on the dark band
+   * where the theme's quiet treatment is already a fade, and it cannot shift
+   * layout. */
+  :root[data-theme="studio"] .st-chrome-mark:hover,
+  :root[data-theme="studio"] .st-chrome-tel:hover {
+    opacity: 0.72;
+  }
+
+  /* ⚠️ AND NOTHING ON THE SITE HAD AN :active STATE — zero rules in 173 kB of
+   * CSS, against 68 :hover and 60 :focus-visible.
+   *
+   * On a phone there is no hover, so a primary control acknowledged a press
+   * with nothing at all until the next page painted. On a shop where the
+   * button leads to a form about a 7.000 EUR purchase, that reads as a dead
+   * button and gets pressed twice.
+   *
+   * transform only: it cannot shift layout, cannot reflow a sticky bar, and
+   * costs one composited frame. Guarded like every other motion in this
+   * theme — a reduced-motion user gets the same page without the nudge. */
+  @media not (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-chrome-btn:active,
+    :root[data-theme="studio"] .st-btn-light:active,
+    :root[data-theme="studio"] .st-page-act:active,
+    :root[data-theme="studio"] .st-page-cta-a:active,
+    :root[data-theme="studio"] .st-pdp-add:active,
+    :root[data-theme="studio"] .st-news-go:active {
+      transform: translateY(1px);
+    }
+  }
   /* And the one for circular icon controls: same ink, drawn OUTSIDE, because a
    * ring inset into a 36–44px disc lands on the glyph. --r-pill so the base
    * sheet's square 4px ring cannot square off a circle mid-focus. */

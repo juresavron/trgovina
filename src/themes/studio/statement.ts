@@ -391,6 +391,23 @@ export const STUDIO_STATEMENT_CSS = `
     padding-block: 0 var(--studio-rhythm);
     overflow: clip;
   }
+  /* ⚠️ EXCEPT WHERE THE NEIGHBOUR IS NOT ON THE WHITE GROUND.
+   *
+   * The rule above pays the boundary once because "this section shares the
+   * page's white ground with its neighbour". On the home page the neighbour
+   * is .st-tst — a dark band that carries its OWN ground and pays its own
+   * top rhythm. So the boundary was paid twice after all: measured 340px
+   * box-to-box, exactly the doubling the note says it removed, and 353.8px
+   * ink-to-ink against 275-298 for the two comparable boundaries on the same
+   * page.
+   *
+   * Scoped with :has() rather than zeroed outright, so a .st-stats followed
+   * by an ordinary white section keeps paying for that boundary as before.
+   * :has() is already load-bearing in this theme (the chrome's four-track
+   * bar, the figure's rhythm, the content grid's width). */
+  :root[data-theme="studio"] .st-stats:has(+ .st-tst) {
+    padding-block: 0;
+  }
   :root[data-theme="studio"] .st-stats-in {
     text-align: center;
   }

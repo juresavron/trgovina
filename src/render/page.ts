@@ -491,7 +491,12 @@ export function renderContentPage(
    * env-free: the async layer does the writing and hands the OUTCOME down as
    * a value. Rendering never learns that a database exists.
    */
-  enquiry?: { readonly done?: boolean; readonly error?: string },
+  enquiry?: {
+    readonly done?: boolean;
+    readonly error?: string;
+    readonly sent?: Readonly<Record<string, string>>;
+    readonly field?: string | null;
+  },
 ): string {
   // Spread rather than assign, because exactOptionalPropertyTypes draws a
   // distinction between "absent" and "present and undefined" — and `about`

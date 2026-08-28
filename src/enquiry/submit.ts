@@ -53,7 +53,10 @@ export type EnquiryProblem =
   | "stik"
   | "eposta"
   | "soglasje"
-  | "dolzina"
+  | "dolzina-ime"
+  | "dolzina-telefon"
+  | "dolzina-sporocilo"
+  | "dolzina-dostop"
   | "robot";
 
 /** Field caps, mirroring the CHECK constraints so the page can say so first. */
@@ -83,10 +86,20 @@ const str = (v: FormDataEntryValue | null): string =>
  * the renderer cannot drift from what gets stored: one string, two consumers,
  * and a test that holds them together.
  */
+// ⚠️ THE RETENTION CLAUSE WAS UNCONDITIONAL AND THE PRIVACY POLICY IS NOT.
+//
+// This read "Podatke hranimo 24 mesecev, nato jih izbrišemo" flat, while
+// content/pages/zasebnost.ts says the 24 months apply to an enquiry that does
+// NOT become an order — once there is an order, contract, warranty and
+// invoicing obligations run far longer, "praviloma deset let". A consent
+// sentence is the one the customer actually ticks and the one stored verbatim
+// against their row, so it cannot promise a deletion the shop is not allowed
+// to perform.
 export const CONSENT_TEXT =
   "Soglašam, da moje podatke uporabite za odgovor na to povpraševanje in " +
-  "pripravo ponudbe. Podatke hranimo 24 mesecev, nato jih izbrišemo. " +
-  "Soglasje lahko kadar koli prekličete.";
+  "pripravo ponudbe. Če iz povpraševanja ne nastane naročilo, podatke " +
+  "hranimo 24 mesecev, nato jih izbrišemo; če pride do naročila, veljajo " +
+  "roki iz politike zasebnosti. Soglasje lahko kadar koli prekličete.";
 
 /**
  * A form body read as an enquiry, or the first thing wrong with it.
@@ -112,7 +125,7 @@ export function parseEnquiry(
 
   const name = str(form.get("ime"));
   if (name.length < 2) return { ok: false, why: "ime" };
-  if (name.length > MAX.name) return { ok: false, why: "dolzina" };
+  if (name.length > MAX.name) return { ok: false, why: "dolzina-ime" };
 
   const email = str(form.get("eposta"));
   const phone = str(form.get("telefon"));
@@ -124,13 +137,12 @@ export function parseEnquiry(
   if (email !== "" && !(email.length <= MAX.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
     return { ok: false, why: "eposta" };
   }
-  if (phone.length > MAX.phone) return { ok: false, why: "dolzina" };
+  if (phone.length > MAX.phone) return { ok: false, why: "dolzina-telefon" };
 
   const message = str(form.get("sporocilo"));
   const access = str(form.get("dostop"));
-  if (message.length > MAX.message || access.length > MAX.access) {
-    return { ok: false, why: "dolzina" };
-  }
+  if (message.length > MAX.message) return { ok: false, why: "dolzina-sporocilo" };
+  if (access.length > MAX.access) return { ok: false, why: "dolzina-dostop" };
 
   // ⚠️ CONSENT IS A TICK, NOT A DEFAULT. An unchecked box submits nothing at
   // all, so this reads as absent and the enquiry is refused — which is the
@@ -165,14 +177,55 @@ export function parseEnquiry(
   };
 }
 
-/** What the visitor is told, per problem. Slovenian, and never a field name. */
+/**
+ * What the visitor is told, per problem. Slovenian, and never an INTERNAL
+ * field name — but always clear about which field on the page is meant.
+ *
+ * ⚠️ THE OLD NOTE SAID "never a field name" AND THAT READ TOO BROADLY. Every
+ * message here already names its field in prose ("Vpišite ime", "E-poštni
+ * naslov ni videti pravilen"), because a message that does not is not an
+ * error message. The one that genuinely did not was "Eno od polj je
+ * predolgo" — one of the fields, which one is your problem — and that is
+ * what WCAG SC 3.3.1 forbids: an error has to identify the item in error.
+ * So `dolzina` split into one problem per field, and PROBLEM_FIELD below
+ * lets the page mark and focus the control the message is about.
+ */
 export const PROBLEM_TEXT: Readonly<Record<EnquiryProblem, string>> = {
   ime: "Vpišite ime, da vas znamo nagovoriti.",
   stik: "Pustite telefon ali e-pošto — brez enega od njiju vam ne moremo odgovoriti.",
   eposta: "E-poštni naslov ni videti pravilen. Preverite ga ali pustite telefon.",
   soglasje: "Za odgovor potrebujemo vaše soglasje za obdelavo podatkov.",
-  dolzina: "Eno od polj je predolgo. Skrajšajte ga in poskusite znova.",
+  "dolzina-ime": "Ime je predolgo. Skrajšajte ga in poskusite znova.",
+  "dolzina-telefon": "Telefonska številka je predolga. Preverite jo in poskusite znova.",
+  "dolzina-sporocilo": "Sporočilo je predolgo. Skrajšajte ga in poskusite znova.",
+  "dolzina-dostop": "Opis dostopa je predolg. Skrajšajte ga in poskusite znova.",
   robot: "Obrazca ni bilo mogoče oddati.",
+};
+
+/**
+ * Which control on the page each problem is about, by form field name.
+ *
+ * SC 3.3.1 asks that an error identify the item in error; SC 3.3.3 that it
+ * suggest a correction. The text does the second. This does the first — the
+ * page marks that field aria-invalid, points its aria-describedby at the
+ * message, and gives it focus, so a screen-reader user is put ON the field
+ * being complained about rather than told a sentence at the top of a form
+ * with fourteen controls.
+ *
+ * `stik` names the phone because that is the field a visitor most often
+ * meant to fill; either one satisfies the rule and the message says so.
+ * `robot` names nothing: no human reaches it.
+ */
+export const PROBLEM_FIELD: Readonly<Record<EnquiryProblem, string | null>> = {
+  ime: "ime",
+  stik: "telefon",
+  eposta: "eposta",
+  soglasje: "soglasje",
+  "dolzina-ime": "ime",
+  "dolzina-telefon": "telefon",
+  "dolzina-sporocilo": "sporocilo",
+  "dolzina-dostop": "dostop",
+  robot: null,
 };
 
 /** Rejected by the database rather than by us. */

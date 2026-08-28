@@ -653,7 +653,13 @@ export const STUDIO_PDP_CSS = `
     letter-spacing: var(--ls-body);
     line-height: var(--lh-lead);
     color: var(--ink-body);
-    max-width: 46ch;
+    /* ⚠️ rem, NOT ch — the trap this file documents twice and still had two
+     * of. ch is the advance of the digit ZERO, measured here at 14.48px
+     * against an average lowercase advance of 10.94px: a ratio of 1.325, so
+     * 46ch rendered 666px. It lands inside the band today, which is why it
+     * survived — but ch re-resolves at font swap and these faces are
+     * font-display: swap, which is the CLS mechanism page.ts records. */
+    max-inline-size: 41rem;
   }
   /* Three rungs share this row and the ramp gives each its own FACE, so the
    * container's family serves only the body-rung child; the other two declare
@@ -1013,7 +1019,8 @@ export const STUDIO_PDP_CSS = `
     font-size: var(--t-body);
     line-height: var(--lh-body);
     color: var(--ink-mute);
-    max-inline-size: 46ch;
+    /* Same trap, same fix: 46ch measured 538.8px at 16px. */
+    max-inline-size: 34rem;
   }
   /* The buy column IS a form. No box of its own — it is a grouping, not a
    * panel — but it owns the column's flow so the fieldsets inside it inherit
@@ -1815,6 +1822,10 @@ export const STUDIO_PDP_CSS = `
    * The ramp has no rung under 16px for prose; inventing one is what this pass
    * exists to undo. */
   :root[data-theme="studio"] .st-pdp-note {
+    /* Uncapped, this ran 832px and 101 CHARACTERS on one line at 1920 — 35%
+     * past the 75 ceiling, and the widest running text on the site. The same
+     * 34rem .st-pdp-panel-b p already uses, which measures 71. */
+    max-inline-size: 34rem;
     margin-top: clamp(12px, 1.1vw, 22px);
     padding-top: clamp(12px, 1.1vw, 22px);
     border-top: 1px solid var(--line);
@@ -1949,7 +1960,13 @@ export const STUDIO_PDP_CSS = `
     position: sticky;
     bottom: 0;
     z-index: 40;
-    margin-top: var(--studio-rhythm);
+    /* ⚠️ NO TOP MARGIN. This is position:sticky and the LAST flow child, so
+     * its rhythm margin is not a gap between two things — it is 170px of
+     * empty page before the footer, on top of the bar's own 74.8px. Measured
+     * at 1440: last content ink at 6281.9, main ending at 6539.7. The product
+     * page paid a 386.8px content-to-footer boundary where the home page pays
+     * 227.4 for the same kind of boundary. */
+    margin-top: 0;
     background: var(--ink-invert);
     color: var(--on-invert);
     /* A band, not a card: sharp edges, one hairline, no shadow — the chrome

@@ -39,7 +39,7 @@ import { renderStudioFinder } from "./themes/studio/finder";
 import { handleAdmin, handleMedia } from "./admin/routes";
 import { handlePosts } from "./blog/routes";
 import type { Env } from "./admin/supabase";
-import { PROBLEM_TEXT, parseEnquiry, submitEnquiry } from "./enquiry/submit";
+import { PROBLEM_FIELD, PROBLEM_TEXT, parseEnquiry, submitEnquiry } from "./enquiry/submit";
 
 /**
  * The product a ?model= parameter names, or nothing.
@@ -175,7 +175,13 @@ export function handleRequest(
    * the page a visitor gets after pressing the button is rendered by exactly
    * the same code that rendered the page they pressed it on.
    */
-  enquiry?: { readonly done?: boolean; readonly error?: string },
+  enquiry?: {
+    readonly done?: boolean;
+    readonly error?: string;
+    /** What was typed, when the submission was refused. See sections.ts. */
+    readonly sent?: Readonly<Record<string, string>>;
+    readonly field?: string | null;
+  },
 ): Response {
   const url = new URL(request.url);
   const host = request.headers.get("host") ?? url.hostname;
@@ -306,12 +312,30 @@ export function handleRequest(
   // robots.txt — closed until a shop is live; QA host permanently closed.
   if (path === "/robots.txt") {
     const open = shop.live && !dev;
-    // /admin and /media are never crawlable. /admin is behind a password and
-    // noindexed at the header, but a Disallow costs nothing and keeps it out
-    // of the crawl budget of a shop whose whole strategy is SEO. /media is
-    // image bytes: useful to a visitor, noise in a page index.
+    // /admin is never crawlable: it is behind a password and noindexed at the
+    // header, but a Disallow costs nothing and keeps it out of the crawl
+    // budget of a shop whose whole strategy is SEO.
+    //
+    // ⚠️ /media IS CRAWLABLE, AND THE RULE THAT BLOCKED IT WOULD HAVE COST THE
+    // PRICE SNIPPET ON EVERY PRODUCT PAGE.
+    //
+    // The old rule read "Disallow: /media/" and justified it as "image bytes:
+    // useful to a visitor, noise in a page index". That reasoning does not
+    // hold: an image referenced from an indexed page goes to IMAGE search, not
+    // into the page index, so blocking it buys nothing — and it costs a great
+    // deal. Every Product.image and every og:image on this site is a /media/
+    // URL, and Google requires the image of a Product rich result to be
+    // CRAWLABLE. A blocked one disqualifies the rich result, which is the
+    // price snippet, on all six product pages — on a shop where the goods run
+    // from 6.690 to 21.690 EUR and "cena" is attached to almost every query.
+    // It also empties every social share card and forfeits Image search in a
+    // category people shop by eye.
+    //
+    // If the images should stay out of WEB results, the tool for that is an
+    // X-Robots-Tag: noindex on the /media response, which still permits the
+    // crawl the rich result needs. A Disallow forbids the crawl itself.
     const body = open
-      ? "User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /media/\n\nSitemap: " +
+      ? "User-agent: *\nAllow: /\nDisallow: /admin\n\nSitemap: " +
         shop.siteUrl + "/sitemap.xml\n"
       : "User-agent: *\nDisallow: /\n";
     return new Response(body, {
@@ -495,6 +519,29 @@ export function handleRequest(
         // Two items with a linked root, because a one-item trail is inert:
         // Google renders nothing for it, so the hub's SERP line stayed a URL.
         breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: "Trgovina" }]),
+        // ⚠️ THE HUB CARRIES EVERY MODEL AND EMITTED NO LIST. Both collection
+        // pages got an ItemList when that gap was found; the page that holds
+        // the WHOLE catalogue was missed, so to a crawler the shop's index was
+        // six anchors in a div. Same helper, same reasoning as the two
+        // collections — a URL per entry, because each product's own page
+        // carries its Product node and repeating it here is two sources for
+        // one fact.
+        itemListJsonLd(
+          shop,
+          "Vsi modeli",
+          // Derived from the collections rather than listed here, so the hub's
+          // list cannot drift from the two category lists that are built from
+          // the same arrays. Deduped: a model in two families would otherwise
+          // appear twice in one ItemList.
+          [
+            ...new Set(
+              (content.collections ?? [])
+                .flatMap((c) => c.products)
+                .map((p) => ("slug" in p ? p.slug : undefined))
+                .filter((x): x is string => typeof x === "string"),
+            ),
+          ],
+        ),
       ],
     });
     return htmlResponse(doc, 200, baseHeaders);
@@ -646,10 +693,36 @@ export function handleRequest(
  * path, every host that is not a live shop — and the caller then does what it
  * did before this function existed.
  */
+/**
+ * What is echoed back into a refused form.
+ *
+ * A whitelist, not the whole body: `website` is the honeypot and must never
+ * be re-rendered, and `soglasje` is consent, which has to be given again
+ * rather than restored. Everything else is the visitor's own typing and
+ * losing it is the difference between a corrected enquiry and an abandoned
+ * one. Values are capped because a refused submission still echoes into a
+ * page, and the cap is generous next to what parseEnquiry accepts.
+ */
+const ECHOED_FIELDS = ["ime", "telefon", "eposta", "kraj", "dostop", "sporocilo", "kanal"] as const;
+
+function typedBack(form: FormData): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const k of ECHOED_FIELDS) {
+    const v = form.get(k);
+    if (typeof v === "string" && v !== "") out[k] = v.slice(0, 4000);
+  }
+  return out;
+}
+
 async function handleEnquiry(
   request: Request,
   env: Env,
-): Promise<{ done?: boolean; error?: string } | null> {
+): Promise<{
+  done?: boolean;
+  error?: string;
+  sent?: Record<string, string>;
+  field?: string | null;
+} | null> {
   if (request.method !== "POST") return null;
   const url = new URL(request.url);
   const shop = resolveShop(request.headers.get("host") ?? url.hostname);
@@ -662,7 +735,10 @@ async function handleEnquiry(
   try {
     form = await request.formData();
   } catch {
-    return { error: PROBLEM_TEXT.dolzina };
+    // The whole body failed to parse — too large, or malformed. That is not
+    // "one field is too long", which is what this used to borrow; it belongs
+    // to no field, so the page shows it and marks nothing invalid.
+    return { error: "Obrazca ni bilo mogoče prebrati. Poskusite znova." };
   }
 
   // ⚠️ THE MODEL AND THE CONFIGURATION ARE RE-RESOLVED FROM THE URL, not read
@@ -684,7 +760,11 @@ async function handleEnquiry(
     // can reach this branch, because the field is off-screen, aria-hidden and
     // never autofilled.
     if (parsed.why === "robot") return { done: true };
-    return { error: PROBLEM_TEXT[parsed.why] };
+    return {
+      error: PROBLEM_TEXT[parsed.why],
+      field: PROBLEM_FIELD[parsed.why],
+      sent: typedBack(form),
+    };
   }
 
   const ip =
@@ -694,6 +774,7 @@ async function handleEnquiry(
   const result = await submitEnquiry(env, shop.key, parsed.value, ip);
   if (result === "ok") return { done: true };
   return {
+    sent: typedBack(form),
     error:
       result === "prepogosto"
         ? "Preveč poskusov v kratkem času. Poskusite čez nekaj minut ali pokličite."

@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { CONSENT_TEXT, PROBLEM_TEXT, parseEnquiry } from "./submit";
+import {
+  CONSENT_TEXT,
+  PROBLEM_FIELD,
+  PROBLEM_TEXT,
+  parseEnquiry,
+  type EnquiryProblem,
+} from "./submit";
 import { handleRequest } from "../worker";
 import { STUDIO_CSS } from "../themes/studio";
 
@@ -90,14 +96,26 @@ describe("what counts as an enquiry", () => {
     }
   });
 
-  it("refuses a field longer than the column that stores it", () => {
+  // ⚠️ AND IT SAYS WHICH FIELD. It used to answer a single "dolzina" for all
+  // four, so the page could only print "one of the fields is too long" —
+  // which is the sentence WCAG SC 3.3.1 exists to forbid, on a form with
+  // fourteen controls.
+  it("refuses a field longer than the column that stores it, and names it", () => {
     expect(parseEnquiry(body({ ...ok, sporocilo: "x".repeat(4001) }))).toEqual({
       ok: false,
-      why: "dolzina",
+      why: "dolzina-sporocilo",
     });
     expect(parseEnquiry(body({ ...ok, ime: "x".repeat(121) }))).toEqual({
       ok: false,
-      why: "dolzina",
+      why: "dolzina-ime",
+    });
+    expect(parseEnquiry(body({ ...ok, telefon: "1".repeat(65) }))).toEqual({
+      ok: false,
+      why: "dolzina-telefon",
+    });
+    expect(parseEnquiry(body({ ...ok, dostop: "x".repeat(4001) }))).toEqual({
+      ok: false,
+      why: "dolzina-dostop",
     });
   });
 
@@ -135,9 +153,30 @@ describe("what counts as an enquiry", () => {
     expect(r.ok && r.value.prefer).toBeNull();
   });
 
+  // ⚠️ DERIVED FROM THE TABLE, NOT LISTED AGAIN. The list used to be typed
+  // out here, so splitting "dolzina" into one problem per field left the new
+  // ones untested while the suite stayed green.
   it("has a sentence for every problem it can report", () => {
-    for (const why of ["ime", "stik", "eposta", "soglasje", "dolzina", "robot"] as const) {
+    const problems = Object.keys(PROBLEM_TEXT) as EnquiryProblem[];
+    expect(problems.length).toBeGreaterThan(5);
+    for (const why of problems) {
       expect(PROBLEM_TEXT[why].length, why).toBeGreaterThan(10);
+    }
+  });
+
+  /**
+   * SC 3.3.1 asks that an error identify the item in error. The page can only
+   * do that if every problem knows which control it is about — so the two
+   * tables must stay in step, and a problem added to one and not the other is
+   * a message the page cannot point anywhere.
+   */
+  it("knows which field every problem is about", () => {
+    for (const why of Object.keys(PROBLEM_TEXT) as EnquiryProblem[]) {
+      expect(PROBLEM_FIELD, why).toHaveProperty(why);
+    }
+    expect(PROBLEM_FIELD.robot, "no human reaches the honeypot").toBeNull();
+    for (const why of Object.keys(PROBLEM_FIELD) as EnquiryProblem[]) {
+      if (why !== "robot") expect(PROBLEM_FIELD[why], why).toBeTruthy();
     }
   });
 });
@@ -305,5 +344,179 @@ describe("the retention period", () => {
     // The art. 7(1) record is itself personal data and has to be declared.
     expect(html).toContain("besedilo soglasja");
     expect(html).toContain("ponudniku podatkovne baze");
+  });
+});
+
+/**
+ * ⚠️ A REFUSED SUBMISSION MUST COME BACK FILLED IN.
+ *
+ * The form posts to its own URL with an empty action, which was chosen so a
+ * failed submit keeps ?model= and the whole configuration — the comment at
+ * that line says so. What it did not keep was the FIELDS: `field()` never
+ * emitted a value, so somebody who wrote their name, two long paragraphs
+ * describing the access to their garden and ticked consent, but left out a
+ * phone number, got the lot wiped. The access prompt asks for three separate
+ * measurements; on a phone, re-typing that is where the enquiry ends.
+ *
+ * Two things must NOT come back, and they are the point of the whitelist:
+ * the honeypot, which a re-rendered value would defeat, and consent, because
+ * a box that re-ticks itself is a pre-ticked box on the second attempt —
+ * GDPR art. 4(11), Planet49 C-673/17.
+ */
+describe("the enquiry form after a refusal", () => {
+  const render = (sent: Record<string, string>) =>
+    handleRequest(
+      new Request("https://trgovina.workers.dev/kontakt?shop=bazen"),
+      { error: "Vpišite telefon ali e-pošto.", sent },
+    );
+
+  it("gives every typed field back", async () => {
+    const html = await (await render({
+      ime: "Ana Novak",
+      eposta: "ana@example.test",
+      kraj: "6000 Koper",
+      dostop: "Najožji prehod 90 cm, tri stopnice, omarica 12 m stran.",
+      sporocilo: "Zanima me dobavni rok.",
+      kanal: "e-posta",
+    })).text();
+    expect(html).toContain('value="Ana Novak"');
+    expect(html).toContain('value="ana@example.test"');
+    expect(html).toContain('value="6000 Koper"');
+    expect(html).toContain("Najožji prehod 90 cm, tri stopnice, omarica 12 m stran.");
+    expect(html).toContain("Zanima me dobavni rok.");
+    // The chosen channel comes back selected, not reset to neither.
+    expect(html).toMatch(/id="enq-k-e"[^>]*checked/);
+    expect(html).not.toMatch(/id="enq-k-t"[^>]*checked/);
+  });
+
+  it("never re-ticks consent", async () => {
+    const html = await (await render({ ime: "Ana Novak" })).text();
+    expect(html).toMatch(/id="enq-soglasje"/);
+    expect(html, "a box that re-ticks itself is a pre-ticked box")
+      .not.toMatch(/id="enq-soglasje"[^>]*checked/);
+  });
+
+  /** Whatever a bot put in the honeypot must not be handed back to it. */
+  it("never echoes the honeypot", async () => {
+    const html = await (await render({ ime: "Ana" })).text();
+    expect(html).toMatch(/id="enq-website"[^>]*>/);
+    expect(html).not.toMatch(/id="enq-website"[^>]*value=/);
+  });
+
+  /** Their own text, round-tripped through a request, is still escaped. */
+  it("escapes what it gives back", async () => {
+    const html = await (await render({ ime: '"><script>alert(1)</script>' })).text();
+    expect(html).not.toContain("<script>alert(1)</script>");
+    expect(html).toContain("&quot;&gt;&lt;script&gt;");
+  });
+});
+
+/**
+ * ⚠️ THE SUMMARY CARD'S FIGURE IS WHAT THE BUYER COMMITS TO.
+ *
+ * It printed the catalogue base while listing the extras they had just ticked
+ * directly underneath. Measured on a real configuration: the product page's
+ * bar read 7.060 € and this card read 6.690 €, with "Termo pokrov" and
+ * "Dvigalo za termo pokrov" named below the figure. A 370 € contradiction on
+ * the one page where somebody decides.
+ */
+describe("the price on the enquiry summary", () => {
+  const at = (qs: string) =>
+    handleRequest(new Request("https://trgovina.workers.dev/kontakt?shop=bazen&" + qs));
+
+  it("adds the chosen extras to the base", async () => {
+    const bare = await (await at("model=mali-195")).text();
+    expect(bare).toContain("6.690");
+
+    const withExtras = await (await at(
+      "model=mali-195&oprema=" + encodeURIComponent("Termo pokrov"),
+    )).text();
+    const card = withExtras.slice(withExtras.indexOf("st-enq-about"));
+    const shown = card.slice(0, card.indexOf("</div>"));
+    // Whatever it now says, it must not be the bare base while an extra is
+    // listed beside it.
+    expect(shown).toContain("Termo pokrov");
+    expect(shown, "the card still shows the base price next to a paid extra")
+      .not.toMatch(/st-enq-about-p">6\.690/);
+  });
+
+  /** An unpriced model must not grow a total out of nothing. */
+  it("leaves an unset base alone", async () => {
+    const html = await (await at("model=mali-195")).text();
+    expect(html).not.toContain("NaN");
+    expect(html).not.toMatch(/st-enq-about-p">\s*€/);
+  });
+});
+
+/**
+ * ⚠️ SC 3.3.1 AND 1.3.1 ON THE SITE'S ONLY TRANSACTION.
+ *
+ * /kosarica and /blagajna are placeholders — "spletno naročanje še ni odprto".
+ * So this form is the entire mechanism by which anyone can buy anything here,
+ * and until now a refused submission put a sentence in a role="alert" above
+ * fourteen controls with nothing tying it to any of them: no id on the
+ * paragraph, no aria-invalid, no aria-describedby, no focus move. The form
+ * carries novalidate, so the browser's own per-field identification was
+ * suppressed as well — there was no other channel.
+ *
+ * The hints had the same shape of problem: visible text, no id, nothing
+ * pointing at them, so the three measurements the business needs on the
+ * access field were never announced at the control.
+ */
+describe("a refused enquiry identifies the field it is about", () => {
+  const refused = (field: string, error = "Vpišite ime, da vas znamo nagovoriti.") =>
+    handleRequest(new Request("https://trgovina.workers.dev/kontakt?shop=bazen"), {
+      error,
+      field,
+    });
+
+  it("marks that field invalid, describes it by the message, and focuses it", async () => {
+    const html = await (await refused("ime")).text();
+    expect(html).toContain('id="enq-err"');
+    const input = /<input[^>]*id="enq-ime"[^>]*>/.exec(html)?.[0] ?? "";
+    expect(input, "the field the message names").toContain('aria-invalid="true"');
+    expect(input).toContain("autofocus");
+    expect(input).toMatch(/aria-describedby="[^"]*enq-err/);
+  });
+
+  it("leaves the other fields alone", async () => {
+    const html = await (await refused("ime")).text();
+    const other = /<input[^>]*id="enq-eposta"[^>]*>/.exec(html)?.[0] ?? "";
+    expect(other).not.toContain("aria-invalid");
+    expect(other).not.toContain("autofocus");
+  });
+
+  /** Consent and the two textareas are built outside the field() helper. */
+  it("reaches the controls that are not built by the shared helper", async () => {
+    for (const [name, tag] of [
+      ["soglasje", "input"],
+      ["dostop", "textarea"],
+      ["sporocilo", "textarea"],
+    ] as const) {
+      const html = await (await refused(name)).text();
+      const el = new RegExp("<" + tag + "[^>]*id=\"enq-" + name + "\"[^>]*>").exec(html)?.[0] ?? "";
+      expect(el, name).toContain('aria-invalid="true"');
+      expect(el, name).toContain("autofocus");
+    }
+  });
+
+  it("announces every hint at its own control", async () => {
+    const html = await (await handleRequest(
+      new Request("https://trgovina.workers.dev/kontakt?shop=bazen"),
+    )).text();
+    for (const name of ["kraj", "dostop"]) {
+      expect(html, name).toContain('id="enq-' + name + '-hint"');
+      const el = new RegExp("<(?:input|textarea)[^>]*id=\"enq-" + name + "\"[^>]*>").exec(html)?.[0] ?? "";
+      expect(el, name).toMatch(new RegExp('aria-describedby="[^"]*enq-' + name + '-hint'));
+    }
+  });
+
+  /** Nothing is marked invalid on a form nobody has submitted yet. */
+  it("marks nothing on a first visit", async () => {
+    const html = await (await handleRequest(
+      new Request("https://trgovina.workers.dev/kontakt?shop=bazen"),
+    )).text();
+    expect(html).not.toContain("aria-invalid");
+    expect(html).not.toContain("autofocus");
   });
 });

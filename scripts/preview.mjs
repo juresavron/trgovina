@@ -16,6 +16,17 @@
  *
  *   node scripts/preview.mjs            # write pages + stand-ins, shoot them
  *   node scripts/preview.mjs --serve    # leave the server up on :8791
+ *
+ * ⚠️ TWO OF THESE AT ONCE WILL MEASURE EACH OTHER'S PAGES unless you set
+ * PREVIEW_DIR. The output directory defaults to /tmp/preview for everyone, so
+ * a second run overwrites the first one's HTML while it is being read — an
+ * audit then reports on a page it never rendered, and the finding looks real.
+ * This happened: four concurrent runs during one review round, caught only
+ * because the file list changed between two listings.
+ *
+ * PREVIEW_PORT was already per-run; PREVIEW_DIR has to be too.
+ *
+ *   PREVIEW_PORT=8811 PREVIEW_DIR=/tmp/preview-a11y node scripts/preview.mjs --serve
  */
 import { mkdirSync, writeFileSync, cpSync, existsSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
