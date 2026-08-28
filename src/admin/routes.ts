@@ -81,9 +81,14 @@ import {
   classify,
   slotOptions,
 } from "./assign";
-import type { FinishKind } from "../catalog/finish-image";
+import { finishImageKey, type FinishKind } from "../catalog/finish-image";
 import { enhance, enhanceAvailable } from "./enhance";
-import { looksLikeColourName, nameColour, uniqueColourName } from "./name-colour";
+import {
+  looksLikeColourName,
+  nameColour,
+  nameColourAvailable,
+  uniqueColourName,
+} from "./name-colour";
 import { describe, describeAvailable } from "./describe";
 import { arrange } from "./shots";
 import { blogEditPage, blogListPage } from "./blog-panel";
@@ -677,10 +682,20 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       // trade name; admin/name-colour.ts says why that line is drawn where it
       // is. When the model is unreachable the filename stands, which is the
       // behaviour this replaces.
-      const proposed: string[] = files.map((_, i) => {
-        const fromFile = nameFromFilename(names[i] ?? "");
-        return looksLikeColourName(fromFile) ? fromFile : "";
-      });
+      //
+      // ⚠️ WHERE EACH NAME CAME FROM IS CARRIED, NOT RE-DERIVED. The first
+      // version inferred it — "the filename was junk, so the model must have
+      // named it" — which reports "po odtenku na sliki" for a colour the
+      // model failed on and that fell back to the junk filename anyway. That
+      // is the silent no-op again, this time wearing a label that says it
+      // worked. The source travels with the name.
+      const proposed: { name: string; from: "file" | "model" | "failed" }[] =
+        files.map((_, i) => {
+          const fromFile = nameFromFilename(names[i] ?? "");
+          return looksLikeColourName(fromFile)
+            ? { name: fromFile, from: "file" as const }
+            : { name: "", from: "failed" as const };
+        });
 
       // ⚠️ FOUR AT A TIME, NOT SIXTY IN A ROW. The colour ceiling is 60 files
       // because a colour drop was a pure filename read and cost no round
@@ -689,7 +704,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       // subrequests before a single row is written — an isolate limit, not a
       // slow page. Four at a time keeps the whole batch to about fifteen
       // rounds and leaves subrequest headroom for the writes that follow.
-      const need = proposed.map((n, i) => (n === "" ? i : -1)).filter((i) => i >= 0);
+      const need = proposed.map((p, i) => (p.name === "" ? i : -1)).filter((i) => i >= 0);
       for (let k = 0; k < need.length; k += 4) {
         const slice = need.slice(k, k + 4);
         const got = await Promise.all(
@@ -703,8 +718,13 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
           }),
         );
         slice.forEach((i, j) => {
-          // The filename is still the fallback — it is a poor name, not no name.
-          proposed[i] = got[j] ?? nameFromFilename(names[i] ?? "");
+          const answer = got[j];
+          // The filename is still the fallback — it is a poor name, not no
+          // name — but the row says so, so a screenshot name never arrives
+          // claiming the model chose it.
+          proposed[i] = answer
+            ? { name: answer, from: "model" }
+            : { name: nameFromFilename(names[i] ?? ""), from: "failed" };
         });
       }
 
@@ -713,11 +733,12 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       // one colour where the operator uploaded two.
       const taken = new Set<string>();
       const items = [];
+      const modelOff = !nameColourAvailable(env);
       for (let i = 0; i < files.length; i++) {
-        const raw = proposed[i] ?? "";
+        const raw = proposed[i]?.name ?? "";
+        const from = proposed[i]?.from ?? "failed";
         const name = raw === "" ? "" : uniqueColourName(raw, taken);
         if (name !== "") taken.add(name.trim().toLowerCase());
-        const named = name !== "" && !looksLikeColourName(nameFromFilename(names[i] ?? ""));
         const finish = name === "" ? null : await ensureFinish(api, "bazen", kind, name);
         items.push(
           finish
@@ -730,9 +751,16 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
                 exact: true,
                 // Which road the name came down, because an operator who sees
                 // a name they did not write should be told who wrote it.
-                reason: named
-                  ? 'Barva "' + finish.name + '" po odtenku na sliki.'
-                  : 'Barva "' + finish.name + '" po imenu datoteke.',
+                reason:
+                  from === "model"
+                    ? 'Barva "' + finish.name + '" po odtenku na sliki.'
+                    : from === "file"
+                      ? 'Barva "' + finish.name + '" po imenu datoteke.'
+                      : 'Ime "' + finish.name + '" je iz imena datoteke — ' +
+                        (modelOff
+                          ? "samodejno poimenovanje ni nastavljeno."
+                          : "barve ni bilo mogoče prepoznati na sliki.") +
+                        " Popravite ga na strani Barve.",
               }
             : {
                 i,
@@ -817,6 +845,41 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         await deleteFinish(api, shopKey, id);
         return seeOther("/admin/barve?m=fin-deleted");
       }
+      // ⚠️ NAMING AN EXISTING COLOUR FROM ITS OWN SWATCH, so a colour that
+      // came in badly named can be fixed without re-uploading the file.
+      //
+      // Six swatches went in called "Screenshot 2026-08-28 at 10.20.46". The
+      // naming that would have caught them shipped in a deploy that finished
+      // fifty seconds BEFORE they were uploaded, and there is no reason the
+      // only cure for that should be delete-everything-and-drag-it-again.
+      //
+      // Safe to redo at any time because renameFinish changes the NAME and
+      // not the slug: the swatch stays at the bucket key it was written to,
+      // and a rename cannot orphan a picture.
+      if (parts[3] === "ime") {
+        const rows = await listFinishes(api, shopKey);
+        const row = rows.find((f) => f.id === id);
+        if (!row) return seeOther("/admin/barve?e=fin-none");
+        if (!nameColourAvailable(env)) return seeOther("/admin/barve?e=fin-noai");
+        const url2 =
+          env.SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" +
+          encodeBucketKey(finishImageKey(row.kind, row.name));
+        let bytes: ArrayBuffer;
+        try {
+          const r = await fetch(url2);
+          if (!r.ok) return seeOther("/admin/barve?e=fin-noimg");
+          bytes = await r.arrayBuffer();
+        } catch {
+          return seeOther("/admin/barve?e=fin-noimg");
+        }
+        const proposal = await nameColour(env, bytes, "image/webp", row.kind);
+        if (!proposal) return seeOther("/admin/barve?e=fin-noname");
+        const others = new Set(
+          rows.filter((f) => f.id !== id).map((f) => f.name.trim().toLowerCase()),
+        );
+        await renameFinish(api, shopKey, id, uniqueColourName(proposal, others));
+        return seeOther("/admin/barve?m=fin-named");
+      }
       const form = await request.formData();
       await renameFinish(api, shopKey, id, String(form.get("name") ?? ""));
       return seeOther("/admin/barve?m=fin-saved");
@@ -830,7 +893,15 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
               ? NOTICES[url.searchParams.get("m")!]
               : undefined) ?? "Shranjeno.",
         } as const)
-      : undefined;
+      : url.searchParams.get("e")
+        ? ({
+            kind: "err",
+            text:
+              (Object.hasOwn(ERRORS, url.searchParams.get("e")!)
+                ? ERRORS[url.searchParams.get("e")!]
+                : undefined) ?? "Ni uspelo.",
+          } as const)
+        : undefined;
     // The fallback lists go WITH the rows, because the page has to describe
     // what the storefront is showing, not what the table holds. On a shop
     // that has uploaded nothing those are two different answers: the table is
@@ -1452,6 +1523,10 @@ const ERRORS: Record<string, string> = {
   // upload is no longer refused for want of a description.
   alt: "Opis slike je obvezen.",
   file: "Nobena slika ni bila izbrana.",
+  "fin-none": "Te barve ni na seznamu.",
+  "fin-noai": "Samodejno poimenovanje ni nastavljeno (manjka ključ za AI).",
+  "fin-noimg": "Vzorca te barve ni v shrambi, zato ga model ne more pogledati.",
+  "fin-noname": "Model barve ni znal poimenovati. Ime vpišite sami v polje.",
   fin: "Vzorec je shranjen, barve pa ni bilo mogoče dodati na seznam barv. " +
     "Poskusite znova; če se ponovi, jo naložite prek strani Barve.",
   // The panel converts every upload itself, in the browser, before it sends
@@ -1493,6 +1568,7 @@ const NOTICES: Record<string, string> = {
   "enq-saved": "Povpraševanje je posodobljeno.",
   "enq-deleted": "Povpraševanje je izbrisano.",
   "fin-saved": "Ime barve je shranjeno.",
+  "fin-named": "Barva je poimenovana po odtenku na vzorcu. Če ime ni pravo, ga popravite v polju.",
   "fin-uploaded":
     "Vzorci so naloženi. Spodaj je seznam barv, ki jih trgovina lahko pokaže.",
   "fin-deleted": "Barva je odstranjena s seznama.",
