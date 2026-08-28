@@ -838,7 +838,7 @@ export const STUDIO_COMMERCE_CSS = `
     letter-spacing: var(--ls-body);
     line-height: var(--lh-lead);
     color: var(--ink-body);
-    max-width: 62ch;
+    max-inline-size: 40rem;
   }
   /* Reads as a control, so it is SHARP (§9). Outlined at rest and filled on
    * hover, exactly as before — only the grounds are the other way up, so the
@@ -890,7 +890,7 @@ export const STUDIO_COMMERCE_CSS = `
    * reads as an indent nobody chose. */
   :root[data-theme="studio"] .st-shop-intro {
     margin: clamp(12px, 1.2vw, 20px) 0 0;
-    max-width: 62ch;
+    max-inline-size: 40rem;
     font-family: var(--f-body);
     font-size: var(--t-lead);
     font-weight: var(--w-body);
@@ -1026,11 +1026,18 @@ export const STUDIO_COMMERCE_CSS = `
      * hub — the tallest under-filled region left on any route — reached 48%
      * across because a rule that should close the section stopped where a
      * paragraph ends. The rule spans the band now; the words still read at
-     * 62ch. */
+     * the measure below. */
     padding-block-start: clamp(32px, 4vw, 56px);
     border-block-start: var(--bw-line) solid var(--line);
   }
-  :root[data-theme="studio"] .st-hub-outro > * { max-inline-size: 62ch; }
+  /* ⚠️ 40rem, NOT 62ch. The ch unit is the width of the digit zero, which in Plus
+   * Jakarta Sans runs about half again as wide as the average lowercase
+   * letter — so a "62-character" cap rendered ninety-five. See the long
+   * note on .st-pdp-panel-b in pdp.ts, where the same unit produced the
+   * widest running text on the site. The short ch caps elsewhere (16ch,
+   * 20ch, 24ch) stay: those are heading wrap points, where "roughly this
+   * many words per line" is the whole intent and the slack is harmless. */
+  :root[data-theme="studio"] .st-hub-outro > * { max-inline-size: 40rem; }
   :root[data-theme="studio"] .st-hub-outro h2 {
     font-family: var(--f-display);
     font-weight: var(--w-display);

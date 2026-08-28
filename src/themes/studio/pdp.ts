@@ -1431,7 +1431,19 @@ export const STUDIO_PDP_CSS = `
     line-height: var(--lh-body);
     color: var(--ink-body);
   }
-  :root[data-theme="studio"] .st-pdp-panel-b p { margin: 0; max-inline-size: 62ch; }
+  /* ⚠️ THE ch UNIT IS NOT A CHARACTER, AND THIS RULE PROVED IT.
+   *
+   * The cap read 62ch, which looks like "62 characters per line" and is
+   * not. ch is the advance width of the digit ZERO, and in Plus Jakarta
+   * Sans the zero is about half again as wide as the average lowercase
+   * letter — so 62ch measured 726px and rendered NINETY-FIVE characters per
+   * line, on all six product pages, at the top of the page where the model
+   * is described. The intent was right and the unit silently multiplied it.
+   *
+   * 34rem is 544px against this ramp's 16px body, which measures ~71 — the
+   * same figure the page module's own 38rem measure is calibrated to and
+   * documents. A rem cannot drift with the face. */
+  :root[data-theme="studio"] .st-pdp-panel-b p { margin: 0; max-inline-size: 34rem; }
 
   /* ---- "ostali modeli" ------------------------------------------------- */
   /* Block padding only — the inline half is layout.ts's. It was a padding

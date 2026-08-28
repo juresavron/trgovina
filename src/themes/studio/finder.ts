@@ -86,7 +86,7 @@ export const STUDIO_FINDER_CSS = `
   }
   :root[data-theme="studio"] .st-fnd-lead {
     font-size: var(--t-lead);
-    line-height: var(--lh-body);
+    line-height: var(--lh-lead);
     color: var(--ink-body);
     margin: 0 0 clamp(26px, 3vw, 44px);
     max-inline-size: 36rem;
@@ -155,7 +155,7 @@ export const STUDIO_FINDER_CSS = `
   /* The verdict: the recommended model as a ruled card row. */
   :root[data-theme="studio"] .st-fnd-why {
     font-size: var(--t-lead);
-    line-height: var(--lh-body);
+    line-height: var(--lh-lead);
     color: var(--ink-body);
     margin: 0 0 clamp(26px, 3vw, 40px);
   }

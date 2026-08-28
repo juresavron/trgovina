@@ -45,7 +45,17 @@ describe("QA host (workers.dev)", () => {
     expect(r.status).toBe(200);
     expect(r.headers.get("x-robots-tag")).toContain("noindex");
     const body = await text(r);
-    expect(body).toContain("Masažni bazen za pet ali šest oseb.");
+    // ⚠️ THE CONTRACT IS "keyword H1", NOT A PARTICULAR SENTENCE. This pinned
+    // the h1 verbatim, so rewriting the hero's copy — a thing marketing does,
+    // and did — failed a test about routing and indexing. What the test is
+    // for is that the page a crawler sees leads its one h1 with the shop's
+    // keyword; the words after it are the shop's business.
+    const h1 = (body.match(/<h1[^>]*>([\s\S]*?)<\/h1>/) ?? [])[1] ?? "";
+    expect(h1, "no h1 on the home page").not.toBe("");
+    expect(
+      h1.toLowerCase().startsWith(SHOPS["bazen"]!.keyword.primary.toLowerCase()),
+      "h1 does not lead with the keyword: " + h1,
+    ).toBe(true);
     expect(body).toContain('rel="canonical" href="https://' + PROD_HOST + '/"');
     expect(body).toContain('data-theme="studio"');
   });

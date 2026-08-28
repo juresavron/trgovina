@@ -493,20 +493,20 @@ function pdpFor(m: PolaModel): PdpContent {
         "Školjka: " + SHELL_FINISHES.join(" · ") +
           ". Obloga: " + CABINET_FINISHES.join(" · ") +
           ". Proizvajalčeva barvna karta našteva deset odtenkov, specifikacija modela " +
-          "pa sedem — kateri veljajo za vaš model, " +
+          "pa sedem; kateri veljajo za vaš model, " +
           "potrdimo ob naročilu.",
       ],
       [
         "Mere in teža",
         footprint(m) + ", višina " + m.mm[2] / 10 + " cm. Prazen tehta " +
           kgText(m.dryKg) + ", napolnjen " + kgText(m.filledKg) +
-          " — nosilnost terase preverimo pred dostavo.",
+          ". Nosilnost terase preverimo pred dostavo.",
       ],
       [
         "Dostava in montaža",
         "Bazen pripeljemo, postavimo, priklopimo in zaženemo. Pred dostavo " +
           "brezplačno preverimo dostop, podlago in električni priklop. " +
-          "Ceno dostave pripravimo po ponudbi — odvisna je od naslova in " +
+          "Ceno dostave pripravimo po ponudbi. Odvisna je od naslova in " +
           "dostopa do mesta postavitve.",
       ],
       [
@@ -659,7 +659,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       [
         "Dostava in montaža",
         "Swim spa pripeljemo, postavimo, priklopimo in zaženemo. Zaradi " +
-          "dolžine je to izredni tovor — dostop in prostor za dvig " +
+          "dolžine je to izredni tovor: dostop in prostor za dvig " +
           "preverimo na lokaciji pred potrditvijo termina.",
       ],
       [
@@ -740,7 +740,7 @@ const collections: Collection[] = [
       "1,95 × 1,95 m in je edini, ki se umesti tja, kamor druga dva ne gresta: " +
       "pet mest, od tega dva ležalnika, 35 šob, ena črpalka 3 KM in 1.500 " +
       "kilogramov, ko je poln. BAZEN 210 meri 2,10 × 2,10 m in sprejme največ " +
-      "ljudi — šest mest z enim ležalnikom in 37 šob, napolnjen 1.870 " +
+      "ljudi: šest mest z enim ležalnikom in 37 šob, napolnjen 1.870 " +
       "kilogramov. BAZEN 230 meri 2,30 × 2,30 m in ni bazen za več ljudi, " +
       "ampak za več prostora: pet mest z dvema ležalnikoma, 50 šob, dve " +
       "črpalki 3 KM in 2.210 kilogramov. Školjka je pri najmanjšem visoka 82 " +
@@ -757,20 +757,20 @@ const collections: Collection[] = [
     navLabel: "Swim spa",
     h1: "Swim spa bazeni",
     intro:
-      "Tri školjke, pri katerih je prva številka dolžina — od nje je odvisno, " +
+      "Tri školjke, pri katerih je prva številka dolžina. Od nje je odvisno, " +
       "koliko plavanja je v bazenu in koliko vrta potrebujete zanj. SWIM 450 " +
       "meri 4,50 × 2,28 m in je vstopni model: najkrajša školjka v ponudbi, " +
       "tri mesta, štiri šobe in 5.750 kilogramov, ko je polna. Modela 580 sta " +
       "dolga 5,80 m in imata sedem mest z enim ležalnikom. SWIM 580 HIDRO ima " +
       "38 šob in tri črpalke 3 KM, napolnjen tehta 8.490 kilogramov; SWIM 580 " +
-      "MAXI ima 94 šob — največ v vsej ponudbi — in pet črpalk 3 KM, " +
+      "MAXI ima 94 šob (največ v vsej ponudbi) in pet črpalk 3 KM, " +
       "napolnjen pa je lažji, 7.360 kilogramov. " +
       (swimSpaFamilyHasSwimJets()
         ? "Tok za plavanje na mestu ustvarijo protitočne šobe, ki jih ima vsak " +
           "od treh modelov. "
         : "Tok za plavanje na mestu ustvarijo protitočne šobe; koliko jih ima " +
           "posamezen model, piše v njegovi specifikaciji. ") +
-      "Swim spa praviloma stoji na betonski plošči in ne na terasi — dostop " +
+      "Swim spa praviloma stoji na betonski plošči, ne na terasi. Dostop " +
       "in prostor za dvig preverimo na lokaciji pred potrditvijo termina.",
     metaDescription:
       "Swim spa bazeni od 450 do 580 cm za plavanje na mestu in sprostitev. " +
@@ -793,7 +793,22 @@ export const bazenContent: ShopContent = {
   nav: ["Trgovina", "O nas", "Vodniki", "Dostava", "Kontakt", "Primerjava", "Kateri bazen?"],
   artKey: "pool",
   kicker: "Masažni bazen · Slovenija",
-  h1: "Masažni bazen za pet ali šest oseb.",
+  // ⚠️ THE H1 SELLS THE DIFFERENCE, NOT THE SPEC — and it keeps the keyword
+  // in the first two words, which is the only SEO constraint it has.
+  //
+  // It read "Masažni bazen za pet ali šest oseb." That is a line from a
+  // price list. It answers a question nobody arrives with: anyone shopping
+  // for a hot tub already knows roughly how many people sit in one, and the
+  // seat count is on every card two screens down. What they do NOT know, and
+  // what actually decides where they buy, is who solves the hard part — a
+  // 1.430 kg object that has to cross a garden, sit on something that holds
+  // it and be wired by an electrician.
+  //
+  // That is this shop's whole argument, made at length on /o-nas and
+  // /dostava-in-montaza, and the hero was the one place not making it.
+  // Five words now do: the noun for the crawler, the promise for the reader.
+  // The seat counts move to the sub, where a spec belongs.
+  h1: "Masažni bazen, ki ga postavimo mi.",
   // No price in the hero copy even now that COST_INPUTS is set. A figure in
   // an h1's sub is the one a customer remembers, and it would go stale the
   // day the inputs move — the cards and the PDPs derive theirs and this line
@@ -805,7 +820,7 @@ export const bazenContent: ShopContent = {
   // DELIVER THE ARC the heading promises — ogled, dostava, priklop, zagon —
   // because moat.steps render on /dostava-in-montaza, not here. Spelled-out
   // numerals, because the ring device cuts numerals in this band.
-  sub: "Trije masažni bazeni od 195 do 230 cm in trije swim spa bazeni od 450 do 580 cm. Pridemo pogledat lokacijo, bazen pripeljemo, priklopimo, zaženemo in predamo — vi pripravite kopalke.",
+  sub: "Trije masažni bazeni od 195 do 230 cm za pet ali šest oseb in trije swim spa bazeni od 450 do 580 cm. Pridemo pogledat lokacijo, bazen pripeljemo, priklopimo, zaženemo in predamo. Vi pripravite kopalke.",
   cta: "Izberite svoj bazen",
   metaDescription:
     "Masažni bazeni za 5 ali 6 oseb, 35–50 šob, akrilna školjka in ogrevanje. Ogled lokacije, dostava na teraso in zagon po vsej Sloveniji.",
@@ -908,11 +923,11 @@ export const bazenContent: ShopContent = {
     },
   ],
   moat: {
-    h2: "Od terase do prve kopeli — vse opravimo mi.",
+    h2: "Od terase do prve kopeli vse opravimo mi.",
     steps: [
       ["Ogled lokacije", "Preverimo dostop, podlago in električni priklop."],
       ["Priprava priklopa", "Navodila za vašega električarja ali izvedba z našim partnerjem."],
-      ["Dostava na teraso", "Ekipa z opremo za prenos — tudi čez ograjo, če je treba."],
+      ["Dostava na teraso", "Ekipa z opremo za prenos, tudi čez ograjo, če je treba."],
       ["Priklop in zagon", "Napolnimo, zaženemo filtracijo in ogrevanje ter umerimo šobe."],
       ["Predaja", "Pokažemo vzdrževanje: 10 minut na teden, nič več."],
     ],
@@ -982,7 +997,7 @@ export const bazenContent: ShopContent = {
   // both jobs — is the reason hubChoice exists; see its note in types.ts.
   hubIntro:
     "Najprej se odločite med dvema stvarema, ki nista različici iste stvari. Razlika " +
-    "ni v velikosti, ampak v tem, kaj v bazenu počnete — od tega pa je odvisno " +
+    "ni v velikosti, ampak v tem, kaj v bazenu počnete. Od tega je odvisno " +
     "vse drugo: podlaga, dostop, priprava priklopa in cena dostave. Vsakega " +
     "pripeljemo, priklopimo in zaženemo.",
   // EVERY FIGURE IS THE CATALOGUE'S — the same ranges the collection intros
@@ -992,7 +1007,7 @@ export const bazenContent: ShopContent = {
     {
       label: "Masažni bazen",
       text:
-        "Kvadratna školjka, v kateri se sedi in leži — masaža, ne plavanje. " +
+        "Kvadratna školjka, v kateri se sedi in leži: masaža, ne plavanje. " +
         "Praviloma gre na teraso.",
       facts: [
         ["Velikost", "195–230 cm"],
@@ -1034,11 +1049,11 @@ export const bazenContent: ShopContent = {
       h: "Kako brati te številke",
       p: [
         "Število šob ni ocena kakovosti. Šobo je treba pognati, in to delajo črpalke: pri " +
-          "vseh šestih modelih so 3 KM, razlikuje pa se, koliko jih je — od ene do petih. " +
+          "vseh šestih modelih so 3 KM, razlikuje pa se, koliko jih je: od ene do petih. " +
           "Zato ob številu šob poglejte število črpalk, saj to pove, koliko šob dela pod " +
           "polnim pritiskom hkrati.",
         "Število mest tudi ni isto kot velikost. BAZEN 230 je večji od BAZEN 210 in ima eno " +
-          "mesto manj, ker ima dva ležalnika namesto enega — ležalnik zasede prostor dveh " +
+          "mesto manj, ker ima dva ležalnika namesto enega: ležalnik zasede prostor dveh " +
           "sedežev. Če radi ležite, je manj mest pravzaprav tisto, kar iščete.",
         "Teža, ki šteje, je teža napolnjenega bazena, ne praznega. Prazen model je nekaj " +
           "sto kilogramov in ga je mogoče prestaviti; poln je od 1.500 do 8.490 kilogramov " +
@@ -1052,7 +1067,7 @@ export const bazenContent: ShopContent = {
       p: [
         "Vrstni red je obrnjen od pričakovanega: najprej prostor, dostop in podlaga, šele " +
           "nato konfiguracija. Zato pridemo na vaš naslov pogledat, kam bi bazen postavili, " +
-          "preden karkoli kupite — ogled je brezplačen po vsej Sloveniji in vas k ničemur ne " +
+          "preden karkoli kupite. Ogled je brezplačen po vsej Sloveniji in vas k ničemur ne " +
           "zavezuje. Če se izkaže, da izbrani model pri vas ni izvedljiv, vam to povemo.",
         "Cene modelov na tej strani so v evrih in vključujejo DDV. Vključujejo zagon, " +
           "umeritev in predajo; ogled lokacije ni zaračunan v ceni. Dostava z ekipo in " +
@@ -1070,5 +1085,5 @@ export const bazenContent: ShopContent = {
     // The footer of EVERY page said "Razstavni bazen v Ljubljani — pridite ga
     // pogledat v živo". There is no showroom; this now names the thing the
     // shop really does, which is the same promise the moat band makes.
-    "Specialist za masažne bazene v Sloveniji. Dostava, priklop in zagon po vsej Sloveniji — z brezplačnim ogledom lokacije pred nakupom.",
+    "Specialist za masažne bazene v Sloveniji. Dostava, priklop in zagon po vsej Sloveniji, z brezplačnim ogledom lokacije pred nakupom.",
 };

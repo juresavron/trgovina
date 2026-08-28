@@ -46,7 +46,7 @@ export const SHOWROOM: Page = {
       h: "Zakaj ogled in ne razstavni salon",
       p: [
         "Razstavnega salona nimamo in vam ga ne bomo obljubljali. Namesto da bi vi vozili k " +
-          "bazenu, pridemo mi k vam — in to je pri tem izdelku bolj uporabno, kot se sliši. " +
+          "bazenu, pridemo mi k vam, in to je pri tem izdelku bolj uporabno, kot se sliši. " +
           "V salonu bi videli, kako je školjka videti. Doma izveste tisto, kar odloča: ali " +
           "bazen sploh pride do mesta postavitve in ali podlaga zdrži, ko je poln.",
         "Napolnjen masažni bazen tehta od 1.500 do 2.210 kilogramov, napolnjen swim spa " +
@@ -54,7 +54,7 @@ export const SHOWROOM: Page = {
           "prenese vaša terasa, se po telefonu ne da presoditi in v nobenem salonu ne " +
           "izve. Zato je ogled pri vas.",
         "Ogled je brezplačen tudi, če se za nakup na koncu ne odločite. Če se izkaže, da " +
-          "model, ki ste ga izbrali, pri vas ni izvedljiv, vam to povemo — to je pogosto " +
+          "model, ki ste ga izbrali, pri vas ni izvedljiv, vam to povemo. To je pogosto " +
           "najkoristnejši izid obiska.",
       ],
     },
@@ -78,7 +78,7 @@ export const SHOWROOM: Page = {
         ],
         [
           "Ponudba",
-          "Model in konfiguracija, dostava, priklop in zagon — vse v eni številki z DDV. " +
+          "Model in konfiguracija, dostava, priklop in zagon: vse v eni številki z DDV. " +
             "Ogled je do tu brezplačen in brez obveznosti.",
         ],
       ],
@@ -89,13 +89,13 @@ export const SHOWROOM: Page = {
       rows: [
         [
           "Mesto postavitve",
-          "Približna predstava, kam bi bazen postavili. Natančno izmerimo mi — pomembno je " +
+          "Približna predstava, kam bi bazen postavili. Natančno izmerimo mi; pomembno je " +
             "le, da se pogovarjamo o istem kotu vrta.",
         ],
         [
           "Dostop do dvorišča",
           "Če je pot do hiše zaprta z zapornico, vrati na ključ ali dogovorom s sosedom, to " +
-            "povejte vnaprej — tovornjak na dan dostave to ugotovi prepozno.",
+            "povejte vnaprej. Tovornjak na dan dostave to ugotovi prepozno.",
         ],
         [
           "Podlaga",
@@ -108,7 +108,7 @@ export const SHOWROOM: Page = {
         ],
         [
           "Kdo je doma",
-          "Dobro je, če je prisoten nekdo, ki odloča o nakupu in pozna hišo — polovica " +
+          "Dobro je, če je prisoten nekdo, ki odloča o nakupu in pozna hišo. Polovica " +
             "vprašanj je o tem, kaj je pod tlakovci in kje teče kabel.",
         ],
       ],
@@ -153,11 +153,11 @@ export const SHOWROOM: Page = {
       p: [
         "Ene stvari tudi na vašem naslovu ni mogoče izvedeti: koliko bo bazen porabil " +
           "električne energije. Poraba je odvisna od temperature, ki jo držite, pogostosti " +
-          "uporabe, kakovosti pokrova in zunanjih razmer — zato mesečnega zneska ne " +
+          "uporabe, kakovosti pokrova in zunanjih razmer, zato mesečnega zneska ne " +
           "navajamo nikjer na tej strani.",
         "Prav tako na ogledu ne izvedete, kako bo bazen deloval pri polni moči. Črpalka " +
           "pri najvišji stopnji ni tiha; kako glasno je to, si vsak predstavlja drugače. " +
-          "Ob predaji vam vse stopnje pokažemo in nastavimo — takrat je bazen vaš in " +
+          "Ob predaji vam vse stopnje pokažemo in nastavimo. Takrat je bazen vaš in " +
           "poln, kar je edino stanje, v katerem se to res sliši.",
       ],
     },
@@ -168,7 +168,7 @@ export const SHOWROOM: Page = {
     {
       kind: "cta",
       h: "Naročite brezplačen ogled",
-      p: "Pokličite ali pišite — povejte naslov in kateri model vas zanima.",
+      p: "Pokličite ali pišite. Povejte naslov in kateri model vas zanima.",
       label: "Kontakt",
       href: "/kontakt",
     },

@@ -40,7 +40,7 @@ export const ABOUT: Page = {
   h1: "O nas",
   lead:
     "Prodajamo in postavljamo masažne bazene in swim spa bazene po vsej Sloveniji. " +
-    "Ne pošiljamo jih s špediterjem na dvorišče — pripeljemo jih, priklopimo in zaženemo.",
+    "Ne pošiljamo jih s špediterjem na dvorišče. Pripeljemo jih, priklopimo in zaženemo.",
   metaDescription:
     "Specialist za masažne bazene in swim spa bazene v Sloveniji. Ogled lokacije, dostava, " +
     "priklop in zagon z lastno ekipo, servis in rezervni deli.",
@@ -71,7 +71,7 @@ export const ABOUT: Page = {
           "bazeni od 450 do 580 cm. Šest modelov, ki jih imamo v rokah, za katere imamo " +
           "fotografije, rezervne dele in servisno zgodovino. Katalog s petdesetimi modeli, od " +
           "katerih polovice prodajalec ni nikoli videl, ni izbira, ampak izgovor.",
-        "Ozek izbor ni omejitev, ampak pogoj za odgovor. Ali bo bazen šel skozi vaša vrtna " +
+        "Ozek izbor je pogoj za odgovor. Ali bo bazen šel skozi vaša vrtna " +
           "vrata, se da po telefonu povedati samo za model, ki smo ga že nosili. Iz istega razloga " +
           "imamo dele na zalogi in vsi trije masažni bazeni tečejo na istem krmilniku Balboa " +
           "BP200 G2+ z grelcem 3 kW.",
@@ -84,12 +84,12 @@ export const ABOUT: Page = {
         "Pred dostavo pride nekdo od nas na lokacijo. Ta brezplačen obisk je razlog, da " +
           "se dostave ne ponesrečijo: težave s prehodom, nosilnostjo terase ali premajhnim " +
           "odklopnikom se pokažejo prej, kot pride tovornjak.",
-        "Za priklop dobite pisna navodila za svojega električarja — presek vodnika, odklopnik " +
+        "Za priklop dobite pisna navodila za svojega električarja: presek vodnika, odklopnik " +
           "in zaščitno stikalo za konkreten model; če električarja nimate, izvedbo prevzame " +
           "naš partner.",
         "Na dan dostave pride ekipa z opremo za prenos, po potrebi čez ograjo ali po " +
           "stopnicah. Bazen napolnimo, zaženemo filtracijo in ogrevanje ter umerimo šobe; " +
-          "preden odidemo, voda kroži in se greje. Nato vas naučimo vzdrževanja — približno " +
+          "preden odidemo, voda kroži in se greje. Nato vas naučimo vzdrževanja: približno " +
           "deset minut na teden in to je vse, kar bazen zahteva od vas.",
       ],
     },
@@ -124,12 +124,12 @@ export const ABOUT: Page = {
       kind: "prose",
       h: "Kaj pomeni servisna zgodovina",
       p: [
-        "Servisna zgodovina ni oglasna beseda, ampak zapis: kateri del na katerem modelu je " +
+        "Servisna zgodovina je zapis: kateri del na katerem modelu je " +
           "odpovedal, po kolikšnem času in kaj ga je nadomestilo. Za šest modelov se tak zapis " +
           "da voditi, za petdeset se ne.",
         "Čez pet let to pomeni, da se pogovarjamo o modelu, ki ga poznamo in smo ga sami " +
           "dostavili in zagnali. Kako dolgo je posamezen del dobavljiv, je odvisno od " +
-          "dobavitelja — tega ne obljubljamo z letnico.",
+          "dobavitelja, zato tega ne obljubljamo z letnico.",
       ],
     },
     {
@@ -152,7 +152,7 @@ export const ABOUT: Page = {
         [
           "Ali je treba bazen za servis premakniti?",
           "Ne, če je ob postavitvi ostal dostop do servisne odprtine. Če ga ni, se premikanju ni " +
-            "mogoče izogniti — zato o njem govorimo že ob ogledu in ne ob prvi okvari.",
+            "mogoče izogniti. Zato o njem govorimo že ob ogledu in ne ob prvi okvari.",
         ],
       ],
     },
@@ -164,7 +164,7 @@ export const ABOUT: Page = {
     {
       kind: "cta",
       h: "Poglejte ponudbo",
-      p: "Šest modelov — trije masažni in trije swim spa bazeni. Mere, specifikacije in cene.",
+      p: "Šest modelov: trije masažni in trije swim spa bazeni. Mere, specifikacije in cene.",
       label: "V trgovino",
       href: "/trgovina",
     },

@@ -32,7 +32,7 @@ export const FINANCING: Page = {
     "Nakup je mogoče razdeliti na do 36 mesečnih obrokov. Izračun za vaš model in znesek " +
     "pripravimo ob ponudbi.",
   metaDescription:
-    "Nakup masažnega bazena na obroke — do 36 mesečnih obrokov. Kako poteka odobritev, kaj " +
+    "Nakup masažnega bazena na obroke, do 36 mesečnih obrokov. Kako poteka odobritev, kaj " +
     "primerjati med ponudbami financiranja in kaj vprašati pred podpisom.",
   blocks: [
     {
@@ -52,7 +52,7 @@ export const FINANCING: Page = {
       items: [
         [
           "Izberete model in dobite ponudbo",
-          "V pisni ponudbi je končna cena z DDV — model in konfiguracija, dostava, priklop in " +
+          "V pisni ponudbi je končna cena z DDV: model in konfiguracija, dostava, priklop in " +
             "zagon. Ta znesek je podlaga za izračun obrokov.",
         ],
         [
@@ -72,7 +72,7 @@ export const FINANCING: Page = {
         ],
         [
           "Ogled in dostava",
-          "Ogled lokacije opravimo pred ponudbo, tako kot pri vsakem drugem nakupu — " +
+          "Ogled lokacije opravimo pred ponudbo, tako kot pri vsakem drugem nakupu; " +
             "financiranje na to zaporedje ne vpliva. Po odobritvi se dogovorimo le še " +
             "za termin dostave.",
         ],
@@ -90,7 +90,7 @@ export const FINANCING: Page = {
         [
           "Kolikšen je skupni znesek za plačilo?",
           "Vsota vseh obrokov in stroškov do konca odplačevanja. Daljša doba pomeni nižji obrok " +
-            "in praviloma višji skupni znesek — to je ista odločitev, gledana z dveh strani.",
+            "in praviloma višji skupni znesek. To je ista odločitev, gledana z dveh strani.",
         ],
         [
           "Je obrestna mera fiksna ali spremenljiva?",
@@ -125,7 +125,7 @@ export const FINANCING: Page = {
       p: [
         "Obrok ni celoten strošek nakupa. Poleg cene modela s konfiguracijo so tu še dostava, " +
           "ki je odvisna od naslova in dostopa, ter priprava podlage in elektroinštalacija na " +
-          "vaši strani — dostava se obračuna po ponudbi, priprava podlage in elektroinštalacija " +
+          "vaši strani: dostava se obračuna po ponudbi, priprava podlage in elektroinštalacija " +
           "pa v ceni bazena nista. Obroke je zato smiselno računati od zneska " +
           "v pisni ponudbi in ne od cene, zapisane ob modelu.",
         "Potem so tu stroški obratovanja: elektrika za ogrevanje in filtracijo, sredstva za " +
@@ -155,7 +155,7 @@ export const FINANCING: Page = {
         ],
         [
           "Stroški obratovanja",
-          "Nikjer kot pavšal — odvisni so od uporabe, pokrova in zunanjih razmer.",
+          "Nikjer kot pavšal. Odvisni so od uporabe, pokrova in zunanjih razmer.",
         ],
       ],
     },
@@ -165,7 +165,7 @@ export const FINANCING: Page = {
       p: [
         "Ni mesečnega zneska, obrestne mere ali efektivne obrestne mere. Ti podatki so odvisni " +
           "od zneska, dobe in ponudnika financiranja ter veljajo za konkretno vlogo. Objavljena " +
-          "številka, ki za vaš primer ne bi držala, ni informacija, ampak zavajanje — zato jo " +
+          "številka, ki za vaš primer ne bi držala, ni informacija, ampak zavajanje. Zato jo " +
           "dobite v pisni ponudbi, ne na oglasni strani.",
         "Pogodbo o financiranju sklenete s ponudnikom financiranja, ne z nami. Ta vam mora " +
           "pred podpisom izročiti predpisane predpogodbene informacije, v katerih so obrestna " +

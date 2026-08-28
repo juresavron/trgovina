@@ -60,7 +60,7 @@ export const PRIVACY: Page = {
         // months" is two different promises about one row.
         [
           "Povpraševanje",
-          "Ime, telefon ali e-naslov, kraj, opis dostopa in vaše sporočilo — ter model in " +
+          "Ime, telefon ali e-naslov, kraj, opis dostopa in vaše sporočilo, ter model in " +
             "barve, ki ste jih izbrali na strani izdelka, če ste prišli od tam. Namen: odgovor " +
             "na vaše povpraševanje in priprava ponudbe. Pravna podlaga: izvedba ukrepov na " +
             "vašo zahtevo pred sklenitvijo pogodbe. Podatki se shranijo v našo bazo pri " +
@@ -104,7 +104,7 @@ export const PRIVACY: Page = {
           "jih izbrišemo. Podatke o sklenjenih poslih hranimo, dokler trajajo obveznosti iz " +
           "pogodbe, jamstva za skladnost blaga in garancije. Račune hranimo toliko časa, " +
           "kolikor zahtevajo davčni predpisi — praviloma deset let.",
-        "Podatke ob povpraševanju daste prostovoljno in vam jih ni treba dati — brez njih pa " +
+        "Podatke ob povpraševanju daste prostovoljno in vam jih ni treba dati; brez njih pa " +
           "ne moremo odgovoriti, pripraviti ponudbe ali izvesti dostave in montaže. Ko je " +
           "naročilo sklenjeno, so podatki, ki jih zahtevajo pogodba in davčni predpisi (na " +
           "primer podatki na računu), obvezni po zakonu.",

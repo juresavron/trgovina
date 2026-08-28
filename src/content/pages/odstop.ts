@@ -54,7 +54,7 @@ export const WITHDRAWAL: Page = {
         "Rok za odstop je 14 dni od dneva, ko blago prevzamete vi ali tretja oseba, ki jo za " +
           "to določite in ni prevoznik. Če v enem naročilu prejmete več kosov blaga ločeno, " +
           "teče rok od prevzema zadnjega. Za pravočasnost šteje datum, ko obvestilo o odstopu " +
-          "pošljete — ne datum, ko ga prejmemo.",
+          "pošljete, ne datum, ko ga prejmemo.",
         "Če vas o pravici do odstopa ne bi obvestili, se rok podaljša za dvanajst mesecev. " +
           "Če vas obvestimo naknadno, teče 14-dnevni rok od dneva, ko obvestilo prejmete.",
         "Pravica velja za potrošnike, torej fizične osebe, ki blaga ne kupujejo za opravljanje " +
@@ -72,8 +72,8 @@ export const WITHDRAWAL: Page = {
         ],
         [
           "Dogovorimo se za prevzem",
-          "Blago je pretežko za pošiljanje — masažni bazen tehta od 300 do 410 kilogramov, " +
-            "swim spa več kot tono — in je ob odstopu praviloma že priklopljeno. Zato ga ne " +
+          "Blago je pretežko za pošiljanje: masažni bazen tehta od 300 do 410 kilogramov, " +
+            "swim spa več kot tono, in je ob odstopu praviloma že priklopljeno. Zato ga ne " +
             "vračate sami: odvoz izvedemo mi, po dogovoru.",
         ],
         [
