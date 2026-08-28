@@ -386,8 +386,16 @@ export const STUDIO_PAGE_CSS = `
   :root[data-theme="studio"] .st-page-a,
   :root[data-theme="studio"] .st-page-step-p,
   :root[data-theme="studio"] .st-page-li,
-  :root[data-theme="studio"] .st-page-block > ul,
-  :root[data-theme="studio"] .st-page-block > ol {
+  /* ⚠️ NAMED BY CLASS, NOT BY ELEMENT. A child-ul/ol selector capped every list in the renderer by
+   * element, which is only correct for the one that is a run of sentences.
+   * It also caught the <ol> the ruled step rows live in and the <ul> the
+   * contact tiles live in — so the hairlines and the tiles that were supposed
+   * to span the track stopped where a paragraph would, and the fill sweep
+   * kept reporting 60% on pages I had already "fixed" twice.
+   *
+   * .st-page-list is the bullets; .st-page-steps and .st-page-ch are
+   * structure and carry their measure on the text inside them. */
+  :root[data-theme="studio"] .st-page-list {
     max-inline-size: 38rem;
   }
   /* ---- the photograph band (kind: "figure") ----
@@ -660,6 +668,59 @@ export const STUDIO_PAGE_CSS = `
     line-height: var(--lh-body);
     color: var(--ink-body);
     overflow-wrap: break-word;
+  }
+
+  /* ⚠️ AT THE TWO-COLUMN TIER THE STEPS BECOME A RULED TABLE, and the reason
+   * is measured rather than stylistic.
+   *
+   * Stacked — disc, then title over paragraph — a steps block draws nothing
+   * that spans. Its <ol> takes the wide track, but the widest thing PAINTED
+   * in it is a 38rem paragraph, so on /dostava-in-montaza a 640px band of
+   * page reached 60% across and the rest was white. That is the page the
+   * owner sent back twice.
+   *
+   * The fix is not a wider measure — 38rem is right and stretching prose to
+   * fill a band is the worse defect. It is to give the block the device the
+   * rest of this renderer already uses: a hairline per row, exactly like
+   * .st-page-qa and .st-page-facts. The rule spans the track, the title sits
+   * beside its paragraph instead of above it, and the reading measure is
+   * untouched.
+   *
+   * 14rem on the title column: the longest of these is "Dostava in prva
+   * kopel" at ~21 characters, which sets on two lines at 14rem and one at
+   * 16 — two is correct here, because a title column wide enough for the
+   * longest heading would push the paragraph past the track on /vodniki.
+   *
+   * Below 1000 it stays stacked: three columns in a phone's 340px is not a
+   * table, it is a squeeze, and the note under this one already explains
+   * what the disc costs there. */
+  @media (min-width: 1000px) {
+    :root[data-theme="studio"] .st-page-steps {
+      border-block-start: var(--bw-line) solid var(--line);
+    }
+    :root[data-theme="studio"] .st-page-step {
+      grid-template-columns: auto minmax(0, 14rem) minmax(0, 38rem);
+      align-items: start;
+      /* ⚠️ start, or the DISC column eats the slack. An auto track stretches
+       * to absorb a grid's free space while justify-content is normal, and
+       * these three tracks total ~940px inside a 1227px one — so the 40px
+       * counter column grew by ~290px and opened a trench between the number
+       * and the title it belongs to. The row's hairline is on the grid
+       * container, not on a track, so packing the columns left costs the
+       * spanning rule nothing. */
+      justify-content: start;
+      column-gap: clamp(20px, 2vw, 34px);
+      padding-block: clamp(18px, 1.8vw, 26px);
+      border-block-end: var(--bw-line) solid var(--line);
+    }
+    /* The rules carry the rhythm now; the old margin would double it. */
+    :root[data-theme="studio"] .st-page-step + .st-page-step {
+      margin-block-start: 0;
+    }
+    /* One row, not two: the title and the paragraph are side by side, so the
+     * disc no longer spans a stack. */
+    :root[data-theme="studio"] .st-page-step::before { grid-row: 1; }
+    :root[data-theme="studio"] .st-page-step-p { margin-block-start: 0; }
   }
 
   /* The counter column is sized for a desktop measure, and on a phone it is
