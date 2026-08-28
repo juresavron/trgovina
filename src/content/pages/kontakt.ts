@@ -31,7 +31,20 @@ export const CONTACT: Page = {
     "Kontakt za masažne bazene in swim spa bazene — telefon, e-pošta in naslov. " +
     "Svetovanje pred nakupom, ogled lokacije in dogovor za dostavo.",
   blocks: [
-    { kind: "contact", h: "Kako do nas" },
+    // The notes are RESTATEMENTS, not new promises: both response times are
+    // this page's own lead sentence, and "seat, not a showroom" is what
+    // /pogosta-vprasanja and the showroom copy already say. A visitor who
+    // reads an address on a contact page and drives to Koper expecting to
+    // see a pool is the failure this one line prevents.
+    {
+      kind: "contact",
+      h: "Kako do nas",
+      notes: {
+        phone: "Odgovorimo sproti.",
+        email: "Odgovor v enem delovnem dnevu.",
+        address: "Sedež podjetja. Razstavnega salona nimamo.",
+      },
+    },
     {
       kind: "prose",
       h: "Kaj nam poveste",

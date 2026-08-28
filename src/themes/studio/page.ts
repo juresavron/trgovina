@@ -24,6 +24,7 @@ import { esc, type RenderCtx } from "../../render/sections";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 import type { Block, Page } from "../../content/pages";
 import { decorativeImg, sitePhoto } from "./media";
+import { contactIcon, type IconKey } from "./icons";
 
 /* ------------------------------------------------------------------ CSS */
 
@@ -867,6 +868,31 @@ export const STUDIO_PAGE_CSS = `
    * not loosen, and the anchor can still wrap mid-value, which an
    * inline-block could not. 19px -> 27px. */
   :root[data-theme="studio"] .st-page-fv a { padding-block: 4px; text-underline-offset: 3px; }
+  /* The imprint's own density. Two columns of term/value pairs above 900px,
+   * so six statutory rows are three lines instead of six, and the label
+   * column narrows to what these particular labels need ("Matična številka"
+   * is the longest at ~9rem) rather than the 12rem a definition needs.
+   *
+   * Column-major (grid-auto-flow: column with an explicit row count) so the
+   * pairs read DOWN each column: firma/sedež/matična on the left, DDV/
+   * register/spletno mesto on the right. Row-major would put "Firma" beside
+   * "Sedež", which reads as one row of two facts and is exactly the
+   * confusion a two-column definition list has to avoid.
+   *
+   * The row count is hard-coded to 3 because the imprint is a fixed six-row
+   * legal set, not a variable list — if a seventh obligation is ever added,
+   * this number is the one thing that has to move with it. */
+  @media (min-width: 900px) {
+    :root[data-theme="studio"] .st-page-facts--tight {
+      grid-auto-flow: column;
+      grid-template-rows: repeat(3, auto);
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: clamp(24px, 3vw, 56px);
+    }
+    :root[data-theme="studio"] .st-page-facts--tight .st-page-frow {
+      grid-template-columns: minmax(0, 9rem) minmax(0, 1fr);
+    }
+  }
   /* An unset company fact is marked rather than left to look like content.
    * --ink-mute is what makes that mark visible AS a mark: at --ink-soft it
    * printed at 16.10:1, the same ink as the values around it, so five rows
@@ -981,6 +1007,122 @@ export const STUDIO_PAGE_CSS = `
     background: var(--ink-invert);
     border-color: var(--ink-invert);
     color: var(--on-invert);
+  }
+
+  /* ---- the contact channels ---------------------------------------------
+   *
+   * Three tiles where a definition list used to be. See channel() for why.
+   *
+   * FLEX, NOT GRID, AND THE REASON IS THE ORPHAN. The obvious device is
+   * grid-template-columns: repeat(auto-fit, minmax(N, 1fr)), and it was the
+   * first one here. auto-fit counts columns against the TRACK rather than
+   * the viewport, and this block's track is 670px at a 1024 viewport and
+   * 608px at 768 — so whatever N is, there are widths where three tiles
+   * become two plus a third stranded underneath at half width with a hole
+   * beside it. Chasing N only moves which width that happens at: 15rem
+   * orphaned at 1024, 13rem fixed 1024 and still orphaned at 768.
+   *
+   * Wrapped flex items grow into their row, so the last row is always full
+   * whatever the count. Three across becomes two-and-one-full-width becomes
+   * one, and there is never a hole. It also stops the count mattering, which
+   * is the same property auto-fit was chosen for: omitAddress drops the seat
+   * to two tiles on the showroom and about pages, and this block appears on
+   * eight pages in all.
+   *
+   * 13rem is the basis, not a minimum — the widest value these carry is
+   * info@masazni-bazeni-vrelec.si, and below about 200px it takes a third
+   * line, which overflow-wrap already handles. */
+  :root[data-theme="studio"] .st-page-ch {
+    list-style: none;
+    margin: 0 0 clamp(28px, 2.8vw, 44px);
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(10px, 1vw, 16px);
+  }
+  /* Grow into the row, shrink no further than the basis, and stretch to the
+   * tallest tile beside it — flex's default align-items, which is what keeps
+   * a two-line address level with a one-line telephone. display:flex on the
+   * item itself is what gives the tile inside a definite box to fill. */
+  :root[data-theme="studio"] .st-page-ch > li {
+    flex: 1 1 13rem;
+    display: flex;
+  }
+  /* The tile. A quiet panel rather than an outlined card: the two controls
+   * above it are the page's emphasis, and three bordered boxes under two
+   * bordered buttons would be five rectangles arguing. align-content:start so
+   * a tile with a note and a tile without still align at the top. */
+  :root[data-theme="studio"] .st-page-ch-t {
+    display: grid;
+    align-content: start;
+    gap: 6px;
+    inline-size: 100%;
+    padding: clamp(16px, 1.6vw, 22px);
+    border-radius: var(--r-media);
+    background: var(--bg-alt);
+    text-decoration: none;
+    color: inherit;
+    transition: background-color .2s ease;
+  }
+  :root[data-theme="studio"] a.st-page-ch-t:hover { background: var(--wash); }
+  :root[data-theme="studio"] a.st-page-ch-t:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
+  }
+  /* The footer's disc, at the page's ink. Not --st-tap here: the TILE is the
+   * target and clears 44px many times over, so the disc is free to be the
+   * label-sized mark it is rather than a control-sized one. */
+  :root[data-theme="studio"] .st-page-ch-ico {
+    display: inline-flex; align-items: center; justify-content: center;
+    inline-size: 38px; block-size: 38px;
+    margin-block-end: 4px;
+    border-radius: var(--r-pill);
+    border: var(--bw-line) solid var(--line);
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-page-ch-ico .st-ico {
+    inline-size: 18px; block-size: 18px;
+  }
+  :root[data-theme="studio"] .st-page-ch-k {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    color: var(--ink-mute);
+  }
+  /* The value at the h6 rung — the point of the whole change. An address is
+   * one unbreakable token, so overflow-wrap is what keeps a longer one than
+   * this shop's inside its tile rather than through the side of it. */
+  :root[data-theme="studio"] .st-page-ch-v {
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+    line-height: var(--lh-h6);
+    color: var(--ink);
+    overflow-wrap: anywhere;
+  }
+  /* No underline on the value: the tile is the affordance and the disc, the
+   * ground and the hover all say so. An underline here would read as a
+   * second, smaller link inside a thing that is already one. */
+  :root[data-theme="studio"] .st-page-ch-v a {
+    color: inherit;
+    text-decoration: none;
+  }
+  /* --t-label's 14px, at the BODY family and body leading. The ramp has no
+   * rung between 16px body and the 14px label, and this is a sentence rather
+   * than a chip: taking the label's size without its family, tracking or caps
+   * is what keeps it a note instead of a second heading. (There is no
+   * --t-small in tokens.ts. Inventing one as a fallback value is a thing I
+   * have already done once in this theme, and it silently ships whatever the
+   * literal says while looking like it came from the ramp.) */
+  :root[data-theme="studio"] .st-page-ch-n {
+    font-family: var(--f-body);
+    font-size: var(--t-label);
+    line-height: var(--lh-body);
+    color: var(--ink-body);
   }
   :root[data-theme="studio"] .st-page-act--lead:hover {
     background: transparent; color: var(--ink); border-color: var(--line-strong);
@@ -1315,10 +1457,11 @@ function facts(
   rows: readonly (readonly [string, string])[],
   raw = false,
   id?: string,
+  cls = "",
 ): string {
   return (
     h2(h, id) +
-    '<dl class="st-page-facts">' +
+    '<dl class="st-page-facts' + (cls ? " " + cls : "") + '">' +
     rows
       .map(
         ([k, v]) =>
@@ -1395,7 +1538,13 @@ function contactActions(ctx: RenderCtx): string {
   return acts.length === 0 ? "" : '<div class="st-page-acts">' + acts.join("") + "</div>";
 }
 
-function contact(ctx: RenderCtx, h?: string, id?: string, omitAddress = false): string {
+function contact(
+  ctx: RenderCtx,
+  h?: string,
+  id?: string,
+  omitAddress = false,
+  notes?: Extract<Block, { kind: "contact" }>["notes"],
+): string {
   const c = ctx.shop.contact;
   const a = c.address;
   // The postal address is three fields, so it is three questions: a street
@@ -1440,19 +1589,82 @@ function contact(ctx: RenderCtx, h?: string, id?: string, omitAddress = false): 
         "</dl>"
       : "") +
     contactActions(ctx) +
-    facts(
-    undefined,
-    [
-      ["Telefon", link(ctx.phoneHref, ctx.phoneDisplay, isSetPhone(ctx.phoneDisplay))],
-      ["E-pošta", link("mailto:" + c.email, c.email, isSet(c.email))],
-      // The seat, unless the page says otherwise: on the showroom page this
-      // row printed the company's Koper address as "Naslov" directly under a
-      // headline about Ljubljana — the seat is not that page's address.
-      ...(omitAddress ? [] : ([["Naslov", fact(place, placeSet)]] as [string, string][])),
-    ],
-    true,
-    )
+    // THE CHANNELS AS CARDS, NOT AS A DEFINITION LIST.
+    //
+    // This was facts(): Telefon / E-pošta / Naslov as three label-value rows
+    // between hairlines. It is the correct device for reference data and it
+    // was the wrong one here, for a reason that only shows on the page —
+    // /kontakt rendered THREE of them, and the one carrying the telephone
+    // number looked exactly like the one carrying the company registration.
+    // The thing a visitor came for had no more weight than the imprint, and
+    // sat in the second column of a list at body size.
+    //
+    // Cards fix the weight and the target both. Each channel gets the
+    // footer's own icon disc, its value at the h6 rung, and its whole tile as
+    // the hit area — a phone number on a phone should be a thing you press,
+    // not an underline you aim at. auto-fit means the same markup is three
+    // tiles here and two wherever omitAddress drops the seat, with no second
+    // layout to keep in step.
+    '<ul class="st-page-ch">' +
+    channel(
+      "phone",
+      "Telefon",
+      link(ctx.phoneHref, ctx.phoneDisplay, isSetPhone(ctx.phoneDisplay)),
+      isSetPhone(ctx.phoneDisplay) ? ctx.phoneHref : null,
+      notes?.phone,
+    ) +
+    channel(
+      "mail",
+      "E-pošta",
+      link("mailto:" + c.email, c.email, isSet(c.email)),
+      isSet(c.email) ? "mailto:" + c.email : null,
+      notes?.email,
+    ) +
+    // The seat, unless the page says otherwise: on the showroom page this
+    // row printed the company's Koper address as "Naslov" directly under a
+    // headline about Ljubljana — the seat is not that page's address.
+    (omitAddress ? "" : channel("pin", "Naslov", fact(place, placeSet), null, notes?.address)) +
+    "</ul>"
   );
+}
+
+/**
+ * One contact channel as a tile.
+ *
+ * ⚠️ THE WHOLE TILE IS THE LINK, AND ONLY WHERE THERE IS SOMEWHERE TO GO.
+ * link() above already refuses to wrap an unset value in an anchor — the
+ * placeholder telephone number must not become a control that dials nothing
+ * — and this has to make the same decision one level up, or an unfilled
+ * channel would still be a 15rem press target announcing "podatek še ni
+ * vpisan". So the address tile, which never goes anywhere, and any unset
+ * channel render as <div>, and `value` keeps its own inner anchor for the
+ * cases where the tile is a div but the value is still worth marking up.
+ *
+ * The nested anchor that would otherwise create — an <a> tile around link()'s
+ * <a> — is why `value` is stripped to its text when the tile itself links.
+ * Nested anchors are invalid HTML and browsers recover from them by closing
+ * the outer one early, which silently halves the target this exists to widen.
+ */
+function channel(
+  k: IconKey,
+  name: string,
+  value: string,
+  href: string | null,
+  note?: string,
+): string {
+  const inner =
+    '<span class="st-page-ch-ico">' + contactIcon(k) + "</span>" +
+    '<span class="st-page-ch-k">' + esc(name) + "</span>" +
+    // Strip link()'s anchor when the tile is itself one; keep it otherwise,
+    // so the unset mark keeps its class and a non-linking tile keeps any
+    // markup the value carries.
+    '<span class="st-page-ch-v">' +
+    (href ? value.replace(/<a [^>]*>/, "").replace(/<\/a>/, "") : value) +
+    "</span>" +
+    (note ? '<span class="st-page-ch-n">' + esc(note) + "</span>" : "");
+  return href
+    ? '<li><a class="st-page-ch-t" href="' + esc(href) + '">' + inner + "</a></li>"
+    : '<li><div class="st-page-ch-t">' + inner + "</div></li>";
 }
 
 function imprint(ctx: RenderCtx, h?: string, id?: string): string {
@@ -1478,6 +1690,15 @@ function imprint(ctx: RenderCtx, h?: string, id?: string): string {
     ],
     true,
     id,
+    // ⚠️ TIGHT, NOT SHORTER. Every ZGD-1 čl. 45 row stays and every unset
+    // mark stays visible; what changes is that six rows of reference data
+    // stop occupying the same full-width, body-size, one-per-line device the
+    // page uses for the things it wants read. On /kontakt this block sat
+    // directly under "Kaj je v ponudbi" in an identical treatment, so a
+    // company registration number had the same weight as what the customer
+    // is buying — and it does that on six pages, four of them legal, where
+    // it is the LAST thing and was the tallest.
+    "st-page-facts--tight",
   );
 }
 
@@ -1546,7 +1767,7 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
           : b.kind === "facts"
             ? facts(b.h, b.rows, false, id)
             : b.kind === "contact"
-              ? contact(ctx, b.h, id, b.omitAddress === true)
+              ? contact(ctx, b.h, id, b.omitAddress === true, b.notes)
               : b.kind === "imprint"
                 ? imprint(ctx, b.h, id)
                 : b.kind === "figure"
