@@ -86,6 +86,38 @@ if (!res.ok) {
 
 const rows = await res.json();
 
+// ⚠️ ZERO ROWS DOES NOT MEAN ZERO REVIEWS. It can equally mean the reader
+// could not see them, and this script cannot tell the two apart.
+//
+// PostgREST answers a request that RLS filters to nothing with 200 and an
+// EMPTY ARRAY — byte for byte what a genuinely empty table returns. Written
+// straight out, that silently replaces the shop's real data with the built-in
+// fallback while the deploy goes green, and every visible signal says it
+// worked.
+//
+// // The stakes are higher here than for a colour: a review is an Annex I claim
+// under ZVPot-1, and silently dropping the four the owner actually collected
+// leaves the storefront making no claim where it should make one.
+//
+// So an empty result leaves the committed file ALONE and turns the step red.
+// Emptying it on purpose still works, but has to be said out loud:
+//
+//   SYNC_ALLOW_EMPTY=1 node scripts/sync-reviews.mjs
+if (!Array.isArray(rows) || (rows.length === 0 && process.env.SYNC_ALLOW_EMPTY !== "1")) {
+  console.error(
+    "sync-reviews: the query succeeded and returned NOTHING, so " + OUT +
+      " is left as it is.",
+  );
+  console.error(
+    "  Either this shop genuinely has no published reviews, or — far more " +
+      "likely — the publishable key cannot read the table. An RLS-filtered " +
+      "read returns an empty array with a 200, which is indistinguishable " +
+      "from an empty table, so this refuses to guess and blank the list.",
+  );
+  console.error("  Check the anon select policy and column grant. To empty it on purpose: SYNC_ALLOW_EMPTY=1.");
+  process.exit(1);
+}
+
 /**
  * The model NAME the storefront prints, from the slug the database stores.
  *

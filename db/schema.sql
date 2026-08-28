@@ -627,3 +627,28 @@ insert into public.shops (id, domain, name, is_live, order_prefix) values
 
 insert into public.shop_order_seq (shop_id) values
   ('savna'), ('kad'), ('bazen'), ('fotelj'), ('kopalna'), ('biljard');
+
+-- ---------------------------------------------------------------------------
+-- APPLIED AFTER THIS FILE — public.finishes
+-- ---------------------------------------------------------------------------
+-- The colour table was created by a later migration, so its access lives here
+-- as a record rather than as the statement that made it. Verified against the
+-- live project.
+--
+--   finishes_admin_all   ALL    to authenticated  using is_admin()
+--   finishes_public_read SELECT to anon, authenticated  using (true)
+--
+-- The read is what the deploy's colour generator uses (scripts/sync-finishes.mjs
+-- with the publishable key), the same arrangement products and reviews have
+-- above. Every column it can see is already printed beside a swatch on the
+-- public product pages.
+--
+-- ⚠️ anon ALSO CARRIED INSERT, UPDATE AND REFERENCES, because Supabase grants
+-- those by name on a new public table and this one was created outside this
+-- file, so it never got the narrowing products and reviews were given. RLS was
+-- already stopping the write — there is no anon policy for anything but
+-- SELECT — but a grant that only a policy stands between is one edited policy
+-- away from being live, with a key published in wrangler.jsonc. Migration
+-- `finishes_anon_read_only` revoked them; anon now holds SELECT and nothing
+-- else. The lesson generalises: a table created outside this file inherits
+-- Supabase's by-name grants and has to be narrowed deliberately.

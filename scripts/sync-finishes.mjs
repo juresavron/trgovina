@@ -10,10 +10,12 @@
  *   node scripts/sync-finishes.mjs
  *
  * ⚠️ THE PUBLISHABLE KEY IS ENOUGH, exactly as it is for sync-reviews. The
- * finishes_public_read policy lets an anonymous reader see the list, and it
- * holds nothing that is not printed on the public product pages anyway. The
- * alternative was the service key in CI — which bypasses every policy in the
- * database, orders and customers included — to read a list of colour names.
+ * finishes_public_read policy lets an anonymous reader see the list (verified
+ * against the live project: `for select to {anon, authenticated} using (true)`,
+ * with the column grants to match), and it holds nothing that is not printed
+ * on the public product pages anyway. The alternative was the service key in
+ * CI — which bypasses every policy in the database, orders and customers
+ * included — to read a list of colour names.
  *
  * ⚠️ AND IT FAILS SOFT. A missing key or an unreachable database leaves the
  * committed file alone rather than emptying it. Emptying it would not blank
@@ -73,6 +75,41 @@ try {
 if (!Array.isArray(rows)) {
   console.error("sync-finishes: unexpected response — leaving " + OUT + " as it is.");
   process.exit(0);
+}
+
+// ⚠️ ZERO ROWS DOES NOT MEAN ZERO COLOURS. It can equally mean the reader
+// could not see them, and this script cannot tell the two apart.
+//
+// PostgREST answers a request that RLS filters to nothing with 200 and an
+// EMPTY ARRAY — byte for byte what a genuinely empty table returns. Written
+// straight out, that silently replaces the shop's real data with the built-in
+// fallback while the deploy goes green, and every visible signal says it
+// worked.
+//
+// // Nothing has actually failed this way yet — the read path for `finishes` was
+// checked against the live project and is in order. This is a guard against
+// a class of failure, not a post-mortem: a policy edited later, a table
+// recreated, a shop_id that stops matching. The cost of being wrong in this
+// direction is a red step; the cost of being wrong in the other is the shop's
+// own colours quietly replaced by the supplier's chart.
+//
+// So an empty result leaves the committed file ALONE and turns the step red.
+// Emptying it on purpose still works, but has to be said out loud:
+//
+//   SYNC_ALLOW_EMPTY=1 node scripts/sync-finishes.mjs
+if (rows.length === 0 && process.env.SYNC_ALLOW_EMPTY !== "1") {
+  console.error(
+    "sync-finishes: the query succeeded and returned NOTHING, so " + OUT +
+      " is left as it is.",
+  );
+  console.error(
+    "  Either this shop genuinely has no rows, or — far more likely — the " +
+      "publishable key cannot read the table. An RLS-filtered read returns " +
+      "an empty array with a 200, which is indistinguishable from an empty " +
+      "table, so this refuses to guess and blank the list.",
+  );
+  console.error("  Check the anon select policy and column grant. To empty it on purpose: SYNC_ALLOW_EMPTY=1.");
+  process.exit(1);
 }
 
 /** Slovenian-safe TS string literal. */
