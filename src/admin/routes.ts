@@ -601,10 +601,31 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     const form = await request.formData();
     const files = form.getAll("files").filter((f): f is File => f instanceof File && f.size > 0);
     if (files.length === 0) return json({ error: "Ni slik." }, 400);
+
+    // WHICH CATALOGUE, read first because it sets the batch ceiling. Default
+    // is the whole site — the flow this endpoint was built for.
+    // "barva"/"obloga" narrow it to one colour list, which is a different and
+    // much easier question: sixteen near-identical slot notes inside a
+    // 46-option prompt is not a catalogue a model can choose from, and the
+    // owner drops the colour samples as their own batch anyway.
+    const scope = form.get("scope");
+    const kind: FinishKind | null =
+      scope === "barva" ? "barva" : scope === "obloga" ? "obloga" : null;
+
     // A ceiling, said plainly: the site has seventeen slots, and a batch of
     // fifty is either a mistake or the product catalogue, which has its own
     // uploader.
-    if (files.length > 20) return json({ error: "Največ 20 slik naenkrat." }, 400);
+    //
+    // ⚠️ THE COLOUR CEILING IS HIGHER BECAUSE THE COST IS LOWER. Twenty is
+    // sized for the classifier — one Gemini round trip per picture. A colour
+    // drop makes no model call at all (the name is the filename), so the only
+    // cost is the bytes, which the two size caps below already bound. The
+    // owner's instruction was to drop ALL the colours at once, and a
+    // supplier's chart is not obliged to stop at twenty.
+    const cap = kind ? 60 : 20;
+    if (files.length > cap) {
+      return json({ error: "Največ " + cap + " slik naenkrat." }, 400);
+    }
     // The shipped client sends ~200 KB probes; the server cannot rely on
     // that, and each file is base64d into a Gemini payload. Per-file and
     // whole-batch caps keep a direct caller from buffering the isolate out.
@@ -614,15 +635,6 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     if (files.reduce((n, f) => n + f.size, 0) > 24 * 1024 * 1024) {
       return json({ error: "Celoten izbor sme meriti do 24 MB." }, 413);
     }
-
-    // WHICH CATALOGUE. Default is the whole site — the flow this endpoint was
-    // built for. "barva"/"obloga" narrow it to one colour list, which is a
-    // different and much easier question: sixteen near-identical slot notes
-    // inside a 46-option prompt is not a catalogue a model can choose from,
-    // and the owner drops the colour samples as their own batch anyway.
-    const scope = form.get("scope");
-    const kind: FinishKind | null =
-      scope === "barva" ? "barva" : scope === "obloga" ? "obloga" : null;
 
     // THE FILENAMES, sent alongside because the probes are not the originals.
     // The client downsamples each picture to a ~200 KB JPEG before posting,
@@ -1386,6 +1398,8 @@ const NOTICES: Record<string, string> = {
   "enq-saved": "Povpraševanje je posodobljeno.",
   "enq-deleted": "Povpraševanje je izbrisano.",
   "fin-saved": "Ime barve je shranjeno.",
+  "fin-uploaded":
+    "Vzorci so naloženi. Spodaj je seznam barv, ki jih trgovina lahko pokaže.",
   "fin-deleted": "Barva je odstranjena s seznama.",
   "post-published": "Zapis je objavljen in je na spletni strani.",
   "post-unpublished": "Zapis je umaknjen s spletne strani.",

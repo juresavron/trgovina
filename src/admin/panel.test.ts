@@ -1,5 +1,14 @@
 import { describe, it, expect } from "vitest";
-import { indexPage, loginPage, modelPage, notFoundPage, photoCount, siteImagePage } from "./panel";
+import {
+  indexPage,
+  loginPage,
+  modelPage,
+  notFoundPage,
+  photoCount,
+  siteImagePage,
+  sitePage,
+} from "./panel";
+import { finishListPage } from "./finishes-panel";
 
 /**
  * Slovenian counts in four forms, and the panel got this wrong: everything
@@ -341,5 +350,61 @@ describe("the site images are not put through the upscaler", () => {
     const rows = [{ id: "a", url: "a.webp", alt: "o", sort: 0, widths: [], enhanced: false, shot: null }];
     const product = modelPage("bazen", "x", "B", rows, undefined, "a@b.c", true, true);
     expect(product).toContain('data-enhance="on"');
+  });
+});
+
+/**
+ * ⚠️ A DROP ZONE WITHOUT ITS SCRIPT IS A CONTROL THAT DOES NOTHING, SILENTLY.
+ *
+ * This is a regression test for a shipped bug. The smart uploader began at
+ * the bottom of the dashboard; when it moved to /admin/slike the markup went
+ * and the `<script>` tag stayed behind. The input is deliberately NOT inside
+ * a form — the script is the submit — so the page rendered a perfectly
+ * normal-looking uploader that swallowed every file picked. Nothing failed,
+ * nothing was logged, and the only symptom was an operator saying their
+ * uploads did not appear.
+ *
+ * The invariant is per PAGE, not per zone: any page that renders `<prefix>-f`
+ * must also carry mount("<prefix>"...).
+ */
+describe("every drop zone ships the script that drives it", () => {
+  const pages: [string, string][] = [
+    [
+      "/admin/slike",
+      sitePage("bazen", "a@b.si", [
+        {
+          stem: "hero",
+          label: "Naslovna",
+          note: "Naslovna fotografija",
+          group: "Naslovnica",
+          src: "/media/site/hero.webp",
+        },
+      ]),
+    ],
+    ["/admin/barve", finishListPage([], "a@b.si", undefined, {
+      shell: ["Midnight"],
+      cabinet: ["Črna"],
+      shellPhotographed: false,
+      cabinetPhotographed: false,
+    })],
+    ["/admin", indexPage("Trgovina", "bazen", [], "a@b.si")],
+  ];
+
+  for (const [route, html] of pages) {
+    it(route + " mounts every zone it renders", () => {
+      for (const prefix of ["sm", "bv", "ob"]) {
+        if (!html.includes('id="' + prefix + '-f"')) continue;
+        expect(html, route + " renders " + prefix + "-f but never mounts it")
+          .toContain('mount("' + prefix + '"');
+      }
+    });
+  }
+
+  /** And the converse: no page pays for a script it has no zone for. */
+  it("ships no uploader script on a page with no drop zone", () => {
+    for (const [route, html] of pages) {
+      const zones = ["sm", "bv", "ob"].some((p) => html.includes('id="' + p + '-f"'));
+      if (!zones) expect(html, route).not.toContain('function mount(');
+    }
   });
 });

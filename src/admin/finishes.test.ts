@@ -147,20 +147,27 @@ describe("the colour page, on a shop that has uploaded nothing", () => {
     expect(page).not.toMatch(/(^|[^0-9])0 barv/);
     const total =
       TRANSCRIBED_SHELL_FINISHES.length + TRANSCRIBED_CABINET_FINISHES.length;
-    expect(page).toContain("— " + finishCount(total) + " skupaj");
+    expect(page).toContain(finishCount(total) + " skupaj");
   });
 
-  /** Every fallback tile has to go somewhere, or the list is a dead end. */
-  it("points each one at an upload slot that exists", () => {
-    for (const [kind, list] of [
-      ["barva", TRANSCRIBED_SHELL_FINISHES],
-      ["obloga", TRANSCRIBED_CABINET_FINISHES],
-    ] as const) {
-      for (const n of list) {
-        const slug = kind + "-" + finishSlug(n);
-        expect(page, slug).toContain('href="/admin/site/' + slug + '"');
-        expect(siteImageBySlug(slug), slug).toBeDefined();
-      }
+  /**
+   * ⚠️ THE DROP ZONE IS THE ONLY WAY IN, so its absence is not a cosmetic
+   * regression — it is a page that shows a list and offers no way to change
+   * it. There is deliberately no "add a colour" form: a name typed without a
+   * photograph behind it is a tile the shop cannot show.
+   */
+  it("offers a bulk drop zone for each kind, and the script that drives it", () => {
+    for (const prefix of ["bv", "ob"]) {
+      expect(page, prefix).toContain('id="' + prefix + '-drop"');
+      expect(page, prefix).toContain('id="' + prefix + '-f" type="file" multiple');
+      expect(page, prefix).toContain('mount("' + prefix + '"');
     }
+    expect(page).not.toContain('name="new-finish"');
+  });
+
+  /** The zone posts to the colour catalogue, not the site one. */
+  it("sorts a dropped file against the colour scope it was dropped on", () => {
+    expect(page).toContain('mount("bv", "barva")');
+    expect(page).toContain('mount("ob", "obloga")');
   });
 });

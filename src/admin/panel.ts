@@ -557,6 +557,42 @@ export function shell(title: string, body: string, who: string, current = ""): s
 }
 
 /**
+ * A COLOUR KIND'S DROP ZONE — the whole way a colour gets into this shop.
+ *
+ * ⚠️ IT IS THE ONLY WAY IN, AND THAT IS THE POINT. Nothing here types a
+ * colour's name: the name is the filename, so a tile cannot exist without a
+ * photograph behind it. Drop the set the shop can actually show and the set
+ * the shop actually shows is what customers see — no list to keep in step
+ * with a folder of samples, because they are the same act.
+ *
+ * ⚠️ NO AI-UPSCALE OPTION, unlike the site uploader. The enhancer redraws a
+ * picture larger; on a marbled acrylic sample the redraw is a new pattern in
+ * approximately that colour, which is the one thing a swatch must not be.
+ * These slots cap at 400 px square anyway.
+ *
+ * Mounted by SMART_JS via mount(prefix, scope) — the same probe, crop, WebP
+ * and upload pipeline the site uploader runs, pointed at the colour
+ * catalogue. The prefix is what binds the markup to the script.
+ */
+export function finishDropCard(prefix: "bv" | "ob", what: string): string {
+  return (
+    '<div class="card">' +
+    '<div class="drop" id="' + prefix + '-drop">' +
+    '<label for="' + prefix + '-f">Izberite ali povlecite vse vzorce ' +
+    esc(what) + " naenkrat</label>" +
+    '<input id="' + prefix + '-f" type="file" multiple ' +
+    'accept="image/webp,image/jpeg,image/png,image/avif">' +
+    '<p class="fmeta">Ena datoteka = ena barva. Vzorec obrežemo na sredini ' +
+    "in shranimo 400 × 400 px.</p>" +
+    "</div>" +
+    '<p class="stline" id="' + prefix + '-stwrap" role="status">' +
+    '<span id="' + prefix + '-st"></span></p>' +
+    '<ul class="picked" id="' + prefix + '-list"></ul>' +
+    "</div>"
+  );
+}
+
+/**
  * THE PICTURES THE STOREFRONT RENDERS, on their own page.
  *
  * ⚠️ THIS USED TO BE THE BOTTOM OF THE DASHBOARD, and it is why the dashboard
@@ -604,52 +640,17 @@ export function sitePage(shopKey: string, who: string, site: SiteSlot[]): string
       '<ul class="picked" id="sm-list"></ul>' +
       "</div>" +
 
-// THE COLOUR SAMPLES — the owner's ask, in the owner's words: "for barve
-      // školjke I want that I upload all colors and AI sorts them correctly".
-      //
-      // Its own drop zone rather than a note on the one above, because it is
-      // a different question and the server answers it from a different
-      // catalogue (see the scope field on /admin/site-sort). Sixteen colour
-      // slots inside the site's 46-option prompt is not a list a model can
-      // choose from — the notes are identical but for the colour name — while
-      // ten shell finishes on their own, with the filenames read first, is.
-      //
-      // ⚠️ NO AI-UPSCALE CHECKBOX HERE, and that is deliberate. The enhancer
-      // redraws a picture larger; on a marbled acrylic sample the redraw is a
-      // new pattern in approximately that colour, which is the one thing a
-      // swatch must not be. These slots cap at 400px anyway.
-      "<h2>Barve školjke — naložite vse naenkrat</h2>" +
-      '<div class="card">' +
-      '<div class="drop" id="bv-drop">' +
-      '<label for="bv-f">Izberite ali povlecite vse vzorce barv školjke naenkrat</label>' +
-      '<input id="bv-f" type="file" multiple ' +
-      'accept="image/webp,image/jpeg,image/png,image/avif">' +
-      '<p class="fmeta">Vsaka datoteka postane ena barva, in ime barve je ime ' +
-      "datoteke. Poimenujte jih po proizvajalčevi barvni karti — Oyster Opal.jpg, " +
-      "silver white marble.png, Črna.jpg — in jih povlecite sem vse naenkrat. " +
-      "Velikih in malih črk ne popravljamo: ime se navaja na naročilnici. " +
-      "Vzorec obrežemo na sredini in shranimo 400 × 400 px." +
-      "</p>" +
-      "</div>" +
-      '<p class="stline" id="bv-stwrap" role="status"><span id="bv-st"></span></p>' +
-      '<ul class="picked" id="bv-list"></ul>' +
-      "</div>" +
-
-      "<h2>Barve obloge — naložite vse naenkrat</h2>" +
-      '<div class="card">' +
-      '<div class="drop" id="ob-drop">' +
-      '<label for="ob-f">Izberite ali povlecite vse vzorce barv obloge naenkrat</label>' +
-      '<input id="ob-f" type="file" multiple ' +
-      'accept="image/webp,image/jpeg,image/png,image/avif">' +
-      '<p class="fmeta">Vsaka datoteka postane ena barva, in ime barve je ime ' +
-      "datoteke. Poimenujte jih po proizvajalčevi barvni karti — Oyster Opal.jpg, " +
-      "silver white marble.png, Črna.jpg — in jih povlecite sem vse naenkrat. " +
-      "Velikih in malih črk ne popravljamo: ime se navaja na naročilnici. " +
-      "Vzorec obrežemo na sredini in shranimo 400 × 400 px." +
-      "</p>" +
-      "</div>" +
-      '<p class="stline" id="ob-stwrap" role="status"><span id="ob-st"></span></p>' +
-      '<ul class="picked" id="ob-list"></ul>' +
+      // ⚠️ THE COLOUR DROP ZONES USED TO BE HERE, and being here is what made
+      // them unfindable. Somebody who wants to put their colours in goes to
+      // the page called Barve; this page is called Slike strani and is about
+      // the storefront's photographs. So the zones moved to /admin/barve,
+      // directly above the list they change, and this line is the signpost
+      // left behind for anyone who lands here first.
+      "<h2>Barve školjke in obloge</h2>" +
+      '<div class="card row-card">' +
+      "<p>Vzorce barv naložite na svoji strani — vse naenkrat, ime barve " +
+      "preberemo iz imena datoteke.</p>" +
+      '<a class="btn btn--ghost" href="/admin/barve">Naložite barve</a>' +
       "</div>" +
 
             // THE SITE'S OWN PICTURES, which had no way in here at all — so the
@@ -681,7 +682,17 @@ export function sitePage(shopKey: string, who: string, site: SiteSlot[]): string
             "</ul>",
         )
         .join("") +
-      '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>",
+      '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>" +
+      // ⚠️ THE ZONE AND ITS SCRIPT SHIP TOGETHER, ALWAYS.
+      //
+      // They did not, and the uploader on this page was dead. The smart
+      // uploader began life at the bottom of the dashboard; when it moved
+      // here the markup came and the script tag stayed behind, so this page
+      // rendered a drop zone that no code was listening to. The input is not
+      // inside a form — the script IS the submit — so picking files did
+      // exactly nothing, silently, with the page looking entirely normal.
+      // See the invariant test in panel.test.ts.
+      "<script>" + SMART_JS + "</script>",
     who,
     "slike",
   );
@@ -939,8 +950,7 @@ export function indexPage(
       '<a class="btn btn--ghost" href="/admin/mnenja">Uredi mnenja</a>' +
       "</div>" +
 
-      '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>" +
-      "<script>" + SMART_JS + "</script>",
+      '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>",
     who,
   );
 }
@@ -1398,7 +1408,7 @@ export function modelPage(
    that script is married to the one-form page, and marrying it to two would
    couple every future change to both. The duplication is ~60 lines of
    canvas code and is priced in. */
-const SMART_JS = `
+export const SMART_JS = `
 /* MOUNTED THREE TIMES, not copied three times.
  *
  * This was one IIFE bound to the ids sm-f/sm-drop/sm-list. The colour
@@ -1658,10 +1668,24 @@ function mount(p, scope){
         });
       });
       return seq.then(function(){
-        say("Razporejenih " + done + " od " + fs.length +
+        /* A COLOUR DROP ENDS BY RELOADING THE LIST IT JUST CHANGED.
+           The uploaded set IS the shop's colour list — nothing else decides
+           what a customer can pick — so leaving a stale list under a success
+           message would be the panel disagreeing with itself on the one page
+           whose whole job is to say which colours exist. Only on a clean run:
+           if anything failed, the per-file log is the more useful thing on
+           screen and a reload would throw it away. */
+        if (scope && done === fs.length) {
+          say("Naloženih " + done + ". Osvežujem seznam …", "ok");
+          setTimeout(function(){ location.href = "/admin/barve?m=fin-uploaded"; }, 900);
+          return;
+        }
+        say((scope ? "Naloženih " : "Razporejenih ") + done + " od " + fs.length +
           (up ? " · " + up + " povečanih z AI" : "") +
-          (skipped ? " · " + skipped + " brez mesta" : "") +
-          ". Slike so na strani v nekaj minutah.", done ? "ok" : "bad");
+          (skipped ? " · " + skipped + (scope ? " ni uspelo" : " brez mesta") : "") +
+          (scope
+            ? ". Na strani modela bodo ob naslednji posodobitvi strani."
+            : ". Slike so na strani v nekaj minutah."), done ? "ok" : "bad");
       });
     }).catch(function(err){
       say(err && err.message ? err.message : "Ni uspelo.", "bad");
