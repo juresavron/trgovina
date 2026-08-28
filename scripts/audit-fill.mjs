@@ -94,8 +94,16 @@ for(const r of ROUTES){
       const hasText=[...el.childNodes].some(n=>n.nodeType===3&&n.textContent.trim());
       const isMedia=/^(IMG|VIDEO|SVG|CANVAS)$/i.test(el.tagName);
       const bg=s2.backgroundColor;
-      const hasGround=bg!=="rgba(0, 0, 0, 0)"&&bg!=="transparent";
-      const hasRule=parseFloat(s2.borderBottomWidth)>0||parseFloat(s2.borderTopWidth)>0;
+      // ⚠️ A GROUND ONLY COUNTS ON SOMETHING SMALLER THAN THE BAND, and this
+      // is the bug that made the first version of this sweep useless. Every
+      // content page's <section class="st-page"> is full-bleed and paints the
+      // page white, so it "painted" in every strip at 132% of the band and
+      // masked the actual content underneath. The sweep reported /dostava-in-
+      // montaza and every one of its twelve siblings as clean while their
+      // steps and prose reached ~60%. A card or a tile is content and its
+      // ground should count; a page's own backdrop is not.
+      const hasGround=(bg!=="rgba(0, 0, 0, 0)"&&bg!=="transparent")&&b.width<=bandW+1;
+      const hasRule=(parseFloat(s2.borderBottomWidth)>0||parseFloat(s2.borderTopWidth)>0)&&b.width<=bandW+1;
       if(!hasText&&!isMedia&&!hasGround&&!hasRule) continue;
       items.push({t:b.top+window.scrollY, bo:b.bottom+window.scrollY, r:b.right,
         n:el.tagName+"."+String(el.className||"").split(" ")[0]});

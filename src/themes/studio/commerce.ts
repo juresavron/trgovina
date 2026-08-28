@@ -1018,11 +1018,19 @@ export const STUDIO_COMMERCE_CSS = `
      * centred 40rem column floated between the gutters with ~360px of dead
      * space either side and ran ~90 characters — a block from another
      * document appended to the hub. 62ch is the ~65-character measure the
-     * site reads at; the hairline stays, the drift goes. */
-    max-inline-size: 62ch;
+     * site reads at; the hairline stays, the drift goes.
+     *
+     * ⚠️ THE MEASURE MOVED OFF THE BLOCK AND ONTO THE TEXT, for the reason it
+     * moved everywhere else in this theme: the block carries a hairline, and
+     * capping the block capped the hairline with it. A 960px stretch of the
+     * hub — the tallest under-filled region left on any route — reached 48%
+     * across because a rule that should close the section stopped where a
+     * paragraph ends. The rule spans the band now; the words still read at
+     * 62ch. */
     padding-block-start: clamp(32px, 4vw, 56px);
     border-block-start: var(--bw-line) solid var(--line);
   }
+  :root[data-theme="studio"] .st-hub-outro > * { max-inline-size: 62ch; }
   :root[data-theme="studio"] .st-hub-outro h2 {
     font-family: var(--f-display);
     font-weight: var(--w-display);
