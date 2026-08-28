@@ -157,7 +157,23 @@ export const STUDIO_PAGE_CSS = `
        * much, which is what closes the gap the container was leaving. */
       grid-template-columns: minmax(0, 16rem) minmax(0, 56rem);
       column-gap: clamp(48px, 4vw, 80px);
-      justify-content: center;
+      /* ⚠️ start, NOT center — this is the second half of the alignment the
+       * container rule fixed one layer up, and it is the half a reader can
+       * actually see.
+       *
+       * justify-content: center makes the tracks CONTENT-sized and then
+       * centres the leftover, so this document floated inside its own band:
+       * measured at 1920, the band starts at 180 and every one of these
+       * pages started its h1 at 345.6 — and /vodniki, whose body track does
+       * not reach 56rem, started at 489.6. The header wordmark, the footer
+       * and every home-page heading start at 180. Fifteen routes were the
+       * only things on the site not on that line.
+       *
+       * The tracks are minmax(0, …) so they still shrink rather than
+       * overflow between 1000 and ~1130; what changes is where the leftover
+       * goes. It goes to the right, which is where a left-aligned document
+       * puts it. */
+      justify-content: start;
     }
     /* ⚠️ THE MASTHEAD SPANS BOTH COLUMNS, and this note replaces one arguing
      * the opposite. That note said a title starting 15rem left of its own

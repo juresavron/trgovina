@@ -305,7 +305,14 @@ export function renderStudioBlogIndex(
         esc(ctx.shop.routeSlugs["/guides"] + ctx.q) + '">vodnikih</a>, ' +
         'odločitev med družinama pa v <a href="' +
         esc(ctx.shop.routeSlugs["/compare"] + ctx.q) + '">primerjavi</a>.</p>' +
-        '<ul class="st-blog-list">' +
+        // ⚠️ --wide OR THE WHOLE INDEX IS 608px WIDE. page.ts narrows a solo
+        // grid that carries no wide block to the 38rem reading measure,
+        // which is right for a column of prose and wrong for a two-column
+        // card grid: measured at 1440 this list laid two ~280px cards inside
+        // a 608px track and left 832px of the viewport empty. The cards are
+        // data, not running text, so they take the wide track exactly as a
+        // facts table or a figure does.
+        '<ul class="st-blog-list st-page-block--wide">' +
         posts.map((p, i) => card(ctx, base, p, i === 0)).join("") +
         "</ul>";
   return (
