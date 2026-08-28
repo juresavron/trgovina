@@ -1355,11 +1355,29 @@ function quoteBlock(r: {
   // would have claimed a verified purchase the moment the flag came off. The
   // claim now comes from `verified` alone, which the operator ticks in the
   // panel against an order number and nothing else sets.
-  const chip = !r.model
-    ? ""
-    : r.verified === true && !r.placeholder
-      ? '<span class="st-tst-chip">Preverjen nakup · ' + esc(r.model) + "</span>"
-      : '<span class="st-tst-model">' + esc(r.model) + "</span>";
+  // ⚠️ THE CHIP DOES NOT DEPEND ON A MODEL, and coupling the two hid the
+  // claim on every review that names no pool.
+  //
+  // This read `!r.model ? "" : …`, so a verified review with no model
+  // rendered no chip at all — which is most of them, because a customer
+  // writing about their spa rarely names the SKU and sync-reviews.mjs only
+  // prints a model it can match against the catalogue. The band's heading
+  // switches to "Preverjena mnenja strank" as soon as one review is
+  // verified, so the page ended up asserting at the top what none of the
+  // quotes underneath repeated.
+  //
+  // They are two different facts and they separate cleanly. "Preverjen
+  // nakup" is the Annex I 23b claim and comes from `verified` alone. The
+  // model is context, appended to the chip when there is one and standing
+  // as a plain caption when the review is not verified. A placeholder still
+  // wears nothing, which is the rule that has not moved.
+  const verified = r.verified === true && !r.placeholder;
+  const chip = verified
+    ? '<span class="st-tst-chip">Preverjen nakup' +
+      (r.model ? " · " + esc(r.model) : "") + "</span>"
+    : r.model
+      ? '<span class="st-tst-model">' + esc(r.model) + "</span>"
+      : "";
   return (
     '<div class="st-tst-body">' +
     '<span class="st-tst-glyph" aria-hidden="true">„</span>' +

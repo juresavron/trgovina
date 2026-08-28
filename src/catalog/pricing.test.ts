@@ -18,6 +18,7 @@ import { SWIMSPA_MODELS, OFFERED_SWIMSPAS } from "./swimspa";
 import { SHOPS } from "../tenants";
 import { PAGES, legalPagesReady } from "../content/pages";
 import { CONTENT } from "../content";
+import { GENERATED_REVIEWS } from "../content/reviews.generated";
 import { handleRequest } from "../worker";
 
 /** A shop's home page as the browser gets it. */
@@ -413,18 +414,43 @@ describe("a live shop can identify itself", () => {
       const content = CONTENT[key];
       if (!content) continue;
       const invented = content.reviews.filter((r) => r.placeholder === true);
-      if (!shop.live) {
-        // Pre-live, assert the flags are still THERE. Someone deleting the
-        // flag to quiet the gate, without replacing the review, is exactly
-        // the failure this test exists to catch — and it would look like
-        // progress in a diff.
-        expect(
-          invented.length,
-          key + ": the reviews are known filler; the flag is what keeps them " +
-            "off a live site",
-        ).toBe(content.reviews.length);
-        continue;
-      }
+
+      // ⚠️ THE ILLEGAL COMBINATION, ASSERTED AT EVERY LIFECYCLE STAGE. A
+      // review nobody wrote, dressed as a verified purchase, is Annex I 23b
+      // AND 23c at once. Nothing — pre-live, staging, a screenshot for a
+      // pitch — makes that acceptable, so this one is not conditioned on
+      // `live`.
+      expect(
+        content.reviews.filter((r) => r.placeholder === true && r.verified === true)
+          .map((r) => r.who),
+        key + ": a review nobody wrote is flagged as a verified purchase",
+      ).toEqual([]);
+
+      // ⚠️ THIS BRANCH USED TO ASSERT THE OPPOSITE, and it had to change when
+      // the first real reviews arrived.
+      //
+      // It read: pre-live, EVERY review must carry placeholder:true. That was
+      // right while content/bazen.ts held two invented quotes as layout
+      // filler — the flag was the only thing keeping them off a live site,
+      // and someone deleting it to quiet the gate would have looked like
+      // progress in a diff. It is wrong now, because a pre-live shop can
+      // perfectly well have collected real reviews before launch, and this
+      // one has: four, entered through the panel, published, none verified.
+      //
+      // What replaces it is a stronger invariant than the flag ever was. The
+      // reviews a shop renders must be EXACTLY the array the generator
+      // produced from the database — the same object, not a copy — so no
+      // quote can be hand-written into a content file and no line can be
+      // edited on its way to the page. reviews.generated.ts is machine-
+      // written on every deploy; anything typed into it is overwritten, and
+      // anything typed anywhere else fails here.
+      expect(
+        content.reviews,
+        key + ": reviews reach the page from somewhere other than the " +
+          "generator — a quote has been hand-written into the content",
+      ).toBe(GENERATED_REVIEWS[key] ?? []);
+
+      if (!shop.live) continue;
       expect(
         invented.map((r) => r.who),
         key + " is live while publishing reviews nobody wrote under a " +
