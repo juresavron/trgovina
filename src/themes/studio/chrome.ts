@@ -414,9 +414,9 @@ export const STUDIO_CHROME_CSS = `
    * can lose width without losing meaning, so it is a scroll container at every
    * width: min-inline-size:0 lets the auto grid track shrink past max-content,
    * and the overflow is a swipeable/arrow-scrollable rail rather than a menu
-   * that runs off the page. With the SEVEN-item menu and the 24px gap the
-   * rail is live below ~1300 and whole from 1360 up (the 1500 tel threshold
-   * is sized off the same arithmetic — see that rule). Either way the point
+   * that runs off the page. With the six-item menu and the 24px gap the rail
+   * is whole from ~1240 up and live below it (the 1400 tel threshold is
+   * sized off the same arithmetic — see that rule). Either way the point
    * holds: the page must never scroll sideways.
    *
    * The padding/margin pair is the same device as the links: it opens 10px of
@@ -772,35 +772,38 @@ export const STUDIO_CHROME_CSS = `
   }
   :root[data-theme="studio"] .st-chrome-tel .st-ico { inline-size: 16px; block-size: 16px; }
 
-  /* ≥1500: THE NUMBER JOINS THE BAR. Below 900 it earns its place because the
+  /* ≥1400: THE NUMBER JOINS THE BAR. Below 900 it earns its place because the
    * two-row bar has a row to spend; on a wide desktop the single row has slack
    * instead, and a shop selling by enquiry hides its phone number at exactly
    * the widths where showing it costs nothing.
    *
-   * 1500 IS ARITHMETIC, NOT TASTE, and it has moved twice — 1360, then 1560,
-   * now here — each time because one of the three things it adds up changed
-   * size. What it adds up, at the tier where each is largest:
+   * 1400 IS ARITHMETIC, NOT TASTE, and it has moved three times — 1360,
+   * 1560, 1500, now here — each time because one of the things it adds up
+   * changed size. What it adds up, at the tier where each is largest:
    *
    *   wordmark      338   "Masažni bazeni Vrelec" at h6, nowrap
-   *   nav           662   seven labels ~518 + six 24px gaps
+   *   nav           571   six labels ~451 + five 24px gaps
    *   cluster       345   number 151 + 10 + enquiry button 184
    *   column gaps    48   two, at --gap-lg
    *                -----
-   *                 1393  against a container of min(1560, vw − 80)
+   *                 1302  against a container of min(1560, vw − 80)
    *
-   * so the number needs 1473 of viewport and waits for 1500. The middle line
-   * is the one that moved: the nav gap was 50px here until it turned out that
-   * 50 is the SOURCE's gap for a FIVE-item menu and cost 156px we did not
-   * have (tokens.ts). At 24 the row is 156px narrower and the number arrives
-   * a whole tier earlier. Between 901 and 1499 the footer states it on every
-   * page, and the PDP and contact page carry it above the fold.
+   * so the number needs 1382 of viewport and waits for 1400. The middle line
+   * is the one that keeps moving, and twice for the same reason — the bar was
+   * spending its width on the menu and paying for it with the number. First
+   * the 50px gap turned out to be the SOURCE's value for a FIVE-item menu
+   * (tokens.ts); then KONTAKT turned out to be the bar's third route to the
+   * same page, beside the number itself and the button that names the act.
+   * Together they are 247px, and they bought the number four hundred pixels
+   * of viewport. Between 901 and 1399 the footer states it on every page, and
+   * the PDP and contact page carry it above the fold.
    *
    * ⚠️ THE PIXEL AUDIT IS THIS BLOCK'S REGRESSION TEST. When 1560 was 1360,
    * the number sat ON "Kontakt" and the wordmark ran under "Trgovina", and
    * the gate reported the collisions as contrast failures of 1.13:1 and
    * 2.65:1 — which is what a layout bug looks like when only colour is being
    * measured. Re-run it after touching any of the four numbers above. */
-  /* 1240–1499: THE NUMBER AS A DISC. The full number needs ~160px this band
+  /* 1240–1399: THE NUMBER AS A DISC. The full number needs ~160px this band
    * does not have, but the shop sells by enquiry and this is the laptop band
    * — the header carrying no phone affordance at 1280px was the cost of an
    * earlier fit fix. A 36px disc in the mark's own two-disc vocabulary fits
@@ -830,7 +833,7 @@ export const STUDIO_CHROME_CSS = `
   }
 
   /* The disc's own dress, in its band only. */
-  @media (min-width: 1240px) and (max-width: 1499px) {
+  @media (min-width: 1240px) and (max-width: 1399px) {
     :root[data-theme="studio"] .st-chrome-tel {
       inline-size: 36px;
       min-inline-size: 36px;
@@ -1650,7 +1653,7 @@ export const STUDIO_CHROME_CSS = `
    * want the same thing, and a media query LIST is an OR, so they say it
    * once. (min-inline-size stays on the phone tier alone: the disc band sets
    * its own 36px above.) */
-  @media (max-width: 460px), (min-width: 1240px) and (max-width: 1499px) {
+  @media (max-width: 460px), (min-width: 1240px) and (max-width: 1399px) {
     :root[data-theme="studio"] .st-chrome-tel span { display: none; }
     :root[data-theme="studio"] .st-chrome-tel { justify-content: center; }
   }
@@ -1715,12 +1718,25 @@ export function renderStudioHeader(ctx: RenderCtx): string {
   const c = ctx.content;
   // DISPLAY order, not tuple order — the tuple is append-only (types.ts).
   // The sequence is the buying journey: catalogue, the two deciding tools,
-  // the reading, the logistics, the company, the act. Primerjava and the
-  // guided choice were in the footer only, which is where a visitor looks
-  // for them last: they are the two highest-intent destinations this site
-  // has, and the header is the one nav that is on screen at every scroll
-  // position. Seven items still fit the bar's ways of failing: the nav track
-  // is a fade-masked scroll rail wherever it runs out of room.
+  // the reading, the logistics, the company. Primerjava and the guided
+  // choice were in the footer only, which is where a visitor looks for them
+  // last: they are the two highest-intent destinations this site has, and
+  // the header is the one nav that is on screen at every scroll position.
+  //
+  // ⚠️ KONTAKT IS NOT HERE, and its absence is deliberate.
+  //
+  // The bar already carries two routes to that page: the telephone number,
+  // which IS the act, and the POVPRAŠEVANJE button, which names it. A third
+  // entry pointing at the same URL is not a convenience, it is the same
+  // objection that retired the magnifier — a control duplicating something
+  // already on screen — and it was costing the bar the room to say anything
+  // else. Seven labels draw 662px; six draw 570, and those 92px are most of
+  // what the phone NUMBER needs to stay visible instead of collapsing to an
+  // unlabelled disc on a laptop (see the tel rule's arithmetic). A menu item
+  // was trading the number's legibility for a link the bar states twice.
+  //
+  // It remains in the footer, which is where a visitor looks for an address
+  // and a company anyway, and every page's own CTA still points at it.
   const links = [
     ["/products", c.nav[0]],
     ["/compare", c.nav[5]],
@@ -1728,7 +1744,6 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     ["/guides", c.nav[2]],
     ["/delivery", c.nav[3]],
     ["/about", c.nav[1]],
-    ["/contact", c.nav[4]],
   ] as const;
 
   // WHERE YOU ARE, said by the server. ctx.path is the canonical path each
@@ -1781,7 +1796,7 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     //
     // It used to be the bar's own third child, between the nav and the
     // buttons, which grew the template a fourth track. That reads correctly
-    // only while the number is at full width. Between 1240 and 1499 the tel
+    // only while the number is at full width. Between 1240 and 1399 the tel
     // collapses to a 36px disc, the track collapses with it, and the ~115px
     // it gave up went to the two 1fr tracks either side — so a laptop saw the
     // menu, then a small unlabelled circle, then a hundred-pixel hole, then
@@ -1805,7 +1820,7 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     // rather than restating); the header is the last place that was still
     // doing it.
     (isSetPhone(ctx.phoneDisplay)
-      ? // title as well as aria-label: in the disc band (1240–1499) the
+      ? // title as well as aria-label: in the disc band (1240–1399) the
         // digits are hidden, and the tooltip is how a pointer reads them
         // without committing to a call.
         '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
