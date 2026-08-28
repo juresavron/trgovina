@@ -39,6 +39,7 @@ import { renderStudioFinder } from "./themes/studio/finder";
 import { handleAdmin, handleMedia } from "./admin/routes";
 import { handlePosts } from "./blog/routes";
 import type { Env } from "./admin/supabase";
+import { PROBLEM_TEXT, parseEnquiry, submitEnquiry } from "./enquiry/submit";
 
 /**
  * The product a ?model= parameter names, or nothing.
@@ -163,7 +164,20 @@ const PLACEHOLDER_TITLES: Partial<Record<InternalRouteKey, string>> = {
   "/withdrawal": "Odstop od pogodbe",
 };
 
-export function handleRequest(request: Request): Response {
+export function handleRequest(
+  request: Request,
+  /**
+   * How an enquiry submission went, when this call is answering one.
+   *
+   * ⚠️ AN OUTCOME, NEVER A CONNECTION. The write happens in the async layer
+   * (see the default export), which awaits Supabase and then calls this with
+   * the result as a plain value. handleRequest therefore stays synchronous
+   * and env-free — the property every one of its tests depends on — while
+   * the page a visitor gets after pressing the button is rendered by exactly
+   * the same code that rendered the page they pressed it on.
+   */
+  enquiry?: { readonly done?: boolean; readonly error?: string },
+): Response {
   const url = new URL(request.url);
   const host = request.headers.get("host") ?? url.hostname;
 
@@ -184,11 +198,26 @@ export function handleRequest(request: Request): Response {
 
   const dev = isDevHost(host);
 
-  // The storefront speaks GET and HEAD. Nothing here mutates — every form
-  // is a GET to /kontakt — so a POST is a mistake or a probe, and answering
-  // it with a rendered 200 let OPTIONS read as CORS consent. The admin, the
-  // media proxy and the blog take their methods before this runs.
-  if (request.method !== "GET" && request.method !== "HEAD") {
+  // The storefront speaks GET and HEAD, and POST on exactly one path.
+  //
+  // The product page's configurator is still a GET — it carries a selection
+  // to /kontakt and changes nothing — but the enquiry form on that page is a
+  // real write, so /kontakt answers POST. Nothing else does: a POST anywhere
+  // else is a mistake or a probe, and answering it with a rendered 200 let
+  // OPTIONS read as CORS consent. The admin, the media proxy and the blog
+  // take their methods before this runs.
+  //
+  // ⚠️ THE CHECK IS ON `enquiry`, NOT ON THE PATH ALONE. This function is
+  // reached with a POST only through the async layer, which has already
+  // written the row and is passing the outcome down; a POST that arrives any
+  // other way has done nothing and is refused exactly as before. So the
+  // method gate cannot become a way to render /kontakt without a submission
+  // ever having happened.
+  const isEnquiryPost =
+    request.method === "POST" &&
+    enquiry !== undefined &&
+    url.pathname === shop.routeSlugs["/contact"];
+  if (!isEnquiryPost && request.method !== "GET" && request.method !== "HEAD") {
     return new Response("Method not allowed", {
       status: 405,
       headers: {
@@ -258,6 +287,13 @@ export function handleRequest(request: Request): Response {
   const baseHeaders: Record<string, string> = dev
     ? { "x-robots-tag": "noindex, nofollow", "cache-control": "no-store", ...SECURITY }
     : { "cache-control": "public, max-age=0, s-maxage=300", ...SECURITY };
+  // ⚠️ AN ENQUIRY REPLY IS NEVER CACHED, and the default here would have
+  // cached it. RFC 9111 makes a response to POST cacheable precisely when it
+  // carries explicit freshness, which "public, s-maxage=300" is — so without
+  // this line a shared cache could hold one visitor's "Povpraševanje je
+  // oddano" and hand it to the next person who asked for /kontakt. The reply
+  // is also personal: it re-renders the page around what THEY configured.
+  if (isEnquiryPost) baseHeaders["cache-control"] = "no-store";
 
   // The stylesheet and the behaviour script, content-addressed and immutable
   // — see render/assets.ts. Before the live gate on purpose: a pre-live
@@ -532,7 +568,9 @@ export function handleRequest(request: Request): Response {
       // product page arrive with a subject line.
       bodyHtml: (() => {
         const about = modelParam(url, content);
-        return renderContentPage(shop, content, q, theme, page, about, chosenParams(url, about));
+        return renderContentPage(
+          shop, content, q, theme, page, about, chosenParams(url, about), enquiry,
+        );
       })(),
       jsonLd: [
         organizationJsonLd(shop),
@@ -598,6 +636,74 @@ export function handleRequest(request: Request): Response {
 }
 
 /**
+ * The enquiry POST, or nothing at all.
+ *
+ * ⚠️ RETURNS AN OUTCOME, NOT A RESPONSE, and that is the whole design. The
+ * caller hands the outcome to handleRequest, which renders /kontakt exactly
+ * as it always does with one extra fact available to the form. Nothing here
+ * builds a page, decides a status code or knows what the form looks like.
+ *
+ * `null` means "this was not an enquiry submission" — every GET, every other
+ * path, every host that is not a live shop — and the caller then does what it
+ * did before this function existed.
+ */
+async function handleEnquiry(
+  request: Request,
+  env: Env,
+): Promise<{ done?: boolean; error?: string } | null> {
+  if (request.method !== "POST") return null;
+  const url = new URL(request.url);
+  const shop = resolveShop(request.headers.get("host") ?? url.hostname);
+  if (!shop) return null;
+  if (url.pathname !== shop.routeSlugs["/contact"]) return null;
+  const content = CONTENT[shop.key];
+  if (!content) return null;
+
+  let form: FormData;
+  try {
+    form = await request.formData();
+  } catch {
+    return { error: PROBLEM_TEXT.dolzina };
+  }
+
+  // ⚠️ THE MODEL AND THE CONFIGURATION ARE RE-RESOLVED FROM THE URL, not read
+  // from the body. They arrive in the query string because the form posts to
+  // its own address, and they go through the same two functions that decided
+  // what the page displayed — so an enquiry can only ever name a product this
+  // shop sells and a colour it offers, whatever was typed into the address
+  // bar. It is the same rule ?model= has followed since it existed.
+  const about = modelParam(url, content);
+  const chosen = chosenParams(url, about);
+  const parsed = parseEnquiry(form, {
+    modelSlug: about?.slug ?? null,
+    configuration: Object.fromEntries(chosen.map(([k, v]) => [k, v])),
+  });
+
+  if (!parsed.ok) {
+    // THE HONEYPOT ANSWERS LIKE A SUCCESS. Telling a bot which field gave it
+    // away is how the next version of that bot stops filling it; and no human
+    // can reach this branch, because the field is off-screen, aria-hidden and
+    // never autofilled.
+    if (parsed.why === "robot") return { done: true };
+    return { error: PROBLEM_TEXT[parsed.why] };
+  }
+
+  const ip =
+    request.headers.get("cf-connecting-ip") ??
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    null;
+  const result = await submitEnquiry(env, shop.key, parsed.value, ip);
+  if (result === "ok") return { done: true };
+  return {
+    error:
+      result === "prepogosto"
+        ? "Preveč poskusov v kratkem času. Poskusite čez nekaj minut ali pokličite."
+        : "Povpraševanja ta trenutek ni bilo mogoče oddati. Poskusite znova ali " +
+          "nam pišite oziroma pokličite — številka je v nogi strani.",
+  };
+}
+
+/**
  * The entry point.
  *
  * The storefront's own `handleRequest` stays SYNCHRONOUS and env-free: it is
@@ -621,6 +727,16 @@ export default {
       // line below cannot change any page that existed before it.
       const post = await handlePosts(request, env);
       if (post) return post;
+      // THE ENQUIRY FORM'S ONE WRITE.
+      //
+      // It sits here, in the async layer, for the same reason the blog does:
+      // handleRequest is synchronous and env-free and must stay that way.
+      // What comes back from this is not a Response — it is an OUTCOME, and
+      // the ordinary renderer draws the page around it. So the page a
+      // visitor sees after pressing the button is the page they pressed it
+      // on, re-rendered, with no redirect and no second template.
+      const enquiry = await handleEnquiry(request, env);
+      if (enquiry) return handleRequest(request, enquiry);
       return handleRequest(request);
     } catch (err) {
       console.error(err);

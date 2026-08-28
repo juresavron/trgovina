@@ -484,6 +484,14 @@ export function renderContentPage(
   about?: PdpContent,
   /** What that model was configured with, already matched — see chosenParams. */
   chosen?: readonly (readonly [string, string])[],
+  /**
+   * How the enquiry form's submission went, on the POST that answers one.
+   *
+   * Absent on every GET, which is why this renderer stays synchronous and
+   * env-free: the async layer does the writing and hands the OUTCOME down as
+   * a value. Rendering never learns that a database exists.
+   */
+  enquiry?: { readonly done?: boolean; readonly error?: string },
 ): string {
   // Spread rather than assign, because exactOptionalPropertyTypes draws a
   // distinction between "absent" and "present and undefined" — and `about`
@@ -498,6 +506,7 @@ export function renderContentPage(
     ),
     ...(about ? { about } : {}),
     ...(chosen && chosen.length > 0 ? { chosen } : {}),
+    ...(enquiry ? { enquiry } : {}),
   };
   return renderStudioHeader(ctx) + renderStudioPage(ctx, page) + renderStudioFooter(ctx);
 }

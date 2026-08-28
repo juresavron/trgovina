@@ -527,7 +527,7 @@ export function shell(title: string, body: string, who: string): string {
  * So the failure keeps role="alert" (assertive: it interrupts) and the success
  * gets role="status" (polite: it waits its turn). Both are announced.
  */
-function noticeHtml(notice?: { kind: "ok" | "err"; text: string }): string {
+export function noticeHtml(notice?: { kind: "ok" | "err"; text: string }): string {
   if (!notice) return "";
   return (
     '<p class="note note--' + notice.kind + '" role="' +
@@ -723,6 +723,16 @@ export function indexPage(
       // baked into the build so the launch gate sees it before a customer does
       // (src/content/reviews.generated.ts). An operator who has just learned
       // that posts are instant will assume everything here is.
+      // POVPRAŠEVANJA FIRST, and above the reviews, because of how often each
+      // is touched: an enquiry is a customer waiting for an answer, a review
+      // is an editorial job. The dashboard should open on the thing with
+      // somebody on the other end of it.
+      "<h2>Povpraševanja</h2>" +
+      '<div class="card row-card">' +
+      "<p>Kar so ljudje oddali prek obrazca na strani Kontakt.</p>" +
+      '<a class="btn btn--ghost" href="/admin/povprasevanja">Odpri povpraševanja</a>' +
+      "</div>" +
+
       "<h2>Mnenja strank</h2>" +
       '<div class="card row-card">' +
       "<p>Prepisana mnenja kupcev. Na strani se pokažejo ob naslednji " +

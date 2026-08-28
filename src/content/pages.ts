@@ -139,6 +139,23 @@ export type Block =
    * montaži") the shop has not put into the slot.
    */
   | { kind: "figure"; slot: string; caption?: string }
+  /**
+   * THE ENQUIRY FORM. One page carries it, and that is deliberate.
+   *
+   * This shop takes no orders online, so an enquiry is the transaction — and
+   * until this block existed, the product page's configurator resolved a
+   * model, two colours and a set of options, carried them to /kontakt in the
+   * query string, and handed the visitor a telephone number. Everything they
+   * had just chosen was theirs to retype.
+   *
+   * ⚠️ IT RENDERS NO CONTENT OF ITS OWN. There is nothing here to write: the
+   * fields, their labels and the consent sentence belong to the feature
+   * (src/enquiry/submit.ts owns the sentence, because the sentence is also
+   * what gets STORED, and a page that printed a different one would be
+   * evidence of consent to something else). What a page may say is the
+   * heading above it and one line of why.
+   */
+  | { kind: "enquiry"; h?: string; p?: string }
   /** A closing call to action pointing at an internal route. */
   | { kind: "cta"; h: string; p: string; label: string; href: string };
 

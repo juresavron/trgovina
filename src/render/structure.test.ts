@@ -326,21 +326,31 @@ describe("the enquiry carries its model", () => {
     return await res.text();
   };
 
-  it("names the model and puts it in the subject line", async () => {
+  it("names the model on the form and puts it in the subject line", async () => {
     const html = await get("/kontakt?shop=bazen&model=veliki-230");
-    expect(html).toContain("Povpraševanje za <strong>BAZEN 230</strong>");
+    // ⚠️ THE ASSERTION MOVED WITH THE DEVICE. This used to read the contact
+    // block's "Povpraševanje za <strong>BAZEN 230</strong>", which was
+    // deleted as a duplicate the moment the enquiry FORM began stating the
+    // same thing 600px lower. The contract is unchanged and the new place is
+    // the stronger one: the name is now on the card attached to the control
+    // that submits it, not on a reassurance beside it.
+    expect(html).toContain('class="st-enq-about-m"');
+    expect(html).toContain("BAZEN 230");
     expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje — BAZEN 230"));
   });
 
   it("is the ordinary page with no parameter", async () => {
     const html = await get("/kontakt?shop=bazen");
-    expect(html).not.toContain('class="st-page-about"');
+    expect(html).not.toContain('class="st-enq-about"');
     expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje"));
+    // The form itself is unconditional: /kontakt without a model is still
+    // the page you send an enquiry from.
+    expect(html).toContain('class="st-enq"');
   });
 
   it("ignores a slug that names nothing", async () => {
     const html = await get("/kontakt?shop=bazen&model=this-is-not-a-model");
-    expect(html).not.toContain('class="st-page-about"');
+    expect(html).not.toContain('class="st-enq-about"');
     expect(html).not.toContain("this-is-not-a-model");
   });
 
@@ -348,7 +358,7 @@ describe("the enquiry carries its model", () => {
     const html = await get("/kontakt?shop=bazen&model=" + encodeURIComponent('"><script>x</script>'));
     expect(html).not.toContain("<script>x");
     expect(html).not.toContain("&lt;script&gt;x");
-    expect(html).not.toContain('class="st-page-about"');
+    expect(html).not.toContain('class="st-enq-about"');
   });
 
   it("keeps one canonical URL whatever the parameter", async () => {

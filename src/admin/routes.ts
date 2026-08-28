@@ -52,6 +52,8 @@ import {
 } from "./panel";
 import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn, readCookie, SESSION_COOKIE } from "./auth";
 import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
+import { deleteEnquiry, isStatus, listEnquiries, updateEnquiry } from "./enquiries";
+import { enquiryListPage } from "./enquiries-panel";
 import {
   assignSlots,
   classify,
@@ -613,6 +615,53 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     });
   }
 
+  // --- enquiries ---
+  //
+  // READ AND WORK, NEVER EDIT. What the customer wrote is text on this page,
+  // not a field: an enquiry is a record of what somebody sent, and a back
+  // office that can rewrite it is a back office whose records prove nothing.
+  // The two writes are a status and a private note, plus deletion — which is
+  // also how the erasure right (GDPR art. 17) is actually exercised, since
+  // the scheduled two-year purge is the floor and not the only way out.
+  //
+  // ⚠️ THE PANEL DOES NOT WRITE ENQUIRIES EITHER. A visitor's submission
+  // goes through public.submit_enquiry, the one function the anon role may
+  // execute; this route reads and patches AS THE SIGNED-IN ADMIN, so the
+  // database decides what an operator may see rather than this code being
+  // trusted to only ask for the right rows.
+  if (parts[1] === "povprasevanja") {
+    const shopKey = "bazen";
+    const id = parts[2];
+
+    if (id && request.method === "POST") {
+      if (parts[3] === "izbris") {
+        await deleteEnquiry(api, shopKey, id);
+        return seeOther("/admin/povprasevanja?m=enq-deleted");
+      }
+      const form = await request.formData();
+      const statusRaw = String(form.get("status") ?? "");
+      await updateEnquiry(api, shopKey, id, {
+        // An unknown status is DROPPED rather than defaulted: a select whose
+        // value did not survive the round trip should leave the row alone,
+        // not quietly move it to "nova".
+        ...(isStatus(statusRaw) ? { status: statusRaw } : {}),
+        note: String(form.get("note") ?? ""),
+      });
+      return seeOther("/admin/povprasevanja?m=enq-saved");
+    }
+
+    const notice = url.searchParams.get("m")
+      ? ({
+          kind: "ok",
+          text:
+            (Object.hasOwn(NOTICES, url.searchParams.get("m")!)
+              ? NOTICES[url.searchParams.get("m")!]
+              : undefined) ?? "Shranjeno.",
+        } as const)
+      : undefined;
+    return page(enquiryListPage(await listEnquiries(api, shopKey), admin.email, notice));
+  }
+
   // --- customer reviews ---
   //
   // ⚠️ THE MOST LEGALLY LOADED SURFACE IN THIS PANEL. See admin/reviews.ts for
@@ -1144,6 +1193,8 @@ const NOTICES: Record<string, string> = {
   // Not an error: the operator asked for an empty set and the set is empty.
   "deleted-none": "Ta model ni imel fotografij.",
   "post-saved": "Zapis je shranjen.",
+  "enq-saved": "Povpraševanje je posodobljeno.",
+  "enq-deleted": "Povpraševanje je izbrisano.",
   "post-published": "Zapis je objavljen in je na spletni strani.",
   "post-unpublished": "Zapis je umaknjen s spletne strani.",
   "post-deleted": "Zapis je izbrisan.",
