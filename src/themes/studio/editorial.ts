@@ -694,8 +694,19 @@ export const STUDIO_EDITORIAL_CSS = `
    * anyway — the visually-hidden span does that. */
   :root[data-theme="studio"] .st-tst-stars {
     margin: 0 0 clamp(12px, 1.2vw, 18px);
-    font-size: 15px;
-    letter-spacing: 0.14em;
+    /* ⚠️ 18px, NOT 15. The owner asked for the reference site's star row
+     * twice, and the second time was looking at a build that had it — the
+     * device was there and simply did not READ as one. A ★ glyph carries far
+     * less ink than a letter of the same em, so a rating set at the body
+     * size lands somewhere under a caption in the visual order, below the
+     * name it is supposed to lead. The reference draws its row at roughly
+     * the lead rung and it is the first thing in the card.
+     *
+     * The tracking goes up with it: five glyphs at 0.14em read as one word
+     * at 15px and as five stars at 0.18em, which is what a rating has to be
+     * before anyone counts it. */
+    font-size: 18px;
+    letter-spacing: 0.18em;
     line-height: 1;
   }
   :root[data-theme="studio"] .st-tst-star-on { color: #e8b53c; }
