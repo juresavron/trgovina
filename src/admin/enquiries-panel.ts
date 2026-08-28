@@ -149,7 +149,7 @@ export function enquiryListPage(
   return shell(
     "Povpraševanja",
     CSS +
-      '<div class="head"><a class="back" href="/admin">Nazaj na izdelke</a>' +
+      '<div class="head">' +
       "<h1>Povpraševanja</h1>" +
       '<p class="lede">Kar so ljudje oddali prek obrazca na strani Kontakt. ' +
       "Nova so obrobljena. Podatke hranimo 24 mesecev od oddaje, nato se " +
@@ -162,5 +162,6 @@ export function enquiryListPage(
       (nova > 0 ? " · " + nova + " novih" : "") + "</span></div>" +
       body,
     who,
+    "povprasevanja",
   );
 }

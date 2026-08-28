@@ -1303,6 +1303,16 @@ export const STUDIO_PAGE_CSS = `
     color: var(--ink);
   }
   :root[data-theme="studio"] .st-page-cta-p {
+    /* ⚠️ THE WORST LINE LENGTH ON THE SITE WAS HERE, ON THE CTA.
+     *
+     * Every other paragraph on these pages is capped at the 38rem reading
+     * measure. This one was not, and .st-page-cta is a --wide block, so the
+     * closing sentence — the last thing a visitor reads before deciding
+     * whether to call — set across the full 960px panel at 122 CHARACTERS
+     * PER LINE, measured at 1440 on six routes. Comfortable running text is
+     * 45–75; at 122 the eye loses its place returning to the left edge, and
+     * it loses it on the one paragraph whose whole job is to be read. */
+    max-inline-size: 38rem;
     margin-block-start: 10px;
     font-family: var(--f-body);
     font-size: var(--t-body);

@@ -151,3 +151,44 @@ describe("slots that declare an exact stored size", () => {
     }
   });
 });
+
+/**
+ * ⚠️ AN UNFILLED OPTIONAL SLOT MUST NOT 404, AND THIS IS WHY.
+ *
+ * The sixteen finish swatches are painted as CSS backgrounds, so a colour
+ * nobody has photographed shows the tile's own ground and its name — quiet
+ * on screen, and for a while extremely loud everywhere else. Every product
+ * page requests all sixteen; each answered 404; and the 404 carried
+ * `no-store`, so the absence was never cached and all sixteen repeated on
+ * every view for every visitor. It surfaced as sixteen red lines in the
+ * console on a page nobody had touched.
+ *
+ * The contract now: an optional slot with nothing behind it answers 200 with
+ * a transparent pixel the browser can cache. These assertions hold the two
+ * halves of that together — the flag on the registry, and the fact that
+ * nothing else acquires it by accident.
+ */
+describe("slots that may legitimately be empty", () => {
+  const optional = SITE_IMAGES.filter((s) => s.optional);
+
+  it("are exactly the finish swatches", () => {
+    // If another slot ever wants this, it is a deliberate decision that
+    // should show up here as a failing test first: everything else renders
+    // an <img>, where an empty slot is a broken picture on a live page and
+    // a 404 is the right, visible answer.
+    expect(optional.every((s) => /^site\/(barva|obloga)-/.test(s.key))).toBe(true);
+    const swatches = SITE_IMAGES.filter((s) => /^site\/(barva|obloga)-/.test(s.key));
+    expect(optional).toHaveLength(swatches.length);
+    expect(optional.length).toBeGreaterThan(0);
+  });
+
+  it("declare no legacy fallback, because there is nothing to fall back to", () => {
+    // No stock photograph of "Odyssey" exists, and pointing one of these at
+    // an unrelated product shot would be a false statement about the colour
+    // a buyer is choosing.
+    for (const s of optional) {
+      expect(s.legacy, s.key).toBeUndefined();
+      expect(s.fallbackOffset, s.key).toBeUndefined();
+    }
+  });
+});

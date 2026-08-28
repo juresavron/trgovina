@@ -29,12 +29,12 @@ export const GUIDES: Page = {
           "Podlaga, ne model",
           "Napolnjen masažni bazen tehta od 1.500 do 2.210 kilogramov, z ljudmi v njem pa " +
             "še nekaj sto več; napolnjen swim spa od 5.750 do 8.490 kilogramov. Betonska " +
-            "plošča to nosi brez razmisleka, lesena terasa in balkon pa ne nujno — in to " +
+            "plošča to nosi brez razmisleka, lesena terasa in balkon pa ne nujno, in to " +
             "je stvar konstrukcije, ne občutka.",
         ],
         [
           "Pot do lokacije",
-          "Izmerite najožje mesto na poti — vrata, prehod med hišo in ograjo, ovinek na " +
+          "Izmerite najožje mesto na poti: vrata, prehod med hišo in ograjo, ovinek na " +
             "stopnišču. Bazen se prenaša postrani, a širina školjke je fizična meja, ki se " +
             "je ne da obiti.",
         ],
@@ -46,7 +46,7 @@ export const GUIDES: Page = {
         ],
         [
           "Šele nato model",
-          "Koliko oseb, koliko šob, kakšna ležalna pozicija — ta izbira je prijetna in jo " +
+          "Koliko oseb, koliko šob, kakšna ležalna pozicija. Ta izbira je prijetna in jo " +
             "lahko naredite v miru; prve tri točke pa določijo, kaj je sploh mogoče.",
         ],
       ],
@@ -63,7 +63,7 @@ export const GUIDES: Page = {
         "Pri obratovanju sta glavni postavki ogrevanje in filtracija. Obe sta odvisni od stvari, " +
           "ki jih ne moremo napovedati namesto vas: kako pogosto bazen uporabljate, na kateri " +
           "temperaturi ga držite, kako dobro je pokrit in kakšna je vaša cena elektrike. Zato " +
-          "nikjer ne navajamo mesečnega zneska — vsaka taka številka bi bila ugibanje.",
+          "nikjer ne navajamo mesečnega zneska; vsaka taka številka bi bila ugibanje.",
         "Kar zanesljivo drži: dobro pokrit bazen porabi bistveno manj kot slabo pokrit, zato je " +
           "termo pokrov prvi in ne zadnji dodatek.",
       ],
@@ -72,11 +72,11 @@ export const GUIDES: Page = {
       kind: "prose",
       h: "Masažni bazen pozimi",
       p: [
-        "Bazen pozimi dela in se uporablja — to je zanj najboljši letni čas. Voda ostane topla, " +
+        "Bazen pozimi dela in se uporablja. To je zanj najboljši letni čas. Voda ostane topla, " +
           "izolacija školjke in pokrov pa opravita večino dela.",
         "Praznjenje čez zimo je pogosta napaka. Prazen bazen v mrazu je bolj ogrožen kot poln " +
           "in delujoč, ker v ceveh in črpalkah ostane voda. Če bazena res ne boste " +
-          "uporabljali, mora biti za zimo pravilno pripravljen — povejte nam, pa vam razložimo " +
+          "uporabljali, mora biti za zimo pravilno pripravljen. Povejte nam, pa vam razložimo " +
           "postopek za vaš model.",
       ],
     },

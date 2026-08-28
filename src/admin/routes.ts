@@ -42,6 +42,7 @@ import {
 } from "./supabase";
 import {
   indexPage,
+  sitePage,
   loginPage,
   modelPage,
   notConfiguredPage,
@@ -51,18 +52,29 @@ import {
   type SiteSlot,
 } from "./panel";
 import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn, readCookie, SESSION_COOKIE } from "./auth";
-import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
+import {
+  SITE_IMAGES,
+  legacyFallback,
+  siteImageByKey,
+  siteImageBySlug,
+  stemOf,
+  type SiteImage,
+} from "./site-images";
 import { deleteEnquiry, isStatus, listEnquiries, updateEnquiry } from "./enquiries";
+import {
+  deleteFinish,
+  ensureFinish,
+  listFinishes,
+  nameFromFilename,
+  renameFinish,
+} from "./finishes";
 import { enquiryListPage } from "./enquiries-panel";
+import { finishListPage } from "./finishes-panel";
 import {
   assignSlots,
   classify,
-  finishOptions,
-  finishPrompt,
-  matchFilename,
   slotOptions,
 } from "./assign";
-import { CABINET_FINISHES, SHELL_FINISHES } from "../catalog/pola";
 import type { FinishKind } from "../catalog/finish-image";
 import { enhance, enhanceAvailable } from "./enhance";
 import { describe, describeAvailable } from "./describe";
@@ -272,6 +284,23 @@ export function slugStem(s: string, max = 60): string {
   const dash = cut.lastIndexOf("-");
   return (dash > 20 ? cut.slice(0, dash) : cut).replace(/^-+|-+$/g, "");
 }
+/**
+ * A 1×1 fully transparent WebP, 34 bytes.
+ *
+ * Generated with sharp at lossless quality and decoded back to confirm it is
+ * one pixel of rgba(0,0,0,0) — not pasted from memory, because a literal that
+ * is subtly wrong here would ship a visible artefact onto every colour tile
+ * on every product page and would look exactly like a design decision.
+ *
+ * Rebuilt per call rather than held as a module-level Uint8Array: a Response
+ * body consumes the buffer it is given, so a shared one would serve the first
+ * request and empty bodies after it.
+ */
+const BLANK_PIXEL = (): ArrayBuffer =>
+  Uint8Array.from(atob("UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=="), (c) =>
+    c.charCodeAt(0),
+  ).buffer as ArrayBuffer;
+
 export async function handleMedia(request: Request, env: Env): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
     // Same shape as the storefront's 405 (worker.ts): allow, a type, nosniff.
@@ -336,6 +365,39 @@ export async function handleMedia(request: Request, env: Env): Promise<Response>
     }
   }
   if (!res.ok) {
+    // ⚠️ AN OPTIONAL SLOT NOBODY HAS UPLOADED YET ANSWERS WITH NOTHING, NOT
+    // WITH A 404 — and the difference is sixteen failing requests per page.
+    //
+    // site-images.ts marks the sixteen finish swatches `optional` because
+    // they are painted as CSS BACKGROUNDS: a colour nobody has photographed
+    // paints the tile's own ground and its name, with no broken-image icon.
+    // That degrades quietly on screen and was extremely loud everywhere else.
+    // Every product page asks for all sixteen, each one 404s, and the 404
+    // carries `no-store` — so the absence is never cached and all sixteen
+    // requests repeat on every single view, for every visitor, until the day
+    // the shop uploads swatches. The owner found it as sixteen red lines in
+    // the console.
+    //
+    // A 1×1 fully transparent WebP is 34 bytes and gives the same picture
+    // (nothing, over the tile's ground) with a 200 the browser will cache.
+    // After the first view the requests stop; on the day a real swatch lands
+    // the 300-second TTL below picks it up, exactly like every other managed
+    // image.
+    //
+    // ONLY for slots the registry itself marks optional. Everything else —
+    // the hero, the gallery, a product photograph — keeps its 404, because
+    // there a missing file is a fault to see rather than a state to absorb.
+    const slot = siteImageByKey(key);
+    if (slot?.optional) {
+      return new Response(BLANK_PIXEL(), {
+        status: 200,
+        headers: {
+          "content-type": "image/webp",
+          "x-content-type-options": "nosniff",
+          "cache-control": "public, max-age=300, must-revalidate",
+        },
+      });
+    }
     return new Response("Not found", {
       status: 404,
       headers: {
@@ -555,10 +617,6 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     const scope = form.get("scope");
     const kind: FinishKind | null =
       scope === "barva" ? "barva" : scope === "obloga" ? "obloga" : null;
-    const options = kind
-      ? finishOptions(kind, kind === "barva" ? SHELL_FINISHES : CABINET_FINISHES)
-      : slotOptions();
-    if (options.length === 0) return json({ error: "Ni barvnih mest." }, 400);
 
     // THE FILENAMES, sent alongside because the probes are not the originals.
     // The client downsamples each picture to a ~200 KB JPEG before posting,
@@ -568,25 +626,58 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     // read when a colour list is in play.
     const names = form.getAll("names").map((v) => (typeof v === "string" ? v : ""));
 
+    // ⚠️ A COLOUR DROP IS NOT A CLASSIFICATION PROBLEM ANY MORE.
+    //
+    // It used to be: a fixed list of transcribed names, and the job was to
+    // decide which of them each photograph belonged to — filename first, then
+    // a model looking at a marbled acrylic and guessing which trade name it
+    // was, which is a question nobody in this repository can answer.
+    //
+    // The list now comes FROM the photographs, so there is nothing to guess.
+    // The file is called "Oyster Opal.jpg" because the operator named it after
+    // the chart, and that IS the colour's name. No network call, no
+    // confidence rating, no proposal to confirm — and, importantly, no
+    // invented trade name, which is the one thing catalog/pola.ts is emphatic
+    // that this project must never produce.
+    //
+    // A file whose name folds to nothing is simply refused, with the reason
+    // said plainly: rename it after the colour and drop it again.
+    if (kind) {
+      const api: Api = { env, token: admin.token };
+      const items = [];
+      for (let i = 0; i < files.length; i++) {
+        const name = nameFromFilename(names[i] ?? "");
+        const finish = name === "" ? null : await ensureFinish(api, "bazen", kind, name);
+        items.push(
+          finish
+            ? {
+                i,
+                stem: kind + "-" + finish.slug,
+                label: finish.name,
+                ar: "1:1",
+                max: 400,
+                exact: true,
+                reason: 'Barva "' + finish.name + '" po imenu datoteke.',
+              }
+            : {
+                i,
+                stem: null,
+                label: null,
+                ar: null,
+                max: null,
+                exact: false,
+                reason: "Iz imena datoteke ni bilo mogoče razbrati imena barve — " +
+                  "preimenujte jo po barvi (npr. »Oyster Opal.jpg«) in poskusite znova.",
+              },
+        );
+      }
+      return json({ items });
+    }
+
+    const options = slotOptions();
     const classified: (Awaited<ReturnType<typeof classify>>)[] = [];
     const deadModels = new Set<string>();
-    const promptText = kind ? finishPrompt(kind, options) : undefined;
     for (let i = 0; i < files.length; i++) {
-      // ⚠️ THE FILENAME WINS, AND COSTS NOTHING. A supplier's swatch folder is
-      // named after the colours, so this settles most of a real drop with no
-      // network call at all — and settles it exactly right, which no amount
-      // of looking at a marbled acrylic can promise. Only the leftovers are
-      // worth a model's opinion.
-      const byName = kind ? matchFilename(names[i] ?? "", options) : null;
-      if (byName) {
-        classified.push({
-          option: byName,
-          alternate: null,
-          confidence: "visoka",
-          reason: "Ime datoteke se ujema z imenom barve.",
-        });
-        continue;
-      }
       classified.push(
         await classify(
           env,
@@ -594,7 +685,6 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
           files[i]!.type || "image/jpeg",
           options,
           deadModels,
-          promptText,
         ),
       );
     }
@@ -606,13 +696,66 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         label: a.slot ? a.slot.label : null,
         ar: a.slot?.ratio ? a.slot.ratio[0] + ":" + a.slot.ratio[1] : null,
         max: a.slot ? a.slot.maxWidth : null,
-        // Whether `max` is a ceiling or the exact stored size — the colour
-        // swatches are the only slots that say the latter, and it is what
-        // makes the finished row one set of identical squares.
         exact: a.slot?.exact === true,
         reason: a.reason,
       })),
     });
+  }
+
+  // --- the storefront's own pictures ---
+  //
+  // Lifted off the dashboard, which had grown to seven unrelated jobs in one
+  // scroll. Everything that puts a picture on a public page is here: the
+  // batch uploader, the two colour drop zones, and every managed slot.
+  if (parts[1] === "slike") {
+    return page(
+      sitePage(
+        "bazen",
+        admin.email,
+        SITE_IMAGES.map(
+          (x): SiteSlot => ({
+            stem: stemOf(x.key),
+            label: x.label,
+            note: x.note,
+            src: "/media/" + x.key,
+            group: x.group,
+          }),
+        ),
+      ),
+    );
+  }
+
+  // --- colours ---
+  //
+  // ⚠️ NO "ADD" FORM, AND THAT IS THE FEATURE. A colour exists because a
+  // swatch was uploaded and the name came off the file; typing a name here
+  // would put a tile on six product pages with nothing behind it, which is
+  // precisely the arrangement this inverted. What the page offers is the
+  // list, a rename for a typo, and a delete.
+  if (parts[1] === "barve") {
+    const shopKey = "bazen";
+    const id = parts[2];
+
+    if (id && request.method === "POST") {
+      if (parts[3] === "izbris") {
+        await deleteFinish(api, shopKey, id);
+        return seeOther("/admin/barve?m=fin-deleted");
+      }
+      const form = await request.formData();
+      await renameFinish(api, shopKey, id, String(form.get("name") ?? ""));
+      return seeOther("/admin/barve?m=fin-saved");
+    }
+
+    const notice = url.searchParams.get("m")
+      ? ({
+          kind: "ok",
+          text:
+            (Object.hasOwn(NOTICES, url.searchParams.get("m")!)
+              ? NOTICES[url.searchParams.get("m")!]
+              : undefined) ?? "Shranjeno.",
+        } as const)
+      : undefined;
+    return page(finishListPage(await listFinishes(api, shopKey), admin.email, notice));
   }
 
   // --- enquiries ---
@@ -922,7 +1065,37 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // Before the model lookup, because "site" is not a shop key and would
   // otherwise fall through to "this model does not exist".
   if (parts[1] === "site") {
-    const slot = siteImageBySlug(parts[2] ?? "");
+    // ⚠️ A COLOUR'S SLOT DOES NOT EXIST UNTIL THE COLOUR DOES, and that is the
+    // whole point of the inversion.
+    //
+    // Every other slot on this site is declared in site-images.ts, so
+    // siteImageBySlug resolves it and a stem that is not there is a 404. The
+    // finish swatches used to work that way too, which meant a colour could
+    // only be photographed if somebody had already typed its name into
+    // catalog/pola.ts. Now the photograph creates the colour, so the stem
+    // arrives BEFORE any deployed code knows the name.
+    //
+    // It is not a hole: the shape is fixed (barva-/obloga- plus a slug), the
+    // key is rebuilt from that shape rather than taken from the request, and
+    // /admin is behind the admin allowlist either way. What it cannot do is
+    // reach any other slot, because a stem outside those two prefixes still
+    // has to resolve in the registry.
+    const stem = parts[2] ?? "";
+    const dyn = /^(barva|obloga)-([a-z0-9]+(?:-[a-z0-9]+)*)$/.exec(stem);
+    const slot: SiteImage | undefined =
+      siteImageBySlug(stem) ??
+      (dyn
+        ? {
+            key: "site/" + stem + ".webp",
+            group: dyn[1] === "barva" ? "Barve školjke" : "Barve obloge",
+            label: stem,
+            note: "",
+            optional: true,
+            ratio: [1, 1],
+            maxWidth: 400,
+            exact: true,
+          }
+        : undefined);
     if (!slot) return page(notFoundPage("Ta slika ne obstaja.", admin.email), 404);
 
     if (parts[3] === "upload" && request.method === "POST") {
@@ -1195,6 +1368,8 @@ const NOTICES: Record<string, string> = {
   "post-saved": "Zapis je shranjen.",
   "enq-saved": "Povpraševanje je posodobljeno.",
   "enq-deleted": "Povpraševanje je izbrisano.",
+  "fin-saved": "Ime barve je shranjeno.",
+  "fin-deleted": "Barva je odstranjena s seznama.",
   "post-published": "Zapis je objavljen in je na spletni strani.",
   "post-unpublished": "Zapis je umaknjen s spletne strani.",
   "post-deleted": "Zapis je izbrisan.",

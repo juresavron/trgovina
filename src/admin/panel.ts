@@ -80,6 +80,15 @@ code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   white-space:nowrap}
 .mark{width:22px;height:22px;display:block;flex:none}
 .acct{display:flex;align-items:center;gap:12px;margin-left:auto;min-width:0}
+.pnav{background:var(--ink);border-top:1px solid #ffffff1f}
+.pnav .in{max-width:1060px;margin:0 auto;padding:0 20px;display:flex;gap:2px;
+  overflow-x:auto;scrollbar-width:none}
+.pnav .in::-webkit-scrollbar{display:none}
+.pnav a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;
+  color:#ffffffcc;text-decoration:none;font-size:14px;white-space:nowrap;
+  border-bottom:2px solid transparent}
+.pnav a:hover{color:#fff}
+.pnav a[aria-current=page]{color:#fff;border-bottom-color:#fff}
 .who{color:var(--on-dark-mute);font-size:13px;max-width:34ch;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* Off the screen, still in the accessible name. */
@@ -491,7 +500,31 @@ function doc(title: string, body: string): string {
  * whose chrome disagrees is how an operator stops trusting which session they
  * are in, which is the exact thing the account label was added to prevent.
  */
-export function shell(title: string, body: string, who: string): string {
+/**
+ * THE PANEL'S SECTIONS, IN THE ORDER THEY DESERVE ATTENTION.
+ *
+ * ⚠️ THIS LIST EXISTS BECAUSE THE PANEL HAD NO NAVIGATION AT ALL. The bar
+ * carried a brand and a logout; everything else lived on one dashboard, and
+ * getting from the colours to the enquiries meant going back and scrolling
+ * past six sections. Every subpage's back-link also said "Nazaj na izdelke" —
+ * back to PRODUCTS — which stopped being true the day the dashboard grew a
+ * blog, then reviews, then enquiries, then colours.
+ *
+ * The order is by who is waiting. An enquiry is a person expecting an answer,
+ * so it is first and it is first on the dashboard too. Photographs and posts
+ * are the daily work. Colours, site pictures and reviews are set up once and
+ * touched rarely.
+ */
+const NAV: readonly (readonly [string, string, string])[] = [
+  ["povprasevanja", "/admin/povprasevanja", "Povpraševanja"],
+  ["izdelki", "/admin", "Modeli"],
+  ["blog", "/admin/blog", "Blog"],
+  ["slike", "/admin/slike", "Slike strani"],
+  ["barve", "/admin/barve", "Barve"],
+  ["mnenja", "/admin/mnenja", "Mnenja"],
+];
+
+export function shell(title: string, body: string, who: string, current = ""): string {
   return doc(
     title,
     '<header class="bar"><div class="in">' +
@@ -506,7 +539,151 @@ export function shell(title: string, body: string, who: string): string {
       '<form method="post" action="/admin/logout">' +
       '<button class="out" type="submit">Odjava</button></form>' +
       "</div>" +
-      '</div></header><main class="wrap">' + body + "</main>",
+      "</div>" +
+      // The nav is its own row under the brand rather than beside it: six
+      // Slovenian labels and an e-mail address do not share 1060px, and a
+      // second row is cheaper than a menu nobody can find.
+      (who
+        ? '<nav class="pnav" aria-label="Razdelki"><div class="in">' +
+          NAV.map(
+            ([k, href, label]) =>
+              '<a href="' + href + '"' +
+              (k === current ? ' aria-current="page"' : "") + ">" + esc(label) + "</a>",
+          ).join("") +
+          "</div></nav>"
+        : "") +
+      '</header><main class="wrap">' + body + "</main>",
+  );
+}
+
+/**
+ * THE PICTURES THE STOREFRONT RENDERS, on their own page.
+ *
+ * ⚠️ THIS USED TO BE THE BOTTOM OF THE DASHBOARD, and it is why the dashboard
+ * needed splitting. Six model tiles, a blog card, colours, enquiries, reviews,
+ * a smart uploader, two colour drop zones and every managed slot on the
+ * storefront — one scroll, no headings a reader could jump between, and the
+ * thing with a customer waiting at the end of it (an enquiry) below a card
+ * about blog posts.
+ *
+ * What belongs together is here: everything that puts a picture on the public
+ * site, in the order the work happens — drop a batch and let it sort itself,
+ * or open one slot and replace it by hand.
+ */
+export function sitePage(shopKey: string, who: string, site: SiteSlot[]): string {
+  return shell(
+    "Slike strani",
+    '<div class="head"><h1>Slike strani</h1>' +
+      '<p class="lede">Fotografije, ki jih trgovina pokaže na svojih straneh. ' +
+      "Naložite jih po več hkrati ali odprite posamezno mesto in jo zamenjajte." +
+      "</p></div>" +
+      // THE SMART UPLOADER — the owner's flow, in the owner's words: "I drop
+      // 10 pictures and AI upscales and checks what on the image and assign
+      // to correct section." The model CLASSIFIES (admin/assign.ts) and the
+      // browser then runs the exact per-slot pipeline the single pages run —
+      // crop to the slot's own frame, WebP, the guarded upscale — so this
+      // card adds a router in front of the machinery, not a second copy of
+      // it. The per-slot pages below remain the manual override.
+      "<h2>Slike strani — pametno nalaganje</h2>" +
+      '<div class="card">' +
+      '<div class="drop" id="sm-drop">' +
+      '<label for="sm-f">Izberite ali povlecite več slik naenkrat</label>' +
+      '<input id="sm-f" type="file" multiple ' +
+      'accept="image/webp,image/jpeg,image/png,image/avif">' +
+      '<p class="fmeta" id="sm-meta">AI vsako fotografijo pogleda, jo razporedi ' +
+      "na pravo mesto spodaj — naslovna, kategoriji, zgodba, vodniki, galerija — " +
+      "jo obreže na pravo razmerje in naloži. Spodaj piše, kaj je šlo kam.</p>" +
+      "</div>" +
+      '<label class="ai-opt" for="sm-ai"><input type="checkbox" id="sm-ai" checked>' +
+      "<span>Premajhne slike povečaj z umetno inteligenco</span></label>" +
+      '<p class="note-ai">Velja za slike, ožje od okvirja, v katerega gredo. ' +
+      "Model sliko PONOVNO NARIŠE večjo: rezultat je oster, ni pa nujno več " +
+      "ista fotografija — razporejene slike po nalaganju preglejte. Če model " +
+      "ne vrne večje slike, obdržimo vašo.</p>" +
+      '<p class="stline" id="sm-stwrap" role="status"><span id="sm-st"></span></p>' +
+      '<ul class="picked" id="sm-list"></ul>' +
+      "</div>" +
+
+// THE COLOUR SAMPLES — the owner's ask, in the owner's words: "for barve
+      // školjke I want that I upload all colors and AI sorts them correctly".
+      //
+      // Its own drop zone rather than a note on the one above, because it is
+      // a different question and the server answers it from a different
+      // catalogue (see the scope field on /admin/site-sort). Sixteen colour
+      // slots inside the site's 46-option prompt is not a list a model can
+      // choose from — the notes are identical but for the colour name — while
+      // ten shell finishes on their own, with the filenames read first, is.
+      //
+      // ⚠️ NO AI-UPSCALE CHECKBOX HERE, and that is deliberate. The enhancer
+      // redraws a picture larger; on a marbled acrylic sample the redraw is a
+      // new pattern in approximately that colour, which is the one thing a
+      // swatch must not be. These slots cap at 400px anyway.
+      "<h2>Barve školjke — naložite vse naenkrat</h2>" +
+      '<div class="card">' +
+      '<div class="drop" id="bv-drop">' +
+      '<label for="bv-f">Izberite ali povlecite vse vzorce barv školjke naenkrat</label>' +
+      '<input id="bv-f" type="file" multiple ' +
+      'accept="image/webp,image/jpeg,image/png,image/avif">' +
+      '<p class="fmeta">Vsaka datoteka postane ena barva, in ime barve je ime ' +
+      "datoteke. Poimenujte jih po proizvajalčevi barvni karti — Oyster Opal.jpg, " +
+      "silver white marble.png, Črna.jpg — in jih povlecite sem vse naenkrat. " +
+      "Velikih in malih črk ne popravljamo: ime se navaja na naročilnici. " +
+      "Vzorec obrežemo na sredini in shranimo 400 × 400 px." +
+      "</p>" +
+      "</div>" +
+      '<p class="stline" id="bv-stwrap" role="status"><span id="bv-st"></span></p>' +
+      '<ul class="picked" id="bv-list"></ul>' +
+      "</div>" +
+
+      "<h2>Barve obloge — naložite vse naenkrat</h2>" +
+      '<div class="card">' +
+      '<div class="drop" id="ob-drop">' +
+      '<label for="ob-f">Izberite ali povlecite vse vzorce barv obloge naenkrat</label>' +
+      '<input id="ob-f" type="file" multiple ' +
+      'accept="image/webp,image/jpeg,image/png,image/avif">' +
+      '<p class="fmeta">Vsaka datoteka postane ena barva, in ime barve je ime ' +
+      "datoteke. Poimenujte jih po proizvajalčevi barvni karti — Oyster Opal.jpg, " +
+      "silver white marble.png, Črna.jpg — in jih povlecite sem vse naenkrat. " +
+      "Velikih in malih črk ne popravljamo: ime se navaja na naročilnici. " +
+      "Vzorec obrežemo na sredini in shranimo 400 × 400 px." +
+      "</p>" +
+      "</div>" +
+      '<p class="stline" id="ob-stwrap" role="status"><span id="ob-st"></span></p>' +
+      '<ul class="picked" id="ob-list"></ul>' +
+      "</div>" +
+
+            // THE SITE'S OWN PICTURES, which had no way in here at all — so the
+      // heaviest image on the storefront (a 2.7 MB PNG hero) was the one
+      // picture the panel's convert-to-WebP promise never reached.
+      // GROUPED, IN THE ORDER THE SLOTS APPEAR ON THE PAGE. The groups are
+      // derived from the slots rather than listed here, so a new slot lands in
+      // its section without this file knowing about it — and a new SECTION
+      // appears by naming it once, in site-images.ts, where the slot is
+      // declared. Set preserves first-seen order, which is already the order
+      // SITE_IMAGES is written in.
+      [...new Set(site.map((x) => x.group))]
+        .map(
+          (g) =>
+            "<h2>" + esc(g) + "</h2>" +
+            '<ul class="models">' +
+            site
+              .filter((x) => x.group === g)
+              .map(
+                (x) =>
+                  '<li class="model"><a href="/admin/site/' + esc(x.stem) + '">' +
+                  '<img class="cover" src="' + esc(x.src) + '" alt="" loading="lazy" ' +
+                  'width="232" height="174">' +
+                  '<span class="meta"><span class="name">' + esc(x.label) + "</span>" +
+                  '<span class="count">' + esc(x.note) + "</span></span>" +
+                  "</a></li>",
+              )
+              .join("") +
+            "</ul>",
+        )
+        .join("") +
+      '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>",
+    who,
+    "slike",
   );
 }
 
@@ -670,11 +847,31 @@ export function indexPage(
   who = "",
   site: SiteSlot[] = [],
 ): string {
+  // ⚠️ `site` IS ACCEPTED AND NOT RENDERED. The site pictures, the smart
+  // uploader and the two colour drop zones used to sit at the bottom of this
+  // page, which made the dashboard a scroll of seven unrelated jobs — a
+  // product list, a blog card, colours, enquiries, reviews, an uploader and
+  // every managed slot on the storefront. They live on /admin/slike now
+  // (sitePage below). The parameter stays so the route does not have to
+  // change shape twice; siteSlots() is cheap and the next caller may want it.
+  void site;
   return shell(
-    "Izdelki",
+    "Nadzorna plošča",
     '<div class="head"><h1>' + esc(shopName) + "</h1>" +
-      '<p class="lede">Izberite model in uredite njegove fotografije. ' +
-      "Prva je tista, ki jo trgovina pokaže povsod.</p></div>" +
+      '<p class="lede">Kar je treba urediti, po vrsti: najprej ljudje, ki čakajo ' +
+      "odgovor, potem vsebina.</p></div>" +
+      // ⚠️ ENQUIRIES FIRST, ABOVE THE MODELS. Everything else on this page is
+      // work the operator chooses to do; an enquiry is a person who wrote in
+      // and is waiting. It sat fourth, under the blog, because the sections
+      // were added in the order they were built rather than in the order they
+      // matter. The nav in shell() is ordered the same way for the same
+      // reason.
+      "<h2>Povpraševanja</h2>" +
+      '<div class="card row-card">' +
+      "<p>Kar so ljudje oddali prek obrazca na strani Kontakt.</p>" +
+      '<a class="btn btn--ghost" href="/admin/povprasevanja">Odpri povpraševanja</a>' +
+      "</div>" +
+
       // The site slots below had a heading and the models above them did not,
       // so the page's outline claimed everything before "Slike strani"
       // belonged to the h1. Two lists, two headings, and a screen reader can
@@ -727,11 +924,13 @@ export function indexPage(
       // is touched: an enquiry is a customer waiting for an answer, a review
       // is an editorial job. The dashboard should open on the thing with
       // somebody on the other end of it.
-      "<h2>Povpraševanja</h2>" +
+      "<h2>Barve</h2>" +
       '<div class="card row-card">' +
-      "<p>Kar so ljudje oddali prek obrazca na strani Kontakt.</p>" +
-      '<a class="btn btn--ghost" href="/admin/povprasevanja">Odpri povpraševanja</a>' +
+      "<p>Barve školjke in obloge, ki jih trgovina lahko pokaže. Dodate jih tako, "
+        + "da naložite njihove vzorce.</p>" +
+      '<a class="btn btn--ghost" href="/admin/barve">Uredi barve</a>' +
       "</div>" +
+
 
       "<h2>Mnenja strank</h2>" +
       '<div class="card row-card">' +
@@ -739,109 +938,6 @@ export function indexPage(
       "posodobitvi.</p>" +
       '<a class="btn btn--ghost" href="/admin/mnenja">Uredi mnenja</a>' +
       "</div>" +
-
-      // THE SMART UPLOADER — the owner's flow, in the owner's words: "I drop
-      // 10 pictures and AI upscales and checks what on the image and assign
-      // to correct section." The model CLASSIFIES (admin/assign.ts) and the
-      // browser then runs the exact per-slot pipeline the single pages run —
-      // crop to the slot's own frame, WebP, the guarded upscale — so this
-      // card adds a router in front of the machinery, not a second copy of
-      // it. The per-slot pages below remain the manual override.
-      "<h2>Slike strani — pametno nalaganje</h2>" +
-      '<div class="card">' +
-      '<div class="drop" id="sm-drop">' +
-      '<label for="sm-f">Izberite ali povlecite več slik naenkrat</label>' +
-      '<input id="sm-f" type="file" multiple ' +
-      'accept="image/webp,image/jpeg,image/png,image/avif">' +
-      '<p class="fmeta" id="sm-meta">AI vsako fotografijo pogleda, jo razporedi ' +
-      "na pravo mesto spodaj — naslovna, kategoriji, zgodba, vodniki, galerija — " +
-      "jo obreže na pravo razmerje in naloži. Spodaj piše, kaj je šlo kam.</p>" +
-      "</div>" +
-      '<label class="ai-opt" for="sm-ai"><input type="checkbox" id="sm-ai" checked>' +
-      "<span>Premajhne slike povečaj z umetno inteligenco</span></label>" +
-      '<p class="note-ai">Velja za slike, ožje od okvirja, v katerega gredo. ' +
-      "Model sliko PONOVNO NARIŠE večjo: rezultat je oster, ni pa nujno več " +
-      "ista fotografija — razporejene slike po nalaganju preglejte. Če model " +
-      "ne vrne večje slike, obdržimo vašo.</p>" +
-      '<p class="stline" id="sm-stwrap" role="status"><span id="sm-st"></span></p>' +
-      '<ul class="picked" id="sm-list"></ul>' +
-      "</div>" +
-
-// THE COLOUR SAMPLES — the owner's ask, in the owner's words: "for barve
-      // školjke I want that I upload all colors and AI sorts them correctly".
-      //
-      // Its own drop zone rather than a note on the one above, because it is
-      // a different question and the server answers it from a different
-      // catalogue (see the scope field on /admin/site-sort). Sixteen colour
-      // slots inside the site's 46-option prompt is not a list a model can
-      // choose from — the notes are identical but for the colour name — while
-      // ten shell finishes on their own, with the filenames read first, is.
-      //
-      // ⚠️ NO AI-UPSCALE CHECKBOX HERE, and that is deliberate. The enhancer
-      // redraws a picture larger; on a marbled acrylic sample the redraw is a
-      // new pattern in approximately that colour, which is the one thing a
-      // swatch must not be. These slots cap at 400px anyway.
-      "<h2>Barve školjke — naložite vse naenkrat</h2>" +
-      '<div class="card">' +
-      '<div class="drop" id="bv-drop">' +
-      '<label for="bv-f">Izberite ali povlecite vse vzorce barv školjke naenkrat</label>' +
-      '<input id="bv-f" type="file" multiple ' +
-      'accept="image/webp,image/jpeg,image/png,image/avif">' +
-      '<p class="fmeta">Naložite lahko vseh deset hkrati. Če se datoteka ' +
-      "imenuje po barvi (npr. Canyon.jpg, silver white marble.png), gre na svoje mesto brez " +
-      "ugibanja; za ostale AI pogleda sliko in predlaga barvo. Spodaj piše, " +
-      "kaj je šlo kam — preverite in po potrebi popravite na posamezni barvi." +
-      "</p>" +
-      "</div>" +
-      '<p class="stline" id="bv-stwrap" role="status"><span id="bv-st"></span></p>' +
-      '<ul class="picked" id="bv-list"></ul>' +
-      "</div>" +
-
-      "<h2>Barve obloge — naložite vse naenkrat</h2>" +
-      '<div class="card">' +
-      '<div class="drop" id="ob-drop">' +
-      '<label for="ob-f">Izberite ali povlecite vse vzorce barv obloge naenkrat</label>' +
-      '<input id="ob-f" type="file" multiple ' +
-      'accept="image/webp,image/jpeg,image/png,image/avif">' +
-      '<p class="fmeta">Naložite lahko vseh šest hkrati. Če se datoteka ' +
-      "imenuje po barvi (npr. Črna.jpg, temno-siva.png), gre na svoje mesto brez " +
-      "ugibanja; za ostale AI pogleda sliko in predlaga barvo. Spodaj piše, " +
-      "kaj je šlo kam — preverite in po potrebi popravite na posamezni barvi." +
-      "</p>" +
-      "</div>" +
-      '<p class="stline" id="ob-stwrap" role="status"><span id="ob-st"></span></p>' +
-      '<ul class="picked" id="ob-list"></ul>' +
-      "</div>" +
-
-            // THE SITE'S OWN PICTURES, which had no way in here at all — so the
-      // heaviest image on the storefront (a 2.7 MB PNG hero) was the one
-      // picture the panel's convert-to-WebP promise never reached.
-      // GROUPED, IN THE ORDER THE SLOTS APPEAR ON THE PAGE. The groups are
-      // derived from the slots rather than listed here, so a new slot lands in
-      // its section without this file knowing about it — and a new SECTION
-      // appears by naming it once, in site-images.ts, where the slot is
-      // declared. Set preserves first-seen order, which is already the order
-      // SITE_IMAGES is written in.
-      [...new Set(site.map((x) => x.group))]
-        .map(
-          (g) =>
-            "<h2>" + esc(g) + "</h2>" +
-            '<ul class="models">' +
-            site
-              .filter((x) => x.group === g)
-              .map(
-                (x) =>
-                  '<li class="model"><a href="/admin/site/' + esc(x.stem) + '">' +
-                  '<img class="cover" src="' + esc(x.src) + '" alt="" loading="lazy" ' +
-                  'width="232" height="174">' +
-                  '<span class="meta"><span class="name">' + esc(x.label) + "</span>" +
-                  '<span class="count">' + esc(x.note) + "</span></span>" +
-                  "</a></li>",
-              )
-              .join("") +
-            "</ul>",
-        )
-        .join("") +
 
       '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>" +
       "<script>" + SMART_JS + "</script>",

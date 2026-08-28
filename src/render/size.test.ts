@@ -73,13 +73,31 @@ describe("the inlined stylesheet stays within budget", () => {
   /**
    * A coarse backstop on the raw string, now that duplication has its own
    * test above. It is NOT a performance budget — the budget is the brotli
-   * figure, and at 17.8 of 20 KB there is real room left. This number exists
-   * so that a tenfold jump gets a human's attention; move it deliberately
-   * when a feature earns it, and never to silence a failure.
+   * figure. This number exists so that a tenfold jump gets a human's
+   * attention; move it deliberately when a feature earns it, and never to
+   * silence a failure.
+   *
+   * ⚠️ AND THE COMMENT ABOVE USED TO SAY "17.8 of 20 KB, real room left".
+   * It is 18.6 now — 93% of the wire budget — so that reassurance was doing
+   * the opposite of its job. The number is not repeated here any more,
+   * because a figure in prose goes stale silently while the assertion above
+   * it stays true; the brotli test is the one that knows.
+   *
+   * What earned the last two raises, so the next person can judge whether
+   * the trend is features or sprawl: the enquiry form (inputs, textareas,
+   * the consent row and two result states — a component the site genuinely
+   * did not have) and the sample-book call to action on the product page.
+   *
+   * WHERE THE HEADROOM IS, when it runs out: ~5 KB raw of .st-rail-*
+   * styles a device this shop never renders. It is not dead — the rail is
+   * what a shop with no categories shows instead of the category cards, and
+   * bazen has categories — so it is a dormant capability of the kernel
+   * rather than waste, and removing it is a decision about the network, not
+   * a cleanup.
    */
   it("has not grown without anyone noticing", () => {
     const kb = BASE_CSS.length / 1024;
-    expect(kb, "raw inline CSS is " + kb.toFixed(1) + " KB").toBeLessThan(168);
+    expect(kb, "raw inline CSS is " + kb.toFixed(1) + " KB").toBeLessThan(172);
   });
 
   it("still emits the rules that matter after minification", async () => {

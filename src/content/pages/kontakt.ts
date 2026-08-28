@@ -28,7 +28,7 @@ export const CONTACT: Page = {
     "odgovorimo sproti, na e-pošto v enem delovnem dnevu, " +
     "za ponudbo pa potrebujemo le naslov in nekaj fotografij prostora.",
   metaDescription:
-    "Kontakt za masažne bazene in swim spa bazene — telefon, e-pošta in naslov. " +
+    "Kontakt za masažne bazene in swim spa bazene: telefon, e-pošta in naslov. " +
     "Svetovanje pred nakupom, ogled lokacije in dogovor za dostavo.",
   blocks: [
     // The notes are RESTATEMENTS, not new promises: both response times are
@@ -65,13 +65,13 @@ export const CONTACT: Page = {
       kind: "prose",
       h: "Kaj nam poveste",
       p: [
-        "Če že veste, kam bi bazen postavili, nam to opišite — kraj, nadstropje ali teraso, " +
+        "Če že veste, kam bi bazen postavili, nam to opišite: kraj, nadstropje ali teraso, " +
           "širino najožjega prehoda in kako daleč je do električne omarice. S temi podatki lahko " +
           "povemo, ali je model izvedljiv, še preden se dogovorimo za ogled.",
         "Fotografija prostora in poti do njega pove več kot dolg opis. Pošljite jo po e-pošti.",
         "Če še ne veste, kam bi ga postavili, povejte, koliko ljudi naj sprejme in ali vas bolj " +
           "zanima sedenje in masaža ali plavanje. To je razlika med masažnim bazenom in swim spa " +
-          "bazenom — med školjko od 195 do 230 cm in školjko od 450 do 580 cm — in od nje je odvisno " +
+          "bazenom (med školjko od 195 do 230 cm in školjko od 450 do 580 cm) in od nje je odvisno " +
           "vse drugo: podlaga, dostop, poraba in cena.",
       ],
     },
@@ -83,7 +83,7 @@ export const CONTACT: Page = {
           "Ali bo bazen šel skozi moja vrtna vrata?",
           "Povejte širino najožjega mesta na poti in model, ki vas zanima, in odgovor dobite " +
             "takoj. Kadar je razlika majhna ali je na poti ovinek, stopnice ali škarpa, to " +
-            "preverimo na ogledu — takrat se odloči tudi, ali gre bazen čez ograjo ali z " +
+            "preverimo na ogledu. Takrat se odloči tudi, ali gre bazen čez ograjo ali z " +
             "dvigalom.",
         ],
         [
@@ -120,7 +120,7 @@ export const CONTACT: Page = {
         ["Ogled lokacije", "Brezplačen. Preverimo dostop, podlago in električni priklop."],
         [
           "Ponudba",
-          "Model in konfiguracija, dostava, priklop in zagon — vse v eni številki z DDV. " +
+          "Model in konfiguracija, dostava, priklop in zagon: vse v eni številki z DDV. " +
             "Kar v ponudbi piše, je tudi cena posla.",
         ],
         // The fourth step, added after the competitive teardown: the best
@@ -154,10 +154,6 @@ export const CONTACT: Page = {
           "Priprave podlage in elektroinštalacije na vaši strani. Za priklop dobite pisna " +
             "navodila za svojega električarja; če ga nimate, izvedbo prevzame naš partner.",
         ],
-        [
-          "Plačilo na obroke",
-          "Do 36 mesečnih obrokov, če to želite. Izračun pripravimo skupaj s ponudbo.",
-        ],
       ],
     },
     {
@@ -166,7 +162,7 @@ export const CONTACT: Page = {
       p: [
         "Po telefonu je hitrejše vse, kar je vprašanje in odgovor: ali model gre skozi prehod, " +
           "kaj mora pripraviti električar, kako poteka dostavni dan. Po e-pošti je bolje vse, " +
-          "kar ima priloge — mere, fotografije prostora in poti, tloris terase.",
+          "kar ima priloge: mere, fotografije prostora in poti, tloris terase.",
         "Kadar na to stran pridete s strani modela, je ta naveden nad kontaktnimi podatki in se " +
           "prepiše tudi v zadevo e-pošte. Pustite ga tam: tako že ob odpiranju sporočila vemo, " +
           "o katerem bazenu teče beseda, in vam ni treba ničesar opisovati dvakrat.",
@@ -176,7 +172,7 @@ export const CONTACT: Page = {
     {
       kind: "cta",
       h: "Morda je odgovor že tu",
-      p: "Postavitev, poraba, vzdrževanje, dostava in garancija — na enem mestu.",
+      p: "Postavitev, poraba, vzdrževanje, dostava in garancija na enem mestu.",
       label: "Pogosta vprašanja",
       href: "/pogosta-vprasanja",
     },

@@ -139,7 +139,6 @@ export const bazen: ShopConfig = {
     // is what this shop actually offers. See content/pages/salon.ts for why
     // the showroom claim was removed rather than softened.
     "/showroom": "/ogled-lokacije",
-    "/financing": "/financiranje",
     "/about": "/o-nas",
     "/contact": "/kontakt",
     "/faq": "/pogosta-vprasanja",

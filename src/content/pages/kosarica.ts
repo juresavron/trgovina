@@ -42,7 +42,7 @@ export const CART: Page = {
     {
       kind: "cta",
       h: "Poglejte ponudbo",
-      p: "Trije masažni bazeni in trije swim spa bazeni — mere, specifikacije in cene.",
+      p: "Trije masažni bazeni in trije swim spa bazeni: mere, specifikacije in cene.",
       label: "V trgovino",
       href: "/trgovina",
     },
@@ -55,7 +55,7 @@ export const CHECKOUT: Page = {
   lead: "Spletno plačilo še ni vzpostavljeno. Naročilo sklenemo po telefonu ali e-pošti.",
   metaDescription:
     "Spletno plačilo še ni vzpostavljeno. Naročilo sklenemo s pisno ponudbo po telefonu ali " +
-    "e-pošti — v njej so končna cena z DDV, obseg montaže in rok.",
+    "e-pošti; v njej so končna cena z DDV, obseg montaže in rok.",
   noindex: true,
   // legal: the page states HOW A CONTRACT FORMS, which is a statement of
   // rights and obligations like any in pogoji.ts — it belongs under the same

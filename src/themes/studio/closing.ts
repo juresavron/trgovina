@@ -680,7 +680,7 @@ export function renderStudioMembership(ctx: RenderCtx): string {
     esc(ctx.shop.keyword.accusative) + "</h2>" +
     // "Oglejte si modele v živo" invited the visitor to a showroom that does
     // not exist. The band now offers the errand that does: we come to them.
-    '<p class="st-mem-p">Pridemo pogledat, kam bi bazen postavili — ' +
+    '<p class="st-mem-p">Pridemo pogledat, kam bi bazen postavili, ' +
     "brezplačno in brez obveznosti.</p>" +
     '<a class="st-btn-light" href="' +
     esc(ctx.shop.routeSlugs["/showroom"] + ctx.q) +

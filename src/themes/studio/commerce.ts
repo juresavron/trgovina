@@ -838,7 +838,7 @@ export const STUDIO_COMMERCE_CSS = `
     letter-spacing: var(--ls-body);
     line-height: var(--lh-lead);
     color: var(--ink-body);
-    max-width: 62ch;
+    max-inline-size: 40rem;
   }
   /* Reads as a control, so it is SHARP (§9). Outlined at rest and filled on
    * hover, exactly as before — only the grounds are the other way up, so the
@@ -890,7 +890,7 @@ export const STUDIO_COMMERCE_CSS = `
    * reads as an indent nobody chose. */
   :root[data-theme="studio"] .st-shop-intro {
     margin: clamp(12px, 1.2vw, 20px) 0 0;
-    max-width: 62ch;
+    max-inline-size: 40rem;
     font-family: var(--f-body);
     font-size: var(--t-lead);
     font-weight: var(--w-body);
@@ -1026,12 +1026,48 @@ export const STUDIO_COMMERCE_CSS = `
      * hub — the tallest under-filled region left on any route — reached 48%
      * across because a rule that should close the section stopped where a
      * paragraph ends. The rule spans the band now; the words still read at
-     * 62ch. */
+     * the measure below. */
     padding-block-start: clamp(32px, 4vw, 56px);
     border-block-start: var(--bw-line) solid var(--line);
   }
-  :root[data-theme="studio"] .st-hub-outro > * { max-inline-size: 62ch; }
-  :root[data-theme="studio"] .st-hub-outro h2 {
+  /* ⚠️ THE MEASURE WAS NEVER THE PROBLEM. THE COLUMN COUNT WAS.
+   *
+   * This rule has been rewritten three times and the first two both changed
+   * the same number. It was a centred 40rem column floating between the
+   * gutters; then a left-aligned 62ch one; then 40rem again, because the ch
+   * unit is the width of the digit zero and in Plus Jakarta Sans it renders
+   * about half again as wide as the average letter, so "62 characters"
+   * measured ninety-five.
+   *
+   * Every one of those was a SINGLE COLUMN in a 1520px band. Measured at
+   * 1600 the content reached 640px — forty-two per cent of the band — and
+   * the remaining thousand pixels were empty from the hairline to the
+   * footer. Widening the column is not the fix either: at full width the
+   * same paragraphs run past 190 characters a line.
+   *
+   * So the band gets the columns it always had room for. Two sections side
+   * by side, each at the reading measure, is ~1320 of 1520 used and both
+   * still read at ~65 characters.
+   *
+   * The breakpoint is arithmetic: two 34rem columns plus a 64px gutter need
+   * 1152px of band, so the grid engages at 1200 of viewport and everything
+   * below stacks into the single column this always was. */
+  :root[data-theme="studio"] .st-hub-outro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(28px, 3vw, 44px) var(--gap-2xl);
+    align-items: start;
+  }
+  @media (min-width: 1200px) {
+    :root[data-theme="studio"] .st-hub-outro {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  /* The measure stays on the TEXT, not on the column: a column is 1fr of the
+   * band and would otherwise set ~90 characters at 1920. 34rem is the same
+   * measure pdp.ts settled on, in rem so it cannot drift with the face. */
+  :root[data-theme="studio"] .st-hub-outro-sec > * { max-inline-size: 34rem; }
+  :root[data-theme="studio"] .st-hub-outro-sec h2 {
     font-family: var(--f-display);
     font-weight: var(--w-display);
     font-size: var(--t-h5);
@@ -1041,15 +1077,15 @@ export const STUDIO_COMMERCE_CSS = `
     margin: clamp(28px, 3vw, 44px) 0 12px;
     text-wrap: balance;
   }
-  :root[data-theme="studio"] .st-hub-outro h2:first-child { margin-block-start: 0; }
-  :root[data-theme="studio"] .st-hub-outro p {
+  :root[data-theme="studio"] .st-hub-outro-sec h2 { margin-block-start: 0; }
+  :root[data-theme="studio"] .st-hub-outro-sec p {
     font-family: var(--f-body);
     font-size: var(--t-body);
     line-height: var(--lh-body);
     color: var(--ink-body);
     margin: 0 0 14px;
   }
-  :root[data-theme="studio"] .st-hub-outro p:last-child { margin-block-end: 0; }
+  :root[data-theme="studio"] .st-hub-outro-sec p:last-child { margin-block-end: 0; }
   :root[data-theme="studio"] .st-btn-line {
     display: inline-flex;
     align-items: center;
@@ -2504,11 +2540,16 @@ function hubOutro(ctx: RenderCtx): string {
   return (
     '<section class="st-shop st-shop--outro"><div class="st-shop-in">' +
     '<div class="st-hub-outro">' +
+    // Each section is its own block, so the band can put them in columns.
+    // Flat h2/p siblings can only ever be one column, which is what stranded
+    // 58% of this band — see the CSS.
     secs
       .map(
         (sec) =>
+          '<div class="st-hub-outro-sec">' +
           "<h2>" + esc(sec.h) + "</h2>" +
-          sec.p.map((t) => "<p>" + esc(t) + "</p>").join(""),
+          sec.p.map((t) => "<p>" + esc(t) + "</p>").join("") +
+          "</div>",
       )
       .join("") +
     "</div></div></section>"

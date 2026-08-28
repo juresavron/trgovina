@@ -19,7 +19,7 @@ export const DELIVERY: Page = {
   h1: "Dostava in montaža",
   lead:
     "Bazen pripeljemo, prenesemo na mesto, priklopimo in zaženemo. " +
-    "Vaša naloga je pripraviti podlago in električni priklop — pri obojem svetujemo vnaprej.",
+    "Vaša naloga je pripraviti podlago in električni priklop; pri obojem svetujemo vnaprej.",
   // The five steps are the page's content, not its description: this named
   // all five and ran to 176 characters, which is cut off mid-list in the
   // result. Naming the promise and two of the steps fits and reads better.
@@ -39,14 +39,14 @@ export const DELIVERY: Page = {
         ],
         [
           "Priprava priklopa",
-          "Dobite pisna navodila za svojega električarja — presek vodnika, odklopnik in " +
+          "Dobite pisna navodila za svojega električarja: presek vodnika, odklopnik in " +
             "zaščitno stikalo za konkreten model. Če električarja nimate, izvedbo prevzame " +
             "naš partner.",
         ],
         [
           "Dostava na teraso",
           "Pride ekipa z opremo za prenos. Bazen gre lahko tudi čez ograjo ali po stopnicah, " +
-            "če drugače ne gre — kako natanko, se dogovorimo že ob ogledu.",
+            "če drugače ne gre. Kako natanko, se dogovorimo že ob ogledu.",
         ],
         [
           "Priklop in zagon",
@@ -69,7 +69,7 @@ export const DELIVERY: Page = {
         "Podlago, ki nosi težo napolnjenega bazena in ljudi v njem. Masažni bazen prazen tehta " +
           "od 300 do 410 kilogramov, napolnjen od 1.500 do 2.210 kilogramov; napolnjen swim " +
           "spa bazen od 5.750 do 8.490 kilogramov. Betonska plošča, tlakovci na pripravljenem " +
-          "nasutju ali ustrezno dimenzionirana terasa so v redu — kaj od tega velja za vašo " +
+          "nasutju ali ustrezno dimenzionirana terasa so v redu; kaj od tega velja za vašo " +
           "lokacijo, povemo ob ogledu.",
         "Električni priklop po navodilih, ki jih dobite v drugem koraku, in dostop do vode za " +
           "prvo polnjenje. Priprava podlage in elektroinštalacija sta na vaši strani; " +
@@ -96,7 +96,7 @@ export const DELIVERY: Page = {
         ],
         [
           "Koliko časa traja postavitev?",
-          "Sam prenos in priklop običajno nekaj ur. Voda se nato ogreva do prve kopeli — " +
+          "Sam prenos in priklop običajno nekaj ur. Voda se nato ogreva do prve kopeli, " +
             "koliko časa, je odvisno od modela in temperature vode ob polnjenju.",
         ],
       ],

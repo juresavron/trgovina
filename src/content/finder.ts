@@ -73,7 +73,7 @@ const OSEBE: FinderStep = {
       // "med masažnimi bazeni", not "v ponudbi": both SWIM 580 seat seven,
       // and this step is asked inside the relaxation branch where the
       // comparison set is the hot-tub family — the hint has to say so.
-      hint: "En ležalnik in pet sedežev — največ mest med masažnimi bazeni.",
+      hint: "En ležalnik in pet sedežev, največ mest med masažnimi bazeni.",
     },
   ],
 };
@@ -193,8 +193,8 @@ export function recommend(a: FinderAnswers): FinderResult {
       return {
         slugs: ["swim-580-maxi", "swim-580-hidro"],
         why:
-          "SWIM 580 MAXI ima med vsemi modeli največ masažnih šob — 94 na pet " +
-          "črpalk — ob polni 5,8-metrski plavalni dolžini. Če toliko masaže ne " +
+          "SWIM 580 MAXI ima med vsemi modeli največ masažnih šob: 94 na pet " +
+          "črpalk, ob polni 5,8-metrski plavalni dolžini. Če toliko masaže ne " +
           "potrebujete, je SWIM 580 HIDRO enaka školjka z 38 šobami.",
       };
     }
@@ -210,7 +210,7 @@ export function recommend(a: FinderAnswers): FinderResult {
     return {
       slugs: ["srednji-210"],
       why:
-        "BAZEN 210 je edini model s šestimi mesti — en ležalnik in pet " +
+        "BAZEN 210 je edini model s šestimi mesti: en ležalnik in pet " +
         "sedežev na 2,10 × 2,10 m.",
     };
   }

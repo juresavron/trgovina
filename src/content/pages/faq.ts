@@ -25,7 +25,7 @@ import type { Page } from "../pages";
 export const FAQ: Page = {
   key: "/faq",
   h1: "Pogosta vprašanja",
-  lead: "Kar nas kupci vprašajo največkrat — o postavitvi, obratovanju, dostavi in garanciji.",
+  lead: "Kar nas kupci vprašajo največkrat: o postavitvi, obratovanju, dostavi in garanciji.",
   metaDescription:
     "Pogosta vprašanja o masažnih bazenih: postavitev in podlaga, poraba, vzdrževanje, " +
     "dostava in montaža, garancija in servis.",
@@ -60,7 +60,7 @@ export const FAQ: Page = {
         [
           "Koliko elektrike porabi?",
           "Odvisno od temperature, ki jo držite, pogostosti uporabe, kakovosti pokrova in " +
-            "zunanjih razmer. Prav zato nikjer ne navajamo mesečnega zneska — brez teh podatkov " +
+            "zunanjih razmer. Prav zato nikjer ne navajamo mesečnega zneska: brez teh podatkov " +
             "bi bila vsaka številka ugibanje.",
         ],
         [
@@ -75,7 +75,7 @@ export const FAQ: Page = {
         ],
         [
           "Ali lahko bazen uporabljam pozimi?",
-          "Da — pozimi je najbolj prijeten. Bazen naj takrat dela; praznjenje čez zimo je pogosta " +
+          "Da, pozimi je najbolj prijeten. Bazen naj takrat dela; praznjenje čez zimo je pogosta " +
             "napaka, ker voda ostane v ceveh in črpalkah.",
         ],
       ],
@@ -93,7 +93,7 @@ export const FAQ: Page = {
         ],
         [
           "Kako dolgo traja od naročila do dostave?",
-          "Odvisno od modela in zaloge. Rok potrdimo ob ponudbi — ne prej, ker bi bil takrat " +
+          "Odvisno od modela in zaloge. Rok potrdimo ob ponudbi, ne prej, ker bi bil takrat " +
             "ugibanje.",
         ],
         [
@@ -104,8 +104,8 @@ export const FAQ: Page = {
         ],
         [
           "Ali je mogoče plačilo na obroke?",
-          "Da, do 36 mesečnih obrokov. Pogoji so odvisni od zneska in ponudnika financiranja; " +
-            "izračun pripravimo ob ponudbi.",
+          "Obročnega plačila in financiranja ne ponujamo. Plačilni pogoji so zapisani v " +
+            "pisni ponudbi, ki jo dobite po ogledu lokacije.",
         ],
       ],
     },
@@ -115,22 +115,22 @@ export const FAQ: Page = {
       items: [
         [
           "Kakšna je garancija?",
-          "Od dveh do petih let, odvisno od sklopa; rok in obseg sta navedena v garancijskem " +
-            "listu, ki ga dobite ob predaji. Garancija je prostovoljna zaveza proizvajalca. " +
+          "Tri leta. Obseg je naveden v garancijskem listu, ki ga dobite ob " +
+            "predaji. Garancija je prostovoljna zaveza proizvajalca. " +
             "Ločeno od nje in poleg nje imate kot potrošnik zakonske pravice pri neskladnosti " +
             "blaga: za neskladnost, ki se pokaže v dveh letih od dobave, odgovarjamo mi kot " +
             "prodajalec.",
         ],
         [
           "Kdo popravi okvaro?",
-          "Naša servisna mreža. Rezervne dele za modele, ki jih prodajamo, imamo na zalogi — " +
+          "Naša servisna mreža. Rezervne dele za modele, ki jih prodajamo, imamo na zalogi; " +
             "to je eden od razlogov, da je ponudba ozka.",
         ],
         [
           "Ali lahko bazen vrnem?",
           "Kot potrošnik imate pri nakupu na daljavo 14 dni za odstop od pogodbe, brez " +
             "navedbe razloga. Ker je bazen težak in praviloma že priklopljen, ga ne vračate " +
-            "sami — odvoz izvedemo mi, neposredne stroške vračila pa nosi kupec in jih " +
+            "sami. Odvoz izvedemo mi, neposredne stroške vračila pa nosi kupec in jih " +
             "navedemo v pisni ponudbi, še preden pogodbo sklenete. Rok, postopek in stroški " +
             "so opisani na strani o odstopu " +
             "od pogodbe.",

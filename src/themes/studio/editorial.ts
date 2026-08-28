@@ -1168,8 +1168,14 @@ export function renderStudioImpact(ctx: RenderCtx): string {
     // then every word under it is about US. A band whose head asks one
     // question and whose body answers a different one reads as filler
     // however good the parts are.
-    '<h2 class="st-imp-h">Zakaj ' + esc(ctx.shop.keyword.accusative) +
-    " kupiti pri nas</h2>" +
+    // ⚠️ WORD ORDER, AND IT WAS WRONG IN SLOVENIAN. This built "Zakaj masažni
+    // bazen kupiti pri nas" — an infinitive stranded after its object, which
+    // reads as a translation. The natural order puts the verb first: "Zakaj
+    // kupiti masažni bazen pri nas". Same words, same keyword, and it is the
+    // heading over this shop's entire argument for itself, so it is the last
+    // line on the page that should sound foreign.
+    '<h2 class="st-imp-h">Zakaj kupiti ' + esc(ctx.shop.keyword.accusative) +
+    " pri nas</h2>" +
     (sub ? '<p class="st-imp-sub">' + sub + "</p>" : "") +
     // The band made three claims about delivery and service and offered no
     // way to read more — /dostava-in-montaza is where all three live.

@@ -148,7 +148,6 @@ const PLACEHOLDER_TITLES: Partial<Record<InternalRouteKey, string>> = {
   "/guides": "Vodniki",
   "/delivery": "Dostava in montaža",
   "/showroom": "Ogled lokacije",
-  "/financing": "Financiranje",
   "/about": "O nas",
   "/contact": "Kontakt",
   "/faq": "Pogosta vprašanja",

@@ -35,7 +35,8 @@
  *     survive the photography" describes.
  *   - The sidebar filtered nothing. This Worker has no query-parameter
  *     filtering, so the device rendered as links to /trgovina, /primerjava,
- *     /vodniki, /financiranje — four destinations the chrome nav and the
+ *     /vodniki and /financiranje (a route that no longer exists) — all of
+ *     them destinations the chrome nav and the
  *     footer already carry, wearing checkbox and pill costumes that promise a
  *     control they are not.
  *
@@ -80,6 +81,7 @@ import { productImg } from "./media";
 import { helpIcon, returnIcon, shieldIcon, truckIcon } from "./icons";
 import { renderStudioTestimonials } from "./editorial";
 import { ADDON_GROUP_ORDER } from "../../catalog/pola";
+import { SHELL_FINISHES_ARE_PHOTOGRAPHED } from "../../catalog/pola";
 import { finishImageUrl, type FinishKind } from "../../catalog/finish-image";
 import { formatEur } from "../../catalog/pricing";
 
@@ -985,6 +987,26 @@ export const STUDIO_PDP_CSS = `
    * takes that column's gap, like every group beside it. A margin here would
    * add to the gap rather than replace it, which is how the block above it
    * ended up with two different distances between the same kind of thing. */
+  /* The sample-book offer, lifted out of the caveat paragraph above it. A
+   * rule rather than a panel: this sits inside the configurator, which is
+   * already a stack of bordered groups, and a fifth box would read as
+   * another question rather than as the answer to the four above it. */
+  :root[data-theme="studio"] .st-pdp-swatch-cta {
+    margin: var(--gap-md) 0 0;
+    padding-block-start: var(--gap-md);
+    border-block-start: var(--bw-line) solid var(--line);
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink);
+  }
+  :root[data-theme="studio"] .st-pdp-swatch-cta a {
+    font-weight: var(--w-body-med);
+    color: var(--ink);
+    text-decoration-thickness: var(--bw-line);
+    text-underline-offset: 3px;
+  }
+  :root[data-theme="studio"] .st-pdp-swatch-cta a:hover { color: var(--acc-text); }
   :root[data-theme="studio"] .st-pdp-swatch-note {
     margin-block: 0;
     font-family: var(--f-body);
@@ -1431,7 +1453,19 @@ export const STUDIO_PDP_CSS = `
     line-height: var(--lh-body);
     color: var(--ink-body);
   }
-  :root[data-theme="studio"] .st-pdp-panel-b p { margin: 0; max-inline-size: 62ch; }
+  /* ⚠️ THE ch UNIT IS NOT A CHARACTER, AND THIS RULE PROVED IT.
+   *
+   * The cap read 62ch, which looks like "62 characters per line" and is
+   * not. ch is the advance width of the digit ZERO, and in Plus Jakarta
+   * Sans the zero is about half again as wide as the average lowercase
+   * letter — so 62ch measured 726px and rendered NINETY-FIVE characters per
+   * line, on all six product pages, at the top of the page where the model
+   * is described. The intent was right and the unit silently multiplied it.
+   *
+   * 34rem is 544px against this ramp's 16px body, which measures ~71 — the
+   * same figure the page module's own 38rem measure is calibrated to and
+   * documents. A rem cannot drift with the face. */
+  :root[data-theme="studio"] .st-pdp-panel-b p { margin: 0; max-inline-size: 34rem; }
 
   /* ---- "ostali modeli" ------------------------------------------------- */
   /* Block padding only — the inline half is layout.ts's. It was a padding
@@ -2763,11 +2797,46 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     "Kjer imamo posnet vzorec, ga vidite ob imenu barve; akril je marmoriran " +
     "in vsak zaslon barvo prikaže nekoliko drugače, zato je posnetek v pomoč " +
     "pri izbiri in ne zavezujoč odtenek. " +
-    // "v salonu pa jih vidite v živo" — there is no salon. The sample book
-    // is the real offer, and now the only one made.
-    "Vzorčnik pošljemo na zahtevo. " +
-    "Proizvajalčeva barvna karta našteva deset odtenkov, specifikacija " +
-    "modela pa sedem; kateri veljajo za vaš model, potrdimo ob naročilu.</p>";
+    // ⚠️ THE APOLOGY ONLY APPLIES TO A TRANSCRIBED LIST.
+    //
+    // "The chart lists ten shades, the model specification lists seven, and
+    // we will confirm which seven when you order" is an honest sentence about
+    // a list copied out of the SUPPLIER'S chart, which is what this page
+    // showed while the colours were hardcoded in catalog/pola.ts.
+    //
+    // Once the list is the shop's own uploaded swatches it stops being true
+    // and starts being confusing: those ARE the colours, there is a
+    // photograph behind every one, and nothing is waiting to be narrowed down
+    // at order time. Leaving it would tell a buyer that the ten tiles they
+    // can see might turn out to be seven.
+    (SHELL_FINISHES_ARE_PHOTOGRAPHED
+      ? ""
+      : "Proizvajalčeva barvna karta našteva deset odtenkov, specifikacija " +
+        "modela pa sedem; kateri veljajo za vaš model, potrdimo ob naročilu.") +
+    "</p>" +
+    // ⚠️ THE SAMPLE BOOK IS AN OFFER, AND IT WAS A SUBORDINATE CLAUSE.
+    //
+    // "Vzorčnik pošljemo na zahtevo." sat as the fourth sentence of the
+    // paragraph above, between "every screen shows the colour differently"
+    // and "only seven of the ten shades apply to your model" — the two most
+    // discouraging facts on the page, with the one thing that resolves them
+    // buried in the middle.
+    //
+    // The person reading this is standing at a grid of ten marbled acrylics
+    // they cannot see, on a €7.000 decision. Posting them the real samples
+    // is the obvious next step, it costs them nothing to ask for, and it is
+    // the only thing on this page that turns a browser into a conversation.
+    // So it gets its own line and a destination.
+    //
+    // The link carries ?model= like every other enquiry route on the site,
+    // so the form at the other end already knows which tub they were looking
+    // at when they asked. No new claim: the shop confirmed it sends these,
+    // and the sentence promises nothing about price or speed that nobody
+    // has stated.
+    '<p class="st-pdp-swatch-cta">Barve raje vidite v roki? ' +
+    '<a href="' + esc(ctx.shop.routeSlugs["/contact"]) + "?model=" + esc(d.slug) +
+    esc(ctx.q ? "&" + ctx.q.slice(1) : "") + '">Naročite vzorčnik barv</a>' +
+    " in pošljemo vam ga po pošti.</p>";
   const finishes =
     (d.finishes ?? []).length || (d.cabinetFinishes ?? []).length
       // -1: NO shade arrives pre-checked. With selected = 0 a visitor who

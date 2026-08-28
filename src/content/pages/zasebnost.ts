@@ -60,7 +60,7 @@ export const PRIVACY: Page = {
         // months" is two different promises about one row.
         [
           "Povpraševanje",
-          "Ime, telefon ali e-naslov, kraj, opis dostopa in vaše sporočilo — ter model in " +
+          "Ime, telefon ali e-naslov, kraj, opis dostopa in vaše sporočilo, ter model in " +
             "barve, ki ste jih izbrali na strani izdelka, če ste prišli od tam. Namen: odgovor " +
             "na vaše povpraševanje in priprava ponudbe. Pravna podlaga: izvedba ukrepov na " +
             "vašo zahtevo pred sklenitvijo pogodbe. Podatki se shranijo v našo bazo pri " +
@@ -104,7 +104,7 @@ export const PRIVACY: Page = {
           "jih izbrišemo. Podatke o sklenjenih poslih hranimo, dokler trajajo obveznosti iz " +
           "pogodbe, jamstva za skladnost blaga in garancije. Račune hranimo toliko časa, " +
           "kolikor zahtevajo davčni predpisi — praviloma deset let.",
-        "Podatke ob povpraševanju daste prostovoljno in vam jih ni treba dati — brez njih pa " +
+        "Podatke ob povpraševanju daste prostovoljno in vam jih ni treba dati; brez njih pa " +
           "ne moremo odgovoriti, pripraviti ponudbe ali izvesti dostave in montaže. Ko je " +
           "naročilo sklenjeno, so podatki, ki jih zahtevajo pogodba in davčni predpisi (na " +
           "primer podatki na računu), obvezni po zakonu.",
@@ -118,13 +118,12 @@ export const PRIVACY: Page = {
           "računovodskemu servisu za račune ter ponudniku gostovanja spletne strani in " +
           "ponudniku podatkovne baze, v kateri se povpraševanja shranijo. Vsak od " +
           "njih obdeluje podatke po naših navodilih in zgolj za navedeni namen.",
-        // Deliberately OUT of the po-naših-navodilih sentence: financiranje.ts
-        // says in the shop's own words that the credit is a second contract
-        // the lender decides on its own assessment — that is an independent
-        // controller with its own notice, not a processor under instruction.
-        "Če se odločite za financiranje, podatke, ki jih zahteva ponudnik financiranja, " +
-          "posredujete njemu; ponudnik financiranja je samostojni upravljavec, o vlogi odloča " +
-          "po lastni presoji in obdelavo pojasnjuje v svoji izjavi o zasebnosti.",
+        // The paragraph about a financing provider is GONE with the offer it
+        // described. It named an independent controller — a lender deciding a
+        // credit application on its own assessment — and this shop does not
+        // offer instalments, so there is no such recipient. A privacy notice
+        // that lists a recipient nobody sends data to is inaccurate in the
+        // direction that matters least, and still inaccurate.
         "Kadar kakšen od teh ponudnikov podatke obdeluje zunaj Evropskega gospodarskega " +
           "prostora, to poteka le na podlagi jamstev, ki jih zahteva splošna uredba o varstvu " +
           "podatkov — na primer standardnih pogodbenih določil ali sklepa o ustreznosti.",

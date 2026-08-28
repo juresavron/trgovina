@@ -46,7 +46,7 @@ export const COMPARE: Page = {
   seoTitle: "Swim spa ali masažni bazen?",
   lead:
     "Prva odločitev ni model, ampak vrsta bazena. Masažni bazen je za sedenje in sprostitev, " +
-    "swim spa pa za plavanje — razlika je v dolžini, teži in tem, kaj zahtevata od prostora.",
+    "swim spa pa za plavanje. Razlikujeta se v dolžini, teži in v tem, kaj zahtevata od prostora.",
   metaDescription:
     "Primerjava masažnih bazenov in swim spa bazenov: mere, teža, prostor in namen. " +
     "Kateri tip bazena je pravi za vašo teraso ali vrt.",
@@ -66,7 +66,7 @@ export const COMPARE: Page = {
         ["Višina školjke", "82–88 cm", "135–140 cm"],
         ["Teža prazen", "300–410 kg", "1.050–1.430 kg"],
         ["Teža napolnjen", "1.500–2.210 kg", "5.750–8.490 kg"],
-        ["Dostava", "Z ekipo in opremo za prenos", "Enako — in dostop je pogosto odločilen"],
+        ["Dostava", "Z ekipo in opremo za prenos", "Enako, in dostop je pogosto odločilen"],
       ],
     },
     {
@@ -78,10 +78,10 @@ export const COMPARE: Page = {
           "iztegnjene noge in več šob. Večja školjka pa ne pomeni več ljudi: BAZEN 210 sprejme " +
           "šest oseb z enim ležalnikom, BAZEN 230 pet oseb z dvema. Mere in specifikacije vseh " +
           "treh modelov so na njihovih straneh.",
-        "Pri swim spa bazenih je merilo dolžina — od nje je odvisen občutek plavanja. Daljša " +
+        "Pri swim spa bazenih je merilo dolžina, od katere je odvisen občutek plavanja. Daljša " +
           "školjka pomeni tudi večjo maso, večjo količino vode in več zahtev do podlage.",
         "Protitočne šobe, ki ustvarijo tok za plavanje na mestu, niso enake pri vseh treh " +
-          "modelih — koliko jih ima posamezen model, piše v njegovi specifikaciji. Preverite " +
+          "modelih; koliko jih ima posamezen model, piše v njegovi specifikaciji. Preverite " +
           "jo, preden se odločite za plavanje na mestu.",
       ],
     },
@@ -91,10 +91,10 @@ export const COMPARE: Page = {
       p: [
         "Razlika med prazno in napolnjeno težo je voda, in prav ta številka loči družini bolj " +
           "kot dolžina školjke. Masažni bazen drži od 1.200 do 1.800 litrov, swim spa pa od " +
-          "4.700 do 7.060 — približno štirikrat toliko. Vse štiri številke so razlika med " +
+          "4.700 do 7.060, približno štirikrat toliko. Vse štiri številke so razlika med " +
           "podatkoma, ki sta v tabeli zgoraj.",
         "Posledica je preprosta in velja ne glede na tarifo: več vode se dlje greje in dražje " +
-          "drži na temperaturi. Koliko dražje, vam ne bomo napisali — poraba je odvisna od " +
+          "drži na temperaturi. Koliko dražje, vam ne bomo napisali: poraba je odvisna od " +
           "temperature, ki jo držite, pogostosti uporabe, kakovosti pokrova in vremena, zato " +
           "mesečnega zneska ne navajamo nikjer na tej strani. Kdor swim spa izbira zaradi " +
           "plavanja, naj to vseeno vzame v račun kot stalen strošek, ne kot enkratnega.",
@@ -106,7 +106,7 @@ export const COMPARE: Page = {
       kind: "prose",
       h: "Globina in vstop",
       p: [
-        "Masažni bazen je visok 82 do 88 centimetrov — vanj se stopi in sede. Swim spa je " +
+        "Masažni bazen je visok 82 do 88 centimetrov, tako da se vanj stopi in sede. Swim spa je " +
           "visok 135 do 140, kar je globina, v kateri odrasel človek stoji in plava. Razlika " +
           "približno pol metra se na papirju bere kot podrobnost, na dvorišču pa določi, kako " +
           "se v bazen sploh pride.",
@@ -122,7 +122,7 @@ export const COMPARE: Page = {
         [
           "Ali gre swim spa na teraso?",
           "Praviloma ne. Školjka je dolga 4,5 do 5,8 metra, široka 2,24 do 2,28 metra in napolnjena " +
-            "tehta od 5.750 do 8.490 kilogramov — to je obremenitev, ki jo lesena ali " +
+            "tehta od 5.750 do 8.490 kilogramov. To je obremenitev, ki jo lesena ali " +
             "nadgrajena terasa redko prenese. Swim spa zato skoraj vedno stoji na betonski " +
             "plošči na terenu. Masažni bazen je pri 1.500 do 2.210 kilogramih pogosto " +
             "izvedljiv tudi na terasi, a to je treba pogledati na kraju samem, ne po telefonu.",
@@ -131,7 +131,7 @@ export const COMPARE: Page = {
           "Se v masažnem bazenu da plavati?",
           "Ne. Vsi trije modeli so kvadratni, od 1,95 do 2,30 metra stranice, in nobeden nima " +
             "protitočnih šob. Za plavanje na mestu je swim spa, a tudi tam preverite " +
-            "specifikacijo posameznega modela — SWIM 450 protitočnih šob ne navaja.",
+            "specifikacijo posameznega modela; SWIM 450 protitočnih šob ne navaja.",
         ],
         [
           "Kateri sprejme največ ljudi?",

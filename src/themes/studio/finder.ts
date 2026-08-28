@@ -86,7 +86,7 @@ export const STUDIO_FINDER_CSS = `
   }
   :root[data-theme="studio"] .st-fnd-lead {
     font-size: var(--t-lead);
-    line-height: var(--lh-body);
+    line-height: var(--lh-lead);
     color: var(--ink-body);
     margin: 0 0 clamp(26px, 3vw, 44px);
     max-inline-size: 36rem;
@@ -155,7 +155,7 @@ export const STUDIO_FINDER_CSS = `
   /* The verdict: the recommended model as a ruled card row. */
   :root[data-theme="studio"] .st-fnd-why {
     font-size: var(--t-lead);
-    line-height: var(--lh-body);
+    line-height: var(--lh-lead);
     color: var(--ink-body);
     margin: 0 0 clamp(26px, 3vw, 40px);
   }
@@ -517,9 +517,8 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     // is doing something other than matching a catalogue. The price is on
     // every model's page either way, so the question would buy nothing.
     '<p class="st-fnd-note">Vprašanja o proračunu namenoma ni. Cena vsakega ' +
-    "modela je napisana na njegovi strani in je za vse obiskovalce enaka, " +
-    'načini plačila pa so opisani v <a href="' +
-    esc(shop.routeSlugs["/financing"]) + '">financiranju</a>.</p>' +
+    "modela je napisana na njegovi strani in je za vse obiskovalce enaka; " +
+    "zavezujoča cena za vašo konfiguracijo pride v pisni ponudbi.</p>" +
     "</div>" +
     "</div>"
   );
