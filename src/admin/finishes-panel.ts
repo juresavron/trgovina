@@ -17,31 +17,33 @@
  * everything else.
  */
 
-import { noticeHtml, shell } from "./panel";
+import { finishDropCard, noticeHtml, shell, SMART_JS } from "./panel";
 import { esc } from "../render/sections";
 import { finishImageUrl } from "../catalog/finish-image";
 import type { Finish } from "./finishes";
-import { finishSlug, type FinishKind } from "../catalog/finish-image";
 
 const CSS = `<style>
 .fin-group{margin-top:26px}
 .fins{list-style:none;margin:12px 0 0;padding:0;display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+  grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px}
 .fin{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);
-  padding:12px;display:flex;gap:12px;align-items:flex-start}
-.fin .sw{inline-size:64px;block-size:64px;flex:none;border-radius:8px;
+  padding:12px;display:flex;flex-direction:column;gap:8px}
+/* THE SWATCH IS THE POINT OF THE CARD, so it gets the card's width. It used
+   to be a 64px chip beside a 90px-wide name field: the colour was too small
+   to judge and the name, which is what goes on a purchase order, was cut off
+   mid-word. */
+.fin .sw{inline-size:100%;block-size:104px;border-radius:6px;
   border:1px solid var(--line);background:var(--paper) center/cover no-repeat}
-.fin .grow{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
-.fin form{display:flex;gap:6px;flex-wrap:wrap}
-.fin input[type=text]{flex:1;min-width:0;min-height:34px;padding:5px 8px;font:inherit;
+.fin .nm{display:flex;gap:6px}
+.fin input[type=text]{flex:1;min-width:0;min-height:36px;padding:5px 9px;font:inherit;
   border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl);background:#fff;color:var(--ink)}
-.fin .slug{font-size:12px;color:var(--mute);word-break:break-all}
-.fin .btn{min-height:34px;padding:0 10px;font-size:13px}
+.fin .slug{font-size:12px;color:var(--mute);word-break:break-all;margin-block-start:-2px}
+.fin .btn{min-height:36px;padding:0 12px;font-size:13px}
+.fin .rm{margin-block-start:auto}
 .fin-state{color:var(--mute);font-size:14px;margin:8px 0 0;max-width:52ch}
-.fin--todo{align-items:stretch}
-.fin--todo .sw--none{background:repeating-linear-gradient(45deg,#fff,#fff 5px,var(--line) 5px,var(--line) 10px)}
-.fin--todo .nm{font-weight:600;color:var(--ink)}
-.fin--todo .btn{align-self:flex-start;margin-block-start:auto}
+.chips{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.chips li{border:1px solid var(--line);border-radius:999px;padding:5px 12px;
+  background:var(--card);font-size:14px;color:var(--ink)}
 .fin-how{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);
   padding:16px 18px;margin-top:14px}
 .fin-how p{margin:0 0 8px}
@@ -66,55 +68,50 @@ function card(f: Finish): string {
     // The swatch itself, so a wrong name beside a picture is obvious at a
     // glance — which is the only way a rename gets noticed as needed.
     '<span class="sw" style="background-image:url(' + esc(src) + ')"></span>' +
-    '<span class="grow">' +
-    '<form method="post" action="/admin/barve/' + esc(f.id) + '">' +
+    '<form class="nm" method="post" action="/admin/barve/' + esc(f.id) + '">' +
     '<label class="vh" for="fn-' + esc(f.id) + '">Ime barve</label>' +
     '<input id="fn-' + esc(f.id) + '" name="name" type="text" value="' + esc(f.name) + '" ' +
     'maxlength="80" required>' +
     '<button class="btn" type="submit">Shrani</button>' +
     "</form>" +
     '<span class="slug">' + esc(f.kind) + "-" + esc(f.slug) + ".webp</span>" +
-    '<form method="post" action="/admin/barve/' + esc(f.id) + '/izbris">' +
-    '<button class="btn btn--ghost" type="submit">Odstrani</button>' +
+    '<form class="rm" method="post" action="/admin/barve/' + esc(f.id) + '/izbris">' +
+    '<button class="btn btn--ghost" type="submit">Odstrani iz ponudbe</button>' +
     "</form>" +
-    "</span></li>"
+    "</li>"
   );
 }
 
 /**
- * A colour that is LIVE ON THE SITE but has no row here: one of the names
- * transcribed from the supplier's chart, which catalog/pola.ts falls back to
- * while nothing has been uploaded.
+ * The colours the storefront is showing while nothing has been uploaded:
+ * the transcription of the supplier's chart, which catalog/pola.ts falls
+ * back to per kind.
  *
- * ⚠️ THIS EXISTS BECAUSE THE PAGE LIED BY OMISSION. It listed only uploaded
- * colours, so on a shop that has uploaded none it said "0 barv" and offered
- * a sentence pointing somewhere else — while every product page was, at that
- * moment, showing ten shell colours and six cabinet ones from the fallback.
- * An operator who came here to edit the colours they could see on their own
- * site found an empty page. That is a worse failure than a missing feature:
- * it makes the panel look broken and the site look unmanaged.
+ * ⚠️ THEY ARE NAMES, NOT SLOTS, and the difference is the whole redesign.
+ * They were sixteen cards with an upload button each, which read as sixteen
+ * chores to work through one at a time. Dropping a folder of samples on the
+ * zone above settles the lot in one gesture and REPLACES this list outright,
+ * so the honest way to draw it is as a plain roll of what stands in until
+ * then — legible, and clearly not the thing you are meant to click.
  *
- * Each one links to its own upload page, which already exists — SITE_IMAGES
- * derives a slot per transcribed name — so "edit" from here is one click.
+ * It cannot simply be omitted. Before this list existed the page showed
+ * nothing at all on a shop that had uploaded nothing, said "0 barv", and the
+ * owner reported it as the panel being broken — while every product page was
+ * at that moment rendering these very names.
  */
-function fallbackCard(kind: FinishKind, name: string): string {
-  const slug = finishSlug(name);
+function fallbackChips(names: readonly string[]): string {
   return (
-    '<li class="fin fin--todo">' +
-    '<span class="sw sw--none" aria-hidden="true"></span>' +
-    '<span class="grow">' +
-    '<span class="nm">' + esc(name) + "</span>" +
-    '<span class="slug">iz dobaviteljeve karte · še brez vzorca</span>' +
-    '<a class="btn btn--ghost" href="/admin/site/' + esc(kind) + "-" + esc(slug) +
-    '">Naložite vzorec</a>' +
-    "</span></li>"
+    '<ul class="chips">' +
+    names.map((n) => "<li>" + esc(n) + "</li>").join("") +
+    "</ul>"
   );
 }
 
 function group(
   title: string,
   note: string,
-  kind: FinishKind,
+  prefix: "bv" | "ob",
+  what: string,
   rows: readonly Finish[],
   fallback: readonly string[],
   photographed: boolean,
@@ -127,24 +124,24 @@ function group(
   // needs to be told which one they are in.
   const live = rows.length > 0;
   const state = !live
-    ? "Na strani modela se zdaj prikazuje " + esc(finishCount(fallback.length)) +
-      " iz dobaviteljeve barvne karte. Ko naložite prvi vzorec, seznam " +
-      "prevzamejo vaše barve."
+    ? "Zdaj v ponudbi — " + esc(finishCount(fallback.length)) +
+      " iz dobaviteljeve barvne karte. Ko naložite svoje vzorce, ta seznam " +
+      "nadomestijo v celoti: kupec izbira med natanko tistimi barvami, " +
+      "ki jih naložite."
     : photographed
-      ? "Na strani modela se prikazuje teh " + esc(finishCount(rows.length)) +
-        " — vaši vzorci."
-      : "Naloženih je " + esc(finishCount(rows.length)) + ". Na strani modela " +
-        "se do naslednje posodobitve strani še prikazuje " +
+      ? "V ponudbi — " + esc(finishCount(rows.length)) + ", vaši vzorci. " +
+        "Kupec izbira med temi in nobeno drugo."
+      : "Naloženo — " + esc(finishCount(rows.length)) + ". Trgovina jih " +
+        "pokaže ob naslednji posodobitvi strani; do takrat je v ponudbi " +
         esc(finishCount(fallback.length)) + " iz dobaviteljeve barvne karte.";
   return (
     '<div class="fin-group"><h2>' + esc(title) + "</h2>" +
     '<p class="lede">' + esc(note) + "</p>" +
+    finishDropCard(prefix, what) +
     '<p class="fin-state">' + state + "</p>" +
-    '<ul class="fins">' +
-    (live
-      ? rows.map(card).join("")
-      : fallback.map((n) => fallbackCard(kind, n)).join("")) +
-    "</ul></div>"
+    (live ? '<ul class="fins">' + rows.map(card).join("") + "</ul>"
+          : fallbackChips(fallback)) +
+    "</div>"
   );
 }
 
@@ -167,24 +164,26 @@ export function finishListPage(
     "Barve",
     CSS +
       '<div class="head"><h1>Barve</h1>' +
-      '<p class="lede">Barve, ki jih trgovina lahko pokaže. Na strani modela se ' +
-      "prikažejo prav te — " + esc(finishCount(shown)) + " skupaj. " +
-      "Spremembe se pokažejo ob naslednji posodobitvi strani.</p></div>" +
+      '<p class="lede">Ta seznam JE ponudba: kupec izbira med temi barvami in ' +
+      "nobeno drugo — zdaj " + esc(finishCount(shown)) + " skupaj. " +
+      "Povlecite vse svoje vzorce naenkrat; naložijo se sami, ime barve " +
+      "preberemo iz imena datoteke.</p></div>" +
       noticeHtml(n) +
       '<div class="fin-how">' +
-      "<p><b>Barvo dodate tako, da naložite njen vzorec.</b> Datoteko poimenujte " +
-      "po barvi, tako kot piše na proizvajalčevi barvni karti — " +
+      "<p><b>Poimenujte datoteke po barvah in jih spustite v okno spodaj.</b> " +
+      "Tako, kot piše na proizvajalčevi barvni karti — " +
       "<code>Oyster Opal.jpg</code>, <code>Silver white marble.png</code>, " +
-      "<code>Črna.jpg</code> — in jo povlecite na ustrezno polje na strani " +
-      '<a href="/admin/slike">Slike strani</a>.</p>' +
-      "<p>Ime barve preberemo iz imena datoteke in ga ne popravljamo: velike in " +
-      "male črke ostanejo takšne, kot ste jih napisali, ker se ime navaja na " +
-      "naročilnici. Ko je barva vaša, jo lahko tukaj preimenujete ali odstranite.</p>" +
+      "<code>Črna.jpg</code>. Vsaka datoteka postane ena barva.</p>" +
+      "<p>Velikih in malih črk ne popravljamo, ker se ime navaja na " +
+      "naročilnici: karta piše <i>Silver white marble</i> in <i>Oyster Opal</i>, " +
+      "vsako po svoje, in tako tudi ostane. Po nalaganju lahko vsako barvo " +
+      "tukaj preimenujete ali odstranite s seznama.</p>" +
       "</div>" +
       group(
         "Barve školjke",
         "Akrilne školjke. Imena so proizvajalčeva in jih ne prevajamo.",
-        "barva",
+        "bv",
+        "barv školjke",
         shellF,
         fallback.shell,
         fallback.shellPhotographed,
@@ -192,11 +191,13 @@ export function finishListPage(
       group(
         "Barve obloge",
         "Stranske plošče. Ta imena so slovenska.",
-        "obloga",
+        "ob",
+        "barv obloge",
         cab,
         fallback.cabinet,
         fallback.cabinetPhotographed,
-      ),
+      ) +
+      "<script>" + SMART_JS + "</script>",
     who,
     "barve",
   );
