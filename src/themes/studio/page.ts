@@ -155,7 +155,18 @@ export const STUDIO_PAGE_CSS = `
        * widening the track costs prose nothing and buys the data blocks
        * 160px. Measured at 1920: the page's right edge moves out by that
        * much, which is what closes the gap the container was leaving. */
-      grid-template-columns: minmax(0, 16rem) minmax(0, 56rem);
+      /* ⚠️ 1fr, NOT 56rem. The track used to cap at 56rem, and measured at
+       * 2560 the widest thing on a content page ended 368px before the band
+       * it sits in — 371px at 1920, 190px at 1440. That is a strip of
+       * content in a wide frame, and it is what "the width is still not ok"
+       * is looking at.
+       *
+       * The cap was protecting running text, which does not need protecting
+       * here: prose carries its own measure (see .st-page-p and friends
+       * below), so widening the track costs it nothing and lets the things
+       * that SHOULD span — a photograph, a fact table, a compare table, a
+       * row of question hairlines — reach the band's own right edge. */
+      grid-template-columns: minmax(0, 16rem) minmax(0, 1fr);
       column-gap: clamp(48px, 4vw, 80px);
       /* ⚠️ start, NOT center — this is the second half of the alignment the
        * container rule fixed one layer up, and it is the half a reader can
@@ -203,7 +214,7 @@ export const STUDIO_PAGE_CSS = `
      * centre with an empty margin where the rail would have been. The legal
      * pages are exactly this shape. */
     :root[data-theme="studio"] .st-page-grid--solo {
-      grid-template-columns: minmax(0, 56rem);
+      grid-template-columns: minmax(0, 1fr);
     }
     /* ⚠️ A PAGE WITH NOTHING WIDE ON IT SHRINKS TO ITS TEXT.
      *
@@ -352,16 +363,32 @@ export const STUDIO_PAGE_CSS = `
    * read at 31rem, which is the width the note at the top of this file
    * measured. A block that is DATA opts out — see --wide, which the renderer
    * puts on the fact tables, the contact block and the imprint. */
-  /* THE READING MEASURE, and it is now the standfirst's too — 38rem carries
-   * ~71 median characters at --t-body, inside the 45–75 band, and having the
-   * lead and the paragraph under it break on the same edge is worth more
-   * than the four characters the old 34rem saved. Re-measure if --t-body or
-   * the body face moves. */
-  :root[data-theme="studio"] .st-page-block {
+  /* THE READING MEASURE — 38rem carries ~71 median characters at --t-body,
+   * inside the 45–75 band. Re-measure if --t-body or the body face moves.
+   *
+   * ⚠️ IT IS ON THE RUNNING TEXT, NOT ON THE BLOCK, and that distinction is
+   * the whole of this pass. Capping the BLOCK capped its structure with it:
+   * the question hairlines on /pogosta-vprasanja, the numbered rules on
+   * /dostava-in-montaza and every disclosure chevron stopped at 608px in a
+   * 1224px track, so the page read as a narrow strip with a wide empty
+   * margin — which is exactly what it was.
+   *
+   * A hairline is not a sentence. Structure spans the track; the words
+   * inside it keep their measure. That is what an editorial column does,
+   * and it is why the chevron now sits at the far right of its own rule
+   * where a reader's eye can find it, instead of two thirds of the way in.
+   *
+   * --wide survives as the marker isWide() puts on data blocks, because the
+   * grid still reads it: a page carrying no wide block gets a narrower
+   * track, and that rule is what keeps a two-paragraph legal page from
+   * being a 1224px column of nothing. */
+  :root[data-theme="studio"] .st-page-p,
+  :root[data-theme="studio"] .st-page-a,
+  :root[data-theme="studio"] .st-page-step-p,
+  :root[data-theme="studio"] .st-page-li,
+  :root[data-theme="studio"] .st-page-block > ul,
+  :root[data-theme="studio"] .st-page-block > ol {
     max-inline-size: 38rem;
-  }
-  :root[data-theme="studio"] .st-page-block--wide {
-    max-inline-size: none;
   }
   /* ---- the photograph band (kind: "figure") ----
    * The FRAME owns the shape: aspect-ratio reserves the box before any bytes
@@ -1733,6 +1760,15 @@ function isWide(b: Block): boolean {
     // A row of links is navigation laid out across the column, not a sentence
     // to read at the measure — same reason onward() spans the body.
     b.kind === "links" ||
+    // ⚠️ STEPS AND Q&A ARE STRUCTURE, and they were the two blocks that made
+    // these pages look narrow. Both draw rules across their whole width — a
+    // numbered ordered list with a disc per row, a stack of disclosure
+    // hairlines with a chevron at the end — and both had that structure cut
+    // off at the reading measure while the band around them ran on for
+    // another 600px. The PROSE inside each still stops at 38rem; what spans
+    // now is the rule, the disc column and the chevron.
+    b.kind === "steps" ||
+    b.kind === "qa" ||
     // A photograph is a band, not a paragraph: at the reading measure it
     // would be a small picture in a wide column, which is neither.
     b.kind === "figure"
