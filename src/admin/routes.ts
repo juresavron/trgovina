@@ -51,7 +51,7 @@ import {
   type SiteSlot,
 } from "./panel";
 import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn, readCookie, SESSION_COOKIE } from "./auth";
-import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
+import { SITE_IMAGES, legacyFallback, siteImageByKey, siteImageBySlug, stemOf } from "./site-images";
 import { deleteEnquiry, isStatus, listEnquiries, updateEnquiry } from "./enquiries";
 import { enquiryListPage } from "./enquiries-panel";
 import {
@@ -272,6 +272,23 @@ export function slugStem(s: string, max = 60): string {
   const dash = cut.lastIndexOf("-");
   return (dash > 20 ? cut.slice(0, dash) : cut).replace(/^-+|-+$/g, "");
 }
+/**
+ * A 1×1 fully transparent WebP, 34 bytes.
+ *
+ * Generated with sharp at lossless quality and decoded back to confirm it is
+ * one pixel of rgba(0,0,0,0) — not pasted from memory, because a literal that
+ * is subtly wrong here would ship a visible artefact onto every colour tile
+ * on every product page and would look exactly like a design decision.
+ *
+ * Rebuilt per call rather than held as a module-level Uint8Array: a Response
+ * body consumes the buffer it is given, so a shared one would serve the first
+ * request and empty bodies after it.
+ */
+const BLANK_PIXEL = (): ArrayBuffer =>
+  Uint8Array.from(atob("UklGRhoAAABXRUJQVlA4TA0AAAAvAAAAEAcQERGIiP4HAA=="), (c) =>
+    c.charCodeAt(0),
+  ).buffer as ArrayBuffer;
+
 export async function handleMedia(request: Request, env: Env): Promise<Response> {
   if (request.method !== "GET" && request.method !== "HEAD") {
     // Same shape as the storefront's 405 (worker.ts): allow, a type, nosniff.
@@ -336,6 +353,39 @@ export async function handleMedia(request: Request, env: Env): Promise<Response>
     }
   }
   if (!res.ok) {
+    // ⚠️ AN OPTIONAL SLOT NOBODY HAS UPLOADED YET ANSWERS WITH NOTHING, NOT
+    // WITH A 404 — and the difference is sixteen failing requests per page.
+    //
+    // site-images.ts marks the sixteen finish swatches `optional` because
+    // they are painted as CSS BACKGROUNDS: a colour nobody has photographed
+    // paints the tile's own ground and its name, with no broken-image icon.
+    // That degrades quietly on screen and was extremely loud everywhere else.
+    // Every product page asks for all sixteen, each one 404s, and the 404
+    // carries `no-store` — so the absence is never cached and all sixteen
+    // requests repeat on every single view, for every visitor, until the day
+    // the shop uploads swatches. The owner found it as sixteen red lines in
+    // the console.
+    //
+    // A 1×1 fully transparent WebP is 34 bytes and gives the same picture
+    // (nothing, over the tile's ground) with a 200 the browser will cache.
+    // After the first view the requests stop; on the day a real swatch lands
+    // the 300-second TTL below picks it up, exactly like every other managed
+    // image.
+    //
+    // ONLY for slots the registry itself marks optional. Everything else —
+    // the hero, the gallery, a product photograph — keeps its 404, because
+    // there a missing file is a fault to see rather than a state to absorb.
+    const slot = siteImageByKey(key);
+    if (slot?.optional) {
+      return new Response(BLANK_PIXEL(), {
+        status: 200,
+        headers: {
+          "content-type": "image/webp",
+          "x-content-type-options": "nosniff",
+          "cache-control": "public, max-age=300, must-revalidate",
+        },
+      });
+    }
     return new Response("Not found", {
       status: 404,
       headers: {
