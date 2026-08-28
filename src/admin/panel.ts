@@ -612,13 +612,15 @@ export function finishDropCard(
     (ai
       ? '<label class="ai-opt" for="' + prefix + '-ai">' +
         '<input type="checkbox" id="' + prefix + '-ai" checked>' +
-        "<span>Premajhne vzorce povečaj z umetno inteligenco</span></label>" +
-        '<p class="note-ai">Velja samo za vzorce, ožje od 400 px — večjih ne ' +
-        "spreminjamo. Model vzorec PONOVNO NARIŠE večji: pri marmoriranem " +
-        "akrilu to ni ostrejša fotografija iste barve, ampak nov vzorec v " +
-        "približno tej barvi. Po nalaganju vsakega poglejte in ga primerjajte " +
-        "z vzorcem v roki — ime barve gre na naročilnico. Če model ne vrne " +
-        "večje slike, obdržimo vašo.</p>"
+        "<span>Vzorce prenovi z umetno inteligenco</span></label>" +
+        '<p class="note-ai">Model vsak vzorec PONOVNO NARIŠE — tudi tistega, ' +
+        "ki je že dovolj velik. Pri marmoriranem akrilu to ni ostrejša " +
+        "fotografija iste barve, ampak nov vzorec v približno tej barvi. " +
+        "Vsakega po nalaganju poglejte in ga primerjajte z vzorcem v roki: " +
+        "ime in odtenek gresta na naročilnico. Če model ne vrne boljše slike, " +
+        "obdržimo vašo. Poravnavo in enako velikost naredimo brez modela — " +
+        "vzorec sami poiščemo na sliki, ga postavimo na sredino in shranimo " +
+        "400 × 400 px, zato so ploščice enake ne glede na to kljukico.</p>"
       : "") +
     '<p class="stline" id="' + prefix + '-stwrap" role="status">' +
     '<span id="' + prefix + '-st"></span></p>' +
@@ -1512,12 +1514,107 @@ function mount(p, scope){
     });
   }
 
+  /* FIND THE SWATCH IN THE PICTURE, so a row of tiles is a row of tiles.
+
+     The owner's report: "when i upload the image i want all to be centered
+     and look the same and not like one a bit higher one a bit lower." Six
+     screen captures of a supplier chart put the sample in six different
+     places at six different sizes; a centre crop keeps whatever happened to
+     be in the middle, so one tile sat high, one sat low, one was clipped at
+     the bottom, and the row read as six mistakes rather than one picker.
+
+     This is a bounding box, not a generator. It reads the four corners to
+     learn the background, walks the image for everything that is not that
+     background, and returns the smallest square holding it with a little
+     air. Deterministic, so the same file always frames the same way, and the
+     colour that comes out is the colour that went in — which is the whole
+     requirement for a swatch somebody orders a shell from.
+
+     ⚠️ EVERY RAIL HERE EXISTS FOR ONE SAMPLE: "Silver white marble" is very
+     nearly the white it is photographed against. A trim that trusted its own
+     answer would find almost nothing and crop the sample away to a speck. So
+     the corners have to agree with each other about what the background even
+     is, and the box has to be a believable size; anything outside those
+     bounds falls back to the plain centre crop, which is today's behaviour.
+     Failing back to a slightly-off tile beats failing forward to a tile that
+     is not the colour. */
+  function frameSwatch(bmp){
+    var w = bmp.width || bmp.naturalWidth, h = bmp.height || bmp.naturalHeight;
+    if (!(w > 8 && h > 8)) return null;
+    /* Analysed small: 240px is enough to find an edge, and keeps a
+       twelve-megapixel screen capture from locking the tab. */
+    var aw = Math.min(w, 240), ah = Math.max(1, Math.round(h * (aw / w)));
+    var c = document.createElement("canvas");
+    c.width = aw; c.height = ah;
+    var ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.drawImage(bmp, 0, 0, aw, ah);
+    var d;
+    try { d = ctx.getImageData(0, 0, aw, ah).data; } catch (e) { return null; }
+
+    function at(x, y){ var i = (y * aw + x) * 4; return [d[i], d[i + 1], d[i + 2]]; }
+    function far(p, q){
+      var dr = p[0] - q[0], dg = p[1] - q[1], db = p[2] - q[2];
+      return Math.sqrt(dr * dr + dg * dg + db * db);
+    }
+    /* The background, from the four corners. They must agree: a photograph
+       with a busy edge has no background to trim, and guessing one would
+       carve into the picture. */
+    var m = 2;
+    var k4 = [at(m, m), at(aw - 1 - m, m), at(m, ah - 1 - m), at(aw - 1 - m, ah - 1 - m)];
+    for (var i = 1; i < k4.length; i++) if (far(k4[0], k4[i]) > 18) return null;
+    var bg = [
+      (k4[0][0] + k4[1][0] + k4[2][0] + k4[3][0]) / 4,
+      (k4[0][1] + k4[1][1] + k4[2][1] + k4[3][1]) / 4,
+      (k4[0][2] + k4[1][2] + k4[2][2] + k4[3][2]) / 4,
+    ];
+
+    var x0 = aw, y0 = ah, x1 = -1, y1 = -1, hits = 0;
+    for (var y = 0; y < ah; y++) {
+      for (var x = 0; x < aw; x++) {
+        if (far(at(x, y), bg) <= 24) continue;
+        hits++;
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
+      }
+    }
+    if (x1 < 0) return null;
+    var area = (x1 - x0 + 1) * (y1 - y0 + 1);
+    /* ⚠️ DENSITY, NOT AREA, IS THE RAIL THAT WORKS. A 4% area floor was the
+       first attempt and it refused a real case: a 120px sample inside a
+       900x600 screen capture is 2.7% of the frame and framed nothing, so
+       that tile stayed as crooked as before. What actually separates a
+       sample from a speck of noise is that a sample FILLS its own bounding
+       box — scattered dark pixels give a huge box with almost nothing in it.
+       Hence the 60% fill test, with a much lower area floor behind it. */
+    if (hits < area * 0.6) return null;       /* scattered, not one object */
+    if (area < aw * ah * 0.005) return null;  /* too small to be the sample */
+    if (area > aw * ah * 0.96) return null;   /* nothing to trim */
+
+    /* Back to full-resolution coordinates, then a square around the box's
+       centre with a little air, clamped inside the picture. Square because
+       the slot is square: framing here and centre-cropping again downstream
+       would shift it back off centre. */
+    var kk = w / aw;
+    var bx = x0 * kk, by = y0 * kk, bw = (x1 - x0 + 1) * kk, bh = (y1 - y0 + 1) * kk;
+    var side = Math.min(Math.max(bw, bh) * 1.12, Math.min(w, h));
+    var cx = bx + bw / 2, cy = by + bh / 2;
+    var sx = Math.round(Math.min(Math.max(cx - side / 2, 0), w - side));
+    var sy = Math.round(Math.min(Math.max(cy - side / 2, 0), h - side));
+    return { x: sx, y: sy, w: Math.round(side), h: Math.round(side) };
+  }
+
   /* Centre-crop to the slot's shape, capped at its width — the same cut the
      single-slot page makes, so the two roads store the same picture. */
-  function drawSlot(bmp, ar, maxW, exact){
+  function drawSlot(bmp, ar, maxW, exact, rect){
     var sw = bmp.width || bmp.naturalWidth, sh = bmp.height || bmp.naturalHeight;
     var sx = 0, sy = 0, cw = sw, ch = sh;
-    if (ar > 0) {
+    /* A rect from frameSwatch is already the slot's shape and already
+       centred on the sample, so it replaces the centre crop rather than
+       being cropped a second time. */
+    if (rect) { sx = rect.x; sy = rect.y; cw = rect.w; ch = rect.h; }
+    else if (ar > 0) {
       if (sw / sh > ar) { cw = Math.round(sh * ar); sx = Math.round((sw - cw) / 2); }
       else { ch = Math.round(sw / ar); sy = Math.round((sh - ch) / 2); }
     }
@@ -1559,7 +1656,17 @@ function mount(p, scope){
        runs only when the source is NARROWER than the slot, and the result is
        kept only when it comes back measurably larger. A redraw that added no
        pixels is all risk and no benefit. */
-    if (!ai || !ai.checked || !(srcW < maxW)) return Promise.resolve({ f: f, up: false });
+    /* ⚠️ THE SIZE GUARD DOES NOT APPLY TO A COLOUR SWATCH, on the owner's
+       instruction, asked for three times. Everywhere else a redraw runs only
+       when the picture is too small for its slot, because a redraw of an
+       already-big photograph is all risk and no benefit. The owner wants the
+       samples regenerated regardless of size — "I want ai to regenerate the
+       image and make it perfect. Like we did for other images" — and the box
+       is ticked per upload, so it is a decision taken each time rather than
+       a default nobody sees. What comes back is still only kept when it is
+       measurably larger than what went in. */
+    if (!ai || !ai.checked) return Promise.resolve({ f: f, up: false });
+    if (!scope && !(srcW < maxW)) return Promise.resolve({ f: f, up: false });
     mark(i, "povečujem z AI …");
     var fd = new FormData();
     fd.append("file", f, f.name || "slika");
@@ -1682,7 +1789,15 @@ function mount(p, scope){
             return decode(e.f);
           }).then(function(bmp2){
             mark(i, it.label + " · obrezujem …");
-            return drawSlot(bmp2, ar, it.max || 2048, it.exact);
+            /* ONLY THE COLOUR CATALOGUE IS FRAMED. A hero, a gallery
+               shot or a guide photograph is composed by whoever took it,
+               and hunting for a subject in one would throw away the
+               composition the photographer chose. A swatch has no
+               composition: it is one object on a plain ground, and the only
+               right answer is that every one of them sits in the same place
+               at the same size. */
+            return drawSlot(bmp2, ar, it.max || 2048, it.exact,
+              scope ? frameSwatch(bmp2) : null);
           }).then(function(r){
             mark(i, it.label + " · nalagam …");
             var fd = new FormData();

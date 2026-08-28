@@ -194,5 +194,8 @@ describe("the colour page, on a shop that has uploaded nothing", () => {
     }
     // And it says what the redraw actually does, rather than "izboljšaj".
     expect(withAi).toContain("PONOVNO NARIŠE");
+    // And that the framing is NOT the model's doing, so an operator who
+    // unticks the box does not think their tiles will go crooked again.
+    expect(withAi).toContain("brez modela");
   });
 });
