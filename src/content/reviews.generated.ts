@@ -32,5 +32,30 @@
 import type { ShopContent } from "./types";
 
 export const GENERATED_REVIEWS: Record<string, ShopContent["reviews"]> = {
-  bazen: [],
+  bazen: [
+    {
+      q: "Spa smo si želeli že dolgo, predvsem za večerno sprostitev po napornem dnevu. Zdaj je to postal naš najljubši del doma. Topla voda in masažni curki res naredijo svoje – po nekaj minutah popolnoma odklopiš.",
+      who: "Nina in Marko",
+      model: "",
+      verified: false,
+    },
+    {
+      q: "Sprva smo mislili, da bo spa predvsem za odrasle, ampak ga danes uporablja cela družina. Čez dan uživajo otroci, zvečer pa si vzamemo čas zase. Postal je prostor, kjer smo skupaj in hkrati resnično sproščeni.",
+      who: "Družina Kovač",
+      model: "",
+      verified: false,
+    },
+    {
+      q: "Ker veliko treniram, mi je regeneracija zelo pomembna. Topla voda in masažni curki so odlični po napornem treningu. Spa je postal del moje rutine – ne samo za sprostitev, ampak tudi za regeneracijo.",
+      who: "Luka",
+      model: "",
+      verified: false,
+    },
+    {
+      q: "Najbolj nama je všeč, da lahko uživava v občutku wellnessa, ne da bi kamorkoli odšla. Zvečer prižgeva luči, napolniva spa in si vzameva čas zase. To je bila ena najboljših odločitev za najin dom.",
+      who: "Tina in Jure",
+      model: "",
+      verified: false,
+    },
+  ],
 };
