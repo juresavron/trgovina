@@ -350,7 +350,10 @@ export function renderStudioBlogPost(
     .map((b, i) => ("h" in b && b.h ? { h: b.h, id: ids[i]! } : null))
     .filter((x): x is { h: string; id: string } => x !== null);
   const index =
-    headed.length < 4
+    // Three, matching renderStudioPage — see the note on its threshold for
+    // why four was wrong (a sticky rail does not "orphan"; fullPage capture
+    // simply cannot show it sticking).
+    headed.length < 3
       ? ""
       : '<nav class="st-page-toc" aria-labelledby="st-post-toc-h">' +
         '<p class="st-page-toc-h" id="st-post-toc-h">V tem zapisu</p>' +

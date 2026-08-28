@@ -116,7 +116,7 @@ export const STUDIO_PAGE_CSS = `
    * is inert, and the max-inline-size is the same 31rem the container used to
    * carry, so a phone and a tablet get exactly the page they had. */
   :root[data-theme="studio"] .st-page-grid {
-    max-inline-size: 34rem;
+    max-inline-size: 38rem;
     margin-inline: auto;
   }
   /* THE INDEX BECOMES A RAIL at the width where there is room for one.
@@ -148,7 +148,13 @@ export const STUDIO_PAGE_CSS = `
     :root[data-theme="studio"] .st-page-grid {
       display: grid;
       max-inline-size: none;
-      grid-template-columns: minmax(0, 16rem) minmax(0, 46rem);
+      /* 56rem, not 46: this track is the WIDE measure — the width a compare
+       * table, a facts list, a contact grid and a photograph band get to
+       * use. Running text never sees it (.st-page-block caps itself), so
+       * widening the track costs prose nothing and buys the data blocks
+       * 160px. Measured at 1920: the page's right edge moves out by that
+       * much, which is what closes the gap the container was leaving. */
+      grid-template-columns: minmax(0, 16rem) minmax(0, 56rem);
       column-gap: clamp(48px, 4vw, 80px);
       justify-content: center;
     }
@@ -180,7 +186,29 @@ export const STUDIO_PAGE_CSS = `
      * centre with an empty margin where the rail would have been. The legal
      * pages are exactly this shape. */
     :root[data-theme="studio"] .st-page-grid--solo {
-      grid-template-columns: minmax(0, 46rem);
+      grid-template-columns: minmax(0, 56rem);
+    }
+    /* ⚠️ A PAGE WITH NOTHING WIDE ON IT SHRINKS TO ITS TEXT.
+     *
+     * The track carries the wide measure so tables and photographs can use
+     * it — but a page that is only prose and steps (/vodniki is three guide
+     * articles, /piskotki is four paragraphs) never fills it, and the unused
+     * 288px sat entirely on the right: the page read as pushed left, which
+     * is exactly the "does not use the full width" report. Centring cannot
+     * fix that, because what is centred is the TRACK, not the text in it.
+     *
+     * So the track asks what is in it. :has() is already load-bearing in this
+     * theme (the chrome's four-track bar, the figure's rhythm); where it is
+     * unsupported the page simply keeps the wide track, which is today's
+     * layout — a graceful degradation to the status quo, never to a break.
+     *
+     * Source order settles the solo pair, the same way it already does for
+     * the rule above it. */
+    :root[data-theme="studio"] .st-page-grid:not(:has(.st-page-block--wide)) {
+      grid-template-columns: minmax(0, 16rem) minmax(0, 38rem);
+    }
+    :root[data-theme="studio"] .st-page-grid--solo:not(:has(.st-page-block--wide)) {
+      grid-template-columns: minmax(0, 38rem);
     }
     :root[data-theme="studio"] .st-page-grid--solo .st-page-head { grid-area: 1 / 1; }
     :root[data-theme="studio"] .st-page-grid--solo .st-page-body { grid-area: 2 / 1; }
@@ -229,6 +257,9 @@ export const STUDIO_PAGE_CSS = `
     color: var(--ink-mute);
   }
   :root[data-theme="studio"] .st-page-h {
+    /* The masthead spans BOTH columns, so without a cap a long title would
+     * set across the full 56rem-plus-rail width as one line of display type. */
+    max-inline-size: 46rem;
     margin-block-start: clamp(12px, 1.2vw, 20px);
     font-family: var(--f-display);
     font-weight: var(--w-display);
@@ -304,8 +335,13 @@ export const STUDIO_PAGE_CSS = `
    * read at 31rem, which is the width the note at the top of this file
    * measured. A block that is DATA opts out — see --wide, which the renderer
    * puts on the fact tables, the contact block and the imprint. */
+  /* THE READING MEASURE, and it is now the standfirst's too — 38rem carries
+   * ~71 median characters at --t-body, inside the 45–75 band, and having the
+   * lead and the paragraph under it break on the same edge is worth more
+   * than the four characters the old 34rem saved. Re-measure if --t-body or
+   * the body face moves. */
   :root[data-theme="studio"] .st-page-block {
-    max-inline-size: 34rem;
+    max-inline-size: 38rem;
   }
   :root[data-theme="studio"] .st-page-block--wide {
     max-inline-size: none;
@@ -786,7 +822,11 @@ export const STUDIO_PAGE_CSS = `
   }
   :root[data-theme="studio"] .st-page-frow {
     display: grid;
-    grid-template-columns: minmax(0, 12rem) minmax(0, 1fr);
+    /* The value is running text, so it takes the reading measure rather than
+     * the whole track: at 1fr inside a 56rem column a definition ran past
+     * 100 characters. Label plus value is 50rem, which still sets the row
+     * wider than the old 46rem column allowed. */
+    grid-template-columns: minmax(0, 12rem) minmax(0, 38rem);
     gap: clamp(10px, 1.2vw, 24px);
     padding-block: clamp(12px, 1.2vw, 18px);
     border-block-end: var(--bw-line) solid var(--line);
@@ -1606,10 +1646,15 @@ export function renderStudioPage(ctx: RenderCtx, page: Page): string {
     .map((b, i) => (b.kind !== "cta" && "h" in b && b.h ? { h: b.h, id: ids[i]! } : null))
     .filter((x): x is { h: string; id: string } => x !== null);
   const index =
-    // Four, not three: a three-link rail held a 256px column open beside
-    // 3,300px of empty track on /dostava. Under four entries the body gets
-    // the width back.
-    headed.length < 4
+    // ⚠️ THREE. It was raised to four for one evening on a critique that a
+    // three-link rail "holds a 256px column open beside 3,300px of empty
+    // track" — which is what a fullPage screenshot shows, because fullPage
+    // capture does not engage position:sticky. The rail is sticky: it
+    // travels with the reader. Raising it stripped the index from /vodniki,
+    // /dostava-in-montaza, /blagajna and /piskotki AND dropped them into the
+    // solo grid, where a 46rem column floats with the page's whole slack on
+    // its right — the reported "subpages do not use the full width".
+    headed.length < 3
       ? ""
       : '<nav class="st-page-toc" aria-labelledby="st-toc-h">' +
         '<p class="st-page-toc-h" id="st-toc-h">Na tej strani</p>' +

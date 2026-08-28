@@ -750,31 +750,31 @@ export const STUDIO_CHROME_CSS = `
    * row + 36 + gaps against an 1160px container; at 1200 exactly it is 20px
    * short, so the floor is 1240). Icon-only, like ≤460: the aria-label and
    * the title carry the number, the tap carries the call. */
-  @media (min-width: 1240px) and (max-width: 1559px) {
+  /* BOTH BANDS SHARE THE FOURTH TRACK, so it is stated once from 1240 up
+   * rather than copied into each — the size guard in render/size.test.ts is
+   * a duplicate-rule detector, and this pair was two of the three verbatim
+   * duplicates in the whole sheet.
+   *
+   * :has(), because the tel is only EMITTED when the phone is set: an
+   * unconditional four-track template put a three-child bar into it and
+   * parked the disc a quarter-screen from the gutter on any tenant with no
+   * number. */
+  @media (min-width: 1240px) {
     :root[data-theme="studio"] .st-chrome-bar:has(> .st-chrome-tel) {
       grid-template-columns: 1fr auto auto 1fr;
     }
+    :root[data-theme="studio"] .st-chrome-tel { display: inline-flex; }
+  }
+
+  /* The disc's own dress, in its band only. */
+  @media (min-width: 1240px) and (max-width: 1559px) {
     :root[data-theme="studio"] .st-chrome-tel {
-      display: inline-flex;
-      justify-content: center;
       inline-size: 36px;
       min-inline-size: 36px;
       border-radius: var(--r-pill);
       border: var(--bw-line) solid var(--on-invert-24);
       background: var(--on-invert-16);
     }
-    :root[data-theme="studio"] .st-chrome-tel span { display: none; }
-  }
-
-  @media (min-width: 1560px) {
-    /* :has(), because the tel is only EMITTED when the phone is set: an
-     * unconditional four-track template put a three-child bar into it and
-     * parked the disc a quarter-screen from the gutter on any tenant with
-     * no number. */
-    :root[data-theme="studio"] .st-chrome-bar:has(> .st-chrome-tel) {
-      grid-template-columns: 1fr auto auto 1fr;
-    }
-    :root[data-theme="studio"] .st-chrome-tel { display: inline-flex; }
   }
 
   /* Skip link: off-screen until focused, then a white plate. Its corners are
@@ -1563,12 +1563,16 @@ export const STUDIO_CHROME_CSS = `
    * in full a scroll away. It also has to keep its target, and a target is two
    * dimensions: the row already makes it --st-tap tall, so with the digits gone
    * the width has to be stated or a 16px glyph would be the whole hit area. */
-  @media (max-width: 460px) {
+  /* ICON-ONLY, IN TWO DISJOINT BANDS — the phone tier and the laptop disc
+   * want the same thing, and a media query LIST is an OR, so they say it
+   * once. (min-inline-size stays on the phone tier alone: the disc band sets
+   * its own 36px above.) */
+  @media (max-width: 460px), (min-width: 1240px) and (max-width: 1559px) {
     :root[data-theme="studio"] .st-chrome-tel span { display: none; }
-    :root[data-theme="studio"] .st-chrome-tel {
-      min-inline-size: var(--st-tap);
-      justify-content: center;
-    }
+    :root[data-theme="studio"] .st-chrome-tel { justify-content: center; }
+  }
+  @media (max-width: 460px) {
+    :root[data-theme="studio"] .st-chrome-tel { min-inline-size: var(--st-tap); }
   }
 
   @media (prefers-reduced-motion: reduce) {
