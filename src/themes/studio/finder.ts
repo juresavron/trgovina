@@ -34,11 +34,19 @@ export const STUDIO_FINDER_CSS = `
   :root[data-theme="studio"] .st-fnd {
     padding-block: clamp(40px, 6vw, 96px) clamp(64px, 8vw, 128px);
   }
-  /* Centred, like every other solo-column page (/blog, a railless content
-   * page): the column sat pinned to the left gutter, which at 1440 left
-   * ~700px of dead white on the right — the one page drawn off the site's
-   * grid. */
-  :root[data-theme="studio"] .st-fnd-in { max-inline-size: 44rem; margin-inline: auto; }
+  /* ⚠️ LEFT, NOT CENTRED, and the note that stood here argued the opposite:
+   * that a left-pinned column left ~700px of dead white at 1440 and was "the
+   * one page drawn off the site's grid". It had the diagnosis backwards. The
+   * dead white is real and it is what a capped measure costs on every page
+   * here; centring did not remove it, it split it in two and moved the h1
+   * off the line the header, the footer and every other h1 sit on. Measured
+   * at 1920: this page's heading started at 608 while the band it sits in
+   * starts at 180.
+   *
+   * The reason it read as the odd one out is that /blog was centred too, and
+   * /blog was centred because it had silently fallen into the 38rem reading
+   * track (see the --wide note in blog.ts). Both are on the grid now. */
+  :root[data-theme="studio"] .st-fnd-in { max-inline-size: 44rem; }
   :root[data-theme="studio"] .st-fnd-eyebrow {
     font-family: var(--f-label);
     font-size: var(--t-label);
