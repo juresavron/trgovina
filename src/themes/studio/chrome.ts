@@ -42,36 +42,9 @@
 
 import { esc, type RenderCtx } from "../../render/sections";
 import { brandMark } from "./brand";
-import { basketIcon, mailIcon } from "./icons";
+import { basketIcon, contactIcon as icon, mailIcon, type IconKey } from "./icons";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 
-/* ---- inline line icons ----------------------------------------------- */
-/* 24px grid, stroke-only, currentColor. The chrome's magnifier and basket are
- * NOT here: icons.ts is the icon set's one home, and a second hand-drawn pair
- * meant the bar and the rest of the theme could drift apart glyph by glyph.
- * What remains is the footer's contact/affordance set, which icons.ts does not
- * carry. */
-type IconKey = "mail" | "phone" | "pin" | "arrow";
-
-const ICON_PATHS: Record<IconKey, string> = {
-  mail:
-    '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.7 6.9 8.3 5.9 8.3-5.9"/>',
-  phone:
-    '<path d="M6.4 3.8h3l1.5 3.7-2 1.4a11.5 11.5 0 0 0 5.2 5.2l1.4-2 3.7 1.5v3a1.6 1.6 0 0 1-1.7 1.6A15.6 15.6 0 0 1 4.8 5.5a1.6 1.6 0 0 1 1.6-1.7Z"/>',
-  pin:
-    '<path d="M12 21s6.4-6 6.4-11a6.4 6.4 0 1 0-12.8 0C5.6 15 12 21 12 21Z"/><circle cx="12" cy="10" r="2.4"/>',
-  arrow: '<path d="M4 12h14.5"/><path d="m12.8 6.2 5.8 5.8-5.8 5.8"/>',
-};
-
-function icon(k: IconKey): string {
-  return (
-    '<svg class="st-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" ' +
-    'fill="none" stroke="currentColor" stroke-width="1.6" ' +
-    'stroke-linecap="round" stroke-linejoin="round">' +
-    ICON_PATHS[k] +
-    "</svg>"
-  );
-}
 
 export const STUDIO_CHROME_CSS = `
   /* THE ONE LOCAL VARIABLE. --studio-gutter, --chrome-h, --chrome-line,

@@ -138,3 +138,44 @@ export function helpIcon(): string {
     '<path d="M12 17.2h.01"/>',
   );
 }
+
+/* ---- the contact/affordance set -------------------------------------- */
+/**
+ * Mail, telephone, map pin and a plain arrow, on the same 24-unit grid.
+ *
+ * ⚠️ THESE LIVED IN chrome.ts AND MOVED HERE WHEN A SECOND MODULE NEEDED THEM.
+ * chrome.ts drew them locally with a note saying icons.ts "does not carry"
+ * the footer's contact set — true at the time, and the note also stated the
+ * principle it was making an exception to: this file is the icon set's one
+ * home, because a second hand-drawn pair is how two parts of a theme drift
+ * apart glyph by glyph. page.ts now paints the same three glyphs on the
+ * contact card, so the exception had to end rather than be made twice.
+ *
+ * The geometry is chrome.ts's verbatim, stroke-width included — the footer's
+ * rows must not change appearance because the file moved.
+ *
+ * Stroke 1.6 rather than the 1.4 above: these are drawn at the footer's 18px
+ * inside a Ø44 disc, where 1.4 read thin against the basket and magnifier.
+ */
+export type IconKey = "mail" | "phone" | "pin" | "arrow";
+
+const CONTACT_PATHS: Record<IconKey, string> = {
+  mail:
+    '<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.7 6.9 8.3 5.9 8.3-5.9"/>',
+  phone:
+    '<path d="M6.4 3.8h3l1.5 3.7-2 1.4a11.5 11.5 0 0 0 5.2 5.2l1.4-2 3.7 1.5v3a1.6 1.6 0 0 1-1.7 1.6A15.6 15.6 0 0 1 4.8 5.5a1.6 1.6 0 0 1 1.6-1.7Z"/>',
+  pin:
+    '<path d="M12 21s6.4-6 6.4-11a6.4 6.4 0 1 0-12.8 0C5.6 15 12 21 12 21Z"/><circle cx="12" cy="10" r="2.4"/>',
+  arrow: '<path d="M4 12h14.5"/><path d="m12.8 6.2 5.8 5.8-5.8 5.8"/>',
+};
+
+/** One contact glyph, aria-hidden — every caller labels its own row. */
+export function contactIcon(k: IconKey): string {
+  return (
+    '<svg class="st-ico" viewBox="0 0 24 24" aria-hidden="true" focusable="false" ' +
+    'fill="none" stroke="currentColor" stroke-width="1.6" ' +
+    'stroke-linecap="round" stroke-linejoin="round">' +
+    CONTACT_PATHS[k] +
+    "</svg>"
+  );
+}

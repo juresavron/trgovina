@@ -84,6 +84,27 @@ export type Block =
        * address.
        */
       omitAddress?: boolean;
+      /**
+       * One line under each channel saying what to expect of it.
+       *
+       * ⚠️ NOT DECORATION AND NOT NEW CLAIMS. Every note here must already be
+       * stated somewhere the shop stands behind — the response times are the
+       * contact page's own lead, and "seat, not a showroom" is what
+       * /pogosta-vprasanja and the showroom copy already say. A note invented
+       * to balance a tile is a promise nobody made.
+       *
+       * Optional, and deliberately absent on most pages. This block appears
+       * on eight of them; on the legal pages it is a channel to reach the
+       * seller, and annotating "answered within one working day" beside a
+       * complaints address would read as a service level attached to a
+       * statutory route. Only /kontakt, whose entire subject is how to get in
+       * touch, carries them.
+       */
+      notes?: {
+        phone?: string;
+        email?: string;
+        address?: string;
+      };
     }
   /** The registered-company imprint, rendered from ShopConfig. */
   | { kind: "imprint"; h?: string }
