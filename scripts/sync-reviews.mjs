@@ -86,23 +86,23 @@ if (!res.ok) {
 
 const rows = await res.json();
 
-// ⚠️ ZERO ROWS DOES NOT MEAN ZERO REVIEWS. It usually means the reader could
-// not see them.
+// ⚠️ ZERO ROWS DOES NOT MEAN ZERO REVIEWS. It can equally mean the reader
+// could not see them, and this script cannot tell the two apart.
 //
 // PostgREST answers a request that RLS filters to nothing with 200 and an
 // EMPTY ARRAY — byte for byte what a genuinely empty table returns. Written
 // straight out, that silently replaces the shop's real data with the built-in
-// fallback while the deploy goes green. It is exactly how six uploaded colour
-// swatches sat in the database with every product page showing the transcribed
-// supplier chart (see sync-finishes.mjs and db/migrations/001).
+// fallback while the deploy goes green, and every visible signal says it
+// worked.
 //
-// Here the stakes are higher than a colour: a review is an Annex I claim, and
-// silently dropping the four the owner collected would leave the storefront
-// making no claim where it should make one — or, worse, quietly reverting to
-// whatever the committed file happens to hold.
+// // The stakes are higher here than for a colour: a review is an Annex I claim
+// under ZVPot-1, and silently dropping the four the owner actually collected
+// leaves the storefront making no claim where it should make one.
 //
 // So an empty result leaves the committed file ALONE and turns the step red.
-// Emptying it on purpose has to be said out loud: SYNC_ALLOW_EMPTY=1.
+// Emptying it on purpose still works, but has to be said out loud:
+//
+//   SYNC_ALLOW_EMPTY=1 node scripts/sync-reviews.mjs
 if (!Array.isArray(rows) || (rows.length === 0 && process.env.SYNC_ALLOW_EMPTY !== "1")) {
   console.error(
     "sync-reviews: the query succeeded and returned NOTHING, so " + OUT +

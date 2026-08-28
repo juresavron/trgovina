@@ -494,20 +494,6 @@ revoke select on public.reviews from anon;
 grant select (id, shop_id, product_id, author_name, rating, body, verified, published, created_at)
   on public.reviews to anon;
 
--- ⚠️ `finishes` IS NOT IN THIS FILE, AND THAT COST A DAY.
---
--- The colour table was created after this schema was applied, so it never got
--- the anon read policy and column grant that products, product_media and
--- reviews have above — and the deploy's colour generator reads with the same
--- publishable key they do. PostgREST answers an RLS-filtered request with 200
--- and an empty array, not an error, so every deploy shipped an empty colour
--- list and the product pages fell back to the transcribed supplier chart,
--- with a green build and six uploaded swatches sitting in the table.
---
--- The fix is db/migrations/001_finishes_public_read.sql. The lesson is that a
--- table created outside this file has no read path until somebody writes one,
--- and that the generator cannot tell "blocked" from "empty".
-
 create policy reviews_public_read on public.reviews
   for select using (
     published
@@ -641,3 +627,28 @@ insert into public.shops (id, domain, name, is_live, order_prefix) values
 
 insert into public.shop_order_seq (shop_id) values
   ('savna'), ('kad'), ('bazen'), ('fotelj'), ('kopalna'), ('biljard');
+
+-- ---------------------------------------------------------------------------
+-- APPLIED AFTER THIS FILE — public.finishes
+-- ---------------------------------------------------------------------------
+-- The colour table was created by a later migration, so its access lives here
+-- as a record rather than as the statement that made it. Verified against the
+-- live project.
+--
+--   finishes_admin_all   ALL    to authenticated  using is_admin()
+--   finishes_public_read SELECT to anon, authenticated  using (true)
+--
+-- The read is what the deploy's colour generator uses (scripts/sync-finishes.mjs
+-- with the publishable key), the same arrangement products and reviews have
+-- above. Every column it can see is already printed beside a swatch on the
+-- public product pages.
+--
+-- ⚠️ anon ALSO CARRIED INSERT, UPDATE AND REFERENCES, because Supabase grants
+-- those by name on a new public table and this one was created outside this
+-- file, so it never got the narrowing products and reviews were given. RLS was
+-- already stopping the write — there is no anon policy for anything but
+-- SELECT — but a grant that only a policy stands between is one edited policy
+-- away from being live, with a key published in wrangler.jsonc. Migration
+-- `finishes_anon_read_only` revoked them; anon now holds SELECT and nothing
+-- else. The lesson generalises: a table created outside this file inherits
+-- Supabase's by-name grants and has to be narrowed deliberately.
