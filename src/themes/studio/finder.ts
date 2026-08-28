@@ -46,7 +46,25 @@ export const STUDIO_FINDER_CSS = `
    * The reason it read as the odd one out is that /blog was centred too, and
    * /blog was centred because it had silently fallen into the 38rem reading
    * track (see the --wide note in blog.ts). Both are on the grid now. */
-  :root[data-theme="studio"] .st-fnd-in { max-inline-size: 44rem; }
+  /* ⚠️ NO CAP ON THE CONTAINER — the measure is on the WORDS, exactly as it
+   * is on the content pages (see .st-page-p in page.ts).
+   *
+   * This was 44rem, and left-aligning it without lifting the cap just moved
+   * the empty half from both sides to one: on a wide screen the questionnaire
+   * occupied the left half of the band and the right half was blank. The cap
+   * was doing two jobs at once — keeping sentences readable, which is right,
+   * and holding the OPTION ROWS to the same width, which is not. Those rows
+   * are a rule, a title and an arrow: structure, and structure spans, with
+   * the arrow landing at the far right where the eye looks for it.
+   *
+   * Every running-text element below carries its own max-inline-size, so
+   * nothing gets a 1200px line. */
+  :root[data-theme="studio"] .st-fnd-in { max-inline-size: none; }
+  /* The reading measure for this page's prose, in one place. 38rem is the
+   * same rung page.ts uses; the lead keeps its slightly tighter 36rem. */
+  :root[data-theme="studio"] .st-fnd h1 {
+    max-inline-size: 38rem;
+  }
   :root[data-theme="studio"] .st-fnd-eyebrow {
     font-family: var(--f-label);
     font-size: var(--t-label);
