@@ -494,6 +494,20 @@ revoke select on public.reviews from anon;
 grant select (id, shop_id, product_id, author_name, rating, body, verified, published, created_at)
   on public.reviews to anon;
 
+-- ⚠️ `finishes` IS NOT IN THIS FILE, AND THAT COST A DAY.
+--
+-- The colour table was created after this schema was applied, so it never got
+-- the anon read policy and column grant that products, product_media and
+-- reviews have above — and the deploy's colour generator reads with the same
+-- publishable key they do. PostgREST answers an RLS-filtered request with 200
+-- and an empty array, not an error, so every deploy shipped an empty colour
+-- list and the product pages fell back to the transcribed supplier chart,
+-- with a green build and six uploaded swatches sitting in the table.
+--
+-- The fix is db/migrations/001_finishes_public_read.sql. The lesson is that a
+-- table created outside this file has no read path until somebody writes one,
+-- and that the generator cannot tell "blocked" from "empty".
+
 create policy reviews_public_read on public.reviews
   for select using (
     published
