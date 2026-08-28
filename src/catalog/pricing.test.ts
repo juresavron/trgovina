@@ -593,3 +593,44 @@ describe("a live shop can identify itself", () => {
     expect(catalogPricingReady()).toBe(COST_INPUTS !== null);
   });
 });
+
+/**
+ * ⚠️ THE WARRANTY IS ONE NUMBER, AND IT ONCE SPLIT INTO TWO.
+ *
+ * The owner settled it at three years. The change went into /o-nas,
+ * /pogosta-vprasanja and /pogoji-poslovanja — and MISSED the product pages,
+ * because those write it as "2–5 let, odvisno od sklopa" with an en dash and
+ * the search had been for the words "od dveh do petih". So for a while the
+ * three pages that explain the warranty said three years while every product
+ * page's spec table AND its printable technical sheet said two to five: a
+ * contradiction on the page where somebody decides to buy, and on the one
+ * artefact they take away with them.
+ *
+ * A grep is not a guarantee. This is: whatever a page says about the
+ * warranty period, every place that states one has to agree.
+ */
+describe("the warranty period", () => {
+  const shop = CONTENT["bazen"]!;
+  const pdps = shop.pdps ?? [shop.pdp];
+
+  it("is three years on every product page and its technical sheet", () => {
+    for (const d of pdps) {
+      // The spec table, which the printable technical sheet renders too.
+      const spec = d.spec.find(([k]) => /garancij/i.test(k));
+      expect(spec, d.slug + " has no warranty row").toBeDefined();
+      expect(spec![1], d.slug + " spec row").toMatch(/3 leta|[Tt]ri leta/);
+      // And the panel further down the page, where there is one.
+      const panel = (d.panels ?? []).find(([h]) => /garancij/i.test(h));
+      if (panel) expect(panel[1], d.slug + " warranty panel").toMatch(/3 leta|[Tt]ri leta/);
+    }
+  });
+
+  /** No product page may still carry the range the owner replaced. */
+  it("never states a range anywhere on a product page", () => {
+    for (const d of pdps) {
+      const all = JSON.stringify(d);
+      expect(all, d.slug).not.toMatch(/2\s*[–-]\s*5\s*let/);
+      expect(all, d.slug).not.toMatch(/od dveh do petih/);
+    }
+  });
+});

@@ -19,6 +19,7 @@ import {
   seating as swimSeating,
 } from "../catalog/swimspa";
 import type { PolaModel } from "../catalog/pola";
+import { jetsText } from "../catalog/count";
 import { catalogPricingReady } from "../catalog/pricing";
 import { filterAreaText, kgText } from "../catalog/count";
 import {
@@ -372,6 +373,81 @@ const flagship = OFFERED_MODELS.find((m) => m.code === "ZR801")!;
  * gets there, what the connection needs, what the service costs — are the
  * same sentences on all nine, because they are the same offer.
  */
+/**
+ * Slovenian count, all four forms, keyed on the LAST TWO DIGITS.
+ *
+ * ⚠️ NOT n % 10. 101 takes the singular and 111 does not; 22 takes the dual
+ * and 12 does not. Every count on this site goes through a function shaped
+ * like this one for that reason — see catalog/count.ts, which does the same
+ * job for jets and is not general enough to reuse here.
+ */
+function plural(n: number, f: readonly [string, string, string, string]): string {
+  const t = n % 100;
+  if (t === 1) return n + " " + f[0];
+  if (t === 2) return n + " " + f[1];
+  if (t === 3 || t === 4) return n + " " + f[2];
+  return n + " " + f[3];
+}
+
+const MESTO = ["mesto", "mesti", "mesta", "mest"] as const;
+const OSEBA = ["osebo", "osebi", "osebe", "oseb"] as const;
+const LEZALNIK = ["ležalnik", "ležalnika", "ležalniki", "ležalnikov"] as const;
+const SEDEZ = ["sedež", "sedeža", "sedeži", "sedežev"] as const;
+const CRPALKA = ["črpalka", "črpalki", "črpalke", "črpalk"] as const;
+
+/**
+ * The one sentence that says why THIS hot tub, among the three offered.
+ *
+ * ⚠️ COMPUTED, NEVER WRITTEN PER MODEL. A hand-written "največ šob v ponudbi"
+ * is true until the day a model with more is added, and then it is a false
+ * superlative sitting on a live product page that nobody remembers to edit.
+ * Every claim below is derived from OFFERED_MODELS at build time, so the
+ * range rewrites its own copy — and a superlative that stops being true
+ * stops being printed.
+ *
+ * The order is the order a buyer decides in: how many people, then how much
+ * massage, then price. A model that leads on nothing takes the honest middle
+ * position rather than an invented distinction — being the smallest of three
+ * IS a reason, and it is the one that comes with the lowest price.
+ */
+function standsOut(m: PolaModel): string {
+  const others = OFFERED_MODELS.filter((x) => x.code !== m.code);
+  const most = (pick: (x: PolaModel) => number): boolean =>
+    others.every((x) => pick(x) < pick(m));
+  const least = (pick: (x: PolaModel) => number): boolean =>
+    others.every((x) => pick(x) > pick(m));
+
+  // ⚠️ EVERY COUNT STAYS IN THE COUNTING FORM, and the sentences are built to
+  // let it. Slovenian declines after a preposition — "s 6 mest" is wrong
+  // where "s šestimi mesti" is right — so an interpolated numeral cannot sit
+  // behind "s", "na" or "ob" without spelling the numeral out in the correct
+  // case, which is four more forms per noun and a new way to be wrong. The
+  // list form ("X: a, b in c") needs only the nominative and the counting
+  // genitive, which is exactly what plural() produces, and it scans better
+  // in a panel anyway.
+  if (most((x) => x.seats)) {
+    return (
+      "Edini masažni bazen v ponudbi, ki sprejme " + plural(m.seats, OSEBA) +
+      ": " + plural(m.lounges, LEZALNIK) + " in " +
+      plural(m.seats - m.lounges, SEDEZ) + ". "
+    );
+  }
+  if (most((x) => x.jets)) {
+    return (
+      "Največ masaže med masažnimi bazeni: " + jetsText(m.jets) + ", " +
+      plural(m.jetPumps[0], CRPALKA) + " po " + m.jetPumps[1] + " KM in " +
+      plural(m.lounges, LEZALNIK) + ". "
+    );
+  }
+  if (least((x) => x.mm[0] * x.mm[1])) {
+    return (
+      "Najmanjši in najcenejši od treh masažnih bazenov: " +
+      plural(m.seats, MESTO) + ", od tega " + plural(m.lounges, LEZALNIK) + ". "
+    );
+  }
+  return "";
+}
+
 function pdpFor(m: PolaModel): PdpContent {
   return {
     slug: m.slug,
@@ -443,7 +519,17 @@ function pdpFor(m: PolaModel): PdpContent {
       // against the note's "sedem" on the same page. (Also: no counted()
       // needed while the literal is 7, but keep the two digits' agreement in
       // mind if the sheet ever changes.)
-      ["Školjka", "ameriški akril, 7 barv · izolacija 2 cm"],
+      // ⚠️ NO COLOUR COUNT HERE. It said "7 barv" while the picker two screens
+      // up listed ten, and the colour panel below it explained the gap in a
+      // sentence ("the chart lists ten, the specification seven"). Three
+      // numbers for one fact on one page, and the spec table — the row a
+      // buyer trusts most, and the one the printable technical sheet carries
+      // — held the one nobody could check.
+      //
+      // The count is now stated only where it is derived: the picker renders
+      // the colours the shop can actually show (catalog/finishes.generated.ts),
+      // so it counts itself and cannot drift.
+      ["Školjka", "ameriški akril · izolacija 2 cm"],
       ["Mere", footprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
       ["Teža", kgText(m.dryKg) + " prazen · " + kgText(m.filledKg) + " poln"],
       // The supplier's own code, printed. It is what an order, a warranty
@@ -452,7 +538,7 @@ function pdpFor(m: PolaModel): PdpContent {
       // "Električni priklop": bare "Priklop" also labels the configurator's
       // who-wires-it group on the same page — one word, two meanings.
       ["Električni priklop", "220 V / 380 V"],
-      ["Garancija", "2–5 let, odvisno od sklopa"],
+      ["Garancija", "3 leta"],
       // Last, in BOTH families: the two comparison tables sit one click
       // apart and the row rhythm should not change between them.
       ["Koda modela", m.code],
@@ -481,7 +567,23 @@ function pdpFor(m: PolaModel): PdpContent {
     panels: [
       [
         "Opis izdelka",
-        "Akrilna školjka " +
+        // ⚠️ THIS PANEL USED TO RESTATE THE SPEC TABLE DIRECTLY ABOVE IT.
+        //
+        // It opened "Akrilna školjka 2,30 × 2,30 m z izolacijo 2 cm…" — the
+        // footprint, the insulation, the controller and the heater, every one
+        // of them a row in the table a reader had just passed. The one thing
+        // the page never said was why a buyer would want THIS model rather
+        // than the one 400 € cheaper beside it, and that is the only question
+        // a product page exists to answer.
+        //
+        // It leads with the distinction now, and the distinction is COMPUTED
+        // from the offered range rather than written per model: nothing here
+        // can claim "most jets" once a model with more is added, and a range
+        // that changes rewrites its own copy. The construction detail stays
+        // as the second half, because a buyer choosing between two of these
+        // does eventually want to know what the frame is made of.
+        standsOut(m) +
+          "Akrilna školjka " +
           footprint(m) +
           " z izolacijo 2 cm, aluminijast nosilni okvir in PS obloga. " +
           "Krmilnik Balboa BP200 G2+ s " +
@@ -511,7 +613,7 @@ function pdpFor(m: PolaModel): PdpContent {
       ],
       [
         "Garancija",
-        "2–5 let, odvisno od sklopa. Rezervni deli in servis prek naše mreže.",
+        "Tri leta. Rezervni deli in servis prek naše mreže.",
       ],
     ],
     finishes: [...SHELL_FINISHES],
@@ -609,7 +711,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
         ? ([["Teža", kgText(m.dryKg) + " prazen · " + kgText(m.filledKg) + " poln"]] as [string, string][])
         : []),
       ["Priklop", "220 V / 380 V"],
-      ["Garancija", "2–5 let, odvisno od sklopa"],
+      ["Garancija", "3 leta"],
       // The supplier's own code — same reason the tub spec prints it.
       ["Koda modela", m.code],
     ],
@@ -664,7 +766,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ],
       [
         "Garancija",
-        "2–5 let, odvisno od sklopa. Rezervni deli in servis prek naše mreže.",
+        "Tri leta. Rezervni deli in servis prek naše mreže.",
       ],
     ],
     // ⚠️ NO SHELL LIST EITHER — the sheet states ONE shell colour for every

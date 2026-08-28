@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { nameFromFilename } from "./finishes";
 import { finishSlug } from "../catalog/finish-image";
-import { SHELL_FINISHES, CABINET_FINISHES } from "../catalog/pola";
+import {
+  CABINET_FINISHES,
+  SHELL_FINISHES,
+  TRANSCRIBED_CABINET_FINISHES,
+  TRANSCRIBED_SHELL_FINISHES,
+} from "../catalog/pola";
+import { finishCount, finishListPage } from "./finishes-panel";
+import { siteImageBySlug } from "./site-images";
 import {
   GENERATED_CABINET_FINISHES,
   GENERATED_SHELL_FINISHES,
@@ -105,6 +112,55 @@ describe("which colour list the product pages render", () => {
   it("keeps every generated slug consistent with its name", () => {
     for (const f of [...GENERATED_SHELL_FINISHES, ...GENERATED_CABINET_FINISHES]) {
       expect(f.slug, f.name).toBe(finishSlug(f.name));
+    }
+  });
+});
+
+/**
+ * ⚠️ THE PANEL MUST LIST WHAT THE SITE IS SHOWING, NOT WHAT THE TABLE HOLDS.
+ *
+ * This is a regression test for a real report — "i cannot edit colors". The
+ * page listed only uploaded colours, so on a shop that had uploaded none it
+ * said "0 barv" and showed an empty list, while every product page was at
+ * that same moment rendering ten shell colours and six cabinet ones from the
+ * transcription. An operator who came to edit the colours they could see on
+ * their own site found nothing. A missing feature is survivable; a panel that
+ * denies the existence of what is live is not.
+ */
+describe("the colour page, on a shop that has uploaded nothing", () => {
+  const page = finishListPage([], "ana@example.com", undefined, {
+    shell: TRANSCRIBED_SHELL_FINISHES,
+    cabinet: TRANSCRIBED_CABINET_FINISHES,
+    shellPhotographed: false,
+    cabinetPhotographed: false,
+  });
+
+  it("names every colour the product pages are rendering", () => {
+    for (const n of [...TRANSCRIBED_SHELL_FINISHES, ...TRANSCRIBED_CABINET_FINISHES]) {
+      expect(page, n).toContain(">" + n + "<");
+    }
+  });
+
+  it("never claims the shop shows none", () => {
+    // Anchored, because finishCount(10) is "10 barv" and a bare "0 barv"
+    // substring matches it.
+    expect(page).not.toMatch(/(^|[^0-9])0 barv/);
+    const total =
+      TRANSCRIBED_SHELL_FINISHES.length + TRANSCRIBED_CABINET_FINISHES.length;
+    expect(page).toContain("— " + finishCount(total) + " skupaj");
+  });
+
+  /** Every fallback tile has to go somewhere, or the list is a dead end. */
+  it("points each one at an upload slot that exists", () => {
+    for (const [kind, list] of [
+      ["barva", TRANSCRIBED_SHELL_FINISHES],
+      ["obloga", TRANSCRIBED_CABINET_FINISHES],
+    ] as const) {
+      for (const n of list) {
+        const slug = kind + "-" + finishSlug(n);
+        expect(page, slug).toContain('href="/admin/site/' + slug + '"');
+        expect(siteImageBySlug(slug), slug).toBeDefined();
+      }
     }
   });
 });
