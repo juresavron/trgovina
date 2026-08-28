@@ -307,3 +307,104 @@ describe("the retention period", () => {
     expect(html).toContain("ponudniku podatkovne baze");
   });
 });
+
+/**
+ * ⚠️ A REFUSED SUBMISSION MUST COME BACK FILLED IN.
+ *
+ * The form posts to its own URL with an empty action, which was chosen so a
+ * failed submit keeps ?model= and the whole configuration — the comment at
+ * that line says so. What it did not keep was the FIELDS: `field()` never
+ * emitted a value, so somebody who wrote their name, two long paragraphs
+ * describing the access to their garden and ticked consent, but left out a
+ * phone number, got the lot wiped. The access prompt asks for three separate
+ * measurements; on a phone, re-typing that is where the enquiry ends.
+ *
+ * Two things must NOT come back, and they are the point of the whitelist:
+ * the honeypot, which a re-rendered value would defeat, and consent, because
+ * a box that re-ticks itself is a pre-ticked box on the second attempt —
+ * GDPR art. 4(11), Planet49 C-673/17.
+ */
+describe("the enquiry form after a refusal", () => {
+  const render = (sent: Record<string, string>) =>
+    handleRequest(
+      new Request("https://trgovina.workers.dev/kontakt?shop=bazen"),
+      { error: "Vpišite telefon ali e-pošto.", sent },
+    );
+
+  it("gives every typed field back", async () => {
+    const html = await (await render({
+      ime: "Ana Novak",
+      eposta: "ana@example.test",
+      kraj: "6000 Koper",
+      dostop: "Najožji prehod 90 cm, tri stopnice, omarica 12 m stran.",
+      sporocilo: "Zanima me dobavni rok.",
+      kanal: "e-posta",
+    })).text();
+    expect(html).toContain('value="Ana Novak"');
+    expect(html).toContain('value="ana@example.test"');
+    expect(html).toContain('value="6000 Koper"');
+    expect(html).toContain("Najožji prehod 90 cm, tri stopnice, omarica 12 m stran.");
+    expect(html).toContain("Zanima me dobavni rok.");
+    // The chosen channel comes back selected, not reset to neither.
+    expect(html).toMatch(/id="enq-k-e"[^>]*checked/);
+    expect(html).not.toMatch(/id="enq-k-t"[^>]*checked/);
+  });
+
+  it("never re-ticks consent", async () => {
+    const html = await (await render({ ime: "Ana Novak" })).text();
+    expect(html).toMatch(/id="enq-soglasje"/);
+    expect(html, "a box that re-ticks itself is a pre-ticked box")
+      .not.toMatch(/id="enq-soglasje"[^>]*checked/);
+  });
+
+  /** Whatever a bot put in the honeypot must not be handed back to it. */
+  it("never echoes the honeypot", async () => {
+    const html = await (await render({ ime: "Ana" })).text();
+    expect(html).toMatch(/id="enq-website"[^>]*>/);
+    expect(html).not.toMatch(/id="enq-website"[^>]*value=/);
+  });
+
+  /** Their own text, round-tripped through a request, is still escaped. */
+  it("escapes what it gives back", async () => {
+    const html = await (await render({ ime: '"><script>alert(1)</script>' })).text();
+    expect(html).not.toContain("<script>alert(1)</script>");
+    expect(html).toContain("&quot;&gt;&lt;script&gt;");
+  });
+});
+
+/**
+ * ⚠️ THE SUMMARY CARD'S FIGURE IS WHAT THE BUYER COMMITS TO.
+ *
+ * It printed the catalogue base while listing the extras they had just ticked
+ * directly underneath. Measured on a real configuration: the product page's
+ * bar read 7.060 € and this card read 6.690 €, with "Termo pokrov" and
+ * "Dvigalo za termo pokrov" named below the figure. A 370 € contradiction on
+ * the one page where somebody decides.
+ */
+describe("the price on the enquiry summary", () => {
+  const at = (qs: string) =>
+    handleRequest(new Request("https://trgovina.workers.dev/kontakt?shop=bazen&" + qs));
+
+  it("adds the chosen extras to the base", async () => {
+    const bare = await (await at("model=mali-195")).text();
+    expect(bare).toContain("6.690");
+
+    const withExtras = await (await at(
+      "model=mali-195&oprema=" + encodeURIComponent("Termo pokrov"),
+    )).text();
+    const card = withExtras.slice(withExtras.indexOf("st-enq-about"));
+    const shown = card.slice(0, card.indexOf("</div>"));
+    // Whatever it now says, it must not be the bare base while an extra is
+    // listed beside it.
+    expect(shown).toContain("Termo pokrov");
+    expect(shown, "the card still shows the base price next to a paid extra")
+      .not.toMatch(/st-enq-about-p">6\.690/);
+  });
+
+  /** An unpriced model must not grow a total out of nothing. */
+  it("leaves an unset base alone", async () => {
+    const html = await (await at("model=mali-195")).text();
+    expect(html).not.toContain("NaN");
+    expect(html).not.toMatch(/st-enq-about-p">\s*€/);
+  });
+});

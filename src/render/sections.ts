@@ -89,7 +89,26 @@ export interface RenderCtx {
    * problem codes to the words a visitor reads, so nothing here has to know
    * what went wrong, only what to print.
    */
-  enquiry?: { readonly done?: boolean; readonly error?: string };
+  enquiry?: {
+    readonly done?: boolean;
+    readonly error?: string;
+    /**
+     * What the visitor typed, echoed back when the submission was refused.
+     *
+     * ⚠️ WITHOUT THIS A REFUSED SUBMISSION IS A BLANK FORM. The empty action
+     * above was chosen so a failed submit keeps ?model= and the whole
+     * configuration — but the FIELDS came back empty, so somebody who filled
+     * in a name, two long textareas describing their access and a consent
+     * tick, and left out a phone number, got everything wiped. On a phone,
+     * re-typing two hundred characters is where an enquiry dies.
+     *
+     * Never carries the honeypot, and never the consent tick: a box that
+     * re-ticks itself is a pre-ticked box on the second attempt, which is
+     * exactly what GDPR art. 4(11) and Planet49 C-673/17 forbid. One tick is
+     * a fair price; two hundred characters is not.
+     */
+    readonly sent?: Readonly<Record<string, string>>;
+  };
 }
 
 /* Product art — duotone scenes; colors ride the theme CSS vars. Redrawn

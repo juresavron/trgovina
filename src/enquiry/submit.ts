@@ -83,10 +83,20 @@ const str = (v: FormDataEntryValue | null): string =>
  * the renderer cannot drift from what gets stored: one string, two consumers,
  * and a test that holds them together.
  */
+// ⚠️ THE RETENTION CLAUSE WAS UNCONDITIONAL AND THE PRIVACY POLICY IS NOT.
+//
+// This read "Podatke hranimo 24 mesecev, nato jih izbrišemo" flat, while
+// content/pages/zasebnost.ts says the 24 months apply to an enquiry that does
+// NOT become an order — once there is an order, contract, warranty and
+// invoicing obligations run far longer, "praviloma deset let". A consent
+// sentence is the one the customer actually ticks and the one stored verbatim
+// against their row, so it cannot promise a deletion the shop is not allowed
+// to perform.
 export const CONSENT_TEXT =
   "Soglašam, da moje podatke uporabite za odgovor na to povpraševanje in " +
-  "pripravo ponudbe. Podatke hranimo 24 mesecev, nato jih izbrišemo. " +
-  "Soglasje lahko kadar koli prekličete.";
+  "pripravo ponudbe. Če iz povpraševanja ne nastane naročilo, podatke " +
+  "hranimo 24 mesecev, nato jih izbrišemo; če pride do naročila, veljajo " +
+  "roki iz politike zasebnosti. Soglasje lahko kadar koli prekličete.";
 
 /**
  * A form body read as an enquiry, or the first thing wrong with it.

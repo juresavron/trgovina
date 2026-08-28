@@ -29,6 +29,7 @@ import { contactIcon, type IconKey } from "./icons";
 // written to the enquiries row, and a page that printed different words
 // would make the stored record evidence of consent to something else.
 import { CONSENT_TEXT } from "../../enquiry/submit";
+import { formatEur } from "../../catalog/pricing";
 
 /* ------------------------------------------------------------------ CSS */
 
@@ -2225,6 +2226,35 @@ function enquiry(
 
   const about = ctx.about;
   const chosen = ctx.chosen ?? [];
+
+  // ⚠️ THE FIGURE IN THIS CARD MUST BE THE ONE THE BUYER JUST SAW.
+  //
+  // It printed about.price — the catalogue base — while the list directly
+  // underneath it named the extras they had ticked. Measured on a real
+  // configuration: the product page's bar read 7.060 EUR and this card read
+  // 6.690 EUR with "Termo pokrov" and "Dvigalo za termo pokrov" listed below
+  // it. A 370 EUR contradiction, on the one page where the visitor commits.
+  //
+  // The extras arrive as one row of labels (see chosenParams, which collapses
+  // them deliberately), so they are matched back to the catalogue entries
+  // that produced them. Anything that does not match is not counted and not
+  // charged for: the labels come off the wire and the prices do not.
+  const pickedLabels = new Set(
+    (chosen.find(([k]) => k === "Dodatna oprema")?.[1] ?? "")
+      .split(", ")
+      .map((x) => x.trim())
+      .filter((x) => x !== ""),
+  );
+  const extraCents = (about?.addons ?? [])
+    .filter((a) => pickedLabels.has(a.label))
+    .reduce((n, a) => n + (a.priceCents ?? 0), 0);
+  // Only a base the catalogue actually priced can be added to. Where it is
+  // unset the card keeps showing about.price, which is the dash — a total
+  // built on a missing base would be a number nobody set.
+  const totalPrice =
+    about && about.priceCents > 0 && extraCents > 0
+      ? formatEur(about.priceCents + extraCents)
+      : about?.price;
   // The summary is a RESTATEMENT of what the visitor chose a page ago. It is
   // shown because an enquiry form that silently carries hidden state is a
   // form nobody can check, and every one of these strings came out of the
@@ -2236,9 +2266,9 @@ function enquiry(
       // The price rides along because the contact block above no longer
       // states it — see the note there. Qualified only beside a real figure:
       // a dash followed by "z DDV" is nonsense.
-      (about.price
-        ? '<span class="st-enq-about-p">' + esc(about.price) +
-          (about.price.includes("€") ? " z DDV" : "") + "</span>"
+      (totalPrice
+        ? '<span class="st-enq-about-p">' + esc(totalPrice) +
+          (totalPrice.includes("€") ? " z DDV" : "") + "</span>"
         : "") +
       "</p>" +
       (chosen.length > 0
@@ -2257,6 +2287,11 @@ function enquiry(
     ? '<p class="st-enq-err" role="alert">' + esc(ctx.enquiry.error) + "</p>"
     : "";
 
+  // What the visitor typed on a refused attempt. Escaped on the way back out,
+  // like every other string this renderer prints — it is their own text, but
+  // it has been round-tripped through a request and is not trusted for that.
+  const sent = (n: string): string => ctx.enquiry?.sent?.[n] ?? "";
+
   const field = (
     name: string,
     label: string,
@@ -2267,6 +2302,7 @@ function enquiry(
     '<label class="st-enq-l" for="enq-' + name + '">' + esc(label) +
     (opts.req ? ' <span class="st-enq-req">*</span>' : "") + "</label>" +
     '<input class="st-enq-in" id="enq-' + name + '" name="' + name + '" type="' + type + '"' +
+    (sent(name) ? ' value="' + esc(sent(name)) + '"' : "") +
     (opts.req ? " required" : "") +
     (opts.auto ? ' autocomplete="' + opts.auto + '"' : "") +
     (opts.mode ? ' inputmode="' + opts.mode + '"' : "") +
@@ -2303,21 +2339,25 @@ function enquiry(
     "</div>" +
     '<p class="st-enq-f">' +
     '<label class="st-enq-l" for="enq-dostop">Dostop do mesta postavitve</label>' +
-    '<textarea class="st-enq-in st-enq-ta" id="enq-dostop" name="dostop" rows="3"></textarea>' +
+    '<textarea class="st-enq-in st-enq-ta" id="enq-dostop" name="dostop" rows="3">' +
+    esc(sent("dostop")) + "</textarea>" +
     '<span class="st-enq-hint">Širina najožjega prehoda, stopnice ali škarpa na poti, ' +
     "razdalja do električne omarice. S temi tremi podatki lahko povemo, ali je model " +
     "izvedljiv, še preden pridemo na ogled.</span>" +
     "</p>" +
     '<p class="st-enq-f">' +
     '<label class="st-enq-l" for="enq-sporocilo">Vaše sporočilo</label>' +
-    '<textarea class="st-enq-in st-enq-ta" id="enq-sporocilo" name="sporocilo" rows="4"></textarea>' +
+    '<textarea class="st-enq-in st-enq-ta" id="enq-sporocilo" name="sporocilo" rows="4">' +
+    esc(sent("sporocilo")) + "</textarea>" +
     "</p>" +
     '<fieldset class="st-enq-fs">' +
     '<legend class="st-enq-l">Kako naj se oglasimo?</legend>' +
     '<span class="st-enq-radios">' +
-    '<span class="st-enq-r"><input type="radio" id="enq-k-t" name="kanal" value="telefon">' +
+    '<span class="st-enq-r"><input type="radio" id="enq-k-t" name="kanal" value="telefon"' +
+    (sent("kanal") === "telefon" ? " checked" : "") + ">" +
     '<label for="enq-k-t">Po telefonu</label></span>' +
-    '<span class="st-enq-r"><input type="radio" id="enq-k-e" name="kanal" value="e-posta">' +
+    '<span class="st-enq-r"><input type="radio" id="enq-k-e" name="kanal" value="e-posta"' +
+    (sent("kanal") === "e-posta" ? " checked" : "") + ">" +
     '<label for="enq-k-e">Po e-pošti</label></span>' +
     "</span></fieldset>" +
     // ⚠️ NOT PRE-TICKED, AND THE SENTENCE IS THE ONE THAT GETS STORED.

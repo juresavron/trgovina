@@ -537,7 +537,7 @@ function pdpFor(m: PolaModel): PdpContent {
       // the phone saves both sides the "the small one, the 195" dance.
       // "Električni priklop": bare "Priklop" also labels the configurator's
       // who-wires-it group on the same page — one word, two meanings.
-      ["Električni priklop", "220 V / 380 V"],
+      ["Električni priklop", "230 V / 400 V"],
       ["Garancija", "3 leta"],
       // Last, in BOTH families: the two comparison tables sit one click
       // apart and the row rhythm should not change between them.
@@ -710,7 +710,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ...(m.dryKg && m.filledKg
         ? ([["Teža", kgText(m.dryKg) + " prazen · " + kgText(m.filledKg) + " poln"]] as [string, string][])
         : []),
-      ["Priklop", "220 V / 380 V"],
+      ["Priklop", "230 V / 400 V"],
       ["Garancija", "3 leta"],
       // The supplier's own code — same reason the tub spec prints it.
       ["Koda modela", m.code],
