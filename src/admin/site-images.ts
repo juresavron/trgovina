@@ -29,6 +29,8 @@
  */
 
 import { OWN_PHOTOS, pick } from "../themes/studio/media";
+import { CABINET_FINISHES, SHELL_FINISHES } from "../catalog/pola";
+import { finishImageKey, type FinishKind } from "../catalog/finish-image";
 
 const MEDIA_PREFIX = "/media/";
 
@@ -89,6 +91,23 @@ export interface SiteImage {
    * for it would throw away the sides for nothing.
    */
   readonly ratio?: readonly [number, number];
+  /**
+   * This slot needs no fallback, because its surface degrades quietly.
+   *
+   * ⚠️ THE DEFAULT IS THE OPPOSITE, AND THE TEST ENFORCES IT: every other
+   * slot renders an <img>, so an empty one is a broken picture on a live
+   * page — worse than whatever it replaced — and site-images.test.ts refuses
+   * a slot with nothing to fall back to.
+   *
+   * The finish swatches are the exception by construction. They are painted
+   * as CSS backgrounds behind a named tile, so a colour nobody has
+   * photographed yet paints its neutral ground and its name, which is
+   * exactly the pill the configurator showed before swatches existed. There
+   * is nothing to fall back TO — no stock photograph of "Odyssey" exists —
+   * and inventing one by pointing at an unrelated product shot would be a
+   * false statement about the colour a buyer is choosing.
+   */
+  readonly optional?: true;
   /**
    * The largest width worth storing, in pixels.
    *
@@ -169,6 +188,13 @@ const CHROME_IMAGES: readonly SiteImage[] = [
  * page back. Each keeps its old offset as a FALLBACK, so nothing changes on
  * the site until somebody uploads. */
 
+/** One note for five identical cards — they differ only by which step. */
+const CARD_NOTE = (n: number): string =>
+  "Slika " + n + " od petih v pasu »Zakaj masažni bazen kupiti pri nas« na " +
+  "domači strani. Vseh pet je enako velikih, zato naj bodo posnete v " +
+  "podobnem slogu. Kvadratna, najbolje 900 × 900 px — slika se NE obreže, " +
+  "vidi se cela, zato je najbolje izdelek na čisti podlagi.";
+
 const HOME_IMAGES: readonly SiteImage[] = [
   {
     key: "site/zgodba.webp",
@@ -198,15 +224,19 @@ const HOME_IMAGES: readonly SiteImage[] = [
     // No ratio: this frame is object-fit: contain and shows the picture whole.
     maxWidth: 1200,
   },
+  /* ⚠️ THE FIVE CARDS OF THE BENEFIT ROW, and the KEYS ARE FROZEN even though
+   * the band they serve was rebuilt. A fixed key is the whole mechanism here
+   * (see the file header): rename one and any picture already uploaded to it
+   * is orphaned in the bucket while the page silently falls back. So the
+   * keys stay "zakaj-mi*" and the LABELS say what each card now is — the
+   * five steps of the job, in order, which is what the row renders. */
   {
     key: "site/zakaj-mi.webp",
     group: HOME,
-    label: "Zakaj mi — slika",
-    note: "Kvadratna slika v pasu s prednostmi na domači strani, ob številki. " +
-      "Kvadrat, najbolje 1200 × 1200 px." + HOME_NOTE_TAIL,
+    label: "Kako delamo — 1 (Ogled lokacije)",
+    note: CARD_NOTE(1),
     fallbackOffset: 22,
-    ratio: [1, 1],
-    maxWidth: 1200,
+    maxWidth: 900,
   },
   // ⚠️ THE OTHER TWO TILES IN THIS BAND ARE object-fit: contain AND THE FIRST
   // ONE IS NOT. Measured off the rendered page: the room tile is 407 × 407
@@ -218,20 +248,34 @@ const HOME_IMAGES: readonly SiteImage[] = [
   {
     key: "site/zakaj-mi-2.webp",
     group: HOME,
-    label: "Zakaj mi — druga slika",
-    note: "Druga slika v pasu s prednostmi. Ta se NE obreže — vidi se cela, " +
-      "v okvirju 3 : 2 ležeče. Najbolje 900 × 600 px.",
+    label: "Kako delamo — 2 (Priprava priklopa)",
+    note: CARD_NOTE(2),
     fallbackOffset: 13,
     maxWidth: 900,
   },
   {
     key: "site/zakaj-mi-3.webp",
     group: HOME,
-    label: "Zakaj mi — tretja slika",
-    note: "Tretja, največja slika v pasu s prednostmi. Ta se NE obreže — vidi " +
-      "se cela, v kvadratnem okvirju. Najbolje 1000 × 1000 px.",
+    label: "Kako delamo — 3 (Dostava na teraso)",
+    note: CARD_NOTE(3),
     fallbackOffset: 31,
-    maxWidth: 1000,
+    maxWidth: 900,
+  },
+  {
+    key: "site/zakaj-mi-4.webp",
+    group: HOME,
+    label: "Kako delamo — 4 (Priklop in zagon)",
+    note: CARD_NOTE(4),
+    fallbackOffset: 19,
+    maxWidth: 900,
+  },
+  {
+    key: "site/zakaj-mi-5.webp",
+    group: HOME,
+    label: "Kako delamo — 5 (Predaja)",
+    note: CARD_NOTE(5),
+    fallbackOffset: 21,
+    maxWidth: 900,
   },
 ];
 
@@ -361,12 +405,57 @@ const PAGE_IMAGES: readonly SiteImage[] = [
   },
 ];
 
+/* ---- the finish swatches ------------------------------------------------
+ *
+ * One upload slot per colour in catalog/pola.ts — ten shell finishes and six
+ * cabinet finishes — so the configurator can show what a buyer is choosing
+ * instead of naming it. The names are the acrylic manufacturer's own
+ * ("Canyon", "Odyssey"), which tell a Slovenian buyer nothing at all: the
+ * swatch note on the product page has been apologising for exactly that
+ * ("Odtenkov ne slikamo: akril je marmoriran in fotografija ga ne pokaže
+ * pošteno"), and a photograph of the sample is the honest answer to it.
+ *
+ * ⚠️ NO FALLBACK, DELIBERATELY — see `optional` on SiteImage. The tile paints
+ * its name with or without a picture, so the page is correct on the day this
+ * ships and better on the day the swatches are uploaded.
+ *
+ * A SQUARE, and small: the tile paints at ~96px, so 400px covers a 2× screen
+ * with room to spare. Capping low here is not stinginess — sixteen swatches
+ * load on one product page, and a 2048px crop of a colour sample would be
+ * the heaviest thing on it by an order of magnitude. */
+function finishSlots(
+  kind: FinishKind,
+  names: readonly string[],
+  group: string,
+  what: string,
+): readonly SiteImage[] {
+  return names.map((name) => ({
+    key: finishImageKey(kind, name),
+    group,
+    label: name,
+    note:
+      "Vzorec barve " + what + " »" + name + "«. Kvadratna slika, najbolje " +
+      "400 × 400 px — posnetek vzorca od blizu, čim bolj enakomerno osvetljen " +
+      "in brez sence. Prikaže se kot majhen kvadratek ob imenu barve na strani " +
+      "modela; dokler je ne naložite, je tam samo ime.",
+    optional: true,
+    ratio: [1, 1],
+    maxWidth: 400,
+  }));
+}
+
+const FINISH_IMAGES: readonly SiteImage[] = [
+  ...finishSlots("barva", SHELL_FINISHES, "Barve školjke", "školjke"),
+  ...finishSlots("obloga", CABINET_FINISHES, "Barve obloge", "obloge"),
+];
+
 export const SITE_IMAGES: readonly SiteImage[] = [
   ...CHROME_IMAGES,
   ...HOME_IMAGES,
   ...GUIDE_IMAGES,
   ...GALLERY_IMAGES,
   ...PAGE_IMAGES,
+  ...FINISH_IMAGES,
 ];
 
 export function siteImageByKey(key: string): SiteImage | undefined {

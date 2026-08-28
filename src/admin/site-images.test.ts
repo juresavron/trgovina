@@ -33,11 +33,50 @@ describe("site image slots", () => {
     expect(clashes).toEqual([]);
   });
 
-  it("resolves a fallback for every slot", () => {
+  it("resolves a fallback for every slot that paints an image", () => {
     // A slot with no fallback renders a broken image until somebody uploads,
     // which is worse than the picture it replaced.
-    const orphans = SITE_IMAGES.filter((s) => legacyFallback(s.key) === null);
+    //
+    // `optional` is the declared exception and it is narrow: the finish
+    // swatches paint as CSS backgrounds behind a named tile, so an empty one
+    // shows the name on a neutral ground rather than a broken picture. There
+    // is also nothing honest to fall back TO — no stock photograph of the
+    // shade "Odyssey" exists, and pointing at an unrelated product shot
+    // would misstate the colour a buyer is choosing.
+    const orphans = SITE_IMAGES.filter(
+      (s) => !s.optional && legacyFallback(s.key) === null,
+    );
     expect(orphans.map((s) => s.key)).toEqual([]);
+  });
+
+  it("gives every offered finish an upload slot, under both stems", async () => {
+    // The configurator asks for /media/site/<kind>-<slug>.webp; if the
+    // registry does not carry that exact key the panel offers no way to fill
+    // it and the swatch can never appear. Both sides derive the key from
+    // catalog/finish-image.ts, and this proves they meet.
+    const { SHELL_FINISHES, CABINET_FINISHES } = await import("../catalog/pola");
+    const { finishImageKey } = await import("../catalog/finish-image");
+    const keys = new Set(SITE_IMAGES.map((s) => s.key));
+    const missing: string[] = [];
+    for (const n of SHELL_FINISHES) {
+      if (!keys.has(finishImageKey("barva", n))) missing.push("barva:" + n);
+    }
+    for (const n of CABINET_FINISHES) {
+      if (!keys.has(finishImageKey("obloga", n))) missing.push("obloga:" + n);
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it("folds a diacritic into the stored key rather than into the URL", async () => {
+    // "Črna" must not become a key with a non-ASCII character in it: the
+    // bucket, the panel route and the storefront URL all carry this string.
+    const { finishImageKey, finishSlug } = await import("../catalog/finish-image");
+    expect(finishSlug("Črna")).toBe("crna");
+    expect(finishSlug("Silver white marble")).toBe("silver-white-marble");
+    expect(finishImageKey("obloga", "Zlato rjava")).toBe("site/obloga-zlato-rjava.webp");
+    for (const s of SITE_IMAGES) {
+      expect(s.key, s.key + " is not URL-safe").toMatch(/^site\/[a-z0-9][a-z0-9/_-]*\.webp$/);
+    }
   });
 
   it("addresses every slot by a unique URL stem", () => {
@@ -56,8 +95,12 @@ describe("site image slots", () => {
     // ones that came back contain.
     const contain = [
       "site/zgodba-detajl.webp",
-      "site/zakaj-mi-2.webp",
-      "site/zakaj-mi-3.webp",
+      // All FIVE benefit cards, since the row was made uniform: the tile
+      // paints object-fit: contain because this shop's photography is studio
+      // cutouts on a white sweep, and cover would crop a centred product
+      // against its own empty background.
+      "site/zakaj-mi.webp",
+      ...Array.from({ length: 4 }, (_, i) => "site/zakaj-mi-" + String(i + 2) + ".webp"),
       ...Array.from({ length: 6 }, (_, i) => "site/galerija-" + String(i + 1) + ".webp"),
     ];
     for (const key of contain) {

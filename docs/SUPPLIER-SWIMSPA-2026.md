@@ -44,6 +44,57 @@ Common to every model: US acrylic shell, silver white 6427; galvanised steel
 frame; PS cabinet in optional colours; PVC base; 3 kW heater; Balboa control
 system; 220 V / 380 V / 110 V.
 
+## Packing list (received 2026-08-28)
+
+A second supplier document, covering the three models the shop offers. Unlike
+the hot tub sheet it prints **no CBM column** — only product size, packing
+size and the two masses.
+
+| Code | Product (mm) | Crate (mm) | Net kg | Gross kg | CBM (derived) |
+| --- | --- | --- | --- | --- | --- |
+| ZR7807 | 5800 × 2240 × 1350 | 5825 × 2265 × 1375 | 1,510 | 1,530 | 18.14 |
+| ZR7809 | 5800 × 2280 × 1400 | 5825 × 2305 × 1425 | 1,850 | 1,870 | 19.13 |
+| ZR7861 | 4500 × 2280 × 1420 | 4525 × 2305 × 1445 | 1,500 | 1,520 | 15.07 |
+
+Transcribed into `pack` on `SwimSpaModel`. `cbmStated: false` on all three
+records that the volume is arithmetic, not a source — the hot tubs carry
+`true`, and there the stated figure is an independent check on the dimensions.
+
+**Crating adds only 3–5% here** — the crate is the shell plus 25 mm a side —
+against 22–34% on the hot tubs. That asymmetry is the whole reason the pricing
+basis changed: billing freight on shell volume under-measured the tub line by
+about a quarter relative to this one. See docs/SUPPLIER-POLA-2026.md.
+
+**The ZR7861's own two documents disagree about its size.** The price list
+says 4500 × 2280 × **1400**; the packing list says 4500 × 2280 × **1420**.
+20 mm, so it changes nothing anyone can see — noted only because it is the
+same pair of documents that disagree by 450 kg below.
+
+### ⚠️ Net mass disagrees with the price list — badly, and this one matters
+
+| Code | Price list dry | Packing list net | Gap |
+| --- | --- | --- | --- |
+| ZR7807 | 1,260 kg | 1,510 kg | **+250 kg (+20%)** |
+| ZR7809 | 1,430 kg | 1,850 kg | **+420 kg (+29%)** |
+| ZR7861 | 1,050 kg | 1,500 kg | **+450 kg (+43%)** |
+
+Net mass on a packing list is the goods without the crate — the same quantity
+"dry" names. A 43% gap is not rounding, a container allowance, or a units
+mistake.
+
+This is a **launch question, not a bookkeeping one.** The site publishes the
+lower figure on every swim spa page and on /primerjava ("Teža prazen
+1.050–1.430 kg"), and /dostava tells a customer to prepare a base that carries
+it. A person sizing a terrace, a slab or a crane hire against 1,050 kg when
+the unit is 1,500 kg is the one failure mode on this site that is not a
+cosmetic defect.
+
+Both figures are carried in the catalogue — `dryKg` for what the site says,
+`pack.netKg` for what ships — and neither has been edited to agree with the
+other, because nothing here can tell which document is right. **Put it to
+Celina before launch.** Until it is answered, treat the packing-list figure as
+the planning number.
+
 ### Jet breakdowns, where the sheet gives one
 
 Every stated breakdown reconciles with its stated total — unlike the Pola list,
@@ -218,7 +269,18 @@ either what a page claims or what a customer is charged.
    tank rather than a taller version of the others. Confirm what the extra
    270 mm is for — it changes both the copy and the freight envelope.
 
-## ⚠️ Cost model
+## ⚠️ Cost model — RESOLVED, twice
+
+**Superseded.** Kept because the reasoning is what produced the current
+model, and because the same mistake is easy to make again one level down.
+
+Freight became volumetric (`freightPerCbmEur`, billed on the greater of weight
+or measure) when this was written. It then billed on SHELL volume until the
+packing list arrived on 2026-08-28, which moved it onto crate volume — the
+same error in miniature, since crating is 22–34% on a tub and 3–5% here. See
+the packing-list section above.
+
+The original note follows.
 
 `CostInputs.freightPerUnitEur` in `src/catalog/pricing.ts` is a **single flat
 figure**. That was correct while the catalogue was one line of similar pallets:

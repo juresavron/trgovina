@@ -238,6 +238,63 @@ export const STUDIO_HERO_CSS = `
    * dropping page copy to match a layout is a bad trade on a site whose whole
    * strategy is the search result. It is held to a narrow measure so the block
    * stays the source's proportion rather than becoming a text column. */
+  /* The two paths, side by side, wrapping to two lines on a narrow phone. */
+  :root[data-theme="studio"] .st-hero-acts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: clamp(14px, 1.6vw, 28px);
+  }
+  /* The secondary path: a link, not a second button, so the filled control
+   * keeps its weight. Underlined from rest — on a photograph an unadorned
+   * white word is not reliably readable AS a link. */
+  :root[data-theme="studio"] .st-hero-alt {
+    display: inline-flex;
+    align-items: center;
+    min-block-size: var(--st-tap, 44px);
+    color: var(--on-invert);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    text-underline-offset: 5px;
+  }
+  /* THE PROOF ROW — price, the free visit, what the price covers.
+   *
+   * Set on the label rung and muted, because it must not compete with the
+   * heading it sits under: this is the line a visitor checks AFTER the
+   * sentence has landed, not the thing that lands. The middot separators are
+   * ::before on every item but the first, so the row can wrap to two lines
+   * on a phone without a dot ever opening one — the site's separator rule. */
+  :root[data-theme="studio"] .st-hero-trust {
+    list-style: none;
+    margin: clamp(18px, 2vw, 30px) 0 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px clamp(12px, 1.2vw, 20px);
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    text-transform: uppercase;
+    color: var(--on-invert-mute);
+  }
+  :root[data-theme="studio"] .st-hero-trust li {
+    display: flex;
+    align-items: center;
+    gap: clamp(12px, 1.2vw, 20px);
+  }
+  :root[data-theme="studio"] .st-hero-trust li + li::before {
+    content: "·";
+    color: var(--on-invert-24);
+  }
+  @media (max-width: 620px) {
+    /* One per line on a phone, and the dots go with the row they separated. */
+    :root[data-theme="studio"] .st-hero-trust { display: grid; gap: 6px; }
+    :root[data-theme="studio"] .st-hero-trust li + li::before { content: none; }
+  }
   :root[data-theme="studio"] .st-hero-cta {
     display: inline-flex;
     align-items: center;
@@ -851,7 +908,25 @@ export function renderStudioHero(ctx: RenderCtx): string {
     // The sentence itself is untouched in content and still runs in the story
     // block further down, where it has room to be read rather than skimmed
     // past on the way to the button.
+    // TWO PATHS, BECAUSE A HERO WITH ONE BUTTON ASKS EVERY VISITOR THE SAME
+    // QUESTION. "Choose your pool" is the right ask for somebody ready to
+    // browse; the visitor who is not sure a 2.210 kg object can stand on
+    // their terrace at all has a different first move, and it is the one
+    // this shop is actually differentiated on. The second is a link rather
+    // than a second button so the primary action keeps its weight.
+    '<div class="st-hero-acts">' +
     '<a class="st-hero-cta" href="#izbor">' + esc(c.cta) + "</a>" +
+    '<a class="st-hero-alt" href="' + esc(ctx.shop.routeSlugs["/showroom"] + ctx.q) +
+    '">Brezplačen ogled lokacije</a>' +
+    "</div>" +
+    // THE PROOF ROW. See heroTrust in content/types.ts for why this list is
+    // not `trust`: every item here is confirmed and backed by another page,
+    // and the price is derived from the offered models rather than typed.
+    (c.heroTrust
+      ? '<ul class="st-hero-trust">' +
+        c.heroTrust.map((t) => "<li>" + esc(t) + "</li>").join("") +
+        "</ul>"
+      : "") +
     "</div>" +
     // Bottom-right, out of the reading path but on the same frame as the
     // photograph it qualifies — and absent entirely once the photograph is

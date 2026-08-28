@@ -39,7 +39,7 @@
  */
 
 import { type Addon, ADDON_GROUP_ORDER } from "./pola";
-import { displayPrice, displayPriceCents, envelopeOf } from "./pricing";
+import { displayPrice, displayPriceCents, envelopeOf, type PackedUnit } from "./pricing";
 import { jetsText, filterAreaText } from "./count";
 
 export { ADDON_GROUP_ORDER };
@@ -92,6 +92,18 @@ export interface SwimSpaModel {
    */
   dryKg?: number;
   filledKg?: number;
+  /**
+   * What the supplier's packing list states for this model's crate.
+   *
+   * ⚠️ `pack.netKg` IS 250–450 KG ABOVE `dryKg` on all three models the list
+   * covers — the SWIM 450 is 1.050 kg on the price list and 1.500 kg net on
+   * the packing list, a 43% gap. Two supplier documents, and nothing here can
+   * say which is right. Both are carried; `dryKg` is what the site publishes,
+   * `pack` is what freight and access planning use. See the ⚠️ in
+   * docs/SUPPLIER-SWIMSPA-2026.md — this is a launch question, because a
+   * terrace is engineered against a mass.
+   */
+  pack?: PackedUnit;
   /** Balboa topside control panel. */
   topside: "TP600" | "TP500S" | "TOUCH3";
   /** The options this model's page offers, in the supplier's own prices. */
@@ -205,6 +217,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     skimmers: 2,
     dryKg: 1050,
     filledKg: 5750,
+    pack: { mm: [4525, 2305, 1445], cbm: 15.07, cbmStated: false, netKg: 1500, grossKg: 1520 },
     topside: "TOUCH3",
     addons: [
       a("cover", 360),
@@ -304,6 +317,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     skimmers: 2,
     dryKg: 1430,
     filledKg: 8490,
+    pack: { mm: [5825, 2305, 1425], cbm: 19.13, cbmStated: false, netKg: 1850, grossKg: 1870 },
     topside: "TP600",
     addons: [
       a("cover", 420),
@@ -370,6 +384,7 @@ export const SWIMSPA_MODELS: readonly SwimSpaModel[] = [
     skimmers: 2,
     dryKg: 1260,
     filledKg: 7360,
+    pack: { mm: [5825, 2265, 1375], cbm: 18.14, cbmStated: false, netKg: 1510, grossKg: 1530 },
     topside: "TP600",
     addons: [
       a("cover", 420),
@@ -639,10 +654,10 @@ export function metaLine(m: SwimSpaModel): string {
 
 /** The display price for a model, or the unset dash. */
 export function modelPrice(m: SwimSpaModel): string {
-  return displayPrice({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
+  return displayPrice({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg, m.pack) });
 }
 
 /** The gross price in cents for schema.org, or 0 when the inputs are unset. */
 export function modelPriceCents(m: SwimSpaModel): number {
-  return displayPriceCents({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg) });
+  return displayPriceCents({ kind: "unit", fobUsd: m.fobUsd, envelope: envelopeOf(m.mm, m.dryKg, m.pack) });
 }

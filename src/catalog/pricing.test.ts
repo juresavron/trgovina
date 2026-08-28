@@ -13,7 +13,8 @@ import {
   type CostInputs,
   type UnitEnvelope,
 } from "./pricing";
-import { POLA_MODELS, modelPrice, modelPriceCents } from "./pola";
+import { POLA_MODELS, OFFERED_MODELS, modelPrice, modelPriceCents } from "./pola";
+import { SWIMSPA_MODELS, OFFERED_SWIMSPAS } from "./swimspa";
 import { SHOPS } from "../tenants";
 import { PAGES, legalPagesReady } from "../content/pages";
 import { CONTENT } from "../content";
@@ -182,6 +183,108 @@ describe("the landed-cost calculation", () => {
     expect(freightTonnes({ m3: 4, tonnes: 0.4 })).toBe(4);
     expect(freightTonnes({ m3: 0.5, tonnes: 1.2 })).toBe(1.2);
   });
+
+  it("bills freight on the crate, not the shell, once a packing list exists", () => {
+    // The ZR805: a 1,95 × 1,95 × 0,82 m shell in a 4,19 m³ crate. Shell
+    // volume is 3,12 m³, so a shell basis under-measures by a quarter — and
+    // it under-measures the hot tubs far more than the swim spas, which is
+    // what makes it wrong by LINE rather than merely low.
+    const shell = envelopeOf([1950, 1950, 820], 300);
+    const crate = envelopeOf([1950, 1950, 820], 300, {
+      mm: [920, 2080, 2190], cbm: 4.19, cbmStated: true, netKg: 320, grossKg: 400,
+    });
+    expect(shell?.m3).toBeCloseTo(3.118, 3);
+    expect(crate?.m3).toBe(4.19);
+    // The mass stays the DRY mass either way: the crew carries the shell, not
+    // the pallet. Only the volume moves.
+    expect(crate?.tonnes).toBe(shell?.tonnes);
+  });
+});
+
+/**
+ * The packing list, checked against itself.
+ *
+ * Every figure here was transcribed by eye off a screenshot of a supplier
+ * spreadsheet, which is exactly the input that produces a transposed digit
+ * nobody notices until a container is booked. These are the checks that
+ * transcription can fail: a crate smaller than the shell it holds, a gross
+ * mass under its own net, a stated CBM that does not match the dimensions
+ * printed beside it.
+ *
+ * The CBM check is the valuable one and it only works on the hot tubs: their
+ * sheet prints a CBM column, so the stated figure is INDEPENDENT evidence and
+ * comparing it to `mm` tests both. The swim spa sheet prints no such column,
+ * so there `cbm` is computed from `mm` and comparing them would test nothing
+ * — `cbmStated` is what keeps this test honest about which it is looking at.
+ */
+describe("the supplier's packing list", () => {
+  const packed = [
+    ...POLA_MODELS.filter((m) => m.pack).map((m) => ({ code: m.code, mm: m.mm, pack: m.pack! })),
+    ...SWIMSPA_MODELS.filter((m) => m.pack).map((m) => ({ code: m.code, mm: m.mm, pack: m.pack! })),
+  ];
+
+  it("covers every model the shop actually offers", () => {
+    // A model that loses its packing list silently falls back to shell
+    // volume and quietly reprices ~2% low. Better to notice here.
+    for (const m of [...OFFERED_MODELS, ...OFFERED_SWIMSPAS]) {
+      expect(m.pack, m.code + " has no packing list").toBeDefined();
+    }
+    expect(packed.length).toBeGreaterThanOrEqual(6);
+  });
+
+  /**
+   * ⚠️ ZR803 IS A KNOWN EXCEPTION, AND IT IS THE SUPPLIER'S OWN INCONSISTENCY.
+   * Its row states 980 × 2210 × 2270 mm and 4,97 m³; those dimensions make
+   * 4,916 m³. The other three rows reconcile to three decimals, so this is
+   * not a transcription slip on our side — the sheet disagrees with itself,
+   * the same way four of nine rows on the Pola price list state a jet total
+   * their own size breakdown does not add up to (see `jetPartsSum`).
+   *
+   * Named rather than tolerated by a loosened bound: a 1% tolerance would let
+   * this through AND would let a genuine transposed digit through with it.
+   * ZR803 is not an offered model, so nothing prices off it today; if it is
+   * ever added to the range, ask which of the two figures is right first.
+   */
+  const CBM_DISAGREES_WITH_ITS_OWN_DIMENSIONS = new Set(["ZR803"]);
+
+  it("states a CBM that matches the dimensions printed beside it", () => {
+    const mismatched: string[] = [];
+    for (const { code, pack } of packed) {
+      if (!pack.cbmStated) continue;
+      const fromMm = (pack.mm[0] / 1000) * (pack.mm[1] / 1000) * (pack.mm[2] / 1000);
+      // The sheet rounds CBM to two decimals, so the tolerance is that
+      // rounding and nothing more: 1% would swallow a transposed digit.
+      if (Math.abs(fromMm - pack.cbm) >= 0.011)
+        mismatched.push(code + " (" + fromMm.toFixed(3) + " m³ from mm vs " + pack.cbm + " stated)");
+    }
+    // Both directions. A new mismatch fails; so does an old one quietly
+    // disappearing, which would mean somebody "tidied" the transcription and
+    // lost the supplier's own figure.
+    expect(mismatched.map((s) => s.split(" ")[0]).sort())
+      .toEqual([...CBM_DISAGREES_WITH_ITS_OWN_DIMENSIONS].sort());
+  });
+
+  it("never crates a shell into a box smaller than the shell", () => {
+    for (const { code, mm, pack } of packed) {
+      const shell = (mm[0] / 1000) * (mm[1] / 1000) * (mm[2] / 1000);
+      expect(pack.cbm, code).toBeGreaterThan(shell);
+      // Sorted, because the packing list does not give the crate's dimensions
+      // in the same order as the shell's — the hot tub sheet leads with
+      // height. Every crate edge must still clear its shell edge.
+      const s = [...mm].sort((a, b) => a - b);
+      const c = [...pack.mm].sort((a, b) => a - b);
+      for (let i = 0; i < 3; i++) expect(c[i], code + " axis " + i).toBeGreaterThanOrEqual(s[i]!);
+    }
+  });
+
+  it("never states a gross mass below its own net", () => {
+    for (const { code, pack } of packed) {
+      expect(pack.grossKg, code).toBeGreaterThanOrEqual(pack.netKg);
+    }
+  });
+});
+
+describe("freight arithmetic, continued", () => {
 
   /**
    * The rounding may never go below the derived price. A €10 slip on nine

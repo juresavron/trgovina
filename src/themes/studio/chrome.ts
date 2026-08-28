@@ -664,6 +664,63 @@ export const STUDIO_CHROME_CSS = `
     block-size: 18px;
   }
 
+  /* THE PRIMARY ACT, WORDED. A filled control on the dark bar, so it reads as
+   * the one thing to press rather than as a third icon; the disc's 36px
+   * geometry survives underneath it, which is what lets the word be dropped
+   * at ≤900 without the target changing size.
+   *
+   * ⚠️ IT MUST STAY BELOW .st-chrome-btn, and this is not a stylistic
+   * preference. Both selectors are one attribute plus one class, so they tie
+   * on specificity and SOURCE ORDER decides — declared above the disc, every
+   * property they share (background, colour, border) lost, and the "filled
+   * pill" was a wide translucent disc with white caps on it. The audit caught
+   * it as a real WCAG failure: 14px white text over #ffffff14 on the dark bar
+   * measures 4.17:1 against a 4.5 floor. Filled, it is #151515 on #ffffff and
+   * ~19:1. Moving this block up again re-breaks both. Same for the :hover
+   * pair, which has to outrank .st-chrome-btn:hover the same way. */
+  :root[data-theme="studio"] .st-chrome-go {
+    inline-size: auto;
+    gap: var(--chrome-item-gap);
+    padding-inline: clamp(14px, 1.1vw, 20px);
+    border-color: var(--on-invert);
+    background: var(--on-invert);
+    color: var(--ink);
+    /* .st-chrome-btn transitions background and border only — the discs never
+     * change ink. This one does, so the property has to be added or the word
+     * snaps while the fill fades. */
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+  :root[data-theme="studio"] .st-chrome-go span {
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: var(--lh-label-tight);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  /* The hero CTA's own hover, restated: the fill empties and the ink goes
+   * white inside the ring it already had. This is the theme's one gesture for
+   * a white pill on a dark ground, and the two controls now point at the same
+   * place, so they should not move differently. A grey fill was tried first
+   * (--on-invert-mute at 7.3:1 — legible, but a rung nothing else on the bar
+   * uses, and muddy beside the white nav). Both states are white-on-#151515
+   * or #151515-on-white; neither goes near the floor. */
+  :root[data-theme="studio"] .st-chrome-go:hover,
+  :root[data-theme="studio"] .st-chrome-go:focus-visible {
+    background: transparent;
+    color: var(--on-invert);
+  }
+  /* ≤900: back to the disc. The two-row bar has a 44px row to spend and a
+   * scroll rail beside it; a worded pill there would crowd the phone. */
+  @media (max-width: 900px) {
+    :root[data-theme="studio"] .st-chrome-go span { display: none; }
+    :root[data-theme="studio"] .st-chrome-go {
+      inline-size: 34px;
+      padding-inline: 0;
+    }
+  }
+
   /* Count badge: small white disc, black numeral (measured).
    *
    * Badges are the label role and the ramp has nothing below it, so the disc is
@@ -1466,7 +1523,8 @@ export const STUDIO_CHROME_CSS = `
      * unset, the note measured 718px and 96 characters at 768. */
     :root[data-theme="studio"] .st-foot-top { gap: 25px; }
     :root[data-theme="studio"] .st-foot-cols { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    :root[data-theme="studio"] .st-foot-brand { grid-column: 1 / -1; }
+    /* No .st-foot-brand rule: this tier is inside ≤1359, which already spans
+     * the brand block across every column with the same value. */
   }
 
   /* THE FADE WITHOUT THE TIMELINE.
@@ -1754,9 +1812,26 @@ export function renderStudioHeader(ctx: RenderCtx): string {
         '" aria-label="Košarica — ' + cartCount + ' izdelkov">' + basketIcon() +
         '<span class="st-chrome-badge" data-st-cart-count="' + cartCount + '" aria-hidden="true">' +
         cartCount + "</span></a>"
-      : '<a class="st-chrome-btn" href="' +
+      : // ⚠️ A WORDED BUTTON, NOT A BARE DISC — the one change the reference
+        // site (bullfrogspas.com, set by the owner) makes that this bar was
+        // missing outright. Their header's right-hand control is a filled
+        // "DESIGN MY SPA"; ours was an unlabelled envelope, so the single
+        // most valuable pixel on a shop that sells only by enquiry said
+        // nothing about what pressing it does.
+        //
+        // "Povpraševanje" and not "Kontakt", which is three inches left in
+        // the nav: the nav is the site's table of contents and names the
+        // PAGE, this names the ACT. That distinction is the one that
+        // retired the magnifier, and it is what keeps this from being the
+        // duplicate that was.
+        //
+        // The glyph stays beside the word, so the ≤900 tier can drop the
+        // word and keep exactly the disc that shipped before (see the
+        // media query on .st-chrome-go).
+        '<a class="st-chrome-btn st-chrome-go" href="' +
         esc(s.routeSlugs["/contact"] + ctx.q) +
-        '" aria-label="Povpraševanje in kontakt">' + mailIcon() + "</a>") +
+        '" aria-label="Povpraševanje in kontakt">' + mailIcon() +
+        "<span>Povpraševanje</span></a>") +
     "</div>" +
     "</div></header>" +
     '<span class="st-anchor" id="st-vsebina" tabindex="-1"></span>'

@@ -47,14 +47,39 @@ describe("the inlined stylesheet stays within budget", () => {
   });
 
   /**
-   * A separate, far looser guard on the raw string. It is not a performance
-   * budget — it is a runaway detector, for the case where a generator starts
+   * THE RUNAWAY, CHECKED DIRECTLY.
+   *
+   * The raw-byte ceiling below was a PROXY for this: "a generator starts
    * emitting duplicate rules and compression hides it because duplicates
-   * compress beautifully.
+   * compress beautifully". A byte count is a poor proxy — it cannot tell a
+   * duplicated rule from a new feature, so it fires on honest growth and
+   * stays silent while a small duplication creeps in under the same budget.
+   * It fired twice in one evening, once correctly (two rules copied between
+   * media queries) and once not (a swatch feature that added real CSS).
+   *
+   * So the thing it was worried about is now asserted directly, and the
+   * ceiling below relaxes into the coarse backstop it always really was.
+   */
+  it("emits no rule twice", () => {
+    const rules = BASE_CSS.match(/[^{}]+\{[^{}]*\}/g) ?? [];
+    const seen = new Map<string, number>();
+    for (const r of rules) seen.set(r, (seen.get(r) ?? 0) + 1);
+    const dupes = [...seen.entries()]
+      .filter(([, n]) => n > 1)
+      .map(([r, n]) => "x" + n + " " + r.slice(0, 70));
+    expect(dupes).toEqual([]);
+  });
+
+  /**
+   * A coarse backstop on the raw string, now that duplication has its own
+   * test above. It is NOT a performance budget — the budget is the brotli
+   * figure, and at 17.8 of 20 KB there is real room left. This number exists
+   * so that a tenfold jump gets a human's attention; move it deliberately
+   * when a feature earns it, and never to silence a failure.
    */
   it("has not grown without anyone noticing", () => {
     const kb = BASE_CSS.length / 1024;
-    expect(kb, "raw inline CSS is " + kb.toFixed(1) + " KB").toBeLessThan(160);
+    expect(kb, "raw inline CSS is " + kb.toFixed(1) + " KB").toBeLessThan(168);
   });
 
   it("still emits the rules that matter after minification", async () => {
