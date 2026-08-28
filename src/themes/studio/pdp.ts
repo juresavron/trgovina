@@ -81,6 +81,7 @@ import { productImg } from "./media";
 import { helpIcon, returnIcon, shieldIcon, truckIcon } from "./icons";
 import { renderStudioTestimonials } from "./editorial";
 import { ADDON_GROUP_ORDER } from "../../catalog/pola";
+import { SHELL_FINISHES_ARE_PHOTOGRAPHED } from "../../catalog/pola";
 import { finishImageUrl, type FinishKind } from "../../catalog/finish-image";
 import { formatEur } from "../../catalog/pricing";
 
@@ -2796,8 +2797,23 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     "Kjer imamo posnet vzorec, ga vidite ob imenu barve; akril je marmoriran " +
     "in vsak zaslon barvo prikaže nekoliko drugače, zato je posnetek v pomoč " +
     "pri izbiri in ne zavezujoč odtenek. " +
-    "Proizvajalčeva barvna karta našteva deset odtenkov, specifikacija " +
-    "modela pa sedem; kateri veljajo za vaš model, potrdimo ob naročilu.</p>" +
+    // ⚠️ THE APOLOGY ONLY APPLIES TO A TRANSCRIBED LIST.
+    //
+    // "The chart lists ten shades, the model specification lists seven, and
+    // we will confirm which seven when you order" is an honest sentence about
+    // a list copied out of the SUPPLIER'S chart, which is what this page
+    // showed while the colours were hardcoded in catalog/pola.ts.
+    //
+    // Once the list is the shop's own uploaded swatches it stops being true
+    // and starts being confusing: those ARE the colours, there is a
+    // photograph behind every one, and nothing is waiting to be narrowed down
+    // at order time. Leaving it would tell a buyer that the ten tiles they
+    // can see might turn out to be seven.
+    (SHELL_FINISHES_ARE_PHOTOGRAPHED
+      ? ""
+      : "Proizvajalčeva barvna karta našteva deset odtenkov, specifikacija " +
+        "modela pa sedem; kateri veljajo za vaš model, potrdimo ob naročilu.") +
+    "</p>" +
     // ⚠️ THE SAMPLE BOOK IS AN OFFER, AND IT WAS A SUBORDINATE CLAUSE.
     //
     // "Vzorčnik pošljemo na zahtevo." sat as the fourth sentence of the

@@ -23,6 +23,10 @@
 
 import { displayPrice, displayPriceCents, envelopeOf, type PackedUnit } from "./pricing";
 import { jetsText } from "./count";
+import {
+  GENERATED_CABINET_FINISHES,
+  GENERATED_SHELL_FINISHES,
+} from "./finishes.generated";
 
 /**
  * An option the supplier prices separately from the shell.
@@ -484,7 +488,7 @@ export const POLA_MODELS: readonly PolaModel[] = [
  * Ask the supplier which seven per model, and for swatch images, before this
  * becomes a colour picker.
  */
-export const SHELL_FINISHES: readonly string[] = [
+const TRANSCRIBED_SHELL_FINISHES: readonly string[] = [
   "Midnight",
   "Canyon",
   "Silver white marble",
@@ -522,7 +526,7 @@ export const SHELL_FINISHES: readonly string[] = [
  * If the supplier ever publishes a Slovenian colour chart, this is where it
  * lands and the note comes out.
  */
-export const CABINET_FINISHES: readonly string[] = [
+const TRANSCRIBED_CABINET_FINISHES: readonly string[] = [
   "Svetlo siva",
   "Zlato rjava",
   "Temno siva",
@@ -530,6 +534,52 @@ export const CABINET_FINISHES: readonly string[] = [
   "Črna",
   "Siva",
 ];
+
+/* ================= WHICH LIST THE SITE ACTUALLY RENDERS =================
+ *
+ * ⚠️ THE PHOTOGRAPH DECIDES, AND THAT IS THE INVERSION.
+ *
+ * The two arrays above are a TRANSCRIPTION of the supplier's colour chart.
+ * They were also, until now, the definition of what could be photographed:
+ * admin/site-images.ts built one upload slot per transcribed name, so a
+ * colour this shop physically holds but the transcription missed had nowhere
+ * to go, and a colour on the chart that the shop cannot show still occupied a
+ * tile on the product page.
+ *
+ * The uploaded set wins where there is one. finishes.generated.ts is written
+ * from the `finishes` table by scripts/sync-finishes.mjs, and a row exists
+ * there because somebody uploaded a swatch and the name came off the file.
+ *
+ * ALL OR NOTHING, PER KIND. Merging the two would put colours the shop can
+ * show beside colours it cannot, in one row, with nothing on the page telling
+ * them apart — which is worse than either list alone. So a kind with any
+ * uploads renders exactly those; a kind with none falls back to the
+ * transcription, which is what the site rendered before this existed and is
+ * still the honest answer for a shop that has photographed nothing yet.
+ *
+ * The fallback is also what makes this safe to deploy on a build that could
+ * not reach Supabase: sync-finishes fails soft and leaves the generated file
+ * alone, exactly as sync-reviews does.
+ */
+export const SHELL_FINISHES: readonly string[] =
+  GENERATED_SHELL_FINISHES.length > 0
+    ? GENERATED_SHELL_FINISHES.map((f) => f.name)
+    : TRANSCRIBED_SHELL_FINISHES;
+
+export const CABINET_FINISHES: readonly string[] =
+  GENERATED_CABINET_FINISHES.length > 0
+    ? GENERATED_CABINET_FINISHES.map((f) => f.name)
+    : TRANSCRIBED_CABINET_FINISHES;
+
+/**
+ * Whether a kind's list came from uploaded photographs rather than the
+ * transcription. The product page's colour note says different things in the
+ * two cases — see pdp.ts — because "the chart lists ten and your model takes
+ * seven" is a statement about the manufacturer's chart, and once the list is
+ * the shop's own swatches it is no longer true or needed.
+ */
+export const SHELL_FINISHES_ARE_PHOTOGRAPHED = GENERATED_SHELL_FINISHES.length > 0;
+
 
 /**
  * WHAT THE SHOP ACTUALLY SELLS.

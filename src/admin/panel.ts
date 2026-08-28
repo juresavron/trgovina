@@ -727,6 +727,13 @@ export function indexPage(
       // is touched: an enquiry is a customer waiting for an answer, a review
       // is an editorial job. The dashboard should open on the thing with
       // somebody on the other end of it.
+      "<h2>Barve</h2>" +
+      '<div class="card row-card">' +
+      "<p>Barve školjke in obloge, ki jih trgovina lahko pokaže. Dodate jih tako, "
+        + "da naložite njihove vzorce.</p>" +
+      '<a class="btn btn--ghost" href="/admin/barve">Uredi barve</a>' +
+      "</div>" +
+
       "<h2>Povpraševanja</h2>" +
       '<div class="card row-card">' +
       "<p>Kar so ljudje oddali prek obrazca na strani Kontakt.</p>" +
@@ -787,10 +794,11 @@ export function indexPage(
       '<label for="bv-f">Izberite ali povlecite vse vzorce barv školjke naenkrat</label>' +
       '<input id="bv-f" type="file" multiple ' +
       'accept="image/webp,image/jpeg,image/png,image/avif">' +
-      '<p class="fmeta">Naložite lahko vseh deset hkrati. Če se datoteka ' +
-      "imenuje po barvi (npr. Canyon.jpg, silver white marble.png), gre na svoje mesto brez " +
-      "ugibanja; za ostale AI pogleda sliko in predlaga barvo. Spodaj piše, " +
-      "kaj je šlo kam — preverite in po potrebi popravite na posamezni barvi." +
+      '<p class="fmeta">Vsaka datoteka postane ena barva, in ime barve je ime ' +
+      "datoteke. Poimenujte jih po proizvajalčevi barvni karti — Oyster Opal.jpg, " +
+      "silver white marble.png, Črna.jpg — in jih povlecite sem vse naenkrat. " +
+      "Velikih in malih črk ne popravljamo: ime se navaja na naročilnici. " +
+      "Vzorec obrežemo na sredini in shranimo 400 × 400 px." +
       "</p>" +
       "</div>" +
       '<p class="stline" id="bv-stwrap" role="status"><span id="bv-st"></span></p>' +
@@ -803,10 +811,11 @@ export function indexPage(
       '<label for="ob-f">Izberite ali povlecite vse vzorce barv obloge naenkrat</label>' +
       '<input id="ob-f" type="file" multiple ' +
       'accept="image/webp,image/jpeg,image/png,image/avif">' +
-      '<p class="fmeta">Naložite lahko vseh šest hkrati. Če se datoteka ' +
-      "imenuje po barvi (npr. Črna.jpg, temno-siva.png), gre na svoje mesto brez " +
-      "ugibanja; za ostale AI pogleda sliko in predlaga barvo. Spodaj piše, " +
-      "kaj je šlo kam — preverite in po potrebi popravite na posamezni barvi." +
+      '<p class="fmeta">Vsaka datoteka postane ena barva, in ime barve je ime ' +
+      "datoteke. Poimenujte jih po proizvajalčevi barvni karti — Oyster Opal.jpg, " +
+      "silver white marble.png, Črna.jpg — in jih povlecite sem vse naenkrat. " +
+      "Velikih in malih črk ne popravljamo: ime se navaja na naročilnici. " +
+      "Vzorec obrežemo na sredini in shranimo 400 × 400 px." +
       "</p>" +
       "</div>" +
       '<p class="stline" id="ob-stwrap" role="status"><span id="ob-st"></span></p>' +

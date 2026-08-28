@@ -89,6 +89,23 @@ jobs:
             git diff --stat -- src/content/reviews.generated.ts
           fi
 
+      # The colour list is baked in for the same reason the reviews are: the
+      # configurator renders inside a synchronous, env-free handleRequest. A
+      # colour exists because somebody uploaded its swatch and the name came
+      # off the file — see src/catalog/finishes.generated.ts. Fails soft: an
+      # unreachable database leaves the committed list alone rather than
+      # swapping the shop's real swatches for the transcribed chart.
+      - name: Rebuild the colour list from Supabase
+        continue-on-error: true
+        run: |
+          node scripts/sync-finishes.mjs
+          if git diff --quiet -- src/catalog/finishes.generated.ts; then
+            echo "colours already matched the database"
+          else
+            echo "colours changed — the committed copy was stale:"
+            git diff --stat -- src/catalog/finishes.generated.ts
+          fi
+
       - name: Typecheck
         run: npx tsc --noEmit
 
