@@ -67,10 +67,14 @@ export const COOKIES: Page = {
       kind: "prose",
       h: "Kaj se vseeno zabeleži",
       p: [
+        // "…in jih ne povezujemo z vašim povpraševanjem" was not true: the
+        // enquiry is stored with the IP it was sent from, for rate limiting.
+        // See the Povpraševanje row on /zasebnost.
         "Kot pri vsaki spletni strani strežnik ob dostavi strani obdela tehnične podatke " +
           "zahteve, med njimi naslov IP. To je nujno za delovanje in varnost storitve in ni " +
-          "piškotek; teh zapisov ne uporabljamo za profiliranje in jih ne povezujemo z vašim " +
-          "povpraševanjem.",
+          "piškotek; teh zapisov ne uporabljamo za profiliranje. Ko oddate povpraševanje, " +
+          "naslov IP shranimo skupaj z njim zaradi omejevanja zlorab obrazca — podrobneje v " +
+          "politiki zasebnosti.",
       ],
     },
     { kind: "contact", h: "Vprašanja o zasebnosti" },

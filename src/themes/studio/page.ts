@@ -1642,15 +1642,28 @@ export const STUDIO_PAGE_CSS = `
    * would be two more grounds nobody has measured against the text on them.
    * The accent rule carries the alarm; role="alert" carries it to everyone
    * else. */
+  /* ⚠️ IT HAS TO READ AS A FAILURE. This was body ink at body size behind a
+   * 3px rule in --acc — the SAME accent as the required asterisk and the focus
+   * ring — with no icon, no weight change and no prefix, so at 390 it read as
+   * a pull-quote between the lead and the first field. Contrast was never the
+   * problem (18:1); salience was. The rule keeps its width and takes the ink
+   * colour, the text takes the medium weight, and focus is visible because the
+   * paragraph is now a focus target when no field owns the problem. */
   :root[data-theme="studio"] .st-enq-err {
     margin: clamp(16px, 1.6vw, 24px) 0 0;
-    padding-inline-start: var(--gap-md);
-    border-inline-start: 3px solid var(--acc);
+    padding: var(--gap-sm) var(--gap-md);
+    border-inline-start: 3px solid var(--ink);
+    background: var(--bg-alt);
     font-family: var(--f-body);
     font-size: var(--t-body);
+    font-weight: var(--w-body-med);
     line-height: var(--lh-body);
     color: var(--ink);
     max-inline-size: 38rem;
+  }
+  :root[data-theme="studio"] .st-enq-err:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
   }
   :root[data-theme="studio"] .st-enq-done {
     margin-block-start: clamp(20px, 2vw, 30px);
@@ -2323,8 +2336,30 @@ function enquiry(
   // The form also carries novalidate, so the browser's own per-field
   // identification is suppressed too — there was no other channel.
   const badField = ctx.enquiry?.field ?? null;
+  // ⚠️ WHEN NO FIELD IS AT FAULT, THIS PARAGRAPH IS THE ONLY THING TO GO TO,
+  // AND NOTHING WENT TO IT.
+  //
+  // A field problem sets autofocus on the control below, so the browser
+  // scrolls to it and a reader lands on it: measured, scrollY 744 at 1440 and
+  // 1225 at 390, error in the viewport both times. A problem that is NOT a
+  // field — Supabase unreachable, the rate limit, a body that would not parse
+  // — sets field:null, so nothing was marked, nothing focused and nothing
+  // scrolled. Measured, both viewports: scrollY 0, focus on BODY, and the
+  // sentence "Povpraševanja ta trenutek ni bilo mogoče oddati" sitting 1124px
+  // down at 1440 and 1731px down at 390 — 1.7 screens below the fold, under a
+  // form that still looks ready to send.
+  //
+  // role="alert" does not rescue it: a live region that is already in the
+  // document at parse time is not announced on a fresh load. So on the one
+  // failure that is the shop's fault, on a page that exists because this shop
+  // takes no orders online, the visitor was told nothing.
+  //
+  // tabindex="-1" + autofocus makes the paragraph itself the focus target
+  // when no field owns the problem. Same device as the fields, no script.
   const err = ctx.enquiry?.error
-    ? '<p class="st-enq-err" id="enq-err" role="alert">' + esc(ctx.enquiry.error) + "</p>"
+    ? '<p class="st-enq-err" id="enq-err" role="alert"' +
+      (badField === null ? ' tabindex="-1" autofocus' : "") +
+      ">" + esc(ctx.enquiry.error) + "</p>"
     : "";
 
   // What the visitor typed on a refused attempt. Escaped on the way back out,
@@ -2434,7 +2469,23 @@ function enquiry(
     '<input type="checkbox" id="enq-soglasje" name="soglasje" value="1" required' +
     (badField === "soglasje" ? ' aria-invalid="true" autofocus' : "") +
     describedBy("soglasje", false) + ">" +
-    '<label for="enq-soglasje">' + esc(CONSENT_TEXT) + "</label>" +
+    // ⚠️ THE ASTERISK AND THE LINK, and both were missing.
+    //
+    // This control is `required` and refuses the submit, and it was the one
+    // required control on the form with no marker — while the copy above the
+    // form said only the name and one contact were mandatory. A visitor who
+    // fixed a bad e-mail was then refused a second time, for a box nothing had
+    // told them about.
+    //
+    // And the sentence cites "politika zasebnosti" while there was NO link to
+    // /zasebnost anywhere inside <main> on this page — only in the site
+    // footer. GDPR art. 7(2) asks that a consent request be in an easily
+    // accessible form; the notice it depends on has to be one click away from
+    // the box, not one scroll and a hunt.
+    '<label for="enq-soglasje">' + esc(CONSENT_TEXT) +
+    ' <span class="st-enq-req">*</span> ' +
+    '<a href="' + esc(ctx.shop.routeSlugs["/privacy"]) + '">Politika zasebnosti</a>' +
+    "</label>" +
     "</p>" +
     '<p class="st-enq-act"><button class="st-page-act st-page-act--lead" type="submit">' +
     "Pošljite povpraševanje</button></p>" +

@@ -58,8 +58,12 @@ export const CONTACT: Page = {
       kind: "enquiry",
       h: "Povprašajte za ponudbo",
       p:
-        "Odgovorimo v enem delovnem dnevu. Obvezna sta samo ime in en stik; " +
-        "vse drugo pomaga, da je prvi odgovor uporaben.",
+        // "Obvezna sta samo ime in en stik" was not true — the consent box
+        // refuses the submit as well, and it carried no marker, so a visitor
+        // could be refused twice for one attempt.
+        "Odgovorimo v enem delovnem dnevu. Obvezni so ime, telefon ali e-pošta " +
+        "(eno od njiju) in soglasje za obdelavo podatkov; vse drugo pomaga, da " +
+        "je prvi odgovor uporaben.",
     },
     {
       kind: "prose",
@@ -163,9 +167,17 @@ export const CONTACT: Page = {
         "Po telefonu je hitrejše vse, kar je vprašanje in odgovor: ali model gre skozi prehod, " +
           "kaj mora pripraviti električar, kako poteka dostavni dan. Po e-pošti je bolje vse, " +
           "kar ima priloge: mere, fotografije prostora in poti, tloris terase.",
-        "Kadar na to stran pridete s strani modela, je ta naveden nad kontaktnimi podatki in se " +
-          "prepiše tudi v zadevo e-pošte. Pustite ga tam: tako že ob odpiranju sporočila vemo, " +
-          "o katerem bazenu teče beseda, in vam ni treba ničesar opisovati dvakrat.",
+        // ⚠️ THE MODEL IS BELOW, NOT ABOVE, AND IT IS NOT EDITABLE. Measured
+        // on /kontakt?model=veliki-230: the contact tiles sit at y=688 and the
+        // model summary at y=1130 — 440px further down, inside the enquiry
+        // card, where page.ts records it was deliberately moved. "Pustite ga
+        // tam" also described a field the visitor could clear; the model
+        // travels in the query string and in hidden state, so there is nothing
+        // to leave anywhere.
+        "Kadar na to stran pridete s strani modela, ga vidite v povzetku nad gumbom za " +
+          "pošiljanje, skupaj z izbrano konfiguracijo, in potuje z obrazcem. Tako že ob " +
+          "odpiranju sporočila vemo, o katerem bazenu teče beseda, in vam ni treba ničesar " +
+          "opisovati dvakrat.",
       ],
     },
     { kind: "imprint", h: "Podatki o podjetju" },

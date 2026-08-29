@@ -60,12 +60,25 @@ export const PRIVACY: Page = {
         // months" is two different promises about one row.
         [
           "Povpraševanje",
+          // ⚠️ THE IP AND THE SOURCE PAGE BELONG IN THIS LIST, and they were
+          // missing from it. submit.ts sends p_ip and p_source_path in the
+          // SAME call as the name, the telephone and the message — so the row
+          // this paragraph describes has always held them. Two published
+          // sentences said otherwise: this page's server-log row ("Sami teh
+          // zapisov ne vodimo in jih ne povezujemo z drugimi podatki") and
+          // /piskotki ("ne povezujemo z vašim povpraševanjem"). Both are now
+          // corrected. GDPR art. 13(1)(c) and (d) require the categories and
+          // the purposes to be the real ones.
           "Ime, telefon ali e-naslov, kraj, opis dostopa in vaše sporočilo, ter model in " +
-            "barve, ki ste jih izbrali na strani izdelka, če ste prišli od tam. Namen: odgovor " +
-            "na vaše povpraševanje in priprava ponudbe. Pravna podlaga: izvedba ukrepov na " +
-            "vašo zahtevo pred sklenitvijo pogodbe. Podatki se shranijo v našo bazo pri " +
+            "barve, ki ste jih izbrali na strani izdelka, če ste prišli od tam. Skupaj s " +
+            "povpraševanjem shranimo tudi naslov IP, s katerega je bilo oddano, in stran, s " +
+            "katere ste prišli — to nam omogoča omejevanje zlorab obrazca. Namen: odgovor " +
+            "na vaše povpraševanje in priprava ponudbe; pri naslovu IP tudi zaščita pred " +
+            "zlorabami. Pravna podlaga: izvedba ukrepov na " +
+            "vašo zahtevo pred sklenitvijo pogodbe, pri naslovu IP zakoniti interes za " +
+            "varno delovanje obrazca. Podatki se shranijo v našo bazo pri " +
             "ponudniku podatkovnih storitev v EU; ob oddaji shranimo tudi besedilo soglasja, " +
-            "ki ste ga potrdili, in čas oddaje.",
+            "ki ste ga potrdili, in čas oddaje. Vse to izbrišemo skupaj s povpraševanjem.",
         ],
         [
           "Naročilo in dostava",
@@ -91,8 +104,9 @@ export const PRIVACY: Page = {
           "Tehnični zapisi strežnika",
           "Ob obisku spletne strani ponudnik gostovanja obdela vaš naslov IP, ker je to " +
             "tehnično nujno za prikaz strani in za zaščito pred zlorabami. Pravna podlaga: " +
-            "zakoniti interes za varno delovanje strani. Sami teh zapisov ne vodimo in jih " +
-            "ne povezujemo z drugimi podatki.",
+            "zakoniti interes za varno delovanje strani. Teh zapisov ne uporabljamo za " +
+            "profiliranje. Izjema je oddaja povpraševanja: takrat naslov IP shranimo skupaj " +
+            "z njim, kot je opisano zgoraj.",
         ],
       ],
     },

@@ -23,7 +23,12 @@ import type { Page } from "../pages";
 export const CART: Page = {
   key: "/cart",
   h1: "Košarica",
-  lead: "Spletno naročanje še ni odprto. Naročila zaenkrat sprejemamo po telefonu in e-pošti.",
+  // The form exists now, so "po telefonu in e-pošti" is no longer the whole
+  // answer — and this was the one page that says you cannot order online
+  // without pointing at the thing that works.
+  lead:
+    "Spletno naročanje še ni odprto. Povpraševanje lahko oddate prek obrazca, " +
+    "sprejemamo pa tudi klice in e-pošto.",
   metaDescription:
     "Spletno naročanje masažnih bazenov še ni odprto. Naročilo in ponudbo uredimo po telefonu " +
     "ali e-pošti, po ogledu lokacije.",

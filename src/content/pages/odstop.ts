@@ -89,9 +89,17 @@ export const WITHDRAWAL: Page = {
           // per address in the written offer. A deduction measured against a
           // tier that does not exist is indeterminate against the consumer,
           // so the refund covers the delivery cost actually paid, full stop.
+          // ⚠️ "brez dodatnih stroškov za vas" READ AS "vračilo je brezplačno",
+          // which the section two below contradicts: the consumer bears the
+          // DIRECT return costs. Both sentences were true of different things
+          // — the refund carries no deduction, the carriage is separate — and
+          // an ambiguous consumer term is construed against the trader
+          // (Dir. 93/13/EEC art. 5). So the step says which one it means and
+          // points at the other.
           "Najkasneje v 14 dneh od prejema obvestila o odstopu, z istim plačilnim sredstvom, " +
-            "kot ste plačali, in brez dodatnih stroškov za vas. Vrnemo tudi stroške dostave, " +
-            "ki ste jih plačali.",
+            "kot ste plačali. Od zneska ne odtegnemo ničesar in vrnemo tudi stroške dostave, " +
+            "ki ste jih plačali. Neposredni stroški vračila blaga so ločeni — kdo jih nosi in " +
+            "koliko znašajo, piše v razdelku »Stroški in stanje blaga« spodaj.",
         ],
       ],
     },
