@@ -211,9 +211,25 @@ function addons(root){
   }
 
   boxes.forEach(function(b){ b.addEventListener("change", sync); });
+  /* The summed lines ship hidden, because with no script they would state a
+     WRONG figure rather than no figure — 0 EUR of equipment beside three
+     ticked boxes. A script is here now, so they can be shown. */
+  [].forEach.call(document.querySelectorAll("[data-st-sums]"), function(el){
+    el.hidden = false;
+  });
   /* A reload can restore ticked boxes without firing change, so the total
      would open disagreeing with the checkboxes above it. */
   sync();
+  /* ⚠️ AND ON pageshow, because the one-shot above is TOO EARLY for the case
+     it was written for. Chrome restores form state AFTER DOMContentLoaded and
+     without firing change, so on a Back navigation the boxes came back ticked
+     and the totals did not: driven twice on this build, three options ticked
+     and a colour chosen, the page reopened saying "Izbrana oprema 0 EUR" and
+     "Skupaj 7.890 EUR" under three visibly ticked boxes — 700 EUR out. One
+     synthetic change event fixed it, so sync() was never the problem, only
+     when it ran. pageshow fires after the restore, for bfcache and ordinary
+     back navigations alike. */
+  window.addEventListener("pageshow", sync);
 }
 
 /* ---- where-you-are ------------------------------------------------------
@@ -264,6 +280,10 @@ function barConfig(){
 
   form.addEventListener("change", sync);
   sync();
+  /* Same restore-after-load case as addons(): the bar's summary line went
+     back to the bare spec string on a Back navigation while the chosen colour
+     was still visibly ringed above it. */
+  window.addEventListener("pageshow", sync);
 }
 
 /* ---- the full-size viewer ----------------------------------------------
@@ -300,6 +320,13 @@ function lightbox(gallery){
     if (photo.srcset) { img.srcset = photo.srcset; img.sizes = "100vw"; }
     img.alt = photo.alt || "";
     dlg.showModal();
+    /* ⚠️ A MODAL FREEZES WHAT IS BEHIND IT, and this one did not: showModal()
+       blocks interaction with the page but not scrolling of it. Driven from
+       scrollY 0, a wheel over the open dialog took the page to 700 and End
+       took it to 5706 — so Escape returned focus correctly and left the
+       reader in the footer, five thousand pixels from the photograph they had
+       opened. */
+    document.documentElement.style.overflow = "hidden";
   }
 
   [].forEach.call(gallery.querySelectorAll("[data-st-zoom]"), function(btn){
@@ -333,6 +360,9 @@ function lightbox(gallery){
   /* Escape closes natively; this is what returns focus to the control that
      opened it, which the platform does not do. */
   dlg.addEventListener("close", function(){
+    /* Runs on Escape, on the X and on a backdrop click — all three route
+       through close, which is why the scroll lock is released here. */
+    document.documentElement.style.overflow = "";
     if (img) { img.removeAttribute("src"); img.removeAttribute("srcset"); }
     if (opener && document.contains(opener)) opener.focus();
     opener = null;
@@ -403,9 +433,43 @@ function printBtn(){
   });
 }
 
+/* ---- the buy bar defers to the buy column's own CTA ----------------------
+   At scroll 0 the bar covers the bottom of the gallery: measured on
+   /bazen/veliki-230, the thumbnail strip was 0% visible on EVERY desktop
+   viewport (1024x768, 1440x900, 1440x1080, 1920x900, 1920x1080), and 66-73px
+   of the product photograph itself sat behind the black band at 1440x900 and
+   1920. A visitor's first paint was one clipped photograph with no sign that
+   nine more existed.
+
+   The bar is also redundant exactly there: at 1440x900 the column's own
+   "Povprašajte za ponudbo" is at y 532-584 while the bar repeats it at
+   826-900, 242px apart. So the bar earns its place only once that button has
+   gone, which is what this watches.
+
+   ⚠️ THE NO-SCRIPT STATE IS THE BAR SHOWING, not hiding. The class is added
+   here, so a visitor with no JavaScript, or an engine without
+   IntersectionObserver, keeps today's page rather than losing the CTA
+   entirely — the same trade every other progressive touch in this file makes.
+   The height budget in pdp.ts is unchanged and still correct for the stuck
+   state; this only fixes the position every visitor starts from. */
+function barDefer(){
+  var bar = document.querySelector(".st-pdp-bar");
+  var cta = document.querySelector(".st-pdp-buyrow");
+  if (!bar || !cta) return;
+  if (!("IntersectionObserver" in window)) return;
+  bar.classList.add("is-deferred");
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      bar.classList.toggle("is-deferred", en.isIntersecting);
+    });
+  }, { threshold: 0 });
+  io.observe(cta);
+}
+
 function init(){
   navCurrent();
   barConfig();
+  barDefer();
   reveal();
   topDisc();
   printBtn();

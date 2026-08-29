@@ -369,10 +369,35 @@ describe("the enquiry carries its model", () => {
     }
   });
 
+  /**
+   * ⚠️ THE CONTRACT IS "THE MODEL REACHES THE ENQUIRY", NOT "A LINK CARRIES
+   * model= IN ITS href".
+   *
+   * This asserted the literal query string, which passed only because the
+   * sticky bar's CTA was an anchor built by hand — and that anchor was the
+   * defect: it carried the model and NOTHING ELSE, so pressing it discarded
+   * both colours, both configuration groups and every extra, landing on an
+   * enquiry page quoting the base price while the bar above it showed the
+   * configured one. The bar is now a submit button on the same form the
+   * column's CTA submits, so the model travels as the form's own hidden
+   * input, together with everything else the visitor chose.
+   *
+   * So the test asks what actually has to be true: the enquiry form carries
+   * this model, and the control that submits it exists. Written as the
+   * contract, it survives the next change of mechanism — and it would have
+   * caught the anchor, which satisfied the old literal while losing the order.
+   */
   it("is emitted by every product page", async () => {
     for (const slug of ["veliki-230", "swim-580-maxi"]) {
       const html = await get("/bazen/" + slug + "?shop=bazen");
-      expect(html, slug + " loses its model on the enquiry").toContain("model=" + slug);
+      expect(html, slug + " loses its model on the enquiry").toContain(
+        '<input type="hidden" name="model" value="' + slug + '">',
+      );
+      // And the bar's control submits THAT form rather than routing past it.
+      expect(html, slug + "'s sticky bar does not submit the enquiry").toContain(
+        '<button type="submit" form="st-pdp-form"',
+      );
+      expect(html, slug + " has no enquiry form").toContain('<form id="st-pdp-form"');
     }
   });
 });

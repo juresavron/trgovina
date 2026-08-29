@@ -67,6 +67,68 @@ describe("the testimonial band's claims", () => {
     expect(html).not.toContain("Preverjena mnenja strank");
   });
 
+  /**
+   * ⚠️ THE LEAD IS A CLAIM TOO, and it was the one part of this band that no
+   * test and no gate covered.
+   *
+   * The chip, the heading and this test file all keyed on `verified`. The
+   * sentence under the heading did not: reviewsLead printed unconditionally
+   * and said "Zapisali so jih stranke, ki so pri nas kupile bazen" — four
+   * asserted purchases, against a reviews table holding order_id NULL on all
+   * four. Every chip was correctly withheld and the strongest form of the same
+   * 23b claim stayed on the page as running text.
+   *
+   * So the purchase sentence lives in reviewsLeadVerified and answers to the
+   * same test as the chip. These two cases are what that means.
+   */
+  it("WITHHOLDS THE PURCHASE SENTENCE WHILE ANY QUOTE IS UNVERIFIED", () => {
+    const content = {
+      ...base,
+      reviewsLead: "Objavljena so tako, kot smo jih prejeli.",
+      reviewsLeadVerified: "Zapisali so jih stranke, ki so pri nas kupile bazen.",
+      reviews: [R({ verified: true }), R({ who: "Sandra P., Koper" })],
+    };
+    const html = renderHome(shop, content, "studio", "");
+    expect(html).toContain("Objavljena so tako, kot smo jih prejeli.");
+    expect(html).not.toContain("kupile bazen");
+  });
+
+  it("prints it once every quote is verified", () => {
+    const content = {
+      ...base,
+      reviewsLead: "Objavljena so tako, kot smo jih prejeli.",
+      reviewsLeadVerified: "Zapisali so jih stranke, ki so pri nas kupile bazen.",
+      reviews: [R({ verified: true }), R({ verified: true, who: "Sandra P., Koper" })],
+    };
+    const html = renderHome(shop, content, "studio", "");
+    expect(html).toContain("kupile bazen");
+    expect(html).toContain("Preverjena mnenja strank");
+  });
+
+  /**
+   * The shop's real content, not a fixture. reviews.generated.ts is rewritten
+   * from the database on every deploy, so a flag in it is a snapshot — and it
+   * had drifted to verified:true on all four while the table held false on all
+   * four. This asserts the RELATION rather than the value, so it holds whatever
+   * the operator ticks: the purchase sentence appears on the live page only
+   * when the flags that earn it do.
+   */
+  it("keeps the shipped content's lead in step with its own flags", () => {
+    const real = CONTENT["bazen"]!;
+    const html = renderHome(shop, real, "studio", "");
+    if (real.reviews.length === 0) return;
+    const allVerified = real.reviews.every((r) => r.verified === true && !r.placeholder);
+    if (real.reviewsLeadVerified) {
+      expect(
+        html.includes(real.reviewsLeadVerified),
+        allVerified
+          ? "every review is verified but the purchase sentence is missing"
+          : "an unverified review is on the page and the purchase sentence still prints",
+      ).toBe(allVerified);
+    }
+    expect(html.includes("Preverjena mnenja strank")).toBe(allVerified);
+  });
+
   it("renders nothing at all when there are no reviews", () => {
     // The honest state of a shop that has not been paid yet — and much better
     // than the two invented quotes this replaced.

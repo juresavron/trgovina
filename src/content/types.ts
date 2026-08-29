@@ -375,6 +375,22 @@ export interface ShopContent {
    * Optional: absent, the intro column is the heading and the link.
    */
   reviewsLead?: string;
+  /**
+   * The half of the lead that MAKES THE PURCHASE CLAIM, printed only when
+   * every quote in the band is verified.
+   *
+   * ⚠️ THIS FIELD EXISTS BECAUSE THE GATE HAD A HOLE IN IT. The chip and the
+   * heading are both conditional on `verified`, and this shop's four reviews
+   * are unverified — order_id is NULL on all four — so both correctly stood
+   * down. reviewsLead printed regardless, and it said "Zapisali so jih
+   * stranke, ki so pri nas kupile bazen": the same Annex I 23b claim the chips
+   * were withheld for, in running text where no chip logic could reach it.
+   *
+   * So the sentence that asserts a purchase goes here and answers to the same
+   * test; reviewsLead keeps only what is true either way. If a sentence would
+   * be false with the chips off, it belongs in this field.
+   */
+  reviewsLeadVerified?: string;
   reviews: {
     q: string;
     who: string;
