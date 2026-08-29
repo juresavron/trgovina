@@ -382,7 +382,17 @@ function reveal(){
   if (!("IntersectionObserver" in window)) return;
   var els = document.querySelectorAll(
     ".st-card, .st-cat-card, .st-gd-card, .st-imp-tile, .st-stat, " +
-    ".st-also-cell, .st-sec-h, .st-statement-h, .st-soc-card, .st-mem-in"
+    // ⚠️ .st-soc-card IS NOT IN THIS LIST, AND MUST NOT BE. It is positioned
+    // with transform: translate(-50%, -50%) (closing.ts), and the reveal's own
+    // .is-in rule sets transform: none at a higher specificity — so revealing
+    // it DELETED its centring. Measured before → after the reveal fires: the
+    // card jumps 183px right at every desktop width, and at 390 it lands at
+    // 195..530 in a 390px viewport, with 140px of a 335px card (42%) clipped
+    // off the screen. The heading read "Ostanimo v" and the button "PIŠITE NA"
+    // — the home page's only "write to us" control, half unreadable and half
+    // untappable, sliding sideways as you scroll to it. Reduced-motion and
+    // no-JS visitors saw the correct card; everyone else did not.
+    ".st-also-cell, .st-sec-h, .st-statement-h, .st-mem-in"
   );
   if (!els.length) return;
   document.documentElement.setAttribute("data-st-motion", "");

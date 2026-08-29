@@ -1633,8 +1633,16 @@ export const STUDIO_COMMERCE_CSS = `
     color: var(--ink);
   }
   /* Hidden where it would not be true — see the note beside the markup. */
+  /* ⚠️ 939, NOT 809, AND FOR 130px THE TABLE WAS SHEARED WITH NO HINT. Its own
+   * min-inline-size is 74ch, which measures 867px intrinsic, so it does not
+   * fit until about 940. Measured overflow of .st-cmp-scroll on both hub
+   * pages: 107px at 810, 83 at 834, 57 at 860, 17 at 900, 0 at 940 — while the
+   * hint was hidden from 810 up. At 834 the third column, the most expensive
+   * model on the page, was cut mid-glyph: "2 × 3 KM + obtočna", "ameriški
+   * akril · izola", "410 kg prazen · 2.2". The note below justifies hiding it
+   * because the table fits above the tablet tier; it does not. */
   :root[data-theme="studio"] .st-cmp-hint { display: none; }
-  @media (max-width: 809px) {
+  @media (max-width: 939px) {
     :root[data-theme="studio"] .st-cmp-hint {
       display: block;
       margin: calc(-1 * var(--gap-sm)) 0 var(--gap-md);
@@ -1723,10 +1731,18 @@ export const STUDIO_COMMERCE_CSS = `
     padding-block: 10px;
     margin-block: -10px;
   }
-  :root[data-theme="studio"] .st-cmp-model a:hover,
-  :root[data-theme="studio"] .st-cmp-model a:focus-visible {
+  /* ⚠️ UNDERLINED AT REST, because :hover is the one affordance a touch device
+   * never gets. These six model names are links into the product pages and on
+   * every phone and tablet they read as ordinary bold column headers. */
+  :root[data-theme="studio"] .st-cmp-model a {
     text-decoration: underline;
     text-underline-offset: 0.22em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--line-strong);
+  }
+  :root[data-theme="studio"] .st-cmp-model a:hover,
+  :root[data-theme="studio"] .st-cmp-model a:focus-visible {
+    text-decoration-color: currentColor;
   }
   :root[data-theme="studio"] .st-cmp-label {
     font-family: var(--f-body);
@@ -1767,7 +1783,21 @@ export const STUDIO_COMMERCE_CSS = `
    * is the card padding: 2.2vw puts ~20px inside an ~253px tablet cell, which
    * is the source's own compensation (its tablet card variant is 25px), and it
    * leaves ~210px of content — tight, and the shape the source ships. */
-  @media (max-width: 809px) {
+  /* ⚠️ 619, NOT 809. Between 620 and 809 the grid dropped to ONE column, so at
+   * 768 a single card was 718px wide around a 642x535 photograph and
+   * /trgovina ran 6,773px tall against 3,748 at 1440 — 81% longer. Two columns
+   * at 768 give 359px cells, WIDER than the 308px cells this theme already
+   * ships at 1024, so the measure was never the constraint. The same 768
+   * screen already renders .st-imp-row three across, so one page was showing
+   * two densities. */
+  /* 620-809: TWO across. The base is three (flex: 1 1 33.3%), which at 620
+   * gives 189px cards — denser than anything this theme ships. Two gives 296px
+   * at 620 and 359px at 768, both above the 308px cells it already uses at
+   * 1024, so the tier is comfortable at both ends. */
+  @media (min-width: 620px) and (max-width: 809px) {
+    :root[data-theme="studio"] .st-card { flex-basis: 50%; }
+  }
+  @media (max-width: 619px) {
     :root[data-theme="studio"] .st-card { flex-basis: 100%; }
     :root[data-theme="studio"] .st-sec-h { max-width: none; }
   }
@@ -2331,7 +2361,7 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
     // two pages further in than where the question is actually asked.
     '<p class="st-cat-help"><a href="' +
     esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
-    '">Ne veste, kateri? Odgovorite na tri vprašanja →</a></p>' +
+    '">Ne veste, kateri? Odgovorite na dve do tri vprašanja →</a></p>' +
     "</div>" +
     '<ul class="st-cat-row">' + cards + "</ul>" +
     "</section>"
