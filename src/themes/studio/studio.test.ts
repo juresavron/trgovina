@@ -404,3 +404,54 @@ describe("a steps block claims the wide track", () => {
     }
   });
 });
+
+/**
+ * THE PANEL BODIES RUN THE BAND'S FULL WIDTH, WHICH IS ONLY RIGHT WHILE THEY
+ * ARE SHORT.
+ *
+ * .st-pdp-panel-b p carries no max-inline-size: at 1440 that is a 1360px line
+ * and at 1920 a 1560px one, roughly 167 and 191 rendered characters. That is
+ * far past the 75-character ceiling for running text — and it is the right
+ * call here only because the longest body on the site is 267 characters, so
+ * the block is TWO lines and the reader makes one return sweep. The measured
+ * set when this was decided: 183 / 131 / 165 / 50 on the swim spas and
+ * 267 / 133 / 215 / 50 on the hot tubs.
+ *
+ * A 900-character body would be six lines at that width and genuinely hard to
+ * read, and the CSS cannot tell the difference. This can. 320 leaves room to
+ * write — about 20% above today's longest — and fails before anything reaches
+ * a length the layout cannot carry. If a panel really needs more than that,
+ * the measure has to come back with it.
+ */
+describe("the product page's panels stay short enough to run full width", () => {
+  const SLUGS = ["mali-195", "srednji-210", "veliki-230", "swim-450", "swim-580-hidro", "swim-580-maxi"];
+  const LIMIT = 320;
+
+  for (const slug of SLUGS) {
+    it("keeps every panel body under " + LIMIT + " characters on " + slug, async () => {
+      const res = handleRequest(
+        new Request("https://trgovina.workers.dev/bazen/" + slug + "?shop=bazen", {
+          headers: { host: "trgovina.workers.dev" },
+        }),
+      );
+      expect(res.status).toBe(200);
+      const html = await res.text();
+      const bodies = [
+        ...html.matchAll(
+          /<h3 class="st-pdp-panel-h">([^<]*)<\/h3><\/summary><div class="st-pdp-panel-b"><p>(.*?)<\/p>/gs,
+        ),
+      ];
+      // If the markup shape changes this must be updated, not silently pass.
+      expect(bodies.length, slug + ": no prose panels matched — the selector is stale").toBeGreaterThan(0);
+      for (const m of bodies) {
+        const text = m[2]!.replace(/<[^>]+>/g, "").replace(/&[a-z]+;/g, " ");
+        expect(
+          text.length,
+          slug + ' — panel "' + m[1] + '" is ' + text.length +
+            " characters; at the band's full width that is more than two lines. " +
+            "Either shorten it or give .st-pdp-panel-b p its measure back.",
+        ).toBeLessThanOrEqual(LIMIT);
+      }
+    });
+  }
+});
