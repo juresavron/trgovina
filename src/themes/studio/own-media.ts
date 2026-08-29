@@ -1,6 +1,23 @@
 /**
  * GENERATED from Supabase by scripts/sync-media.mjs — do not edit by hand.
  *
+ * ⚠️ AND THE CHECKED-IN COPY IS A SNAPSHOT, NOT THE TRUTH. The deploy runs the
+ * generator BEFORE it builds (see .github/workflows/deploy.yml, which prints a
+ * diffstat when the committed copy was stale), so what SHIPS is whatever the
+ * product_media table says at that moment. This file is only what the table
+ * said the last time somebody ran the script and committed the result.
+ *
+ * That difference has now misread the live site twice in one review round. Two
+ * audits reported that SWIM 580 HIDRO's photographs describe a swim spa as a
+ * "masažni bazen" and never name the model — true of THIS FILE, and false of
+ * the database, which carries ten photographs whose alts all say "plavalni
+ * masažni bazen" and read correctly. reviews.generated.ts had drifted the same
+ * way, in the opposite direction and with legal consequences.
+ *
+ * So: if an alt, an order or a photo count matters, read the table, not this.
+ *   select p.slug, m.sort, m.alt from product_media m
+ *     join products p on p.id = m.product_id order by p.slug, m.sort;
+ *
  * The shop's product photography, keyed by "<shop>/<model-slug>", in the order
  * the gallery shows it. The bytes live in the Supabase `product-media` bucket
  * and reach the page through the Worker's /media/ proxy, which puts them in

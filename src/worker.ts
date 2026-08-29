@@ -439,7 +439,15 @@ export function handleRequest(
         // sent to somebody's partner should show the product, not the shop's
         // hero — and where a model has no photography yet the hero is still
         // the right stand-in, which is renderDocument's default.
-        ...(pdp.photos && pdp.photos[0] ? { image: pdp.photos[0].src } : {}),
+        // The alt travels with the picture: og:image:alt described the PAGE
+        // until now, on the six pages that actually have a photograph to
+        // describe. See PageOptions.imageAlt.
+        ...(pdp.photos && pdp.photos[0]
+          ? {
+              image: pdp.photos[0].src,
+              ...(pdp.photos[0].alt ? { imageAlt: pdp.photos[0].alt } : {}),
+            }
+          : {}),
         bodyHtml: renderPdp(shop, content, q, theme, pdp),
         jsonLd: [
           organizationJsonLd(shop),

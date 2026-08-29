@@ -744,6 +744,9 @@ export const STUDIO_PDP_CSS = `
    * It is an <h2> in the DOM and a label in the ramp — heading LEVEL and type
    * rung are independent, and a group label is label copy. */
   :root[data-theme="studio"] .st-pdp-glabel {
+    /* block, because the configurator's labels are spans now (they label
+     * controls, not sections) and only the freight heading is still an h2. */
+    display: block;
     padding-bottom: clamp(8px, 0.7vw, 14px);
     border-bottom: 1px solid var(--line);
     font-family: var(--f-label);
@@ -2010,21 +2013,6 @@ export const STUDIO_PDP_CSS = `
    * height of its neighbours (65.4px at 1920 down to 49 at 1024) instead of
    * alternating 49 and 75 as the text happened to fall. */
   :root[data-theme="studio"] .st-pdp-printhead { display: none; }
-  :root[data-theme="studio"] .st-pdp-printrow { margin: 14px 0 0; }
-  :root[data-theme="studio"] .st-pdp-print {
-    font-family: var(--f-label);
-    font-size: var(--t-label);
-    font-weight: var(--w-label);
-    letter-spacing: var(--ls-label);
-    text-transform: uppercase;
-    background: none;
-    border: var(--bw-line) solid var(--line-strong);
-    border-radius: var(--r-ctrl);
-    color: var(--ink);
-    padding: 10px 16px;
-    cursor: pointer;
-  }
-  :root[data-theme="studio"] .st-pdp-print:hover { border-color: var(--ink); }
   /* PAPER: the page becomes the technical sheet. Everything that is not the
    * letterhead, the title block or the spec list leaves; the letterhead
    * (screen: hidden) opens the sheet with who sells this and for how much.
@@ -2046,7 +2034,6 @@ export const STUDIO_PDP_CSS = `
     :root[data-theme="studio"] .st-band,
     :root[data-theme="studio"] .st-gd,
     :root[data-theme="studio"] .st-pdp-panel:not([open]),
-    :root[data-theme="studio"] .st-pdp-printrow,
     :root[data-theme="studio"] .st-pdp-panel[open] > summary {
       display: none !important;
     }
@@ -2849,8 +2836,20 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       // in CSS, so the DOM text "Barva školjke" reaches the accessibility tree
       // as "BARVA ŠKOLJKE" — and some screen readers spell an all-caps string
       // out as an initialism. Same for BARVA OBLOGE, PRIKLOP, SERVIS.
-      '<div><h2 class="st-pdp-glabel" id="' + labelId + '" aria-label="' +
-      esc(label) + '">' + esc(label) + "</h2>" +
+      // ⚠️ A span, NOT AN h2 — this labels a CONTROL, not a section.
+      //
+      // The type rung was argued here and the heading LEVEL never was, so a
+      // reader navigating /bazen/mali-195 by heading met "Barva školjke",
+      // "Barva obloge", "Priklop" and "Servis" — four radiogroup labels —
+      // before anything that is a part of the document. Four of the page's
+      // six h2s were controls.
+      //
+      // Nothing is lost by demoting it: the radiogroup's accessible name
+      // comes from aria-labelledby pointing here, which reads an element's
+      // text whatever tag it wears. aria-label stays because .st-pdp-glabel
+      // uppercases in CSS and Chrome carries that into the name.
+      '<div><span class="st-pdp-glabel" id="' + labelId + '" aria-label="' +
+      esc(label) + '">' + esc(label) + "</span>" +
       '<ul class="' + (swatch ? "st-pdp-sws" : pills ? "st-pdp-pills" : "st-pdp-opts") +
       '" role="radiogroup"' + (inBar ? " data-st-bar" : "") +
       ' aria-labelledby="' + labelId + '">' + rows + "</ul></div>"
@@ -2992,12 +2991,16 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     .map((row) => '<div class="st-pdp-srow"><dt>' + esc(row[0]) + "</dt><dd>" + esc(dotBind(row[1])) + "</dd></div>")
     .join("");
   // The printable technical sheet, without a PDF pipeline: a print-only
-  // letterhead inside the spec panel, a print stylesheet that reduces the
-  // page to it, and a button the behaviour script reveals ([data-st-print]
-  // → window.print()). The category's better shops hand out per-model spec
-  // sheets; a browser already knows how to make one from a page that
-  // formats itself for paper — including "print to PDF", which every OS
-  // offers, so the shop gets the artefact with no file to maintain.
+  // letterhead inside the spec panel, and a print stylesheet that reduces the
+  // page to it.
+  //
+  // ⚠️ NO BUTTON ANY MORE — asked for directly, and the feature does not need
+  // one. There was a "Natisnite tehnični list" control here that called
+  // window.print(); every browser and every OS already offers that on Ctrl/⌘-P,
+  // including "print to PDF", and the stylesheet does not care how the dialog
+  // was opened. So the sheet still exists, still carries the letterhead and
+  // the price composition, and the panel is no longer interrupted by a control
+  // duplicating something the browser has in its own menu.
   const printHead =
     '<div class="st-pdp-printhead" aria-hidden="true">' +
     "<strong>" + esc(ctx.shop.name) + "</strong> · " + esc(ctx.shop.domain) +
@@ -3013,13 +3016,21 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       : "") +
     "</div>";
   const panels =
-    '<div class="st-pdp-panels">' +
+    // ⚠️ A SECTION WITH ITS OWN HEADING, because the five h3s inside it used
+    // to hang off whatever h2 came last — which was the freight heading,
+    // INSIDE the buy column. So the outline said the full-width reference
+    // band was part of a card in a column it sits below, and one of its own
+    // panels ("Dostava in montaža") repeated that h2's text at h3.
+    //
+    // The heading is visually hidden rather than drawn: the band opens with
+    // "Tehnični podatki" and does not need a second title above it, but the
+    // document does need to say where these five belong.
+    '<section class="st-pdp-panels" aria-labelledby="st-pdp-ph">' +
+    '<h2 class="st-vh" id="st-pdp-ph">Podrobnosti o izdelku</h2>' +
     '<details class="st-pdp-panel" open><summary>' +
     '<h3 class="st-pdp-panel-h">Tehnični podatki</h3></summary>' +
     '<div class="st-pdp-panel-b">' + printHead +
     '<dl class="st-pdp-spec-table">' + specRows + "</dl>" +
-    '<p class="st-pdp-printrow"><button type="button" class="st-pdp-print" ' +
-    'data-st-print hidden>Natisnite tehnični list</button></p>' +
     "</div></details>" +
     (d.panels ?? [])
       .map(
@@ -3029,7 +3040,7 @@ export function renderStudioPdp(ctx: RenderCtx): string {
           '<div class="st-pdp-panel-b"><p>' + esc(x[1]) + "</p></div></details>",
       )
       .join("") +
-    "</div>";
+    "</section>";
 
   // ---- colour ------------------------------------------------------------
   //
@@ -3336,7 +3347,11 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     addons +
     "</form>" +
     '<section class="st-pdp-freight" aria-labelledby="st-pdp-fh">' +
-    '<h2 class="st-pdp-glabel" id="st-pdp-fh">Dostava in montaža</h2>' +
+    // aria-label for the same reason group() carries one: the class
+    // uppercases, and this h2 also names the section via aria-labelledby, so
+    // without it both reached AT as "DOSTAVA IN MONTAŽA".
+    '<h2 class="st-pdp-glabel" id="st-pdp-fh" aria-label="Dostava in montaža">' +
+    "Dostava in montaža</h2>" +
     '<dl class="st-pdp-frows">' + freight + "</dl>" +
     // The span carries the measure so the <p> can keep the card's full width
     // for its rule — see .st-pdp-note.

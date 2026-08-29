@@ -96,6 +96,14 @@ export interface PageOptions {
    */
   image?: string;
   /**
+   * What the share card's picture SHOWS, for og:image:alt.
+   *
+   * Optional and falling back to the title, which is what every caller used
+   * to get whether it had a picture or not — see the note beside the tag.
+   * Pass it wherever `image` is a real photograph with a real alt.
+   */
+  imageAlt?: string;
+  /**
    * og:type for the share card — "product" on the six model pages, the
    * default "website" everywhere else. Meta's ingestion reads it; nothing
    * else does, which is why it is one string and not a taxonomy.
@@ -144,10 +152,20 @@ export function renderDocument(o: PageOptions): string {
     // Absolute by requirement: og:image is one of the few tags where a
     // relative URL is simply ignored, and it must be on the shop's own
     // origin so the crawler that fetches it sees the same bytes a visitor
-    // would. og:image:alt carries the same sentence a screen reader gets.
+    // would.
+    //
+    // ⚠️ og:image:alt IS THE PICTURE'S ALT, NOT THE PAGE'S TITLE, and this
+    // line claimed to carry "the same sentence a screen reader gets" while
+    // emitting the title. On /bazen/mali-195 that was "BAZEN 195 — masažni
+    // bazen | Masažni bazeni Vrelec": a page name with a site-name suffix and
+    // a pipe, offered to anyone whose reader announces the alt of a shared
+    // card. The photograph's own alt — "Masažni bazen BAZEN 195, pogled od
+    // zgoraj na akrilno školjko s petimi sedeži" — describes the image, which
+    // is the whole point of the property. The title stands in only where a
+    // caller has no picture of its own to describe.
     '<meta property="og:image" content="' +
       esc(s.siteUrl + (o.image ?? "/media/site/hero.webp")) + '">' +
-    '<meta property="og:image:alt" content="' + esc(o.title) + '">' +
+    '<meta property="og:image:alt" content="' + esc(o.imageAlt ?? o.title) + '">' +
     '<meta name="twitter:card" content="summary_large_image">' +
     // ICONS. There were none at all, so every tab, bookmark and shared link
     // showed the browser's blank-page glyph — on a storefront asking for
