@@ -2159,8 +2159,30 @@ function isWide(b: Block): boolean {
     // A row of links is navigation laid out across the column, not a sentence
     // to read at the measure — same reason onward() spans the body.
     b.kind === "links" ||
-    // ⚠️ STEPS AND Q&A ARE NOT DATA, and listing them here is what made the
-    // question rows ragged.
+    // ⚠️ STEPS ARE A RULED TABLE AT THE DESKTOP TIER, Q&A IS NOT, and that is
+    // the whole of why one of these is here and the other is not.
+    //
+    // Both were struck off together, on one argument: a hairline that runs
+    // past its own last word reads as an unfinished column. That argument is
+    // right about Q&A — a question and its answer are two paragraphs, so the
+    // block ends where the sentences end and /pogosta-vprasanja reads as one
+    // clean column.
+    //
+    // It is wrong about steps, because ABOVE 1000px A STEP IS NOT A
+    // PARAGRAPH. .st-page-step becomes a three-track row — the counter disc,
+    // a 14rem title column, a 38rem paragraph column — which wants ~940px.
+    // Capped at the 38rem every plain block gets, those three tracks were
+    // sized down to fit 608: measured on /dostava-in-montaza, the title
+    // column fell to ~190 and THE PARAGRAPH TO 284px, which is 37 characters
+    // a line on a 1440 desktop, inside a body track that was 902px wide and
+    // had the room. The reported words were "here width is not ok" and the
+    // screenshot showed a 284px column of text with half a screen of white
+    // beside it.
+    //
+    // So a steps block takes the wide track, like the other blocks that lay
+    // rows out across it, and the prose blocks around it keep their 38rem —
+    // two right edges, which is what --wide has always meant here.
+    b.kind === "steps" ||
     //
     // The note this replaces widened them so their rules would span the
     // track rather than stop at the reading measure — the band ran on for

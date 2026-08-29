@@ -1439,29 +1439,37 @@ export const STUDIO_PDP_CSS = `
      * the rule and the text opened up again at 1920 (752px columns around
      * the same 544px measure). At 76rem the columns hold near 580 at every
      * width above it, which the 34rem measure very nearly fills. */
-    /* ⚠️ ONE COLUMN. THE TWO-COLUMN VERSION WAS VERIFIED CLOSED AND IT ONLY
-     * FAILS OPEN.
+    /* ⚠️ ONE COLUMN, AT THE FULL WIDTH OF THE BAND. Both halves of that were
+     * asked for, one after the other, and they are not in conflict — the
+     * mistake was treating them as the same decision twice.
      *
-     * Two across used the band's width and kept the 34rem measure, and every
-     * measurement taken of it was correct — because every measurement was
-     * taken with the panels SHUT. A grid row is as tall as its tallest item,
-     * so opening "Tehnični podatki" — fourteen spec rows, ~700px — stretched
-     * its row and left the panel beside it a heading with 700px of nothing
-     * under it. The reported words were "this whole layout is shit an
-     * unorganized" and they are the correct reading: the page's most-used
-     * control produced a hole the size of a screen.
+     * TWO COLUMNS FAILED, and it only failed OPEN. Two across used the width
+     * and kept the 34rem measure, and every measurement taken of it was
+     * correct — because every measurement was taken with the panels SHUT. A
+     * grid row is as tall as its tallest item, so opening "Tehnični podatki"
+     * stretched its row and left the panel beside it a heading with ~700px of
+     * nothing under it ("this whole layout is shit an unorganized"). A
+     * disclosure list changes height every time somebody uses it, which is
+     * precisely what a grid row cannot absorb. Nothing here reopens that.
      *
-     * A disclosure list changes height every time somebody uses it, which is
-     * precisely what a grid row cannot absorb. So it is one column, and the
-     * width is capped instead: 40rem for the panel against the 34rem the
-     * running text inside it carries, a ratio of 1.18 — the editorial
-     * relation the content pages settled on, where a rule closes the words it
-     * opened rather than running 800px past them.
+     * CAPPING THE BAND AT 40rem was the wrong fix for it. It answered the
+     * void by making the whole section 640px under a 1360px row, which is
+     * what "we need to use full width" is about: the page's other bands run
+     * the container's width, and this one stopped at a third of it with a
+     * screen of white beside every panel.
      *
-     * The band is 640px under a 730px gallery column, so the section reads as
-     * continuing that column rather than starting a new full-width one. What
-     * is to the right of it is margin, which is what it looks like. */
-    max-inline-size: 40rem;
+     * So the band takes the container and stays a single stack. The rules and
+     * the summary rows are full width — the chevron sits at the far right of
+     * its own row, which is what makes them read as rows rather than as an
+     * abandoned paragraph — and the MEASURE is held where the measure belongs,
+     * on the running text (34rem, .st-pdp-panel-b p below).
+     *
+     * The width also does real work again rather than only framing prose:
+     * .st-pdp-spec-table is auto-fit at a 40rem floor, so at the band's width
+     * the specification lays out in TWO columns of rows. That is the layout
+     * the panels were moved below the buy row to get, and the 40rem cap had
+     * been quietly cancelling it — fourteen rows in one column, ~700px, which
+     * is also what made the two-column version's void so large. */
   }
   :root[data-theme="studio"] .st-pdp-panel {
     border-bottom: var(--bw-line) solid var(--line);
