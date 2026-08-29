@@ -364,3 +364,43 @@ describe("no basket where there is nothing to fill", () => {
     expect(html).toContain('href="' + shop.routeSlugs["/contact"]);
   });
 });
+
+/**
+ * A STEPS BLOCK IS A RULED TABLE ON DESKTOP, SO IT MUST HAVE THE WIDE TRACK.
+ *
+ * This has now been reported three times and fixed twice at the wrong layer,
+ * because the two halves of it live in different files and neither one looks
+ * wrong on its own. page.ts sizes .st-page-step as three tracks — a counter
+ * disc, a 14rem title column and a 38rem paragraph column, ~940px in all —
+ * above 1000px. isWide() decides whether the block those tracks live in gets
+ * the wide track or the 38rem every prose block is capped to.
+ *
+ * With steps NOT wide, the block is 608px and the three tracks are sized down
+ * to fit it: measured in Chromium on /dostava-in-montaza, the paragraph came
+ * out 284px at 1440 and 294px at 1200 — under forty characters a line, on a
+ * desktop, inside a body track that was 902px wide and had the room. It does
+ * not get better on a bigger screen, which is why it kept being sent back.
+ *
+ * tsc cannot see that relation and neither can a screenshot taken of the
+ * closed page. This can: if somebody strikes steps off isWide again — the
+ * note there argues Q&A's case, which is a good argument about a different
+ * block — this fails and says why.
+ */
+describe("a steps block claims the wide track", () => {
+  it("marks every steps block --wide", async () => {
+    const res = handleRequest(
+      new Request("https://trgovina.workers.dev/dostava-in-montaza?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    // The page under test really does carry one, or this asserts nothing.
+    expect(html, "no steps rendered — this test is vacuous").toContain("st-page-steps");
+    for (const m of html.matchAll(/<div class="(st-page-block[^"]*)">(?:(?!<\/div>).)*?st-page-steps/gs)) {
+      expect(m[1], "a steps block rendered without the wide track").toContain(
+        "st-page-block--wide",
+      );
+    }
+  });
+});
