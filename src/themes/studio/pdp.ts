@@ -210,7 +210,13 @@ export const STUDIO_PDP_CSS = `
    * would kill position:sticky on the buy bar inside it. */
   :root[data-theme="studio"] .st-pdp {
     background: var(--bg);
-    padding-top: var(--studio-rhythm);
+    /* The page opening, matching chrome.ts's first-child rule and page.ts's
+     * documents. This declaration has in fact never decided anything —
+     * chrome.ts's selector scores (0,4,2) against this one's (0,3,0), so it
+     * has always won — and while it asked for the full 170px rhythm that was
+     * invisible. Left in and corrected rather than deleted, because a reader
+     * of this file needs to see the number the section actually opens with. */
+    padding-top: clamp(48px, 6.5vw, 96px);
   }
   :root[data-theme="studio"] .st-pdp-in {
     /* The CONTENT measure is --studio-container, the baseline's text-led

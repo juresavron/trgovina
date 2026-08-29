@@ -146,7 +146,33 @@ export const STUDIO_CHROME_CSS = `
    *
    * Measured on the home page at 1440: eight boundaries over 200px, the four
    * worst of them all downstream of this doubling. */
-  :root[data-theme="studio"] main > section:first-child:not(.st-hero),
+  /* ⚠️ THE FIRST CHILD IS NOT FOLLOWING A BAND, IT IS FOLLOWING THE CHROME,
+   * and those want different distances.
+   *
+   * --studio-rhythm is 170px and it is the pause BETWEEN two full-bleed
+   * grounds — the marquee and the dark band hand the next section no space at
+   * all, so it has to make its own. The first section of a page has no band
+   * above it: it has a 56px fixed bar it must simply clear. Given the whole
+   * rhythm, it does not read as a pause, it reads as the page not starting.
+   *
+   * Measured at 1440 before this split: 168px of nothing between the bar and
+   * the breadcrumb on every product page, 170px above the eyebrow on the
+   * collection pages and the finder. The reported words were "why is this so
+   * under the navbar", with a screenshot of a product page whose first ink was
+   * a 13px breadcrumb a fifth of a screen down.
+   *
+   * page.ts already found this and fixed it for the document renderer alone —
+   * "measured on /o-nas at 1440x1000, the eyebrow sat 235px down and the title
+   * was the only thing above the fold" — and had to repeat its class to win
+   * the tie against this rule. The value here is that same opening, so the
+   * three page types that never got it now open where the documents do, and
+   * page.ts's override stops being the only thing holding the line.
+   *
+   * The two + section selectors keep the full rhythm: those really do follow
+   * a band. */
+  :root[data-theme="studio"] main > section:first-child:not(.st-hero) {
+    padding-top: clamp(48px, 6.5vw, 96px);
+  }
   :root[data-theme="studio"] .st-mq + section,
   :root[data-theme="studio"] .st-band + section {
     padding-top: var(--studio-rhythm);
