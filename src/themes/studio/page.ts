@@ -123,7 +123,16 @@ export const STUDIO_PAGE_CSS = `
    * carry, so a phone and a tablet get exactly the page they had. */
   :root[data-theme="studio"] .st-page-grid {
     max-inline-size: 38rem;
-    margin-inline: auto;
+    /* ⚠️ auto CENTRES THE DOCUMENT WHILE THE CHROME STAYS FLUSH LEFT, and
+     * between 768 and 999 that is exactly what it did: measured on /o-nas,
+     * the header wordmark starts at x=25 and the identical eyebrow below it
+     * started at 80 (768) and 113 (834) — off by 55 and 88px. It is the same
+     * misalignment the desktop tier fixed by setting margin-inline: 0, which
+     * is why 1024 and up were already clean and the iPad band was not.
+     *
+     * A phone is unaffected: there the column is narrower than the viewport
+     * only by the gutter, so auto and 0 resolve to the same edge. */
+    margin-inline: 0;
   }
   /* THE INDEX BECOMES A RAIL at the width where there is room for one.
    *
@@ -320,6 +329,15 @@ export const STUDIO_PAGE_CSS = `
     text-transform: uppercase;
     color: var(--ink-mute);
   }
+  /* ⚠️ THE HEADINGS HAVE TO BREAK SOMEWHERE. At 390 with the page zoomed to
+   * 200% (195 CSS px) "Brezplačen" ran to 229.8px and pushed /ogled-lokacije
+   * 35px sideways; "vprašanja" and "Obratovanje" did the same to
+   * /pogosta-vprasanja by 18px. 320 CSS px — the width SC 1.4.10 actually
+   * measures — passes on all five, so this is robustness rather than a
+   * failure; a phone at 200% is still a real reader. */
+  :root[data-theme="studio"] .st-page-h,
+  :root[data-theme="studio"] .st-page-h2,
+  :root[data-theme="studio"] .st-page-cta-h { overflow-wrap: anywhere; }
   :root[data-theme="studio"] .st-page-h {
     /* The masthead spans BOTH columns, so without a cap a long title would
      * set across the full 56rem-plus-rail width as one line of display type. */
@@ -767,7 +785,14 @@ export const STUDIO_PAGE_CSS = `
       border-block-start: var(--bw-line) solid var(--line);
     }
     :root[data-theme="studio"] .st-page-step {
-      grid-template-columns: auto minmax(0, 14rem) minmax(0, 38rem);
+      /* ⚠️ fit-content, NOT A FLAT 14rem. minmax(0, 14rem) grows to its 224px
+       * limit whatever the title's length, so the paragraph absorbs the whole
+       * shortfall — and crossing 1000px, where this tier begins, cost the
+       * reader 27 characters a line: measured on /dostava-in-montaza step 1,
+       * 550px and 67.3 cpl at 999px, then 340px and 40.4 cpl at 1000, five
+       * lines instead of three. fit-content(14rem) sizes to the title and caps
+       * at the same limit, so "Elektrika" takes ~100px and returns the rest. */
+      grid-template-columns: auto minmax(0, fit-content(14rem)) minmax(0, 38rem);
       align-items: start;
       /* ⚠️ start, or the DISC column eats the slack. An auto track stretches
        * to absorb a grid's free space while justify-content is normal, and
@@ -868,7 +893,13 @@ export const STUDIO_PAGE_CSS = `
     outline: var(--bw-ctrl) solid var(--acc);
     outline-offset: 3px;
   }
+  /* ⚠️ A ROTATED SQUARE IS WIDER THAN ITS BOX. 11x11 turned 45 degrees has a
+   * 15.56px bounding box, so it overhung 2.28px each side and the overflow
+   * propagated up to the document: proven by removing the transform in-page,
+   * .st-page-q scrollWidth 611 -> 608 against a 608 client width. The gutter
+   * absorbs it at normal widths; at 195 CSS px it reaches the page. */
   :root[data-theme="studio"] .st-page-q::after {
+    margin-inline-end: 3px;
     content: "";
     flex: none;
     inline-size: 11px;
@@ -1327,6 +1358,15 @@ export const STUDIO_PAGE_CSS = `
    * not a grid of everything: see onward() for what the audit measured and
    * why these three. */
   :root[data-theme="studio"] .st-page-onward {
+    /* ⚠️ THE RULE ENDS WHERE THE LINKS END. This is a flex row of three short
+     * links under a full-track hairline, so at 1440 the rule ran 902.4px over
+     * 428px of content — 474.6px, 53% of it drawn over nothing. The file
+     * argues exactly this at .st-page-block ("a rule that runs 438px past its
+     * own last word reads as an unfinished one") and fixed it for every other
+     * block; this one renders outside the block wrapper and was missed.
+     * fit-content with a 100% ceiling keeps the wrap behaviour intact. */
+    inline-size: fit-content;
+    max-inline-size: 100%;
     margin-block-start: clamp(44px, 4.6vw, 76px);
     padding-block-start: clamp(20px, 2vw, 30px);
     border-block-start: var(--bw-line) solid var(--line);
@@ -2182,6 +2222,16 @@ function isWide(b: Block): boolean {
     // A row of links is navigation laid out across the column, not a sentence
     // to read at the measure — same reason onward() spans the body.
     b.kind === "links" ||
+    // ⚠️ A FILLED PANEL IS NOT RUNNING TEXT. `cta` draws a --bg-alt box with a
+    // --r-lg radius and 48px of padding, and it was capped at the 38rem
+    // reading measure like a paragraph. Measured right edges against the
+    // widest block on the same page: short by 62px at 1024, 285 at 1280,
+    // 294.4 at 1440, 275.2 at 1920, 272 at 2560 — so on /o-nas the grey
+    // "Poglejte ponudbo" panel stopped 294px left of the contact tiles above
+    // it AND of the rule below it. Same class as the steps block that was
+    // mis-capped this way: the measure belongs to the words inside, not to
+    // the box around them.
+    b.kind === "cta" ||
     // ⚠️ STEPS ARE A RULED TABLE AT THE DESKTOP TIER, Q&A IS NOT, and that is
     // the whole of why one of these is here and the other is not.
     //

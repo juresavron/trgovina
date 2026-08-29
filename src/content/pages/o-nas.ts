@@ -81,7 +81,8 @@ export const ABOUT: Page = {
       kind: "prose",
       h: "Kako delamo",
       p: [
-        "Pred dostavo pride nekdo od nas na lokacijo. Ta brezplačen obisk je razlog, da " +
+        // "Ta brezplačni obisk": after a demonstrative the adjective is definite.
+        "Pred dostavo pride nekdo od nas na lokacijo. Ta brezplačni obisk je razlog, da " +
           "se dostave ne ponesrečijo: težave s prehodom, nosilnostjo terase ali premajhnim " +
           "odklopnikom se pokažejo prej, kot pride tovornjak.",
         "Za priklop dobite pisna navodila za svojega električarja: presek vodnika, odklopnik " +

@@ -29,7 +29,11 @@ export const GUIDES: Page = {
           "Podlaga, ne model",
           "Napolnjen masažni bazen tehta od 1.500 do 2.210 kilogramov, z ljudmi v njem pa " +
             "še nekaj sto več; napolnjen swim spa od 5.750 do 8.490 kilogramov. Betonska " +
-            "plošča to nosi brez razmisleka, lesena terasa in balkon pa ne nujno, in to " +
+            // ⚠️ "brez razmisleka" TOLD A READER NOT TO CHECK, about 2.210 kg plus
+            // bathers on a slab of unstated thickness over unstated ground. It
+            // was the only sentence on the site that did; every other surface
+            // hedges ("ali to velja za vašo lokacijo, preverimo ob ogledu").
+            "plošča navadno ni sporna, lesena terasa in balkon pa pogosto sta, in to " +
             "je stvar konstrukcije, ne občutka.",
         ],
         [

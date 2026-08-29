@@ -33,7 +33,8 @@ export const DELIVERY: Page = {
       items: [
         [
           "Ogled lokacije",
-          "Pridemo pogledat, kam bo bazen postavljen. Zanima nas širina prehodov, ovire na poti, " +
+          // "Zanimajo", not "Zanima": four coordinated subjects, one of them plural.
+          "Pridemo pogledat, kam bo bazen postavljen. Zanimajo nas širina prehodov, ovire na poti, " +
             "nosilnost podlage in razdalja do električne omarice. Ogled je brezplačen in je " +
             "razlog, da se dostave ne ponesrečijo.",
         ],
@@ -83,6 +84,19 @@ export const DELIVERY: Page = {
         [
           "Kam vse dostavljate?",
           "Po vsej Sloveniji.",
+        ],
+        // ⚠️ THE PAGE NAMED AFTER DELIVERY NEVER SAID DELIVERY IS CHARGED.
+        // Every other surface does — pogoji.ts ("se obračuna po ponudbi"),
+        // faq.ts, vodniki.ts and the freight row on all six product pages —
+        // and this page's lead promises the whole chain ("pripeljemo,
+        // prenesemo na mesto, priklopimo in zaženemo") without once using the
+        // word cost. A buyer arriving here from a search for delivery, which
+        // is what this page is for, left believing it was included.
+        [
+          "Koliko stane dostava?",
+          "Dostavo obračunamo po ponudbi, ker je odvisna od naslova, dostopa in modela. " +
+            "Znesek dobite v pisni ponudbi, preden karkoli potrdite. Ogled lokacije, zagon " +
+            "in predaja so vključeni v ceno bazena.",
         ],
         [
           "Kaj pa, če do terase ni poti za voziček?",
