@@ -494,6 +494,24 @@ export const STUDIO_COMMERCE_CSS = `
    * picture floated somewhere inside it at whatever size its own proportions
    * happened to give — which is the single thing that made this grid read as
    * unfinished beside the source. */
+  /* ---- Windows High Contrast --------------------------------------------
+   *
+   * ⚠️ A CARD DRAWN WITH box-shadow HAS NO EDGE IN FORCED COLOURS. The mode
+   * drops box-shadow by design, and .st-card, .st-also-card and .st-util draw
+   * their only boundary with it — measured under forced-colors: active, all
+   * three come back "box-shadow: none, border: 0px none", so the product grid
+   * renders as unbounded runs of text with no card edge. The sibling
+   * components that use a real border (.st-cat-card, .st-btn-line, .st-badge)
+   * are fine, which is the tell: one design intent, three techniques, one of
+   * which vanishes.
+   *
+   * A border only inside the media query, so nothing shifts for anyone else. */
+  @media (forced-colors: active) {
+    :root[data-theme="studio"] .st-card,
+    :root[data-theme="studio"] .st-util {
+      border: 1px solid CanvasText;
+    }
+  }
   :root[data-theme="studio"] .st-card-panel {
     position: relative;
     display: block;
@@ -647,7 +665,9 @@ export const STUDIO_COMMERCE_CSS = `
     font-size: var(--t-body);
     font-weight: var(--w-body);
     letter-spacing: var(--ls-body);
-    line-height: 1.45;
+    /* --lh-body, not a 1.45 literal: the rung is 1.625 and 1.45 is on no
+     * scale. The note above this rule argues size and case, never leading. */
+    line-height: var(--lh-body);
     color: var(--ink-mute);
     overflow-wrap: break-word;
   }

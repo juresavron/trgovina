@@ -1504,7 +1504,13 @@ export const STUDIO_PDP_CSS = `
      * the summary rows are full width — the chevron sits at the far right of
      * its own row, which is what makes them read as rows rather than as an
      * abandoned paragraph — and the MEASURE is held where the measure belongs,
-     * on the running text (34rem, .st-pdp-panel-b p below).
+     * on the running text.
+     *
+     * ⚠️ THAT LAST CLAUSE USED TO READ "(34rem, .st-pdp-panel-b p below)".
+     * The cap is gone — the bodies run the band, on the owner's instruction
+     * taken four times, because they are one or two lines. Measured after:
+     * 157 and 177 characters on ONE line at 1440 on the swim spa pages. Left
+     * recorded so the next reader does not go hunting for a cap.
      *
      * The width also does real work again rather than only framing prose:
      * .st-pdp-spec-table is auto-fit at a 40rem floor, so at the band's width
@@ -1671,6 +1677,11 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-also-meta {
     font-size: var(--t-body);
     color: var(--ink-mute);
+  }
+  /* The same forced-colors gap commerce.ts documents: this card's only
+   * boundary is a box-shadow, which the mode drops. */
+  @media (forced-colors: active) {
+    :root[data-theme="studio"] .st-also-card { border: 1px solid CanvasText; }
   }
   :root[data-theme="studio"] .st-also-card {
     display: flex;
@@ -1951,7 +1962,9 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-note {
     /* Uncapped, this ran 832px and 101 CHARACTERS on one line at 1920 — 35%
      * past the 75 ceiling, and the widest running text on the site. The same
-     * 34rem .st-pdp-panel-b p already uses, which measures 71. */
+     * 34rem, which measures 71. ⚠️ This used to say "the same 34rem
+     * .st-pdp-panel-b p already uses" — that cap was removed; 34rem now
+     * governs .st-pdp-note alone, which is what this rule is about. */
     /* ⚠️ THE RULE IS THE CARD'S, THE MEASURE IS THE TEXT'S, and capping the
      * block capped both. This sits in .st-pdp-freight under three .st-pdp-frow
      * rows whose hairlines run the card's full inner width; its own border-top

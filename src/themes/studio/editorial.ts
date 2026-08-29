@@ -717,6 +717,9 @@ export const STUDIO_EDITORIAL_CSS = `
    * read, not declaimed, and the old 1-up carousel set them at h4 because it
    * had a whole stage to fill. */
   :root[data-theme="studio"] .st-tst-q {
+    /* pretty, like the eight other prose selectors: measured at 1440 this
+     * set [358, 322, 332, 342, 40] in a 368px column — a 40px orphan. */
+    text-wrap: pretty;
     margin: 0 0 clamp(18px, 1.8vw, 26px);
     font-family: var(--f-body);
     font-size: var(--t-body);

@@ -66,9 +66,19 @@ export const STUDIO_CHROME_CSS = `
    * (The skip link is NOT this: it hides by off-screen position so it can
    * come back on focus — see .st-skip.) clip-path over the old clip-rect
    * hack: it survives transforms and does not leave a 1px scroll artefact. */
+  /* ⚠️ IT INHERITS ITS TYPE, or the UA's defaults pull a font face over the
+   * wire to lay out something nobody can see. .st-vh had no font rules, so an
+   * <h2> wearing it landed on the UA's own h2 { font-weight: bold } — and the
+   * only element on the entire site at weight 700 was one visually-hidden
+   * heading on the product pages, which fetched a third Plus Jakarta Sans face
+   * (27,272 B) to set 1x1px of clipped text. It is one file now (see
+   * fonts.ts), so the bytes are gone either way; the rule stays because the
+   * next .st-vh heading should not reintroduce it, and because a hidden
+   * element has no business declaring a weight nothing else on the page uses. */
   :root[data-theme="studio"] .st-vh {
     position: absolute; width: 1px; height: 1px; overflow: hidden;
     clip-path: inset(50%); white-space: nowrap;
+    font: inherit;
   }
 
   /* ---- chrome bar ----
@@ -762,9 +772,29 @@ export const STUDIO_CHROME_CSS = `
     background: transparent;
     color: var(--on-invert);
   }
-  /* ≤900: back to the disc. The two-row bar has a 44px row to spend and a
-   * scroll rail beside it; a worded pill there would crowd the phone. */
-  @media (max-width: 900px) {
+  /* ≤1199: back to the disc. The two-row bar has a 44px row to spend and a
+   * scroll rail beside it; a worded pill there would crowd the phone.
+   *
+   * ⚠️ 1199, NOT 900, AND THE 299px GAP SHIPPED THE CTA BROKEN ON EVERY LAPTOP.
+   *
+   * The rule that SIZES the disc lives in the ≤1199 block far below
+   * (.st-chrome-btn { inline-size: 34px; block-size: 34px }), and .st-chrome-go
+   * carries both classes, so it took the 34px box across that whole tier. This
+   * block — the one that hides the word and drops the padding to fit it — was
+   * bounded at 900. Between 901 and 1199 the box was a 34px disc and the word
+   * inside it was still there: measured, a 124.4px nowrap span with no overflow
+   * on the parent, spilling 41.2px left and 49.2px right, of which 24.2px sat
+   * PAST THE RIGHT EDGE OF THE VIEWPORT at every width in the band.
+   *
+   * The left spill is #151515 ink on the #151515 bar — 1.00:1, pixel-sampled at
+   * 94.6–100% coverage — so what a visitor saw on a 1024 laptop was a white
+   * circle with the letters "RAŠE" printed across it, running off the screen.
+   * The one control this shop sells through, on every route, on the commonest
+   * desktop widths there are. Both neighbouring tiers were correct, which is
+   * why it was never seen.
+   *
+   * The disc is what the band is sized for, so the disc is what it gets. */
+  @media (max-width: 1199px) {
     :root[data-theme="studio"] .st-chrome-go span { display: none; }
     :root[data-theme="studio"] .st-chrome-go {
       inline-size: 34px;
@@ -1241,8 +1271,19 @@ export const STUDIO_CHROME_CSS = `
    * imprint fields) shouted over every real word in the footer. The words
    * carry the meaning; --on-invert-mute (7.33:1) keeps them legible while
    * stepping the two white contact rows down to secondary. */
+  /* ⚠️ IT HAS TO DIFFER FROM THE LINE IT SITS IN. .st-foot-legal is already
+   * --on-invert-mute, so this resolved to the identical rgb(164,164,164) and
+   * "podatek še ni vpisan" was typographically indistinguishable from a real
+   * registry fact — on the one surface where it appears on this shop, three
+   * times, beside ID za DDV, Matična številka and Register. The note further
+   * up reasons about the contact rows, where white → mute does read as a step;
+   * the legal line was not considered. Italic and a dotted rule, so it reads
+   * as a gap whatever the ink resolves to. */
   :root[data-theme="studio"] .st-foot-todo {
     color: var(--on-invert-mute);
+    font-style: italic;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
   }
 
   /* Column heading: an eyebrow over a list, so the label rung uppercase. The

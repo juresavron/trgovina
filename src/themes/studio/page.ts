@@ -608,7 +608,7 @@ export const STUDIO_PAGE_CSS = `
     min-block-size: 24px;
     font-family: var(--f-body);
     font-size: var(--t-body);
-    line-height: 1.4;
+    line-height: var(--lh-label-tight);
     color: var(--ink-body);
     text-decoration: none;
     text-underline-offset: 3px;
@@ -816,7 +816,14 @@ export const STUDIO_PAGE_CSS = `
    * list-style:none nor display:flex took the role away. */
   :root[data-theme="studio"] .st-page-qa { border-block-start: var(--bw-line) solid var(--line); }
   :root[data-theme="studio"] .st-page-qi { border-block-end: var(--bw-line) solid var(--line); }
+  /* ⚠️ balance, LIKE EVERY OTHER HEADING. css.ts sets it globally on h1/h2/h3
+   * and fifteen named heading classes carry it — but a <summary> is none of
+   * those, and this one wears the h6 rung and is the largest text in the
+   * accordion. Measured at 320: line boxes [235, 53] in a 270px box, a 53px
+   * trailing widow at 20% of the measure; [303, 74] at 390. The comment below
+   * already knew every real question wraps to two lines here. */
   :root[data-theme="studio"] .st-page-q {
+    text-wrap: balance;
     display: flex;
     /* The chevron aligns to the FIRST line, not to the middle of the block.
      * At 390px every real question in /pogosta-vprasanja wraps to two lines
@@ -1350,7 +1357,7 @@ export const STUDIO_PAGE_CSS = `
     min-block-size: 24px;
     font-family: var(--f-body);
     font-size: var(--t-body);
-    line-height: 1.4;
+    line-height: var(--lh-label-tight);
     color: var(--ink);
     text-underline-offset: 3px;
   }
@@ -1564,7 +1571,8 @@ export const STUDIO_PAGE_CSS = `
    * condition of sending, not another question — but never below the muted
    * rung that clears 4.5:1 on the panel grey (tokens.ts: --ink-mute is
    * 4.54:1 there, which is the floor, so the sentence takes --ink-body). */
-  :root[data-theme="studio"] .st-enq-consent label { font-size: 0.9375rem; }
+  /* --t-label, not a 15px literal: 15 is on no rung at any tier. */
+  :root[data-theme="studio"] .st-enq-consent label { font-size: var(--t-label); }
   :root[data-theme="studio"] .st-enq-consent input { margin-block-start: 3px; }
   :root[data-theme="studio"] .st-enq-act { margin: 0; }
   :root[data-theme="studio"] .st-enq-act .st-page-act { inline-size: auto; }
@@ -1619,13 +1627,15 @@ export const STUDIO_PAGE_CSS = `
   }
   :root[data-theme="studio"] .st-enq-cfg dt {
     font-family: var(--f-body);
-    font-size: 0.9375rem;
+    /* --t-label, not a 15px literal: 15 is on no rung at any tier. */
+    font-size: var(--t-label);
     color: var(--ink-mute);
   }
   :root[data-theme="studio"] .st-enq-cfg dd {
     margin: 0;
     font-family: var(--f-body);
-    font-size: 0.9375rem;
+    /* --t-label, not a 15px literal: 15 is on no rung at any tier. */
+    font-size: var(--t-label);
     font-weight: var(--w-body-med);
     color: var(--ink);
   }

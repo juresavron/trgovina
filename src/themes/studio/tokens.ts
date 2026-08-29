@@ -302,7 +302,19 @@ export const STUDIO_TOKENS = `
       --t-h1: 64px;
       --t-h2: 50px;  --lh-h2: 1.1em;
       --t-h3: 38px;
-      --t-h4: 42px;
+      /* ⚠️ 34, NOT 42 — h4 WAS BIGGER THAN h3 AT THIS TIER, which is the same
+       * fault --t-lead's note below records and fixes for itself. Measured
+       * across 768/834/1024/1280 the pair read h3 [32, 38, 38, 48] against h4
+       * [28, 42, 42, 42], so between 810 and 1199 a level-2 heading (42px)
+       * outsized a level-1 heading (38px) across pages of the same site:
+       * /izbira's h1 takes --t-h3 and the document pages' section heads take
+       * --t-h4. 42 was also the ONLY ramp entry identical at desktop and
+       * tablet, so the h1→h2 step on those pages compressed from 60→42
+       * (1.43x) to 50→42 (1.19x) and the hierarchy nearly vanished.
+       *
+       * 34 restores both: h3 38 > h4 34, and the step becomes 50→34 (1.47x),
+       * which is the desktop relation. */
+      --t-h4: 34px;
       --t-h5: 26px;
       --t-h6: 19px;
       --t-lead-xl: 44px;
