@@ -863,10 +863,22 @@ export const STUDIO_PDP_CSS = `
    * particular marbled sheets, and the note under this group has been
    * apologising for exactly that; a photograph of the sample is the answer.
    *
-   * AUTO-FIT, so the row fills whatever the buy column gives it — three
+   * AUTO-FILL, so the row fills whatever the buy column gives it — three
    * across on a phone, five or six beside the gallery — without a breakpoint
-   * per tier. minmax(0, 1fr) rather than a fixed tile: sixteen swatches must
-   * never be the thing that makes the column scroll sideways.
+   * per tier. minmax(76px, 1fr) rather than a fixed tile: sixteen swatches
+   * must never be the thing that makes the column scroll sideways.
+   *
+   * ⚠️ auto-FILL, NOT auto-FIT, AND THE DIFFERENCE IS ONLY VISIBLE WHEN A
+   * GROUP IS SHORT. auto-fit COLLAPSES the tracks no item landed in, so a
+   * group of three in a column with room for seven stretches those three
+   * across the whole width. Measured on the shop's own list — six shell
+   * colours, three cabinet — the cabinet tiles came out 181px beside 84px
+   * shell tiles at 1440 and 206px beside 95px at 1920, on the same page,
+   * which is what "barve obloge is too big" was. auto-fill keeps the empty
+   * tracks, so a track is the same width in both groups and a short group
+   * simply ends early. Both
+   * behave identically once a group has more items than tracks, which is why
+   * the sixteen-swatch group never showed the bug.
    *
    * ⚠️ THE PICTURE IS var(--sw), SET INLINE PER OPTION, and the tile is
    * designed to be correct WITHOUT it — see the swatch note in the group()
@@ -875,7 +887,7 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-sws {
     list-style: none; margin: clamp(12px, 1.1vw, 22px) 0 0; padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
     gap: clamp(10px, 0.9vw, 16px);
   }
   :root[data-theme="studio"] .st-pdp-sws > li { min-inline-size: 0; }
