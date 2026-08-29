@@ -1588,7 +1588,36 @@ export const STUDIO_PDP_CSS = `
    * 34rem is 544px against this ramp's 16px body, which measures ~71 — the
    * same figure the page module's own 38rem measure is calibrated to and
    * documents. A rem cannot drift with the face. */
-  :root[data-theme="studio"] .st-pdp-panel-b p { margin: 0; max-inline-size: 34rem; }
+  /* ⚠️ NO MEASURE HERE, AND THE REASON IS THAT THESE BODIES ARE TWO LINES.
+   *
+   * 34rem stood here on the ch-unit note below, and the arithmetic was right:
+   * 544px measures 67 rendered characters, and 75 is the ceiling for RUNNING
+   * TEXT. What that rule protects is the return sweep — the eye finding the
+   * start of the next line after travelling the length of the last one — and
+   * it is a real cost in a paragraph of ten lines.
+   *
+   * These are not paragraphs of ten lines. Measured across both families, the
+   * longest panel body on the site is 267 characters and the shortest is 50:
+   * 183 / 131 / 165 / 50 on the swim spas, 267 / 133 / 215 / 50 on the tubs.
+   * At the band's full width that is TWO lines, so there is exactly one return
+   * sweep in the whole block, and the ceiling is being paid for a risk that is
+   * not present. What was present instead was 816px of white beside four short
+   * lines at 1440 and 1016px at 1920 — reported four times.
+   *
+   * text-wrap: balance evens the two lines rather than leaving a long first
+   * line and an orphan; where it is unsupported the text simply wraps, which
+   * is the same block a little less tidy.
+   *
+   * ⚠️ THIS IS ONLY CORRECT WHILE THE BODIES STAY SHORT. A 900-character panel
+   * would be six lines at this width and genuinely hard to read, and nothing
+   * about the CSS would say so. studio.test.ts fails the build if any panel
+   * body passes 320 characters — the guard belongs where a future writer will
+   * meet it, not in this comment. */
+  :root[data-theme="studio"] .st-pdp-panel-b p {
+    margin: 0;
+    max-inline-size: none;
+    text-wrap: balance;
+  }
 
   /* ---- "ostali modeli" ------------------------------------------------- */
   /* Block padding only — the inline half is layout.ts's. It was a padding

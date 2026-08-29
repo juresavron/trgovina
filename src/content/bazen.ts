@@ -720,7 +720,9 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ["Ogled lokacije in preveritev nosilnosti", "vključeno", true],
     ],
     note:
-      "Swim spa je izredni tovor: dostop, podlago in nosilnost preverimo na " +
+      // "izredni prevoz", not "izredni tovor": ZCes-1 names the MOVEMENT, and
+      // that is the phrase a haulier, a permit and a road authority all use.
+      "Za swim spa je potreben izredni prevoz: dostop, podlago in nosilnost preverimo na " +
       "lokaciji, preden potrdimo termin.",
     spec: [
       // Length ALONE: the label says one dimension, so the value carries
@@ -814,7 +816,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       [
         "Dostava in montaža",
         "Swim spa pripeljemo, postavimo, priklopimo in zaženemo. Zaradi " +
-          "dolžine je to izredni tovor: dostop in prostor za dvig " +
+          "dolžine je zanj potreben izredni prevoz: dostop in prostor za dvig " +
           "preverimo na lokaciji pred potrditvijo termina.",
       ],
       [
