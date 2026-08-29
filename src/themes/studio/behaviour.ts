@@ -422,17 +422,6 @@ function topDisc(){
   sync();
 }
 
-/* The print button exists only where script does: window.print() is the
-   whole feature, so a no-JS visitor is not shown a control that cannot
-   work. (They can still print the page — the print stylesheet does not
-   care how the dialog was opened.) */
-function printBtn(){
-  [].forEach.call(document.querySelectorAll("[data-st-print]"), function(b){
-    b.hidden = false;
-    b.addEventListener("click", function(){ window.print(); });
-  });
-}
-
 /* ---- the buy bar defers to the buy column's own CTA ----------------------
    At scroll 0 the bar covers the bottom of the gallery: measured on
    /bazen/veliki-230, the thumbnail strip was 0% visible on EVERY desktop
@@ -472,7 +461,6 @@ function init(){
   barDefer();
   reveal();
   topDisc();
-  printBtn();
   [].forEach.call(document.querySelectorAll(".st-pdp-gallery"), lightbox);
   [].forEach.call(document.querySelectorAll("[data-st-slider]"), slider);
   [].forEach.call(document.querySelectorAll("[data-st-count]"), counter);

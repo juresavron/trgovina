@@ -2010,21 +2010,6 @@ export const STUDIO_PDP_CSS = `
    * height of its neighbours (65.4px at 1920 down to 49 at 1024) instead of
    * alternating 49 and 75 as the text happened to fall. */
   :root[data-theme="studio"] .st-pdp-printhead { display: none; }
-  :root[data-theme="studio"] .st-pdp-printrow { margin: 14px 0 0; }
-  :root[data-theme="studio"] .st-pdp-print {
-    font-family: var(--f-label);
-    font-size: var(--t-label);
-    font-weight: var(--w-label);
-    letter-spacing: var(--ls-label);
-    text-transform: uppercase;
-    background: none;
-    border: var(--bw-line) solid var(--line-strong);
-    border-radius: var(--r-ctrl);
-    color: var(--ink);
-    padding: 10px 16px;
-    cursor: pointer;
-  }
-  :root[data-theme="studio"] .st-pdp-print:hover { border-color: var(--ink); }
   /* PAPER: the page becomes the technical sheet. Everything that is not the
    * letterhead, the title block or the spec list leaves; the letterhead
    * (screen: hidden) opens the sheet with who sells this and for how much.
@@ -2046,7 +2031,6 @@ export const STUDIO_PDP_CSS = `
     :root[data-theme="studio"] .st-band,
     :root[data-theme="studio"] .st-gd,
     :root[data-theme="studio"] .st-pdp-panel:not([open]),
-    :root[data-theme="studio"] .st-pdp-printrow,
     :root[data-theme="studio"] .st-pdp-panel[open] > summary {
       display: none !important;
     }
@@ -2992,12 +2976,16 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     .map((row) => '<div class="st-pdp-srow"><dt>' + esc(row[0]) + "</dt><dd>" + esc(dotBind(row[1])) + "</dd></div>")
     .join("");
   // The printable technical sheet, without a PDF pipeline: a print-only
-  // letterhead inside the spec panel, a print stylesheet that reduces the
-  // page to it, and a button the behaviour script reveals ([data-st-print]
-  // → window.print()). The category's better shops hand out per-model spec
-  // sheets; a browser already knows how to make one from a page that
-  // formats itself for paper — including "print to PDF", which every OS
-  // offers, so the shop gets the artefact with no file to maintain.
+  // letterhead inside the spec panel, and a print stylesheet that reduces the
+  // page to it.
+  //
+  // ⚠️ NO BUTTON ANY MORE — asked for directly, and the feature does not need
+  // one. There was a "Natisnite tehnični list" control here that called
+  // window.print(); every browser and every OS already offers that on Ctrl/⌘-P,
+  // including "print to PDF", and the stylesheet does not care how the dialog
+  // was opened. So the sheet still exists, still carries the letterhead and
+  // the price composition, and the panel is no longer interrupted by a control
+  // duplicating something the browser has in its own menu.
   const printHead =
     '<div class="st-pdp-printhead" aria-hidden="true">' +
     "<strong>" + esc(ctx.shop.name) + "</strong> · " + esc(ctx.shop.domain) +
@@ -3018,8 +3006,6 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<h3 class="st-pdp-panel-h">Tehnični podatki</h3></summary>' +
     '<div class="st-pdp-panel-b">' + printHead +
     '<dl class="st-pdp-spec-table">' + specRows + "</dl>" +
-    '<p class="st-pdp-printrow"><button type="button" class="st-pdp-print" ' +
-    'data-st-print hidden>Natisnite tehnični list</button></p>' +
     "</div></details>" +
     (d.panels ?? [])
       .map(
