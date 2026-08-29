@@ -1158,9 +1158,14 @@ export const bazenContent: ShopContent = {
   // prices, against pogoji.ts and both freight tables ("po ponudbi"). The
   // SERP line is a price surface like any other: what it says about the
   // composition must match what the page says beside the figure.
+  // ⚠️ SHORT ENOUGH TO SURVIVE THE SNIPPET. This measured 969px at 14px Arial
+  // against Google's ~920px desktop cap, so it was cut mid-clause and the
+  // clause it lost was "dostava po ponudbi" — the one a buyer of a 400 kg
+  // object most needs. Rewritten to 149 characters, which measures inside the
+  // cap with the delivery term intact.
   hubMetaDescription:
-    "Masažni bazeni od 195 do 230 cm in swim spa bazeni od 450 do 580 cm. " +
-    "Mere, specifikacije in cene z DDV; priklop in zagon vključena, dostava po ponudbi.",
+    "Masažni bazeni 195–230 cm in swim spa 450–580 cm. Cene z DDV, priklop " +
+    "in zagon vključena, dostava po ponudbi.",
   // The lede states the decision; the two cards under it carry the facts the
   // decision turns on. What used to be here — one nine-line paragraph doing
   // both jobs — is the reason hubChoice exists; see its note in types.ts.

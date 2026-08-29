@@ -188,6 +188,26 @@ export interface Page {
    * gate has to check. See legalPagesReady().
    */
   readonly legal?: boolean;
+  /**
+   * True where the page's MAIN CONTENT is the question set, so it may carry
+   * FAQPage structured data.
+   *
+   * ⚠️ OPT-IN, BECAUSE IT USED TO BE AUTOMATIC AND THEREFORE WRONG. Any page
+   * with two `qa` items got FAQPage, which put it on /o-nas and /kontakt —
+   * an about page and a contact page are not FAQs, and Google's guidance is
+   * explicit that the type is for pages whose main content is the question
+   * set. It also duplicated questions across pages ("Kakšna je garancija?" on
+   * two, the see-it-in-person question in three near-identical forms on
+   * three), which is the shape of a spam signal rather than a rich result.
+   *
+   * And there is no rich result to lose: since August 2023 Google shows FAQ
+   * results only for authoritative government and health sites, so on a
+   * commercial shop this markup earns nothing and cost 4.7 kB of JSON-LD on
+   * /pogosta-vprasanja alone — 23% of that document. Kept there, where it is
+   * honest and where a non-Google consumer may still use it; dropped on the
+   * five pages that merely happened to carry a question.
+   */
+  readonly faqPage?: boolean;
 }
 
 /* ------------------------------------------------------------- registry */

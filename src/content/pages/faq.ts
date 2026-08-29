@@ -24,6 +24,9 @@ import type { Page } from "../pages";
  */
 export const FAQ: Page = {
   key: "/faq",
+  // The one page whose main content IS the question set, so the one page that
+  // may carry FAQPage. See Page.faqPage.
+  faqPage: true,
   h1: "Pogosta vprašanja",
   lead: "Kar nas kupci vprašajo največkrat: o postavitvi, obratovanju, dostavi in garanciji.",
   metaDescription:

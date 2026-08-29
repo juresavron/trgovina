@@ -1881,7 +1881,28 @@ export const STUDIO_COMMERCE_CSS = `
  * A shop with no drawing keeps the neutral mass rather than borrowing another
  * shop's product. A real photograph drops into .st-shot with no restructuring.
  */
-function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto, artKey?: ArtKey): string {
+/**
+ * @param eager  Load this one immediately, for a card that is above the fold.
+ *
+ * ⚠️ THE FIRST CARD OF A COLLECTION IS THE LCP AND WAS LAZY. Measured in
+ * Chromium with the preview's eager-rewrite disabled: on /masazni-bazeni the
+ * first card's photograph is inside the initial viewport at BOTH 390x844
+ * (266x222px) and 1440x900 (326x272px), and it carried loading="lazy" with no
+ * fetchpriority — so on the two pages built to rank, the picture a buyer sees
+ * first queued behind 166 kB of fonts and a 170 kB stylesheet. Same on
+ * /swim-spa for all three cards at desktop widths.
+ *
+ * Only the FIRST is promoted. Making the row eager would trade one late image
+ * for three competing ones, which is the fault this fixes in the other
+ * direction; everything below the fold stays lazy.
+ */
+function shot(
+  ctx: RenderCtx,
+  variant = 0,
+  photo?: PdpPhoto,
+  artKey?: ArtKey,
+  eager = false,
+): string {
   // A real photograph beats the drawing every time. The drawing exists because
   // most models have no photography yet, not because it is preferred.
   if (photo) {
@@ -1899,7 +1920,7 @@ function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto, artKey?: ArtKey): s
       // hint promised, and a hint that is short is the one direction that
       // costs sharpness. Below 810 the grid is one column and the plate takes
       // 84.2vw at its widest (a 809px viewport), so 92vw still covers it.
-      productImg(photo, "st-shot-img", "(max-width: 809px) 92vw, 376px", photo.alt) +
+      productImg(photo, "st-shot-img", "(max-width: 809px) 92vw, 376px", photo.alt, eager) +
       "</span>"
     );
   }
@@ -2051,7 +2072,7 @@ function productCards(
         '<a class="st-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-card-panel">' +
         (p.badge ? '<span class="st-badge">' + esc(p.badge) + "</span>" : "") +
-        shot(ctx, i, p.photo, p.art) +
+        shot(ctx, i, p.photo, p.art, i === 0) +
         "</span>" +
         '<span class="st-card-body">' +
         "<" + level + ' class="st-card-name">' + esc(p.name) + "</" + level + ">" +
@@ -2164,7 +2185,7 @@ export function renderStudioRail(ctx: RenderCtx): string {
       return (
         '<li class="st-rail-item" data-st-item id="' + esc(id) + '" tabindex="-1">' +
         '<a class="st-rail-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
-        '<span class="st-rail-panel">' + shot(ctx, i, p.photo, p.art) + "</span>" +
+        '<span class="st-rail-panel">' + shot(ctx, i, p.photo, p.art, i === 0) + "</span>" +
         '<span class="st-rail-body">' +
         '<span class="st-rail-name">' + esc(p.name) + "</span>" +
         '<span class="st-rail-meta">' + esc(p.meta) + "</span>" +
