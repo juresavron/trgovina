@@ -403,9 +403,43 @@ function printBtn(){
   });
 }
 
+/* ---- the buy bar defers to the buy column's own CTA ----------------------
+   At scroll 0 the bar covers the bottom of the gallery: measured on
+   /bazen/veliki-230, the thumbnail strip was 0% visible on EVERY desktop
+   viewport (1024x768, 1440x900, 1440x1080, 1920x900, 1920x1080), and 66-73px
+   of the product photograph itself sat behind the black band at 1440x900 and
+   1920. A visitor's first paint was one clipped photograph with no sign that
+   nine more existed.
+
+   The bar is also redundant exactly there: at 1440x900 the column's own
+   "Povprašajte za ponudbo" is at y 532-584 while the bar repeats it at
+   826-900, 242px apart. So the bar earns its place only once that button has
+   gone, which is what this watches.
+
+   ⚠️ THE NO-SCRIPT STATE IS THE BAR SHOWING, not hiding. The class is added
+   here, so a visitor with no JavaScript, or an engine without
+   IntersectionObserver, keeps today's page rather than losing the CTA
+   entirely — the same trade every other progressive touch in this file makes.
+   The height budget in pdp.ts is unchanged and still correct for the stuck
+   state; this only fixes the position every visitor starts from. */
+function barDefer(){
+  var bar = document.querySelector(".st-pdp-bar");
+  var cta = document.querySelector(".st-pdp-buyrow");
+  if (!bar || !cta) return;
+  if (!("IntersectionObserver" in window)) return;
+  bar.classList.add("is-deferred");
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      bar.classList.toggle("is-deferred", en.isIntersecting);
+    });
+  }, { threshold: 0 });
+  io.observe(cta);
+}
+
 function init(){
   navCurrent();
   barConfig();
+  barDefer();
   reveal();
   topDisc();
   printBtn();

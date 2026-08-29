@@ -462,7 +462,14 @@ export const STUDIO_PDP_CSS = `
     /* Centred, because the strip is narrower than the frame whenever the
      * ceiling above binds. Left-aligned under a frame half again its width
      * reads as a row that ran out; centred under it reads as a caption. */
-    justify-content: center;
+    /* ⚠️ CENTRE ONLY WHERE THE CEILING ACTUALLY BINDS. At 390 the thumbs hit
+     * their 44px floor, so ten of them plus nine 8px gaps are 512px in a 340px
+     * strip and wrap to two rows: row one is 6 × 44 + 5 × 8 = 304px, centred,
+     * which put the first thumb at x 43 against a frame, an h1, a price and a
+     * breadcrumb all at x 25. 18px off, under a frame only 36px wider — too
+     * close to read as centring and too far to read as aligned. Everywhere
+     * else the first thumb sits at the frame's own edge. */
+    justify-content: flex-start;
     gap: var(--studio-pdp-thumb-gap);
     --st-pdp-n: 10;
   }
@@ -899,6 +906,15 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-sws > li { min-inline-size: 0; }
   :root[data-theme="studio"] .st-pdp-sw {
     display: grid;
+    /* ⚠️ minmax(0, 1fr), NOT THE IMPLICIT auto TRACK, and break-word does not
+     * substitute for it. An implicit track's floor is MIN-CONTENT, and
+     * "overflow-wrap: break-word" — which .st-pdp-sw-n carries for exactly
+     * this word — does not lower min-content sizing; only "anywhere" does.
+     * So the track was sized to the unbroken word: "Mediterranean" measured
+     * 89.7px against cells of 77.5 at 390, 81.0 at 768, 86.1 at 1440 and
+     * 88.5 at 1920, and at 390 the label spilled past the swatch grid and
+     * broke the page's right margin. */
+    grid-template-columns: minmax(0, 1fr);
     gap: 7px;
     min-inline-size: 0;
     cursor: pointer;
@@ -1369,7 +1385,18 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-assure {
     list-style: none; margin: clamp(22px, 2.2vw, 40px) 0 0; padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+    /* ⚠️ 20rem, NOT 22, AND THE OLD FLOOR PUT MORE COLUMNS IN THE NARROWER
+     * COLUMN. Two tracks need 2 × floor + gap: at 22rem that is 724.2px at
+     * 1440 against a buy column of 680.7 and 730 at 1920 against 715.8 — so
+     * the row ran ONE-up on both desktop tiers, while at 768 (gap 14px, needs
+     * 718, column exactly 718) it ran two-up. Measured empty space beside the
+     * four trust lines: 398.8px at 1440 (58.6% of the row) and 433.9px at
+     * 1920, pushing the colour choice and the configurator ~125px down.
+     *
+     * 20rem needs 660.2px at 1440 and 666px at 1920 — both fit — and 1024
+     * still needs 660 against 408.3, so the narrow tier stays one-up, which
+     * is correct: the widest line here is 281.9px. */
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
     gap: clamp(14px, 1.4vw, 26px);
   }
   :root[data-theme="studio"] .st-pdp-assure-i {
@@ -1432,7 +1459,13 @@ export const STUDIO_PDP_CSS = `
    * bottom rules stay on one line — the objection to two columns, answered
    * by the layout rather than by a script. */
   :root[data-theme="studio"] .st-pdp-panels {
-    margin-top: clamp(34px, 3.4vw, 64px);
+    /* ⚠️ A BAND-TO-BAND STEP, WHICH 34–64px IS NOT. This measured 49px at
+     * 1440 between the bottom of the buy row and the panels' top rule, while
+     * the two bands below it were stepping 340. The panels are reference
+     * material read after the decision — a different kind of thing from the
+     * column above them — so they take the same order of step the rest of the
+     * page uses between kinds, at the smaller end of it. */
+    margin-top: clamp(48px, 5vw, 96px);
     border-top: var(--bw-line) solid var(--line);
     /* ⚠️ AN EXPLICIT TIER, NOT auto-fit, because the two tiers want different
      * things. auto-fit gave two columns above ~1150 and one column below —
@@ -1563,7 +1596,17 @@ export const STUDIO_PDP_CSS = `
    * gutter and quietly taken this band off the container above the cap. */
   :root[data-theme="studio"] .st-also {
     padding-block: var(--studio-rhythm) 0;
+    /* ⚠️ TWO BANDS THAT BOTH PAY THE FULL RHYTHM MAKE A 340px HOLE. .st-tst
+     * carries --studio-rhythm on both sides and so does this, so the step
+     * between them measured 340px at 1440 and 1920 — 170 of black plus 170 of
+     * white, 38% of a 900px viewport, with nothing in it. Meanwhile the step
+     * from the buy row into the panels, which the file calls a band-to-band
+     * step, was 49px. The rhythm is right between a band and a DIFFERENT kind
+     * of thing; two supporting bands in a row only need to pay it once, and
+     * the one above has already paid. */
   }
+  :root[data-theme="studio"] .st-tst + .st-also { padding-block-start: 0; }
+
   /* The same rung as "Primerjajte modele" (.st-cmp-h): both are secondary
    * section heads over supporting material, and this one was set centred at
    * the full h2 display rung — home-page-band volume over three slim cards,
@@ -1616,7 +1659,13 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-also-frame {
     position: relative;
     display: block;
-    aspect-ratio: 1 / 1;
+    /* ⚠️ NOT A SQUARE, because at two tracks a square makes the models the
+     * visitor DIDN'T choose bigger than the one they did. Measured at 1440:
+     * the product's own .st-pdp-stage is 630.3px and each of these was 632.9 —
+     * 2.6px larger — making the last band on the page 1023.5px tall, more than
+     * a viewport, for two links. 4/3 puts the art at 474px there and 539 at
+     * 1920, which reads as a suggestion rather than as a second hero. */
+    aspect-ratio: 4 / 3;
     border-radius: var(--r-media);
     background: var(--bg-alt);
     overflow: hidden;
@@ -1660,6 +1709,15 @@ export const STUDIO_PDP_CSS = `
    * sibling. Focus lands on the box because the input has no paint of its own.
    */
   :root[data-theme="studio"] .st-pdp-ao {
+    /* ⚠️ A FIELDSET CARRIES margin-inline: 2px FROM THE UA AND NOTHING HERE
+     * RESET IT. Measured at 1440: every direct child of .st-pdp-buy sits at
+     * x 719.3 / right 1400.0 — eyebrow, h1, price, standfirst, CTA, the
+     * assurances, the configurator, the freight card — except this one, at
+     * 721.3 / 1398.0. So the "DODATNA OPREMA" rule and all fourteen add-on
+     * row rules were 4px narrower and 2px inset from the rules above and
+     * below them, on both desktop tiers. padding and border were reset here;
+     * margin was the one the reset missed. */
+    margin-inline: 0;
     margin-top: clamp(24px, 2.4vw, 48px);
     padding: 0;
     border: 0;
@@ -1862,7 +1920,18 @@ export const STUDIO_PDP_CSS = `
     /* Uncapped, this ran 832px and 101 CHARACTERS on one line at 1920 — 35%
      * past the 75 ceiling, and the widest running text on the site. The same
      * 34rem .st-pdp-panel-b p already uses, which measures 71. */
-    max-inline-size: 34rem;
+    /* ⚠️ THE RULE IS THE CARD'S, THE MEASURE IS THE TEXT'S, and capping the
+     * block capped both. This sits in .st-pdp-freight under three .st-pdp-frow
+     * rows whose hairlines run the card's full inner width; its own border-top
+     * was capped with the text at 544px, so the fourth hairline in one small
+     * bordered card stopped 88.7px short at 1440 and 108.4px short at 1920 —
+     * 14% and 17% of the card. Four rules, three full width and one two-thirds
+     * across, reads as a rendering fault rather than as a measure.
+     *
+     * So the border stays on the block, which is the card's width, and the
+     * measure moves to a span inside it. A span, not "> *": the note is a <p>
+     * of bare text, so a child selector has nothing to match. */
+    max-inline-size: none;
     margin-top: clamp(12px, 1.1vw, 22px);
     padding-top: clamp(12px, 1.1vw, 22px);
     border-top: 1px solid var(--line);
@@ -1873,6 +1942,7 @@ export const STUDIO_PDP_CSS = `
     line-height: var(--lh-body);
     color: var(--ink-mute);
   }
+  :root[data-theme="studio"] .st-pdp-note > span { display: block; max-inline-size: 34rem; }
 
   /* ---- spec: hairline-ruled definition list ---------------------------- */
   /* (.st-pdp-spec and .st-pdp-spec-h — the freestanding two-column spec band
@@ -2009,6 +2079,20 @@ export const STUDIO_PDP_CSS = `
     /* A band, not a card: sharp edges, one hairline, no shadow — the chrome
      * bar's exact construction, mirrored. */
     border-top: 1px solid color-mix(in srgb, var(--on-invert) 10%, transparent);
+  }
+  /* Deferred while the buy column's own CTA is still on screen — see
+   * barDefer() in behaviour.ts for the measurements. transform, not display:
+   * the bar keeps its box, so --studio-pdp-bar-h and the scroll padding stay
+   * true and nothing reflows when it arrives. */
+  :root[data-theme="studio"] .st-pdp-bar.is-deferred {
+    transform: translateY(100%);
+    pointer-events: none;
+  }
+  :root[data-theme="studio"] .st-pdp-bar {
+    transition: transform 0.25s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-theme="studio"] .st-pdp-bar { transition: none; }
   }
   :root[data-theme="studio"] .st-pdp-bar-in {
     min-height: var(--chrome-h);
@@ -3162,7 +3246,9 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     '<section class="st-pdp-freight" aria-labelledby="st-pdp-fh">' +
     '<h2 class="st-pdp-glabel" id="st-pdp-fh">Dostava in montaža</h2>' +
     '<dl class="st-pdp-frows">' + freight + "</dl>" +
-    '<p class="st-pdp-note">' + esc(d.note) + "</p>" +
+    // The span carries the measure so the <p> can keep the card's full width
+    // for its rule — see .st-pdp-note.
+    '<p class="st-pdp-note"><span>' + esc(d.note) + "</span></p>" +
     "</section>" +
     "</div></div>" +
 

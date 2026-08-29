@@ -27,6 +27,21 @@
  * it straight from the database column the operator ticks against an order
  * number; nothing here infers it, and `placeholder` is reserved for content
  * nobody wrote.
+ *
+ * ⚠️ THE CHECKED-IN COPY IS A SNAPSHOT AND THE DATABASE IS THE TRUTH, and the
+ * difference has already misled one audit. The deploy runs sync-reviews.mjs
+ * before it builds, so what SHIPS is whatever the `reviews` table says at that
+ * moment; this file is only what the table said the last time somebody ran the
+ * script and committed the result. It had drifted to `verified: true` on all
+ * four while the table held false on all four, so every local render, preview
+ * and screenshot showed "Preverjena mnenja strank" and four "Preverjen nakup"
+ * chips that the live site does not draw — and an audit reported the live site
+ * as making a claim it does not make.
+ *
+ * If you are reading a flag here and it matters, check the table:
+ *   select author_name, verified, order_id from reviews order by created_at;
+ * Re-synced 2026-08-29 against the table: four reviews, none verified,
+ * order_id NULL on all four.
  */
 
 import type { ShopContent } from "./types";
@@ -39,7 +54,7 @@ export const GENERATED_REVIEWS: Record<string, ShopContent["reviews"]> = {
       model: "",
       rating: 5,
       role: "Lastnika spa-ja",
-      verified: true,
+      verified: false,
     },
     {
       q: "Sprva smo mislili, da bo spa predvsem za odrasle, ampak ga danes uporablja cela družina. Čez dan uživajo otroci, zvečer pa si vzamemo čas zase. Postal je prostor, kjer smo skupaj in hkrati resnično sproščeni.",
@@ -47,7 +62,7 @@ export const GENERATED_REVIEWS: Record<string, ShopContent["reviews"]> = {
       model: "",
       rating: 5,
       role: "Zadovoljni uporabniki",
-      verified: true,
+      verified: false,
     },
     {
       q: "Ker veliko treniram, mi je regeneracija zelo pomembna. Topla voda in masažni curki so odlični po napornem treningu. Spa je postal del moje rutine – ne samo za sprostitev, ampak tudi za regeneracijo.",
@@ -55,7 +70,7 @@ export const GENERATED_REVIEWS: Record<string, ShopContent["reviews"]> = {
       model: "",
       rating: 5,
       role: "Aktivni športnik",
-      verified: true,
+      verified: false,
     },
     {
       q: "Najbolj nama je všeč, da lahko uživava v občutku wellnessa, ne da bi kamorkoli odšla. Zvečer prižgeva luči, napolniva spa in si vzameva čas zase. To je bila ena najboljših odločitev za najin dom.",
@@ -63,7 +78,7 @@ export const GENERATED_REVIEWS: Record<string, ShopContent["reviews"]> = {
       model: "",
       rating: 5,
       role: "Lastnika spa-ja",
-      verified: true,
+      verified: false,
     },
   ],
 };

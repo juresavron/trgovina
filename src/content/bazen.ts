@@ -292,6 +292,26 @@ function modelCount(n: number): string {
   return n + " modelov";
 }
 
+
+/**
+ * A height in centimetres, in Slovenian.
+ *
+ * ⚠️ m.mm[2] / 10 EMITS A JAVASCRIPT DECIMAL POINT. Every offered model's
+ * height is a multiple of 10 mm today, so the division has always produced a
+ * whole number and the bug has never shown — but the supplier's own packing
+ * list already disagrees with the price list on one of them (SUPPLIER-SWIMSPA
+ * records ZR7861 at 1420 mm against 1400), and the first height that is not a
+ * round number of centimetres would render "135.5 cm" with an English
+ * separator, in the spec table and in the panel a buyer reads before hiring a
+ * crane. The rest of this file has used the comma form for years — footprint()
+ * and the pump strings both do — so this is the one number that could still
+ * slip through.
+ */
+function heightCm(mm: number): string {
+  const cm = mm / 10;
+  return (Number.isInteger(cm) ? String(cm) : cm.toFixed(1).replace(".", ",")) + " cm";
+}
+
 const categories: Category[] = [
   {
     name: "Masažni bazeni",
@@ -530,7 +550,7 @@ function pdpFor(m: PolaModel): PdpContent {
       // the colours the shop can actually show (catalog/finishes.generated.ts),
       // so it counts itself and cannot drift.
       ["Školjka", "ameriški akril · izolacija 2 cm"],
-      ["Mere", footprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
+      ["Mere", footprint(m) + " · višina " + heightCm(m.mm[2])],
       ["Teža", kgText(m.dryKg) + " prazen · " + kgText(m.filledKg) + " poln"],
       // The supplier's own code, printed. It is what an order, a warranty
       // claim and a spare part are matched on — a buyer quoting "ZR805" on
@@ -590,19 +610,32 @@ function pdpFor(m: PolaModel): PdpContent {
           m.topside +
           " in grelcem 3 kW, ozon in podvodna osvetlitev so del osnovne opreme.",
       ],
-      [
-        "Barve školjke in obloge",
-        "Školjka: " + SHELL_FINISHES.join(" · ") +
-          ". Obloga: " + CABINET_FINISHES.join(" · ") +
-          ". Proizvajalčeva barvna karta našteva deset odtenkov, specifikacija modela " +
-          "pa sedem; kateri veljajo za vaš model, " +
-          "potrdimo ob naročilu.",
-      ],
+      // ⚠️ NO "BARVE ŠKOLJKE IN OBLOGE" PANEL. It listed all sixteen colour
+      // names — which are the labels under the sixteen radio tiles two screens
+      // above it — and then repeated the picker's own note WORD FOR WORD:
+      // "Proizvajalčeva barvna karta našteva deset odtenkov, specifikacija
+      // modela pa sedem…", which also lives in pdp.ts.
+      //
+      // The copy is not the problem; the DIVERGENCE is. The renderer guards
+      // that sentence on SHELL_FINISHES_ARE_PHOTOGRAPHED and drops it the
+      // moment the shop uploads its own swatches, because it stops being true:
+      // those ARE the colours then, with a photograph behind each. The panel
+      // had no such guard, so on the first upload the picker would fall silent
+      // and the panel would go on telling a buyer that the tiles they can see
+      // might turn out to be seven — a contradiction with itself, on the page
+      // where the colour is chosen.
+      //
+      // One source, and it is the one next to the swatches.
       [
         "Mere in teža",
-        footprint(m) + ", višina " + m.mm[2] / 10 + " cm. Prazen tehta " +
+        footprint(m) + ", višina " + heightCm(m.mm[2]) + ". Prazen tehta " +
           kgText(m.dryKg) + ", napolnjen " + kgText(m.filledKg) +
-          ". Nosilnost terase preverimo pred dostavo.",
+          // "pred ponudbo", not "pred dostavo". The correction at the
+          // assurance strip above ("the visit happens before the OFFER") was
+          // never applied here, so the panel told a buyer the survey happens
+          // after they have committed — the opposite of the shop's argument,
+          // and the one thing this page is selling.
+          ". Nosilnost terase preverimo na brezplačnem ogledu, pred ponudbo.",
       ],
       [
         "Dostava in montaža",
@@ -664,7 +697,13 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       "Akrilni swim spa " +
       swimFootprint(m) +
       " za " +
-      swimSeating(m) +
+      // ⚠️ THE SAME replace() THE TUB STANDFIRST DOES, and the reason is the
+      // same: swimSeating()'s middot form is right in the cards and wrong mid
+      // sentence. Rendered "za 7 oseb · 1 ležalnik: 3 protitočne šobe…" on all
+      // three swim spa pages — and this string is also the meta description
+      // and the JSON-LD description, so the middot travelled to the search
+      // result too.
+      swimSeating(m).replace(" · ", ", od tega ") +
       ": " +
       swimJets +
       counted(m.jets, MASSAGE_JETS) +
@@ -704,13 +743,17 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       // cabinet+bottom insulation is a PRICED OPTION on these units. The
       // shell colour is the sheet's own: silver white.
       ["Školjka", "ameriški akril · silver white"],
-      ["Mere", swimFootprint(m) + " · višina " + m.mm[2] / 10 + " cm"],
+      ["Mere", swimFootprint(m) + " · višina " + heightCm(m.mm[2])],
       // Omitted entirely where the supplier states no mass. A dash would read
       // as "none"; an estimate would be a structural claim nobody made.
       ...(m.dryKg && m.filledKg
         ? ([["Teža", kgText(m.dryKg) + " prazen · " + kgText(m.filledKg) + " poln"]] as [string, string][])
         : []),
-      ["Priklop", "230 V / 400 V"],
+      // "Električni priklop", not "Priklop": the configurator's who-wires-it
+      // group on the same page is already labelled "Priklop". The tub spec was
+      // renamed for exactly this and the swim spa spec was not, so these three
+      // pages printed the word twice with two meanings.
+      ["Električni priklop", "230 V / 400 V"],
       ["Garancija", "3 leta"],
       // The supplier's own code — same reason the tub spec prints it.
       ["Koda modela", m.code],
@@ -746,15 +789,25 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
               " tok, v katerem se plava na mestu; " +
               counted(m.jets, MASSAGE_JETS) + " " + aimedAtRest(m.jets) +
               " po plavanju."
+            // ⚠️ THIS BRANCH IS THE MODEL THAT CANNOT SWIM, so it must not
+            // end "po plavanju". SWIM 450 lists no counter-current jet at all
+            // (swimspa.ts: "The supplier's sheet really does say four … this
+            // one lists no swim jet"), which is why the guard above exists —
+            // and both branches then finished with the same tail, so the one
+            // model with nothing to swim against still told the reader the
+            // jets were for afterwards, in the first panel a buyer opens, on
+            // a 16.790 EUR page whose h1 says swim spa. /primerjava already
+            // discloses the gap; this page did not.
             : counted(m.jets, MASSAGE_JETS) + " " + aimedAtRest(m.jets) +
-              " po plavanju."),
+              " za sprostitev. Protitočnih šob dobavitelj za ta model ne " +
+              "navaja."),
       ],
       [
         "Mere in prostor",
-        swimFootprint(m) + ", višina " + m.mm[2] / 10 + " cm. " +
+        swimFootprint(m) + ", višina " + heightCm(m.mm[2]) + ". " +
           (m.dryKg && m.filledKg
             ? "Prazen tehta " + kgText(m.dryKg) + ", napolnjen " + kgText(m.filledKg) + ". "
-            : "Teže dobavitelj za ta model ne navaja; pred dostavo jo pridobimo " +
+            : "Teže dobavitelj za ta model ne navaja; pred ponudbo jo pridobimo " +
               "in preverimo nosilnost podlage. ") +
           "Swim spa praviloma stoji na betonski plošči, ne na terasi.",
       ],
@@ -1063,13 +1116,13 @@ export const bazenContent: ShopContent = {
   // returns "" for an empty list, which is the honest state of a shop that has
   // not been paid yet, and a far better one than two strangers who do not
   // exist praising a product that does not either.
-  // Describes the quotes, claims nothing beyond them: every review under
-  // this line is flagged verified, which is the statement being made, and
-  // the sentence says only that and where they came from. See reviewsLead
-  // in types.ts for why this field is fenced.
-  reviewsLead:
-    "Zapisali so jih stranke, ki so pri nas kupile bazen. Objavljena so " +
-    "tako, kot smo jih prejeli.",
+  // Describes the quotes and claims nothing beyond them. SPLIT IN TWO, because
+  // the two halves are not equally true: how a quote was handled is true
+  // whoever wrote it, while "kupile pri nas" is the purchase claim and answers
+  // to `verified` exactly as the chip does. These four carry order_id NULL, so
+  // today only the first line prints. See reviewsLeadVerified in types.ts.
+  reviewsLead: "Objavljena so tako, kot smo jih prejeli.",
+  reviewsLeadVerified: "Zapisali so jih stranke, ki so pri nas kupile bazen.",
   reviews: GENERATED_REVIEWS["bazen"] ?? [],
   // The fragments are the sections' derived ids on /vodniki — pinned by
   // structure.test.ts, which renders that page and fails the moment a

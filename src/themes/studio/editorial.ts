@@ -1228,13 +1228,10 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
 
 
   // The heading makes the same claim the chip does, so it answers to the same
-  // rule: it may say "verified" only when every quote under it is real.
-  // The heading makes the same claim the chip does, so it answers to the same
   // rule — and to the stricter half of it: it may say "verified" only when
   // EVERY quote under it has been checked, because it speaks for all of them.
-  const heading = reviews.every((r) => r.verified === true && !r.placeholder)
-    ? "Preverjena mnenja strank"
-    : "Mnenja strank";
+  const allVerified = reviews.every((r) => r.verified === true && !r.placeholder);
+  const heading = allVerified ? "Preverjena mnenja strank" : "Mnenja strank";
 
   // ⚠️ A GRID, NOT A SLIDER, and the reason is what a testimonial band is for.
   //
@@ -1247,6 +1244,13 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
   // Capped at six. Beyond that the band becomes a page of its own, and there
   // is no "all reviews" route to send anyone to; when there is, this is where
   // the link goes.
+  const lead = [
+    allVerified ? ctx.content.reviewsLeadVerified : undefined,
+    ctx.content.reviewsLead,
+  ]
+    .filter((t): t is string => typeof t === "string" && t !== "")
+    .join(" ");
+
   const cards = reviews.slice(0, 6).map(quoteCard).join("");
 
   return (
@@ -1256,9 +1260,22 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
     '<div class="st-tst-intro">' +
     motif() +
     '<h2 class="st-tst-h" id="st-tst-h">' + esc(heading) + "</h2>" +
-    (ctx.content.reviewsLead
-      ? '<p class="st-tst-lead">' + esc(ctx.content.reviewsLead) + "</p>"
-      : "") +
+    // ⚠️ THE LEAD IS GATED THE SAME WAY THE HEADING AND THE CHIPS ARE, and it
+    // was the one sentence in this band that was not.
+    //
+    // The heading falls back to "Mnenja strank" and every chip disappears the
+    // moment one quote is unverified — but reviewsLead printed unconditionally,
+    // and it carried "Zapisali so jih stranke, ki so pri nas kupile bazen". So
+    // with the chips correctly gone, the strongest form of the claim they were
+    // gated for stayed on the page as running text: a sentence asserting four
+    // purchases, on a shop whose reviews table holds order_id NULL on all four.
+    // That is the Annex I 23b claim (ZVPot-1) with nothing behind it, and no
+    // amount of chip logic reaches it, because it is not a chip.
+    //
+    // So the purchase sentence lives in its own field and may only be printed
+    // under the same test. reviewsLead keeps what is true either way — how the
+    // quotes were handled — and prints always.
+    (lead ? '<p class="st-tst-lead">' + esc(lead) + "</p>" : "") +
     '<a class="st-btn-light" href="' +
     esc(ctx.shop.routeSlugs["/contact"] + ctx.q) +
     '">Povprašajte za ponudbo</a>' +
