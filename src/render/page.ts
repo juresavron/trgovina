@@ -165,7 +165,13 @@ export function renderDocument(o: PageOptions): string {
     // caller has no picture of its own to describe.
     '<meta property="og:image" content="' +
       esc(s.siteUrl + (o.image ?? "/media/site/hero.webp")) + '">' +
-    '<meta property="og:image:alt" content="' + esc(o.imageAlt ?? o.title) + '">' +
+    // ⚠️ ONLY WHERE THERE IS SOMETHING TRUE TO SAY. The title fallback put a
+    // page name with a pipe and a brand suffix — "Vodniki | Masažni bazeni
+    // Vrelec" — into an IMAGE description on the nineteen routes that share
+    // the hero card, and the hero's own alt is "" because it is decorative.
+    // A missing og:image:alt degrades to no announcement; a wrong one is
+    // announced. So it is emitted only when a caller passed a real alt.
+    (o.imageAlt ? '<meta property="og:image:alt" content="' + esc(o.imageAlt) + '">' : "") +
     '<meta name="twitter:card" content="summary_large_image">' +
     // ICONS. There were none at all, so every tab, bookmark and shared link
     // showed the browser's blank-page glyph — on a storefront asking for
@@ -286,7 +292,18 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
       // and on launch day every product would still have asserted it until
       // somebody remembered this line. The flip that opens the shop is the
       // flip that changes the claim.
-      availability: s.live ? "https://schema.org/InStock" : "https://schema.org/PreOrder",
+      // ⚠️ ordersOnline, NOT live, AND THE NOTE ABOVE PICKED THE WRONG FLAG.
+      // It is right that the claim must move with a flip rather than with
+      // somebody's memory; it named the flip that makes the shop VISIBLE
+      // instead of the one that makes a purchase possible. This shop is
+      // ordersOnline:false and says so on the page — /kosarica reads "Spletno
+      // naročanje še ni odprto" — so on launch day all six products would have
+      // asserted InStock at a URL whose only control is an enquiry form. That
+      // is the merchant-listing mismatch that suppresses a price snippet and
+      // fails a Merchant Center review.
+      availability: s.ordersOnline
+        ? "https://schema.org/InStock"
+        : "https://schema.org/PreOrder",
       itemCondition: "https://schema.org/NewCondition",
     };
   }

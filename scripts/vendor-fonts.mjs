@@ -52,7 +52,21 @@ const UA =
 const CSS_URL =
   "https://fonts.googleapis.com/css2?family=Chivo:wght@500" +
   "&family=DM+Sans:opsz,wght@9..40,400..500" +
-  "&family=Plus+Jakarta+Sans:wght@400;500;700&display=swap";
+  // ⚠️ THE AXIS, NOT THREE STATIC WEIGHTS. Asking for wght@400;500;700 made
+  // Google return THREE @font-face blocks per subset pointing at three URLs —
+  // and the three files are byte-identical, because Plus Jakarta Sans is a
+  // variable font and each block simply instances it. Verified by md5:
+  //   52d0444…  plus-jakarta-sans-{400,500,700}-latin.woff2      (27,272 B each)
+  //   5ffe46e…  plus-jakarta-sans-{400,500,700}-latin-ext.woff2  (21,688 B each)
+  // Rendering was correct — the browser instanced each one properly — but it
+  // downloaded the same bytes up to three times under three names, and
+  // separate URLs defeat the HTTP cache. Measured per page load: 48,960 wasted
+  // bytes on the home page and the two collection pages (22.4% of their font
+  // payload) and 76,232 on every product page (31.0%).
+  //
+  // The range asks for the axis, so one face per subset covers 200–800 — which
+  // is exactly what the DM Sans line above already does.
+  "&family=Plus+Jakarta+Sans:wght@200..800&display=swap";
 
 const KEEP = new Set(["latin", "latin-ext"]);
 const OUT_DIR = path.join(process.cwd(), "public", "fonts");

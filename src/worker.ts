@@ -59,6 +59,9 @@ import { PROBLEM_FIELD, PROBLEM_TEXT, parseEnquiry, submitEnquiry } from "./enqu
  * to be ignored.
  */
 function faqFor(page: Page): object[] {
+  // Opt-in, not "has two questions" — see Page.faqPage for why that spread it
+  // to an about page and a contact page.
+  if (!page.faqPage) return [];
   const items = page.blocks.flatMap((b) => (b.kind === "qa" ? b.items : []));
   return items.length >= 2 ? [faqJsonLd(items)] : [];
 }

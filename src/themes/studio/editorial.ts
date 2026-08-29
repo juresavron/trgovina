@@ -279,11 +279,24 @@ export const STUDIO_EDITORIAL_CSS = `
    * rows to two columns, and the label's bottom-alignment (which exists so
    * five labels share a baseline ACROSS a row) becomes centring, because
    * stacked there is no row to share a baseline with. */
+  /* ⚠️ THE CLASS IS REPEATED THROUGHOUT THIS BLOCK, and it is the only reason
+   * any of it applies. A media query adds NO specificity, and three rules
+   * below this one — .st-imp-quiet, .st-imp-quiet .st-imp-photo and
+   * .st-imp-label — score the same and come later, so source order silently
+   * won and the phone layout never rendered.
+   *
+   * What shipped at 360/390/414 instead, on all five tiles: a 340x240 box with
+   * an 86x65 photograph in the top-left corner and the label 138px below it,
+   * leaving the 254x65 cell beside the picture and the 86x175 cell under it
+   * empty — about 41,000 of 81,600 px², 39% of every tile. Five of them is
+   * 1,200px of scroll for five sentences, with the shop's own installation
+   * photographs reduced to postage stamps on the device most of its traffic
+   * uses. Doubling the class buys the tie. */
   @media (max-width: 619px) {
-    :root[data-theme="studio"] .st-imp-row {
+    :root[data-theme="studio"] .st-imp-row.st-imp-row {
       grid-template-columns: minmax(0, 1fr);
     }
-    :root[data-theme="studio"] .st-imp-quiet {
+    :root[data-theme="studio"] .st-imp-quiet.st-imp-quiet {
       grid-template-columns: minmax(0, 0.34fr) minmax(0, 1fr);
       grid-template-rows: minmax(0, 1fr);
       /* 15rem was the height of a stacked SQUARE. On its side the tile is
@@ -292,7 +305,7 @@ export const STUDIO_EDITORIAL_CSS = `
       min-block-size: 8.5rem;
       align-items: center;
     }
-    :root[data-theme="studio"] .st-imp-quiet .st-imp-photo {
+    :root[data-theme="studio"] .st-imp-quiet.st-imp-quiet .st-imp-photo {
       grid-column: 1;
       grid-row: 1;
       /* Square, not 4:3: the picture column is narrow here and a landscape
@@ -300,7 +313,7 @@ export const STUDIO_EDITORIAL_CSS = `
       aspect-ratio: 1 / 1;
       padding: 12%;
     }
-    :root[data-theme="studio"] .st-imp-label {
+    :root[data-theme="studio"] .st-imp-label.st-imp-label {
       grid-column: 2;
       grid-row: 1;
       align-self: center;
@@ -717,6 +730,9 @@ export const STUDIO_EDITORIAL_CSS = `
    * read, not declaimed, and the old 1-up carousel set them at h4 because it
    * had a whole stage to fill. */
   :root[data-theme="studio"] .st-tst-q {
+    /* pretty, like the eight other prose selectors: measured at 1440 this
+     * set [358, 322, 332, 342, 40] in a 368px column — a 40px orphan. */
+    text-wrap: pretty;
     margin: 0 0 clamp(18px, 1.8vw, 26px);
     font-family: var(--f-body);
     font-size: var(--t-body);

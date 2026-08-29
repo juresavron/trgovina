@@ -51,7 +51,9 @@ export const SHOWROOM: Page = {
           "bazen sploh pride do mesta postavitve in ali podlaga zdrži, ko je poln.",
         "Napolnjen masažni bazen tehta od 1.500 do 2.210 kilogramov, napolnjen swim spa " +
           "bazen od 5.750 do 8.490 kilogramov, in največji del te teže je voda. Ali to " +
-          "prenese vaša terasa, se po telefonu ne da presoditi in v nobenem salonu ne " +
+          // The impersonal clitic belongs to both clauses; the second had neither
+          // subject nor "se".
+          "prenese vaša terasa, se po telefonu ne da presoditi in se v nobenem salonu ne " +
           "izve. Zato je ogled pri vas.",
         "Ogled je brezplačen tudi, če se za nakup na koncu ne odločite. Če se izkaže, da " +
           "model, ki ste ga izbrali, pri vas ni izvedljiv, vam to povemo. To je pogosto " +
@@ -79,7 +81,9 @@ export const SHOWROOM: Page = {
         [
           "Ponudba",
           "Model in konfiguracija, dostava, priklop in zagon: vse v eni številki z DDV. " +
-            "Ogled je do tu brezplačen in brez obveznosti.",
+            // "do tu" implied a paid stage follows. Nothing is charged before the
+          // confirmed offer, on a page whose h1 is "Brezplačen ogled lokacije".
+          "Ogled in ponudba sta brezplačna in brez obveznosti.",
         ],
       ],
     },
@@ -108,7 +112,9 @@ export const SHOWROOM: Page = {
         ],
         [
           "Kdo je doma",
-          "Dobro je, če je prisoten nekdo, ki odloča o nakupu in pozna hišo. Polovica " +
+          // "Polovica vprašanj" was a statistic nobody has counted — the exact
+          // class of sentence this file was rewritten to remove.
+          "Dobro je, če je prisoten nekdo, ki odloča o nakupu in pozna hišo. Veliko " +
             "vprašanj je o tem, kaj je pod tlakovci in kje teče kabel.",
         ],
       ],
@@ -151,10 +157,13 @@ export const SHOWROOM: Page = {
       kind: "prose",
       h: "Česa tudi ogled ne pove",
       p: [
-        "Ene stvari tudi na vašem naslovu ni mogoče izvedeti: koliko bo bazen porabil " +
+        // "Ene stvari" announced one; two follow, and the heading is plural.
+        "Dveh stvari tudi na vašem naslovu ni mogoče izvedeti: koliko bo bazen porabil " +
           "električne energije. Poraba je odvisna od temperature, ki jo držite, pogostosti " +
           "uporabe, kakovosti pokrova in zunanjih razmer, zato mesečnega zneska ne " +
-          "navajamo nikjer na tej strani.",
+          // The claim is site-wide and is made site-wide (vodniki.ts, faq.ts):
+          // scoping it to this page was weaker and inconsistent.
+          "navajamo nikjer.",
         "Prav tako na ogledu ne izvedete, kako bo bazen deloval pri polni moči. Črpalka " +
           "pri najvišji stopnji ni tiha; kako glasno je to, si vsak predstavlja drugače. " +
           "Ob predaji vam vse stopnje pokažemo in nastavimo. Takrat je bazen vaš in " +

@@ -494,6 +494,24 @@ export const STUDIO_COMMERCE_CSS = `
    * picture floated somewhere inside it at whatever size its own proportions
    * happened to give — which is the single thing that made this grid read as
    * unfinished beside the source. */
+  /* ---- Windows High Contrast --------------------------------------------
+   *
+   * ⚠️ A CARD DRAWN WITH box-shadow HAS NO EDGE IN FORCED COLOURS. The mode
+   * drops box-shadow by design, and .st-card, .st-also-card and .st-util draw
+   * their only boundary with it — measured under forced-colors: active, all
+   * three come back "box-shadow: none, border: 0px none", so the product grid
+   * renders as unbounded runs of text with no card edge. The sibling
+   * components that use a real border (.st-cat-card, .st-btn-line, .st-badge)
+   * are fine, which is the tell: one design intent, three techniques, one of
+   * which vanishes.
+   *
+   * A border only inside the media query, so nothing shifts for anyone else. */
+  @media (forced-colors: active) {
+    :root[data-theme="studio"] .st-card,
+    :root[data-theme="studio"] .st-util {
+      border: 1px solid CanvasText;
+    }
+  }
   :root[data-theme="studio"] .st-card-panel {
     position: relative;
     display: block;
@@ -647,7 +665,9 @@ export const STUDIO_COMMERCE_CSS = `
     font-size: var(--t-body);
     font-weight: var(--w-body);
     letter-spacing: var(--ls-body);
-    line-height: 1.45;
+    /* --lh-body, not a 1.45 literal: the rung is 1.625 and 1.45 is on no
+     * scale. The note above this rule argues size and case, never leading. */
+    line-height: var(--lh-body);
     color: var(--ink-mute);
     overflow-wrap: break-word;
   }
@@ -1613,8 +1633,16 @@ export const STUDIO_COMMERCE_CSS = `
     color: var(--ink);
   }
   /* Hidden where it would not be true — see the note beside the markup. */
+  /* ⚠️ 939, NOT 809, AND FOR 130px THE TABLE WAS SHEARED WITH NO HINT. Its own
+   * min-inline-size is 74ch, which measures 867px intrinsic, so it does not
+   * fit until about 940. Measured overflow of .st-cmp-scroll on both hub
+   * pages: 107px at 810, 83 at 834, 57 at 860, 17 at 900, 0 at 940 — while the
+   * hint was hidden from 810 up. At 834 the third column, the most expensive
+   * model on the page, was cut mid-glyph: "2 × 3 KM + obtočna", "ameriški
+   * akril · izola", "410 kg prazen · 2.2". The note below justifies hiding it
+   * because the table fits above the tablet tier; it does not. */
   :root[data-theme="studio"] .st-cmp-hint { display: none; }
-  @media (max-width: 809px) {
+  @media (max-width: 939px) {
     :root[data-theme="studio"] .st-cmp-hint {
       display: block;
       margin: calc(-1 * var(--gap-sm)) 0 var(--gap-md);
@@ -1703,10 +1731,18 @@ export const STUDIO_COMMERCE_CSS = `
     padding-block: 10px;
     margin-block: -10px;
   }
-  :root[data-theme="studio"] .st-cmp-model a:hover,
-  :root[data-theme="studio"] .st-cmp-model a:focus-visible {
+  /* ⚠️ UNDERLINED AT REST, because :hover is the one affordance a touch device
+   * never gets. These six model names are links into the product pages and on
+   * every phone and tablet they read as ordinary bold column headers. */
+  :root[data-theme="studio"] .st-cmp-model a {
     text-decoration: underline;
     text-underline-offset: 0.22em;
+    text-decoration-thickness: 1px;
+    text-decoration-color: var(--line-strong);
+  }
+  :root[data-theme="studio"] .st-cmp-model a:hover,
+  :root[data-theme="studio"] .st-cmp-model a:focus-visible {
+    text-decoration-color: currentColor;
   }
   :root[data-theme="studio"] .st-cmp-label {
     font-family: var(--f-body);
@@ -1747,7 +1783,21 @@ export const STUDIO_COMMERCE_CSS = `
    * is the card padding: 2.2vw puts ~20px inside an ~253px tablet cell, which
    * is the source's own compensation (its tablet card variant is 25px), and it
    * leaves ~210px of content — tight, and the shape the source ships. */
-  @media (max-width: 809px) {
+  /* ⚠️ 619, NOT 809. Between 620 and 809 the grid dropped to ONE column, so at
+   * 768 a single card was 718px wide around a 642x535 photograph and
+   * /trgovina ran 6,773px tall against 3,748 at 1440 — 81% longer. Two columns
+   * at 768 give 359px cells, WIDER than the 308px cells this theme already
+   * ships at 1024, so the measure was never the constraint. The same 768
+   * screen already renders .st-imp-row three across, so one page was showing
+   * two densities. */
+  /* 620-809: TWO across. The base is three (flex: 1 1 33.3%), which at 620
+   * gives 189px cards — denser than anything this theme ships. Two gives 296px
+   * at 620 and 359px at 768, both above the 308px cells it already uses at
+   * 1024, so the tier is comfortable at both ends. */
+  @media (min-width: 620px) and (max-width: 809px) {
+    :root[data-theme="studio"] .st-card { flex-basis: 50%; }
+  }
+  @media (max-width: 619px) {
     :root[data-theme="studio"] .st-card { flex-basis: 100%; }
     :root[data-theme="studio"] .st-sec-h { max-width: none; }
   }
@@ -1881,7 +1931,28 @@ export const STUDIO_COMMERCE_CSS = `
  * A shop with no drawing keeps the neutral mass rather than borrowing another
  * shop's product. A real photograph drops into .st-shot with no restructuring.
  */
-function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto, artKey?: ArtKey): string {
+/**
+ * @param eager  Load this one immediately, for a card that is above the fold.
+ *
+ * ⚠️ THE FIRST CARD OF A COLLECTION IS THE LCP AND WAS LAZY. Measured in
+ * Chromium with the preview's eager-rewrite disabled: on /masazni-bazeni the
+ * first card's photograph is inside the initial viewport at BOTH 390x844
+ * (266x222px) and 1440x900 (326x272px), and it carried loading="lazy" with no
+ * fetchpriority — so on the two pages built to rank, the picture a buyer sees
+ * first queued behind 166 kB of fonts and a 170 kB stylesheet. Same on
+ * /swim-spa for all three cards at desktop widths.
+ *
+ * Only the FIRST is promoted. Making the row eager would trade one late image
+ * for three competing ones, which is the fault this fixes in the other
+ * direction; everything below the fold stays lazy.
+ */
+function shot(
+  ctx: RenderCtx,
+  variant = 0,
+  photo?: PdpPhoto,
+  artKey?: ArtKey,
+  eager = false,
+): string {
   // A real photograph beats the drawing every time. The drawing exists because
   // most models have no photography yet, not because it is preferred.
   if (photo) {
@@ -1899,7 +1970,7 @@ function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto, artKey?: ArtKey): s
       // hint promised, and a hint that is short is the one direction that
       // costs sharpness. Below 810 the grid is one column and the plate takes
       // 84.2vw at its widest (a 809px viewport), so 92vw still covers it.
-      productImg(photo, "st-shot-img", "(max-width: 809px) 92vw, 376px", photo.alt) +
+      productImg(photo, "st-shot-img", "(max-width: 809px) 92vw, 376px", photo.alt, eager) +
       "</span>"
     );
   }
@@ -2051,7 +2122,7 @@ function productCards(
         '<a class="st-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-card-panel">' +
         (p.badge ? '<span class="st-badge">' + esc(p.badge) + "</span>" : "") +
-        shot(ctx, i, p.photo, p.art) +
+        shot(ctx, i, p.photo, p.art, i === 0) +
         "</span>" +
         '<span class="st-card-body">' +
         "<" + level + ' class="st-card-name">' + esc(p.name) + "</" + level + ">" +
@@ -2164,7 +2235,7 @@ export function renderStudioRail(ctx: RenderCtx): string {
       return (
         '<li class="st-rail-item" data-st-item id="' + esc(id) + '" tabindex="-1">' +
         '<a class="st-rail-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
-        '<span class="st-rail-panel">' + shot(ctx, i, p.photo, p.art) + "</span>" +
+        '<span class="st-rail-panel">' + shot(ctx, i, p.photo, p.art, i === 0) + "</span>" +
         '<span class="st-rail-body">' +
         '<span class="st-rail-name">' + esc(p.name) + "</span>" +
         '<span class="st-rail-meta">' + esc(p.meta) + "</span>" +
@@ -2290,7 +2361,7 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
     // two pages further in than where the question is actually asked.
     '<p class="st-cat-help"><a href="' +
     esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
-    '">Ne veste, kateri? Odgovorite na tri vprašanja →</a></p>' +
+    '">Ne veste, kateri? Odgovorite na dve do tri vprašanja →</a></p>' +
     "</div>" +
     '<ul class="st-cat-row">' + cards + "</ul>" +
     "</section>"

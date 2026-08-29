@@ -1158,9 +1158,14 @@ export const bazenContent: ShopContent = {
   // prices, against pogoji.ts and both freight tables ("po ponudbi"). The
   // SERP line is a price surface like any other: what it says about the
   // composition must match what the page says beside the figure.
+  // ⚠️ SHORT ENOUGH TO SURVIVE THE SNIPPET. This measured 969px at 14px Arial
+  // against Google's ~920px desktop cap, so it was cut mid-clause and the
+  // clause it lost was "dostava po ponudbi" — the one a buyer of a 400 kg
+  // object most needs. Rewritten to 149 characters, which measures inside the
+  // cap with the delivery term intact.
   hubMetaDescription:
-    "Masažni bazeni od 195 do 230 cm in swim spa bazeni od 450 do 580 cm. " +
-    "Mere, specifikacije in cene z DDV; priklop in zagon vključena, dostava po ponudbi.",
+    "Masažni bazeni 195–230 cm in swim spa 450–580 cm. Cene z DDV, priklop " +
+    "in zagon vključena, dostava po ponudbi.",
   // The lede states the decision; the two cards under it carry the facts the
   // decision turns on. What used to be here — one nine-line paragraph doing
   // both jobs — is the reason hubChoice exists; see its note in types.ts.
@@ -1221,11 +1226,22 @@ export const bazenContent: ShopContent = {
           "vseh šestih modelih so 3 KM, razlikuje pa se, koliko jih je: od ene do petih. " +
           "Zato ob številu šob poglejte število črpalk, saj to pove, koliko šob dela pod " +
           "polnim pritiskom hkrati.",
-        "Število mest tudi ni isto kot velikost. BAZEN 230 je večji od BAZEN 210 in ima eno " +
+        // "od BAZENA 210": the preposition governs the genitive. /primerjava
+          // declines the identical sentence correctly, so the shop shipped both.
+        "Število mest tudi ni isto kot velikost. BAZEN 230 je večji od BAZENA 210 in ima eno " +
           "mesto manj, ker ima dva ležalnika namesto enega: ležalnik zasede prostor dveh " +
           "sedežev. Če radi ležite, je manj mest pravzaprav tisto, kar iščete.",
-        "Teža, ki šteje, je teža napolnjenega bazena, ne praznega. Prazen model je nekaj " +
-          "sto kilogramov in ga je mogoče prestaviti; poln je od 1.500 do 8.490 kilogramov " +
+        // ⚠️ "nekaj sto kilogramov in ga je mogoče prestaviti" IS TRUE OF THREE
+          // MODELS OF SIX. The hot tubs are 300/370/410 kg dry; the swim spas
+          // are 1.050/1.260/1.430 — and this same paragraph names two of them
+          // three sentences later. The home page's own stats band says "1.430
+          // kg · najtežji model, prazen — dostava z ekipo", and /swim-spa's
+          // table prints all three. Promising a EUR 16.790–21.690 buyer they
+          // can shift it is the exact claim the free site visit exists to
+          // protect against.
+          "Teža, ki šteje, je teža napolnjenega bazena, ne praznega. Prazen masažni bazen " +
+          "tehta od 300 do 410 kilogramov, prazen swim spa pa od 1.050 do 1.430; poln je " +
+          "od 1.500 do 8.490 kilogramov " +
           "in to je številka, proti kateri mora zdržati podlaga. Največji swim spa v ponudbi " +
           "tudi ni tisti z največ šobami: SWIM 580 MAXI ima 94 šob pri 7.360 kilogramih, " +
           "SWIM 580 HIDRO pa 38 pri 8.490.",

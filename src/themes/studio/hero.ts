@@ -771,9 +771,23 @@ export const STUDIO_HERO_CSS = `
       row-gap: var(--gap-sm);
     }
     :root[data-theme="studio"] .st-mq-set--dup { display: none; }
+    /* ⚠️ AND THE ITEMS THEMSELVES HAVE TO WRAP. The rule above wraps BETWEEN
+     * items; each item kept white-space: nowrap inside a clipped band, so at
+     * 320 all three claims were cut ("Dostava in zagon po vsej Sloveniji"
+     * short by 85.2px) and at 360 all three again. The ticker is stopped, so
+     * nothing brings them back — reduced motion was losing content, which is
+     * the failure this whole block exists to prevent. */
+    :root[data-theme="studio"] .st-mq .st-mq-item { white-space: normal; }
     :root[data-theme="studio"] .st-mq-set .st-mq-sep:last-child { display: none; }
-    :root[data-theme="studio"] .st-mq-pause,
-    :root[data-theme="studio"] .st-mq-toggle { display: none; }
+    /* ⚠️ .st-mq PREFIXED, OR THIS LOSES THE TIE AND SHIPS A DEAD BUTTON.
+     * .st-mq .st-mq-toggle above scores (0,4,0) and this scored (0,3,0), so
+     * under reduced motion the label stayed: measured 80.5 x 44px reading
+     * "USTAVI", while the checkbox behind it WAS hidden and therefore not
+     * focusable — 40 Tab presses never reached it. Clicking flipped the word
+     * to "ZAŽENI" with nothing moving. WCAG 2.1.1. closing.ts's ticker uses a
+     * compound selector for exactly this and does hide. */
+    :root[data-theme="studio"] .st-mq .st-mq-pause,
+    :root[data-theme="studio"] .st-mq .st-mq-toggle { display: none; }
     :root[data-theme="studio"] .st-btn-light { transition: none; }
   }
 `;

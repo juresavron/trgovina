@@ -123,7 +123,16 @@ export const STUDIO_PAGE_CSS = `
    * carry, so a phone and a tablet get exactly the page they had. */
   :root[data-theme="studio"] .st-page-grid {
     max-inline-size: 38rem;
-    margin-inline: auto;
+    /* ⚠️ auto CENTRES THE DOCUMENT WHILE THE CHROME STAYS FLUSH LEFT, and
+     * between 768 and 999 that is exactly what it did: measured on /o-nas,
+     * the header wordmark starts at x=25 and the identical eyebrow below it
+     * started at 80 (768) and 113 (834) — off by 55 and 88px. It is the same
+     * misalignment the desktop tier fixed by setting margin-inline: 0, which
+     * is why 1024 and up were already clean and the iPad band was not.
+     *
+     * A phone is unaffected: there the column is narrower than the viewport
+     * only by the gutter, so auto and 0 resolve to the same edge. */
+    margin-inline: 0;
   }
   /* THE INDEX BECOMES A RAIL at the width where there is room for one.
    *
@@ -320,6 +329,15 @@ export const STUDIO_PAGE_CSS = `
     text-transform: uppercase;
     color: var(--ink-mute);
   }
+  /* ⚠️ THE HEADINGS HAVE TO BREAK SOMEWHERE. At 390 with the page zoomed to
+   * 200% (195 CSS px) "Brezplačen" ran to 229.8px and pushed /ogled-lokacije
+   * 35px sideways; "vprašanja" and "Obratovanje" did the same to
+   * /pogosta-vprasanja by 18px. 320 CSS px — the width SC 1.4.10 actually
+   * measures — passes on all five, so this is robustness rather than a
+   * failure; a phone at 200% is still a real reader. */
+  :root[data-theme="studio"] .st-page-h,
+  :root[data-theme="studio"] .st-page-h2,
+  :root[data-theme="studio"] .st-page-cta-h { overflow-wrap: anywhere; }
   :root[data-theme="studio"] .st-page-h {
     /* The masthead spans BOTH columns, so without a cap a long title would
      * set across the full 56rem-plus-rail width as one line of display type. */
@@ -608,7 +626,7 @@ export const STUDIO_PAGE_CSS = `
     min-block-size: 24px;
     font-family: var(--f-body);
     font-size: var(--t-body);
-    line-height: 1.4;
+    line-height: var(--lh-label-tight);
     color: var(--ink-body);
     text-decoration: none;
     text-underline-offset: 3px;
@@ -767,7 +785,14 @@ export const STUDIO_PAGE_CSS = `
       border-block-start: var(--bw-line) solid var(--line);
     }
     :root[data-theme="studio"] .st-page-step {
-      grid-template-columns: auto minmax(0, 14rem) minmax(0, 38rem);
+      /* ⚠️ fit-content, NOT A FLAT 14rem. minmax(0, 14rem) grows to its 224px
+       * limit whatever the title's length, so the paragraph absorbs the whole
+       * shortfall — and crossing 1000px, where this tier begins, cost the
+       * reader 27 characters a line: measured on /dostava-in-montaza step 1,
+       * 550px and 67.3 cpl at 999px, then 340px and 40.4 cpl at 1000, five
+       * lines instead of three. fit-content(14rem) sizes to the title and caps
+       * at the same limit, so "Elektrika" takes ~100px and returns the rest. */
+      grid-template-columns: auto minmax(0, fit-content(14rem)) minmax(0, 38rem);
       align-items: start;
       /* ⚠️ start, or the DISC column eats the slack. An auto track stretches
        * to absorb a grid's free space while justify-content is normal, and
@@ -816,7 +841,14 @@ export const STUDIO_PAGE_CSS = `
    * list-style:none nor display:flex took the role away. */
   :root[data-theme="studio"] .st-page-qa { border-block-start: var(--bw-line) solid var(--line); }
   :root[data-theme="studio"] .st-page-qi { border-block-end: var(--bw-line) solid var(--line); }
+  /* ⚠️ balance, LIKE EVERY OTHER HEADING. css.ts sets it globally on h1/h2/h3
+   * and fifteen named heading classes carry it — but a <summary> is none of
+   * those, and this one wears the h6 rung and is the largest text in the
+   * accordion. Measured at 320: line boxes [235, 53] in a 270px box, a 53px
+   * trailing widow at 20% of the measure; [303, 74] at 390. The comment below
+   * already knew every real question wraps to two lines here. */
   :root[data-theme="studio"] .st-page-q {
+    text-wrap: balance;
     display: flex;
     /* The chevron aligns to the FIRST line, not to the middle of the block.
      * At 390px every real question in /pogosta-vprasanja wraps to two lines
@@ -861,7 +893,13 @@ export const STUDIO_PAGE_CSS = `
     outline: var(--bw-ctrl) solid var(--acc);
     outline-offset: 3px;
   }
+  /* ⚠️ A ROTATED SQUARE IS WIDER THAN ITS BOX. 11x11 turned 45 degrees has a
+   * 15.56px bounding box, so it overhung 2.28px each side and the overflow
+   * propagated up to the document: proven by removing the transform in-page,
+   * .st-page-q scrollWidth 611 -> 608 against a 608 client width. The gutter
+   * absorbs it at normal widths; at 195 CSS px it reaches the page. */
   :root[data-theme="studio"] .st-page-q::after {
+    margin-inline-end: 3px;
     content: "";
     flex: none;
     inline-size: 11px;
@@ -1320,6 +1358,15 @@ export const STUDIO_PAGE_CSS = `
    * not a grid of everything: see onward() for what the audit measured and
    * why these three. */
   :root[data-theme="studio"] .st-page-onward {
+    /* ⚠️ THE RULE ENDS WHERE THE LINKS END. This is a flex row of three short
+     * links under a full-track hairline, so at 1440 the rule ran 902.4px over
+     * 428px of content — 474.6px, 53% of it drawn over nothing. The file
+     * argues exactly this at .st-page-block ("a rule that runs 438px past its
+     * own last word reads as an unfinished one") and fixed it for every other
+     * block; this one renders outside the block wrapper and was missed.
+     * fit-content with a 100% ceiling keeps the wrap behaviour intact. */
+    inline-size: fit-content;
+    max-inline-size: 100%;
     margin-block-start: clamp(44px, 4.6vw, 76px);
     padding-block-start: clamp(20px, 2vw, 30px);
     border-block-start: var(--bw-line) solid var(--line);
@@ -1350,7 +1397,7 @@ export const STUDIO_PAGE_CSS = `
     min-block-size: 24px;
     font-family: var(--f-body);
     font-size: var(--t-body);
-    line-height: 1.4;
+    line-height: var(--lh-label-tight);
     color: var(--ink);
     text-underline-offset: 3px;
   }
@@ -1564,7 +1611,8 @@ export const STUDIO_PAGE_CSS = `
    * condition of sending, not another question — but never below the muted
    * rung that clears 4.5:1 on the panel grey (tokens.ts: --ink-mute is
    * 4.54:1 there, which is the floor, so the sentence takes --ink-body). */
-  :root[data-theme="studio"] .st-enq-consent label { font-size: 0.9375rem; }
+  /* --t-label, not a 15px literal: 15 is on no rung at any tier. */
+  :root[data-theme="studio"] .st-enq-consent label { font-size: var(--t-label); }
   :root[data-theme="studio"] .st-enq-consent input { margin-block-start: 3px; }
   :root[data-theme="studio"] .st-enq-act { margin: 0; }
   :root[data-theme="studio"] .st-enq-act .st-page-act { inline-size: auto; }
@@ -1619,13 +1667,15 @@ export const STUDIO_PAGE_CSS = `
   }
   :root[data-theme="studio"] .st-enq-cfg dt {
     font-family: var(--f-body);
-    font-size: 0.9375rem;
+    /* --t-label, not a 15px literal: 15 is on no rung at any tier. */
+    font-size: var(--t-label);
     color: var(--ink-mute);
   }
   :root[data-theme="studio"] .st-enq-cfg dd {
     margin: 0;
     font-family: var(--f-body);
-    font-size: 0.9375rem;
+    /* --t-label, not a 15px literal: 15 is on no rung at any tier. */
+    font-size: var(--t-label);
     font-weight: var(--w-body-med);
     color: var(--ink);
   }
@@ -1642,15 +1692,28 @@ export const STUDIO_PAGE_CSS = `
    * would be two more grounds nobody has measured against the text on them.
    * The accent rule carries the alarm; role="alert" carries it to everyone
    * else. */
+  /* ⚠️ IT HAS TO READ AS A FAILURE. This was body ink at body size behind a
+   * 3px rule in --acc — the SAME accent as the required asterisk and the focus
+   * ring — with no icon, no weight change and no prefix, so at 390 it read as
+   * a pull-quote between the lead and the first field. Contrast was never the
+   * problem (18:1); salience was. The rule keeps its width and takes the ink
+   * colour, the text takes the medium weight, and focus is visible because the
+   * paragraph is now a focus target when no field owns the problem. */
   :root[data-theme="studio"] .st-enq-err {
     margin: clamp(16px, 1.6vw, 24px) 0 0;
-    padding-inline-start: var(--gap-md);
-    border-inline-start: 3px solid var(--acc);
+    padding: var(--gap-sm) var(--gap-md);
+    border-inline-start: 3px solid var(--ink);
+    background: var(--bg-alt);
     font-family: var(--f-body);
     font-size: var(--t-body);
+    font-weight: var(--w-body-med);
     line-height: var(--lh-body);
     color: var(--ink);
     max-inline-size: 38rem;
+  }
+  :root[data-theme="studio"] .st-enq-err:focus-visible {
+    outline: 2px solid var(--acc);
+    outline-offset: 3px;
   }
   :root[data-theme="studio"] .st-enq-done {
     margin-block-start: clamp(20px, 2vw, 30px);
@@ -2159,6 +2222,16 @@ function isWide(b: Block): boolean {
     // A row of links is navigation laid out across the column, not a sentence
     // to read at the measure — same reason onward() spans the body.
     b.kind === "links" ||
+    // ⚠️ A FILLED PANEL IS NOT RUNNING TEXT. `cta` draws a --bg-alt box with a
+    // --r-lg radius and 48px of padding, and it was capped at the 38rem
+    // reading measure like a paragraph. Measured right edges against the
+    // widest block on the same page: short by 62px at 1024, 285 at 1280,
+    // 294.4 at 1440, 275.2 at 1920, 272 at 2560 — so on /o-nas the grey
+    // "Poglejte ponudbo" panel stopped 294px left of the contact tiles above
+    // it AND of the rule below it. Same class as the steps block that was
+    // mis-capped this way: the measure belongs to the words inside, not to
+    // the box around them.
+    b.kind === "cta" ||
     // ⚠️ STEPS ARE A RULED TABLE AT THE DESKTOP TIER, Q&A IS NOT, and that is
     // the whole of why one of these is here and the other is not.
     //
@@ -2323,8 +2396,30 @@ function enquiry(
   // The form also carries novalidate, so the browser's own per-field
   // identification is suppressed too — there was no other channel.
   const badField = ctx.enquiry?.field ?? null;
+  // ⚠️ WHEN NO FIELD IS AT FAULT, THIS PARAGRAPH IS THE ONLY THING TO GO TO,
+  // AND NOTHING WENT TO IT.
+  //
+  // A field problem sets autofocus on the control below, so the browser
+  // scrolls to it and a reader lands on it: measured, scrollY 744 at 1440 and
+  // 1225 at 390, error in the viewport both times. A problem that is NOT a
+  // field — Supabase unreachable, the rate limit, a body that would not parse
+  // — sets field:null, so nothing was marked, nothing focused and nothing
+  // scrolled. Measured, both viewports: scrollY 0, focus on BODY, and the
+  // sentence "Povpraševanja ta trenutek ni bilo mogoče oddati" sitting 1124px
+  // down at 1440 and 1731px down at 390 — 1.7 screens below the fold, under a
+  // form that still looks ready to send.
+  //
+  // role="alert" does not rescue it: a live region that is already in the
+  // document at parse time is not announced on a fresh load. So on the one
+  // failure that is the shop's fault, on a page that exists because this shop
+  // takes no orders online, the visitor was told nothing.
+  //
+  // tabindex="-1" + autofocus makes the paragraph itself the focus target
+  // when no field owns the problem. Same device as the fields, no script.
   const err = ctx.enquiry?.error
-    ? '<p class="st-enq-err" id="enq-err" role="alert">' + esc(ctx.enquiry.error) + "</p>"
+    ? '<p class="st-enq-err" id="enq-err" role="alert"' +
+      (badField === null ? ' tabindex="-1" autofocus' : "") +
+      ">" + esc(ctx.enquiry.error) + "</p>"
     : "";
 
   // What the visitor typed on a refused attempt. Escaped on the way back out,
@@ -2434,7 +2529,23 @@ function enquiry(
     '<input type="checkbox" id="enq-soglasje" name="soglasje" value="1" required' +
     (badField === "soglasje" ? ' aria-invalid="true" autofocus' : "") +
     describedBy("soglasje", false) + ">" +
-    '<label for="enq-soglasje">' + esc(CONSENT_TEXT) + "</label>" +
+    // ⚠️ THE ASTERISK AND THE LINK, and both were missing.
+    //
+    // This control is `required` and refuses the submit, and it was the one
+    // required control on the form with no marker — while the copy above the
+    // form said only the name and one contact were mandatory. A visitor who
+    // fixed a bad e-mail was then refused a second time, for a box nothing had
+    // told them about.
+    //
+    // And the sentence cites "politika zasebnosti" while there was NO link to
+    // /zasebnost anywhere inside <main> on this page — only in the site
+    // footer. GDPR art. 7(2) asks that a consent request be in an easily
+    // accessible form; the notice it depends on has to be one click away from
+    // the box, not one scroll and a hunt.
+    '<label for="enq-soglasje">' + esc(CONSENT_TEXT) +
+    ' <span class="st-enq-req">*</span> ' +
+    '<a href="' + esc(ctx.shop.routeSlugs["/privacy"]) + '">Politika zasebnosti</a>' +
+    "</label>" +
     "</p>" +
     '<p class="st-enq-act"><button class="st-page-act st-page-act--lead" type="submit">' +
     "Pošljite povpraševanje</button></p>" +

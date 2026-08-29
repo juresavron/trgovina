@@ -126,7 +126,9 @@ export const STUDIO_FINDER_CSS = `
     color: var(--ink-mute);
   }
   :root[data-theme="studio"] .st-fnd-opt .st-fnd-go {
-    font-size: 22px;
+    /* --t-h6: 22px is the PHONE h6 and was frozen at all three tiers, so it
+     * was off-ramp from 834 up. */
+    font-size: var(--t-h6);
     color: var(--ink-mute);
     transition: transform 0.3s ease-out, color 0.3s ease-out;
   }
