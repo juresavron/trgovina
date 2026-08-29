@@ -2087,6 +2087,14 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-bar.is-deferred {
     transform: translateY(100%);
     pointer-events: none;
+    /* ⚠️ AND visibility, or the CTA stays in the tab order and the AX tree
+     * while it sits below the fold. Focusing it at scroll 0 jumped the page
+     * to 2804 (1440) and 3035 (390). The delayed transition keeps the slide
+     * out visible and only then takes it out of the tree. */
+    visibility: hidden;
+  }
+  :root[data-theme="studio"] .st-pdp-bar.is-deferred {
+    transition: transform 0.25s ease, visibility 0s 0.25s;
   }
   :root[data-theme="studio"] .st-pdp-bar {
     transition: transform 0.25s ease;
@@ -2273,6 +2281,38 @@ export const STUDIO_PDP_CSS = `
    * the .st-filters sidebar — were removed here along with their renderers.
    * No route ever called either one; see the file header for why neither was
    * worth wiring up. 166 lines of CSS for markup nothing emitted.) */
+
+  /* ---- Windows High Contrast ------------------------------------------
+   *
+   * ⚠️ THE SWATCHES WENT BLANK AND THE RADIOS BECAME IDENTICAL. Driven under
+   * forced-colors: active, cropping each control and counting non-white
+   * pixels: a chosen swatch and an unchosen one were both 0/7396 — ten blank
+   * white squares — and a selected radio and an unselected one were both
+   * 116/484, pixel-identical.
+   *
+   * Two separate causes. forced-colors drops background-image, and on a
+   * swatch that image IS the content: the photograph of the colour being
+   * chosen. And it drops box-shadow, which is what both the ring and the
+   * radio dot were drawn with, while .st-pdp-dot's own currentColor resolves
+   * to the forced Canvas white inside a box forced to the same white.
+   *
+   * So the swatch opts out of the override entirely — it is a photograph, not
+   * a UI surface — and every state indicator moves to something the mode
+   * keeps: outline, and the system Highlight pair. */
+  @media (forced-colors: active) {
+    :root[data-theme="studio"] .st-pdp-sw-img { forced-color-adjust: none; }
+    :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-sw .st-pdp-sw-img {
+      outline: 3px solid Highlight;
+      outline-offset: 2px;
+    }
+    :root[data-theme="studio"] .st-pdp-radio:checked + .st-pdp-opt .st-pdp-box {
+      background: Highlight;
+    }
+    :root[data-theme="studio"] .st-pdp-dot {
+      background: HighlightText;
+      forced-color-adjust: none;
+    }
+  }
 
   /* ---- motion ---------------------------------------------------------- */
   @media (prefers-reduced-motion: reduce) {
@@ -2776,7 +2816,12 @@ export function renderStudioPdp(ctx: RenderCtx): string {
       })
       .join("");
     return (
-      '<div><h2 class="st-pdp-glabel" id="' + labelId + '">' + esc(label) + "</h2>" +
+      // ⚠️ aria-label CARRIES THE SENTENCE CASE. .st-pdp-glabel is uppercased
+      // in CSS, so the DOM text "Barva školjke" reaches the accessibility tree
+      // as "BARVA ŠKOLJKE" — and some screen readers spell an all-caps string
+      // out as an initialism. Same for BARVA OBLOGE, PRIKLOP, SERVIS.
+      '<div><h2 class="st-pdp-glabel" id="' + labelId + '" aria-label="' +
+      esc(label) + '">' + esc(label) + "</h2>" +
       '<ul class="' + (swatch ? "st-pdp-sws" : pills ? "st-pdp-pills" : "st-pdp-opts") +
       '" role="radiogroup"' + (inBar ? " data-st-bar" : "") +
       ' aria-labelledby="' + labelId + '">' + rows + "</ul></div>"
@@ -2850,10 +2895,27 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     all.length === 0
       ? ""
       : '<fieldset class="st-pdp-ao" data-st-addons>' +
-        '<legend class="st-pdp-ao-legend">Dodatna oprema</legend>' +
+        // Sentence case for the AX tree; the uppercase is the stylesheet's.
+        '<legend class="st-pdp-ao-legend" aria-label="Dodatna oprema">Dodatna oprema</legend>' +
         '<ul class="st-pdp-ao-list">' + groups + "</ul>" +
         (priced.length > 0 && d.priceCents > 0
-          ? '<p class="st-pdp-ao-line"><span>Izbrana oprema</span>' +
+          // ⚠️ hidden UNTIL A SCRIPT CLEARS IT, and role="status" once it is.
+          //
+          // WITHOUT SCRIPT these two lines do not fail to sum — they state a
+          // WRONG figure. Driven with JavaScript off and three options ticked
+          // (700 EUR of them), "Izbrana oprema" read 0 EUR and "Skupaj" read
+          // the base price. Every other no-script path on this page is honest:
+          // the form still submits every choice, the thumbs are real anchors,
+          // the zoom and print buttons stay hidden. A running total that
+          // contradicts the boxes above it is the one that is not, and it is
+          // the number a EUR 3-10k decision turns on. Hidden, the per-option
+          // prices and the base price remain — which is the honest fallback.
+          //
+          // WITH SCRIPT, the figure moves silently: the page had no live
+          // region anywhere, so ticking an option changed the total and a
+          // screen-reader user was told nothing.
+          ? '<div class="st-pdp-ao-sums" role="status" data-st-sums hidden>' +
+            '<p class="st-pdp-ao-line"><span>Izbrana oprema</span>' +
             '<span data-st-extras>' + esc(formatEur(0)) + "</span></p>" +
             // One right-anchored group: sum + qualifier. As three loose
             // children of a space-between row the sum floated centred
@@ -2864,7 +2926,7 @@ export function renderStudioPdp(ctx: RenderCtx): string {
             '<p class="st-pdp-ao-total"><span>Skupaj</span>' +
             '<span class="st-pdp-ao-r"><span class="st-pdp-ao-sum" data-st-total data-st-base="' +
             String(d.priceCents) + '">' + esc(d.price) + "</span>" +
-            ' <span class="st-vat">z DDV</span></span></p>'
+            ' <span class="st-vat">z DDV</span></span></p></div>'
           : "") +
         (d.pricesProvisional
           ? '<p class="st-pdp-ao-note">Cene so informativne in še niso dokončne.</p>'
@@ -3195,7 +3257,8 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     // GET, not POST: the destination is a page that shows the enquiry back to
     // the visitor, so it must be reloadable, linkable and back-button safe.
     // Nothing here changes state.
-    '<form class="st-pdp-form" method="get" action="' +
+    // id, so the sticky bar's button can submit this form from outside it.
+    '<form id="st-pdp-form" class="st-pdp-form" method="get" action="' +
     esc(
       ctx.shop.ordersOnline
         ? ctx.shop.routeSlugs["/cart"]
@@ -3297,15 +3360,24 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     // without "z DDV" — only where a figure exists, though: the bar
     // must not qualify "cena po povpraševanju".
     (d.bar[2].includes("€") ? ' <span class="st-vat">z DDV</span>' : "") +
-    '<a class="st-pdp-cta" href="' +
-    esc(
-      ctx.shop.ordersOnline
-        ? ctx.shop.routeSlugs["/cart"] + ctx.q
-        : ctx.shop.routeSlugs["/contact"] + ctx.q,
-    ) +
-    (ctx.shop.ordersOnline ? "" : (ctx.q ? "&" : "?") + "model=" + encodeURIComponent(d.slug)) +
-    '">' +
-    esc(ctx.shop.ordersOnline ? d.bar[3] : "Povpraševanje") + "</a>" +
+    // ⚠️ A SUBMIT BUTTON, NOT AN ANCHOR, AND THE ANCHOR THREW THE ORDER AWAY.
+    //
+    // The note above says this CTA "follows the column's — the same promise,
+    // made a second time". It was not the same promise. The column's control
+    // submits .st-pdp-form and carries barva, obloga, cfg0, cfg1 and every
+    // oprema; this was a bare href="/kontakt?model=<slug>". Driven at 1440:
+    // with two colours, both configuration groups and three extras chosen,
+    // the bar's own price read 8.590 EUR and its link landed on an enquiry
+    // page quoting 7.890 EUR with no configuration list at all — 700 EUR
+    // under the figure the visitor was looking at when they pressed it, with
+    // every choice they had just made discarded.
+    //
+    // form= attaches a button to a form it is not inside, which is exactly
+    // this case and needs no script: the bar is a sibling of the form, not a
+    // descendant. So the no-JS path is fixed too, which the JavaScript
+    // alternative (rewriting href on every change) would not have been.
+    '<button type="submit" form="st-pdp-form" class="st-pdp-cta">' +
+    esc(ctx.shop.ordersOnline ? d.bar[3] : "Povpraševanje") + "</button>" +
     "</div></div>" +
     "</section>"
   );
