@@ -729,7 +729,12 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       // one — the full footprint repeats below under "Mere" where it belongs.
       ["Dolžina", (m.mm[0] / 1000).toFixed(2).replace(".", ",") + " m"],
       ["Kapaciteta", swimSeating(m)],
-      ["Protitočne šobe", m.swimJets > 0 ? String(m.swimJets) : "—"],
+      // ⚠️ WORDS, NOT AN EM DASH. The absence is the point on SWIM 450, so it has
+      // to survive being read aloud: the cell's only text was "—", which a
+      // screen reader at default punctuation announces as nothing at all — the
+      // row said "Protitočne šobe" and then silence. The panel below already
+      // states it in words.
+      ["Protitočne šobe", m.swimJets > 0 ? String(m.swimJets) : "ni navedeno"],
       ["Masažne šobe", String(m.jets)],
       [
         "Črpalke",
@@ -738,7 +743,10 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
           m.circPumps[0] + " × " + String(m.circPumps[1]).replace(".", ",") + " KM",
       ],
       ["Krmilnik", "Balboa · " + m.topside + " · grelec 3 kW"],
-      ["Filtracija", m.skimmers + " × " + filterAreaText(m.filterSf)],
+      // "Filter" on the tubs and "Filtracija" here, for the same fact. The value
+      // already carries the skimmer count, so the rename bought nothing and
+      // broke the row rhythm the two comparison tables are meant to share.
+      ["Filter", m.skimmers + " × " + filterAreaText(m.filterSf)],
       // ⚠️ NO INSULATION LINE. "izolacija 2 cm" is the POLA sheet's shell
       // line; the swim-spa sheet's common list states shell, frame, cabinet,
       // base, heater, control and voltages — no shell insulation — and
@@ -748,7 +756,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ["Mere", swimFootprint(m) + " · višina " + heightCm(m.mm[2])],
       // Omitted entirely where the supplier states no mass. A dash would read
       // as "none"; an estimate would be a structural claim nobody made.
-      ...(m.dryKg && m.filledKg
+      ...(typeof m.dryKg === "number" && typeof m.filledKg === "number"
         ? ([["Teža", kgText(m.dryKg) + " prazen · " + kgText(m.filledKg) + " poln"]] as [string, string][])
         : []),
       // "Električni priklop", not "Priklop": the configurator's who-wires-it
@@ -800,14 +808,19 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
             // jets were for afterwards, in the first panel a buyer opens, on
             // a 16.790 EUR page whose h1 says swim spa. /primerjava already
             // discloses the gap; this page did not.
+            // ⚠️ NO TAIL HERE. aimedAtRest() ALREADY ENDS "sprostitvi".
+            // The sibling branch appends " po plavanju" to it, which reads
+            // "38 masažnih šob je namenjenih sprostitvi po plavanju" — so this
+            // one was given " za sprostitev" by symmetry and rendered "4
+            // masažne šobe so namenjene sprostitvi ZA SPROSTITEV", on the one
+            // page of six that takes this branch.
             : counted(m.jets, MASSAGE_JETS) + " " + aimedAtRest(m.jets) +
-              " za sprostitev. Protitočnih šob dobavitelj za ta model ne " +
-              "navaja."),
+              ". Protitočnih šob dobavitelj za ta model ne navaja."),
       ],
       [
         "Mere in prostor",
         swimFootprint(m) + ", višina " + heightCm(m.mm[2]) + ". " +
-          (m.dryKg && m.filledKg
+          (typeof m.dryKg === "number" && typeof m.filledKg === "number"
             ? "Prazen tehta " + kgText(m.dryKg) + ", napolnjen " + kgText(m.filledKg) + ". "
             : "Teže dobavitelj za ta model ne navaja; pred ponudbo jo pridobimo " +
               "in preverimo nosilnost podlage. ") +
