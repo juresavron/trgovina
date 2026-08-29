@@ -1427,18 +1427,29 @@ export const STUDIO_PDP_CSS = `
      * the rule and the text opened up again at 1920 (752px columns around
      * the same 544px measure). At 76rem the columns hold near 580 at every
      * width above it, which the 34rem measure very nearly fills. */
-    max-inline-size: 76rem;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    column-gap: clamp(26px, 3vw, 56px);
-  }
-  @media (max-width: 1159px) {
-    :root[data-theme="studio"] .st-pdp-panels { max-inline-size: 40rem; }
-  }
-  @media (min-width: 1160px) {
-    :root[data-theme="studio"] .st-pdp-panels {
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
+    /* ⚠️ ONE COLUMN. THE TWO-COLUMN VERSION WAS VERIFIED CLOSED AND IT ONLY
+     * FAILS OPEN.
+     *
+     * Two across used the band's width and kept the 34rem measure, and every
+     * measurement taken of it was correct — because every measurement was
+     * taken with the panels SHUT. A grid row is as tall as its tallest item,
+     * so opening "Tehnični podatki" — fourteen spec rows, ~700px — stretched
+     * its row and left the panel beside it a heading with 700px of nothing
+     * under it. The reported words were "this whole layout is shit an
+     * unorganized" and they are the correct reading: the page's most-used
+     * control produced a hole the size of a screen.
+     *
+     * A disclosure list changes height every time somebody uses it, which is
+     * precisely what a grid row cannot absorb. So it is one column, and the
+     * width is capped instead: 40rem for the panel against the 34rem the
+     * running text inside it carries, a ratio of 1.18 — the editorial
+     * relation the content pages settled on, where a rule closes the words it
+     * opened rather than running 800px past them.
+     *
+     * The band is 640px under a 730px gallery column, so the section reads as
+     * continuing that column rather than starting a new full-width one. What
+     * is to the right of it is margin, which is what it looks like. */
+    max-inline-size: 40rem;
   }
   :root[data-theme="studio"] .st-pdp-panel {
     border-bottom: var(--bw-line) solid var(--line);

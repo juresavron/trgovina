@@ -1566,20 +1566,41 @@ function mount(p, scope){
       var dr = p[0] - q[0], dg = p[1] - q[1], db = p[2] - q[2];
       return Math.sqrt(dr * dr + dg * dg + db * db);
     }
-    /* The ground, from the four corners — used both to find the sample and to
-       paint the tile around it, so the padding is the colour the photograph
-       already had rather than an invented white. */
+    /* THE GROUND, FROM THE WHOLE BORDER RING — used both to find the sample
+       and to paint the tile around it, so the padding is the colour the
+       photograph already had rather than an invented white.
+
+       ⚠️ IT USED TO BE THE FOUR CORNERS, AND THAT IS WHY THE CAPTIONS SURVIVED.
+       Four corners had to AGREE within 18, or the function gave up and
+       returned the whole picture. A hot-tub corner photographed wide touches
+       or nearly touches the left and right edges, so a bottom corner sample
+       landed on the panel or on its shadow, the four disagreed, and every one
+       of those images took the give-up path — caption included, and framed at
+       whatever size it happened to arrive at. Which is exactly what shipped:
+       three cabinet tiles at three different scales, two with the supplier's
+       English shade name still printed across them.
+
+       A ring is the right sample because an object can touch an edge without
+       touching most of the border. The median is taken per channel and then
+       the ring is asked how much of ITSELF agrees: a real ground carries most
+       of its own border, and a photograph with no ground carries none. That
+       is the honest version of the test the corners were trying to be. */
     var m = 2;
-    var k4 = [at(m, m), at(aw - 1 - m, m), at(m, ah - 1 - m), at(aw - 1 - m, ah - 1 - m)];
-    var bg = [
-      Math.round((k4[0][0] + k4[1][0] + k4[2][0] + k4[3][0]) / 4),
-      Math.round((k4[0][1] + k4[1][1] + k4[2][1] + k4[3][1]) / 4),
-      Math.round((k4[0][2] + k4[1][2] + k4[2][2] + k4[3][2]) / 4),
-    ];
+    var ring = [];
+    for (var rx = m; rx < aw - m; rx += 2) { ring.push(at(rx, m)); ring.push(at(rx, ah - 1 - m)); }
+    for (var ry = m; ry < ah - m; ry += 2) { ring.push(at(m, ry)); ring.push(at(aw - 1 - m, ry)); }
+    if (ring.length < 8) return whole;
+    var med = function (ch) {
+      var v = ring.map(function (px) { return px[ch]; }).sort(function (a, b) { return a - b; });
+      return v[Math.floor(v.length / 2)];
+    };
+    var bg = [med(0), med(1), med(2)];
     whole.bg = "rgb(" + bg[0] + "," + bg[1] + "," + bg[2] + ")";
-    /* Corners that disagree mean there is no ground to separate the sample
-       from. The whole picture is then the object, painted on its average. */
-    for (var i = 1; i < k4.length; i++) if (far(k4[0], k4[i]) > 18) return whole;
+    var agree = 0;
+    for (var ri = 0; ri < ring.length; ri++) if (far(ring[ri], bg) <= 24) agree++;
+    /* Less than half the border is the ground: there is no ground to separate
+       the sample from, so the whole picture is the object. */
+    if (agree < ring.length * 0.5) return whole;
 
     /* The mask: everything that is not the ground. */
     var mask = new Uint8Array(aw * ah), hits = 0;
