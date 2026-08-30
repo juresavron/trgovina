@@ -91,61 +91,114 @@ export const STUDIO_FINDER_CSS = `
     margin: 0 0 clamp(26px, 3vw, 44px);
     max-inline-size: 36rem;
   }
-  /* The options: rows on hairlines, the facts device's rhythm — each one a
-   * single large target with the hint under the label.
+  /* THE ANSWERS ARE CARDS, TWO ACROSS, AND THEY WERE RULED ROWS.
    *
-   * ⚠️ AND THEY WERE THE ONLY THING ON THE PAGE WITHOUT A MEASURE. .st-fnd-in
-   * sets max-inline-size:none precisely because every element below is meant
-   * to cap itself, and these three lists never did: measured at 1440 the rows
-   * ran 1360px against an h1 of 608 and a lead of 576, so each answer's arrow
-   * sat about 1036px to the right of its own last word — far enough that it
-   * reads as page furniture rather than as this row's affordance, and far
-   * enough that the eye loses the row on the way. The hairlines under them
-   * ran the same 1360 while everything above them stopped at 608.
+   * ⚠️ TWO GOES AT THIS, AND THE FIRST ONE WAS THE WRONG FIX. As rows they
+   * ran the whole band — 1360px at 1440 against an h1 of 608 — so each
+   * answer's arrow sat about 1036px right of its own last word, reading as
+   * page furniture rather than as that row's affordance, with the hairline
+   * under it running the same 1360 while everything above stopped at 608. The
+   * fix was to cap the list at the h1's 38rem, and it traded one fault for
+   * another: the page became a narrow column against 830px of empty screen,
+   * which is the "use the full width" the pdp panels were rebuilt for.
    *
-   * 38rem is the h1's own measure, so the question and its answers are one
-   * column. */
-  :root[data-theme="studio"] .st-fnd-opts,
-  :root[data-theme="studio"] .st-fnd-list,
-  :root[data-theme="studio"] .st-fnd-hits {
+   * A cap was the wrong instrument because a MEASURE governs running text,
+   * and these are not running text — they are the two things the page exists
+   * to offer. Every step in content/finder.ts has exactly two choices, so two
+   * cards fill the band with no orphan at any width and no arithmetic about
+   * how many.
+   *
+   * What that buys, beyond the width: the answers stop looking like the skip
+   * list below them. Those are still hairline rows, deliberately quieter —
+   * with rows above them the page offered the visitor two identical devices
+   * and let the type size carry the difference. And the card is the shape of
+   * what it leads to, .st-fnd-hit, so the choice looks like the answer.
+   *
+   * A BORDER, NOT A RING. commerce.ts has the note: forced-colours mode drops
+   * box-shadow, so a card drawn with one has no edge there at all. */
+  /* The skip list stays a narrow, quiet column — it is the escape hatch, and
+   * the cards above it are the offer. The RESULT cards do not: see
+   * .st-fnd-hit, where the band is used by the card's own layout. */
+  :root[data-theme="studio"] .st-fnd-list {
     max-inline-size: 38rem;
   }
   :root[data-theme="studio"] .st-fnd-opts {
     list-style: none;
     margin: 0;
     padding: 0;
-    border-block-start: var(--bw-line) solid var(--line);
-  }
-  :root[data-theme="studio"] .st-fnd-opts li {
-    border-block-end: var(--bw-line) solid var(--line);
-  }
-  :root[data-theme="studio"] .st-fnd-opt {
     display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: 16px;
-    padding: clamp(16px, 2vw, 24px) 2px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(14px, 1.4vw, 22px);
+  }
+  @media (max-width: 620px) {
+    :root[data-theme="studio"] .st-fnd-opts { grid-template-columns: minmax(0, 1fr); }
+  }
+  /* ⚠️ ONLY WHERE THE LEAD IS NOT. The lead carries the step between the
+   * question and its answers, and it is printed on the FIRST question only —
+   * so on questions two and three the cards sat 9px under the h1's
+   * descenders. Adjacent-sibling, not a margin on the list itself, because
+   * that would stack with the lead's own bottom margin on the entry page. */
+  :root[data-theme="studio"] .st-fnd h1 + .st-fnd-opts {
+    margin-block-start: clamp(26px, 3vw, 44px);
+  }
+  /* The li stretches to the row's height and the card fills it, so both
+   * arrows sit on one line however long the two hints are. */
+  :root[data-theme="studio"] .st-fnd-opts li { display: flex; }
+  :root[data-theme="studio"] .st-fnd-opt {
+    display: flex;
+    flex-direction: column;
+    inline-size: 100%;
+    padding: clamp(20px, 2.2vw, 32px);
+    border: var(--bw-line) solid var(--line);
+    border-radius: var(--r-card);
     text-decoration: none;
+    transition: border-color .2s ease, background-color .2s ease;
+  }
+  /* No outline rule here: render/css.ts rings every <a> on :focus-visible,
+   * and the card is one. This is the surface change the pointer gets, given
+   * to the keyboard as well. */
+  :root[data-theme="studio"] .st-fnd-opt:hover,
+  :root[data-theme="studio"] .st-fnd-opt:focus-visible {
+    border-color: var(--line-strong);
+    background: var(--bg-alt);
+  }
+  /* The label and its hint, as one block: the markup wraps them in a span so
+   * the arrow can be a sibling the auto margin can push down. */
+  :root[data-theme="studio"] .st-fnd-opt > span:first-child {
+    display: grid;
+    gap: 6px;
+    min-inline-size: 0;
   }
   :root[data-theme="studio"] .st-fnd-opt b {
     display: block;
     font-family: var(--f-display);
     font-weight: var(--w-display);
-    font-size: var(--t-h6);
-    letter-spacing: var(--ls-h6);
-    line-height: var(--lh-h6);
+    font-size: var(--t-h5);
+    letter-spacing: var(--ls-h5);
+    line-height: var(--lh-h5);
     color: var(--ink);
+    text-wrap: balance;
   }
-  :root[data-theme="studio"] .st-fnd-opt span {
+  :root[data-theme="studio"] .st-fnd-opt b + span {
     display: block;
-    margin-top: 4px;
     font-size: var(--t-body);
+    line-height: var(--lh-body);
     color: var(--ink-mute);
+    /* The hints are one sentence; 30rem keeps the longer of the two off a
+     * 660px line inside a card that is itself the measure's container. */
+    max-inline-size: 30rem;
   }
+  /* ⚠️ margin-block-start:auto IN A FLEX COLUMN, which is the version of this
+   * that works — page.ts spent a round on the grid one, where align-content
+   * leaves the free space outside the tracks and an auto margin has nothing
+   * to take. Here it pushes the arrow to the floor of the card. */
   :root[data-theme="studio"] .st-fnd-opt .st-fnd-go {
+    margin-block-start: auto;
+    padding-block-start: clamp(16px, 1.6vw, 26px);
     /* --t-h6: 22px is the PHONE h6 and was frozen at all three tiers, so it
      * was off-ramp from 834 up. */
     font-size: var(--t-h6);
+    line-height: 1;
     color: var(--ink-mute);
     transition: transform 0.3s ease-out, color 0.3s ease-out;
   }
@@ -162,14 +215,21 @@ export const STUDIO_FINDER_CSS = `
     max-inline-size: 34rem;
   }
   :root[data-theme="studio"] .st-fnd-visit a { color: var(--ink); text-underline-offset: 3px; }
+  /* ⚠️ THE STEP ABOVE THIS LINK WAS BEING CANCELLED BY THE LINE UNDER IT.
+   * margin-top: clamp(22px, 3vw, 36px) was declared first and margin-block:
+   * -10px second, in the same rule, so the shorthand overwrote it: the link
+   * sat 10px ABOVE where it should, and on the result page "← Začnite znova"
+   * hugged the sentence before it as though it were part of that paragraph.
+   *
+   * The -10px is the other half of a 44px target built from 10px of padding,
+   * so it has to stay; the step it was eating is folded into it. */
   :root[data-theme="studio"] .st-fnd-back {
     display: inline-block;
-    margin-top: clamp(22px, 3vw, 36px);
     font-size: var(--t-body);
     color: var(--ink-mute);
     text-underline-offset: 3px;
     padding-block: 10px;
-    margin-block: -10px;
+    margin-block: calc(clamp(22px, 3vw, 36px) - 10px) -10px;
   }
   /* The verdict: the recommended model as a ruled card row. */
   :root[data-theme="studio"] .st-fnd-why {
@@ -177,6 +237,10 @@ export const STUDIO_FINDER_CSS = `
     line-height: var(--lh-lead);
     color: var(--ink-body);
     margin: 0 0 clamp(26px, 3vw, 40px);
+    /* The lead's own 36rem. This is the sentence that says why the quiz
+     * chose this model, at the same rung as the lead on the entry page, and
+     * it was the one piece of running text on the page with no measure. */
+    max-inline-size: 36rem;
   }
   :root[data-theme="studio"] .st-fnd-hits {
     list-style: none;
@@ -211,6 +275,35 @@ export const STUDIO_FINDER_CSS = `
     gap: 12px;
     flex-wrap: wrap;
     margin-top: 12px;
+  }
+  /* ⚠️ THE PAYOFF OF THE WHOLE QUIZ WAS A SMALL BOX IN THE CORNER. Capped at
+   * 38rem it sat 608px wide in a 1360px band with the rest of the screen
+   * empty, under a question whose two answers had just spanned the band.
+   *
+   * Above 900 the card takes the band and lays itself out instead: the model,
+   * what is in it and the price on the left, the two controls on the right,
+   * aligned to the centre of the row. Two recommendations stack as two of
+   * these — the tree returns one or two slugs, never a grid of them. */
+  @media (min-width: 900px) {
+    :root[data-theme="studio"] .st-fnd-hit {
+      grid-template-columns: minmax(0, 1fr) auto;
+      column-gap: clamp(24px, 3vw, 48px);
+      padding: clamp(24px, 2.6vw, 36px);
+    }
+    /* ⚠️ EVERY CELL PLACED, because auto-placement around a spanning item put
+     * the PRICE in the right-hand column under the buttons — the one figure
+     * that has to sit with the model it belongs to. Three rows of text in
+     * column one, the controls centred beside them in column two. */
+    :root[data-theme="studio"] .st-fnd-hit .name,
+    :root[data-theme="studio"] .st-fnd-hit .meta,
+    :root[data-theme="studio"] .st-fnd-hit .price { grid-column: 1; }
+    :root[data-theme="studio"] .st-fnd-hit .acts {
+      grid-column: 2;
+      grid-row: 1 / span 3;
+      align-self: center;
+      margin-top: 0;
+      flex-wrap: nowrap;
+    }
   }
   :root[data-theme="studio"] .st-fnd-hit .acts a {
     font-family: var(--f-label);
@@ -374,9 +467,13 @@ export const STUDIO_FINDER_CSS = `
     text-underline-offset: 3px;
   }
   @media (prefers-reduced-motion: reduce) {
-    :root[data-theme="studio"] .st-fnd-list .st-fnd-go { transition: none; }
+    :root[data-theme="studio"] .st-fnd-list .st-fnd-go,
+    :root[data-theme="studio"] .st-fnd-opt,
+    :root[data-theme="studio"] .st-fnd-opt .st-fnd-go { transition: none; }
     :root[data-theme="studio"] .st-fnd-list a:hover .st-fnd-go,
-    :root[data-theme="studio"] .st-fnd-list a:focus-visible .st-fnd-go {
+    :root[data-theme="studio"] .st-fnd-list a:focus-visible .st-fnd-go,
+    :root[data-theme="studio"] .st-fnd-opt:hover .st-fnd-go,
+    :root[data-theme="studio"] .st-fnd-opt:focus-visible .st-fnd-go {
       transform: none;
     }
   }
