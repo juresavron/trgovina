@@ -1059,6 +1059,10 @@ export const STUDIO_PDP_CSS = `
     color: var(--ink);
     text-decoration-thickness: var(--bw-line);
     text-underline-offset: 3px;
+    /* SC 2.5.8's inline exception does cover this one — it ends a sentence
+     * that starts "Barve raje vidite v roki?" — but it is also the only way
+     * to ask for a sample, and inline padding costs the layout nothing. */
+    padding-block: 4px;
   }
   :root[data-theme="studio"] .st-pdp-swatch-cta a:hover { color: var(--acc-text); }
   :root[data-theme="studio"] .st-pdp-swatch-note {
@@ -1109,6 +1113,19 @@ export const STUDIO_PDP_CSS = `
     color: var(--ink);
     text-decoration: underline;
     text-underline-offset: 3px;
+    /* 19px -> 27px, over WCAG 2.2 SC 2.5.8's 24px floor. .st-pdp-panel-more
+     * is a paragraph that holds NOTHING but its link, so the inline exception
+     * — a link inside a run of text — does not cover it; audit-site.mjs found
+     * three of them on every product page.
+     *
+     * ⚠️ PADDING ON AN INLINE BOX, WITH NO NEGATIVE MARGIN AGAINST IT. That is
+     * the whole trick, and page.ts has the scar from getting it wrong: 10px of
+     * padding handed back with margin-block:-10px does not shrink the box, it
+     * only hides that the box now overlaps its neighbour, and the index's
+     * entries spent a release opening each other. Padding on an inline box
+     * never enters line layout at all — the line keeps its height, the panel
+     * keeps its rhythm, and the hit area is the only thing that changes. */
+    padding-block: 4px;
   }
   :root[data-theme="studio"] .st-pdp-cfg-note a:focus-visible,
   :root[data-theme="studio"] .st-pdp-panel-more a:focus-visible {
