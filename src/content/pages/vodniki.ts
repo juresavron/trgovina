@@ -21,6 +21,36 @@ export const GUIDES: Page = {
     "Vodniki za nakup masažnega bazena: nosilnost podlage in dostop, cena nakupa in " +
     "obratovanja, ter delovanje pozimi.",
   blocks: [
+    // ⚠️ AN INDEX NEEDS ITS OWN VOICE, and this one was three titles and a
+    // lead. themes/studio/blog.ts makes the argument for the post list and it
+    // is the same argument here: "left as a bare list of cards it is also the
+    // site's only indexable page that says nothing in its own voice — the
+    // reader gets three headlines and no idea what the series is for".
+    //
+    // What this paragraph carries is the ORDER, which is the one thing a
+    // reader choosing between three guides cannot see from three titles: the
+    // first decides whether a model is possible at their address, the second
+    // what it costs, the third what happens after. Every figure it alludes to
+    // is published on the guide it points at.
+    //
+    // It is deliberately NOT the blog index's standing paragraph reworded —
+    // that one is about the posts and this one is about the order — because
+    // two pages carrying the same sentence is the duplication a link-and-a-
+    // line index exists to avoid.
+    {
+      kind: "prose",
+      p: [
+        "Vrstni red ni naključen. Prvi vodnik pove, ali je model pri vas sploh " +
+          "izvedljiv: koliko tehta poln bazen, kod ga bomo pripeljali in kaj mora " +
+          "pripraviti električar. Drugi pove, koliko stane nakup in kaj se " +
+          "obračuna posebej. Tretji odgovarja na vprašanje, ki pride za tem — " +
+          "kako je z bazenom pozimi.",
+        "Številke v vseh treh so iz specifikacij modelov, ne iz ocen; kjer " +
+          "odgovora nimamo, to piše. Kar se ne da odgovoriti na daljavo — ali " +
+          "podlaga zdrži in ali model pride do mesta postavitve — pogledamo na " +
+          "brezplačnem ogledu pred ponudbo.",
+      ],
+    },
     // The index IS the links — but a link and a line, not a link alone. The
     // note here used to say a summary "would be a fourth copy of text that
     // already has a URL", and that is true of the guides' own opening

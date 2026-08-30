@@ -113,6 +113,11 @@ export function parseEnquiry(
   opts: {
     readonly modelSlug?: string | null;
     readonly configuration?: Record<string, string>;
+    /**
+     * The address the form was posted to, INCLUDING its query — read from the
+     * request by the caller. See the note beside `sourcePath` below.
+     */
+    readonly sourcePath?: string | null;
   } = {},
 ):
   | { readonly ok: true; readonly value: Enquiry }
@@ -172,7 +177,17 @@ export function parseEnquiry(
       modelSlug: opts.modelSlug ?? null,
       configuration: opts.configuration ?? {},
       consentText: CONSENT_TEXT,
-      sourcePath: str(form.get("od")).slice(0, 200) || null,
+      // ⚠️ THE REQUEST'S OWN ADDRESS, AND IT USED TO BE A HIDDEN FIELD THAT
+      // COULD ONLY EVER SAY ONE THING. <input name="od"> carried ctx.path,
+      // and the enquiry form exists on exactly one page — so every row ever
+      // written said "/kontakt" and the admin list printed "oddano na
+      // /kontakt" under every enquiry, a line that could not vary.
+      //
+      // The address the form was POSTED to does vary, and usefully: it is the
+      // configurator's whole selection when the visitor came from a product
+      // page, and bare /kontakt when they did not. It also cannot be forged
+      // into anything but a string the panel escapes and this truncates.
+      sourcePath: (opts.sourcePath ?? "").slice(0, 200) || null,
     },
   };
 }

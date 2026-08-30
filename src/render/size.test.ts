@@ -131,12 +131,28 @@ describe("the stylesheet stays within budget", () => {
    * number here is not the one that will stop you. The next feature of any
    * size has to pay for itself, and the note below says where.
    *
-   * WHERE THE HEADROOM IS, when it runs out: ~5 KB raw of .st-rail-*
-   * styles a device this shop never renders. It is not dead — the rail is
-   * what a shop with no categories shows instead of the category cards, and
-   * bazen has categories — so it is a dormant capability of the kernel
-   * rather than waste, and removing it is a decision about the network, not
-   * a cleanup.
+   * WHERE THE HEADROOM IS, when it runs out — MEASURED, because the estimate
+   * that stood here ("~5 KB raw of .st-rail-*") named the wrong currency. Raw
+   * bytes are not the budget; the wire is, and brotli collapses repetition
+   * before it ever reaches a visitor. Cutting each candidate out of the sheet
+   * and re-compressing it:
+   *
+   *   .st-rail-*            5.1 KB raw   0.45 KB brotli   (19.10 -> 18.65)
+   *   every :focus-visible  8.6 KB raw   0.61 KB brotli   (not an option —
+   *                                                        it is the ring)
+   *
+   * So the sheet is not fat, it is large because the site is: 4,600-odd
+   * declarations of design, and brotli has already taken everything that
+   * repeats. There is no cleanup here worth 1 KB on the wire — the rail is
+   * the only real lever and it is worth less than half of one.
+   *
+   * The rail is also not dead code: it is what a shop with no categories
+   * shows instead of the category cards, and bazen has categories. Removing
+   * it is a decision about what the NETWORK can still render, not a tidy-up,
+   * and it buys 2% of this budget.
+   *
+   * What that means for the next feature: it pays for itself out of its own
+   * module, or the budget moves deliberately with a line in this comment.
    */
   it("has not grown without anyone noticing", () => {
     const kb = BASE_CSS.length / 1024;

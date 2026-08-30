@@ -2512,11 +2512,23 @@ function compareAt(d: PdpContent): string | null {
  */
 function panelMore(ctx: RenderCtx, label?: string, routeKey?: string): string {
   if (!label || !routeKey) return "";
+  // ⚠️ A KEY MAY NAME A SECTION: "/terms#s6-…". The warranty panel's link said
+  // "Garancija in zakonsko jamstvo za skladnost blaga" and landed the reader
+  // at the TOP of a nine-section legal page, to find it themselves. Only the
+  // key half is looked up; the fragment is not a route and is not resolved,
+  // it rides through — after the query, which is where a fragment goes.
+  //
+  // The fragment is generated from the destination's own heading, so it can
+  // rot silently if that heading moves. audit-seo.mjs resolves every internal
+  // fragment against the page it points at, which is what makes this safe.
+  const cut = routeKey.indexOf("#");
+  const key = cut < 0 ? routeKey : routeKey.slice(0, cut);
+  const frag = cut < 0 ? "" : routeKey.slice(cut);
   const slugs = ctx.shop.routeSlugs as Record<string, string | undefined>;
-  const href = slugs[routeKey];
+  const href = slugs[key];
   if (typeof href !== "string" || href.length === 0) return "";
   return (
-    '<p class="st-pdp-panel-more"><a href="' + esc(href + ctx.q) + '">' +
+    '<p class="st-pdp-panel-more"><a href="' + esc(href + ctx.q + frag) + '">' +
     esc(label) + "</a></p>"
   );
 }
@@ -3244,8 +3256,11 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     // at when they asked. No new claim: the shop confirmed it sends these,
     // and the sentence promises nothing about price or speed that nobody
     // has stated.
+    // ⚠️ AND IT SAYS SO AT THE OTHER END. The link used to arrive at a general
+    // enquiry form that mentioned swatches nowhere — see SWATCH_PARAM in
+    // worker.ts, which turns this mark into a sentence already in the box.
     '<p class="st-pdp-swatch-cta">Barve raje vidite v roki? ' +
-    '<a href="' + esc(ctx.shop.routeSlugs["/contact"]) + "?model=" + esc(d.slug) +
+    '<a href="' + esc(ctx.shop.routeSlugs["/contact"]) + "?vzorcnik&model=" + esc(d.slug) +
     esc(ctx.q ? "&" + ctx.q.slice(1) : "") + '">Naročite vzorčnik barv</a>' +
     " in pošljemo vam ga po pošti.</p>";
   const finishes =

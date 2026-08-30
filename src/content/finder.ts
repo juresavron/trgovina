@@ -215,7 +215,12 @@ export function recommend(a: FinderAnswers): FinderResult {
     return {
       slugs: ["srednji-210"],
       why:
-        "BAZEN 210 je edini model s šestimi mesti: en ležalnik in pet " +
+        // "med masažnimi bazeni", not "model": this branch is inside the
+        // relaxation path, where the comparison set is the hot-tub family —
+        // the same scoping the OSEBE hint above already carries. Both SWIM
+        // 580s seat seven, so an unqualified "the only model" is a claim the
+        // catalogue on the next page contradicts.
+        "BAZEN 210 je edini masažni bazen s šestimi mesti: en ležalnik in pet " +
         "sedežev na 2,10 × 2,10 m.",
     };
   }
@@ -232,7 +237,12 @@ export function recommend(a: FinderAnswers): FinderResult {
   return {
     slugs: ["veliki-230"],
     why:
-      "BAZEN 230 je največji v ponudbi: 2,30 × 2,30 m, dva ležalnika in 50 " +
-      "šob na dveh črpalkah.",
+      // ⚠️ "MED MASAŽNIMI BAZENI", AND IT SAID "v ponudbi". The offer also
+      // holds three swim spas from 4,50 to 5,80 m, so "the largest in the
+      // range" was contradicted by the shop's own /trgovina two clicks away —
+      // on the sentence whose entire job is to explain why this model. Same
+      // fault the OSEBE hint in this file was already fixed for.
+      "BAZEN 230 je največji med masažnimi bazeni: 2,30 × 2,30 m, dva " +
+      "ležalnika in 50 šob na dveh črpalkah.",
   };
 }
