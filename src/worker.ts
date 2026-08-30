@@ -518,7 +518,15 @@ export function handleRequest(
       content,
       theme,
       path,
-      title: "Trgovina — " + shop.keyword.primary + " | " + shop.name,
+      // ⚠️ NOT THE HEAD TERM. This read "Trgovina — masažni bazen", and so did
+      // the home page ("Masažni bazen — cena in dostava") and the hot-tub
+      // collection ("Masažni bazeni"): three URLs on one site, all titled for
+      // the same query, none of them saying which one a searcher wants. The
+      // head term belongs to the home page, which leads with it; this is the
+      // page that lists EVERY model with its price, and that is what it says.
+      // The term is not lost either way — shop.name is "Masažni bazeni
+      // Vrelec", so every title on this site carries it in the suffix.
+      title: "Vsi modeli in cene | " + shop.name,
       // NOT content.metaDescription: that is the home page's, and two
       // indexable pages sharing one description give a search engine nothing
       // to tell them apart. Falls back only if a shop has not written one.
@@ -569,7 +577,7 @@ export function handleRequest(
       content,
       theme,
       path,
-      title: collection.h1 + " | " + shop.name,
+      title: (collection.seoTitle ?? collection.h1) + " | " + shop.name,
       description: collection.metaDescription,
       noindex: dev,
       q,

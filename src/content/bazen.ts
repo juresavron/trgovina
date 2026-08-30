@@ -935,6 +935,13 @@ const collections: Collection[] = [
     path: "/masazni-bazeni",
     navLabel: "Masažni bazeni",
     h1: "Masažni bazeni",
+    // The h1 names the page; the title has to win a result list. "Masažni
+    // bazeni | Masažni bazeni Vrelec" printed the category noun twice and
+    // offered a searcher nothing to choose on. No figures here on purpose:
+    // "za 5 ali 6 oseb" and "od 195 do 230 cm" are in the description, which
+    // is cheap to correct, while a title with a stale number is the line
+    // Google shows.
+    seoTitle: "Masažni bazeni za doma in vrt",
     intro:
       "Trije modeli, ki se ne razlikujejo samo po velikosti. BAZEN 195 meri " +
       "1,95 × 1,95 m in je edini, ki se umesti tja, kamor druga dva ne gresta: " +
@@ -956,6 +963,13 @@ const collections: Collection[] = [
     path: "/swim-spa",
     navLabel: "Swim spa",
     h1: "Swim spa bazeni",
+    // ⚠️ NO "ZA PLAVANJE NA MESTU" HERE. It is the obvious differentiator and
+    // it is a family promise this shop cannot make: SWIM 450 lists no
+    // counter-current jet at all, which is why swimSpaFamilyHasSwimJets()
+    // exists and why the intro above branches on it. A title is the one line
+    // a searcher reads before clicking; it may not claim what the range does
+    // not uniformly do.
+    seoTitle: "Swim spa bazeni — mere in cene",
     intro:
       "Tri školjke, pri katerih je prva številka dolžina. Od nje je odvisno, " +
       "koliko plavanja je v bazenu in koliko vrta potrebujete zanj. SWIM 450 " +
