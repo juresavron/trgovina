@@ -1367,7 +1367,12 @@ export const STUDIO_COMMERCE_CSS = `
     /* Room for the card's focus ring, which would otherwise be clipped by
      * the scroll container. */
     padding-block: 4px;
-    -webkit-overflow-scrolling: touch;
+    /* ⚠️ NO -webkit-overflow-scrolling: touch. It stood here as the momentum
+     * hint iOS once needed, and it is dead in both directions: Chrome has
+     * never implemented it (audit-css-valid.mjs reports it as unknown to the
+     * engine), and Safari has scrolled overflow containers with momentum by
+     * default since iOS 13, which deprecated the property. A declaration no
+     * engine reads is bytes in a sheet at 98.8% of its budget. */
     scrollbar-width: none;
   }
   :root[data-theme="studio"] .st-rail::-webkit-scrollbar { display: none; }
