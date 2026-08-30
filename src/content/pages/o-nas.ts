@@ -42,8 +42,16 @@ export const ABOUT: Page = {
     "Prodajamo in postavljamo masažne bazene in swim spa bazene po vsej Sloveniji. " +
     "Ne pošiljamo jih s špediterjem na dvorišče. Pripeljemo jih, priklopimo in zaženemo.",
   metaDescription:
-    "Specialist za masažne bazene in swim spa bazene v Sloveniji. Ogled lokacije, dostava, " +
-    "priklop in zagon z lastno ekipo, servis in rezervni deli.",
+    // ⚠️ THIS IS THE SENTENCE THE FOOTER DELETED, AND IT SURVIVED HERE.
+    // bazen.ts records why it went: "Specialist za" is a status nobody can
+    // check, claimed as a noun, on a site whose own note at the top of this
+    // file refuses to state a founding year, an installation count or a
+    // headcount for exactly that reason — and the rest was four
+    // nominalisations with no verb, so the promise the shop rests on was
+    // written as a directory entry. A meta description is the line Google
+    // prints under the shop's own about page.
+    "Masažne in swim spa bazene po vsej Sloveniji pripeljemo, priklopimo in " +
+    "zaženemo z lastno ekipo. Pred ponudbo brezplačno pregledamo lokacijo.",
   blocks: [
     {
       kind: "prose",
@@ -82,7 +90,7 @@ export const ABOUT: Page = {
       h: "Kako delamo",
       p: [
         // "Ta brezplačni obisk": after a demonstrative the adjective is definite.
-        "Pred dostavo pride nekdo od nas na lokacijo. Ta brezplačni obisk je razlog, da " +
+        "Preden karkoli kupite, pride nekdo od nas na lokacijo. Ta brezplačni obisk je razlog, da " +
           "se dostave ne ponesrečijo: težave s prehodom, nosilnostjo terase ali premajhnim " +
           "odklopnikom se pokažejo prej, kot pride tovornjak.",
         "Za priklop dobite pisna navodila za svojega električarja: presek vodnika, odklopnik " +
@@ -139,8 +147,8 @@ export const ABOUT: Page = {
       items: [
         [
           "Koga pokličem, če bazen preneha greti?",
-          "Nas. Servis opravi naša servisna mreža, rezervne dele za modele, ki jih prodajamo, " +
-            "pa imamo na zalogi. Povejte model in kaj se dogaja: ali voda kroži in kaj kaže " +
+          "Nas. Servis opravimo sami, rezervne dele pa naročamo le za modele, ki jih " +
+            "prodajamo. Povejte model in kaj se dogaja: ali voda kroži in kaj kaže " +
             "krmilnik.",
         ],
         [

@@ -164,13 +164,19 @@ export const SHOWROOM: Page = {
       h: "Česa tudi ogled ne pove",
       p: [
         // "Ene stvari" announced one; two follow, and the heading is plural.
-        "Dveh stvari tudi na vašem naslovu ni mogoče izvedeti: koliko bo bazen porabil " +
-          "električne energije. Poraba je odvisna od temperature, ki jo držite, pogostosti " +
+        //
+        // ⚠️ AND THE COLON HAD TO GO WITH IT. "Dveh stvari … ni mogoče
+        // izvedeti:" promises the pair right there and then delivers one, with
+        // the second arriving a paragraph later — so the enumeration read as a
+        // sentence that had lost half of itself. A full stop announces two and
+        // numbers them.
+        "Dveh stvari tudi na vašem naslovu ni mogoče izvedeti. Prva je poraba električne " +
+          "energije: odvisna je od temperature, ki jo držite, pogostosti " +
           "uporabe, kakovosti pokrova in zunanjih razmer, zato mesečnega zneska ne " +
           // The claim is site-wide and is made site-wide (vodniki.ts, faq.ts):
           // scoping it to this page was weaker and inconsistent.
           "navajamo nikjer.",
-        "Prav tako na ogledu ne izvedete, kako bo bazen deloval pri polni moči. Črpalka " +
+        "Druga je, kako bo bazen deloval pri polni moči. Črpalka " +
           "pri najvišji stopnji ni tiha; kako glasno je to, si vsak predstavlja drugače. " +
           "Ob predaji vam vse stopnje pokažemo in nastavimo. Takrat je bazen vaš in " +
           "poln, kar je edino stanje, v katerem se to res sliši.",

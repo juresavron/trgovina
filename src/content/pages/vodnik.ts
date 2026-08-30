@@ -30,7 +30,11 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
     h1: "Masažni bazen na terasi: kaj preveriti pred nakupom",
     seoTitle: "Masažni bazen na terasi — kaj preveriti pred nakupom",
     lead:
-      "Štiri stvari po vrsti, in model je zadnja od njih: podlaga, pot do lokacije, " +
+      // The model is the LAST of the four, and saying so as "model je zadnja
+      // od njih" made the reader resolve a feminine adjective against a
+      // masculine noun by way of an elided "stvar". The ordinal says it
+      // outright and reads faster.
+      "Štiri stvari po vrsti, in model je četrta: podlaga, pot do lokacije, " +
       "elektrika in šele nato izbira bazena.",
     metaDescription:
       "Masažni bazen na terasi: nosilnost podlage, širina poti, električni priklop in " +
@@ -137,8 +141,11 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
     h1: "Masažni bazen pozimi",
     seoTitle: "Masažni bazen pozimi — delovanje, stroški in praznjenje",
     lead:
-      "Pozimi je masažni bazen na svojem. Praznjenje čez zimo je pogosta napaka, " +
-      "ne previdnost.",
+      // ⚠️ "PRIDE NA SVOJ RAČUN", NOT "JE NA SVOJEM". Biti na svojem means to
+      // be on one's own land, or to insist on one's own view — neither of
+      // which is "comes into its own", which is the sentence this wanted.
+      "Pozimi masažni bazen pride na svoj račun. Praznjenje čez zimo je pogosta " +
+      "napaka, ne previdnost.",
     metaDescription:
       "Masažni bazen pozimi: zakaj deluje bolje kot poleti, kaj naredi pokrov in " +
       "zakaj je prazen bazen v mrazu bolj ogrožen kot poln.",

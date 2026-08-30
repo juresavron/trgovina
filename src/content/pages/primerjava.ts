@@ -80,9 +80,13 @@ export const COMPARE: Page = {
           "treh modelov so na njihovih straneh.",
         "Pri swim spa bazenih je merilo dolžina, od katere je odvisen občutek plavanja. Daljša " +
           "školjka pomeni tudi večjo maso, večjo količino vode in več zahtev do podlage.",
-        "Protitočne šobe, ki ustvarijo tok za plavanje na mestu, niso enake pri vseh treh " +
-          "modelih; koliko jih ima posamezen model, piše v njegovi specifikaciji. Preverite " +
-          "jo, preden se odločite za plavanje na mestu.",
+        // ⚠️ "NISO ENAKE" AND "KOLIKO JIH IMA" BOTH PRESUPPOSE SOME. SWIM 450
+        // has none — this page says so plainly fifty lines further down — so
+        // the reader who stops here is told the models differ in a count that
+        // one of them does not have. Say it once, in both places it is said.
+        "Protitočnih šob, ki ustvarijo tok za plavanje na mestu, nimajo vsi trije modeli: " +
+          "modela 580 imata po tri, za SWIM 450 pa jih dobaviteljev list ne navaja. " +
+          "Preverite specifikacijo modela, preden se odločite za plavanje na mestu.",
       ],
     },
     {
@@ -91,13 +95,13 @@ export const COMPARE: Page = {
       p: [
         "Razlika med prazno in napolnjeno težo je voda, in prav ta številka loči družini bolj " +
           "kot dolžina školjke. Masažni bazen drži od 1.200 do 1.800 litrov, swim spa pa od " +
-          "4.700 do 7.060, približno štirikrat toliko. Vse štiri številke so razlika med " +
-          "podatkoma, ki sta v tabeli zgoraj.",
+          "4.700 do 7.060, približno štirikrat toliko. Vsaka od teh štirih številk je " +
+          "razlika med podatkoma iz tabele zgoraj.",
         "Posledica je preprosta in velja ne glede na tarifo: več vode se dlje greje in dražje " +
           "drži na temperaturi. Koliko dražje, vam ne bomo napisali: poraba je odvisna od " +
           "temperature, ki jo držite, pogostosti uporabe, kakovosti pokrova in vremena, zato " +
           "mesečnega zneska ne navajamo nikjer na tej strani. Kdor swim spa izbira zaradi " +
-          "plavanja, naj to vseeno vzame v račun kot stalen strošek, ne kot enkratnega.",
+          "plavanja, naj to vseeno upošteva kot stalen in ne kot enkraten strošek.",
         "Ista številka odloča tudi pri menjavi vode in pri prvem polnjenju: 7.000 litrov je " +
           "drugačen opravek kot 1.500 in traja dlje, kot večina pričakuje.",
       ],
@@ -129,7 +133,7 @@ export const COMPARE: Page = {
         ],
         [
           "Se v masažnem bazenu da plavati?",
-          "Ne. Vsi trije modeli so kvadratni, od 1,95 do 2,30 metra stranice, in nobeden nima " +
+          "Ne. Vsi trije modeli so kvadratni, s stranico od 1,95 do 2,30 metra, in nobeden nima " +
             "protitočnih šob. Za plavanje na mestu je swim spa, a tudi tam preverite " +
             "specifikacijo posameznega modela; SWIM 450 protitočnih šob ne navaja.",
         ],
