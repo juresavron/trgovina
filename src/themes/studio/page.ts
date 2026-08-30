@@ -2020,7 +2020,13 @@ function links(ctx: RenderCtx, b: Extract<Block, { kind: "links" }>, id?: string
     '<nav class="st-page-onward' + (rich ? " st-page-onward--rich" : "") + '"' +
     (id ? ' id="' + esc(id) + '"' : "") +
     ' aria-labelledby="' + esc(hid) + '">' +
-    '<p class="st-page-onward-h" id="' + esc(hid) + '">' + esc(head) + "</p><ul>" +
+    // Same uppercase-into-the-accessible-name trap as the skip link, and it
+    // bites harder here: this <p> NAMES the surrounding <nav>, so the shouted
+    // string is what a landmark menu lists. aria-label on the referenced
+    // element is what accname resolves first, so the region reads "Oglejte
+    // si" while the page still draws OGLEJTE SI.
+    '<p class="st-page-onward-h" id="' + esc(hid) + '" aria-label="' + esc(head) +
+    '">' + esc(head) + "</p><ul>" +
     b.items
       .map(
         ([label, href, blurb]) =>
@@ -2591,7 +2597,12 @@ function enquiry(
     opts: { req?: boolean; hint?: string; auto?: string; mode?: string } = {},
   ): string =>
     '<p class="st-enq-f">' +
-    '<label class="st-enq-l" for="enq-' + name + '">' + esc(label) +
+    // aria-label on the LABEL, which is what the input's name resolves
+    // through — otherwise every field on this form is announced shouted
+    // ("IME IN PRIIMEK"), and a shouted field label is the one place a
+    // spelled-out reading actively confuses somebody filling a form.
+    '<label class="st-enq-l" for="enq-' + name + '" aria-label="' + esc(label) + '">' +
+    esc(label) +
     (opts.req ? ' <span class="st-enq-req">*</span>' : "") + "</label>" +
     '<input class="st-enq-in" id="enq-' + name + '" name="' + name + '" type="' + type + '"' +
     (sent(name) ? ' value="' + esc(sent(name)) + '"' : "") +
@@ -2642,7 +2653,8 @@ function enquiry(
     }) +
     "</div>" +
     '<p class="st-enq-f">' +
-    '<label class="st-enq-l" for="enq-dostop">Dostop do mesta postavitve</label>' +
+    '<label class="st-enq-l" for="enq-dostop" aria-label="Dostop do mesta postavitve">' +
+    "Dostop do mesta postavitve</label>" +
     '<textarea class="st-enq-in st-enq-ta" id="enq-dostop" name="dostop" rows="3"' +
     (badField === "dostop" ? ' aria-invalid="true"' : ' aria-invalid="false"') +
     describedBy("dostop", true) + ">" +
@@ -2652,14 +2664,15 @@ function enquiry(
     "izvedljiv, še preden pridemo na ogled.</span>" +
     "</p>" +
     '<p class="st-enq-f">' +
-    '<label class="st-enq-l" for="enq-sporocilo">Vaše sporočilo</label>' +
+    '<label class="st-enq-l" for="enq-sporocilo" aria-label="Vaše sporočilo">' +
+    "Vaše sporočilo</label>" +
     '<textarea class="st-enq-in st-enq-ta" id="enq-sporocilo" name="sporocilo" rows="4"' +
     (badField === "sporocilo" ? ' aria-invalid="true"' : ' aria-invalid="false"') +
     describedBy("sporocilo", false) + ">" +
     esc(sent("sporocilo")) + "</textarea>" +
     "</p>" +
     '<fieldset class="st-enq-fs">' +
-    '<legend class="st-enq-l">Kako naj se oglasimo?</legend>' +
+    '<legend class="st-enq-l" aria-label="Kako naj se oglasimo?">Kako naj se oglasimo?</legend>' +
     '<span class="st-enq-radios">' +
     '<span class="st-enq-r"><input type="radio" id="enq-k-t" name="kanal" value="telefon"' +
     (sent("kanal") === "telefon" ? " checked" : "") + ">" +
@@ -2807,7 +2820,7 @@ function onward(ctx: RenderCtx, page: Page): string {
   if (links.length === 0) return "";
   return (
     '<nav class="st-page-onward" aria-labelledby="st-onward-h">' +
-    '<p class="st-page-onward-h" id="st-onward-h">Oglejte si</p>' +
+    '<p class="st-page-onward-h" id="st-onward-h" aria-label="Oglejte si">Oglejte si</p>' +
     "<ul>" +
     links
       .map(
@@ -2858,7 +2871,7 @@ export function renderStudioPage(ctx: RenderCtx, page: Page): string {
     headed.length < 3
       ? ""
       : '<nav class="st-page-toc" aria-labelledby="st-toc-h">' +
-        '<p class="st-page-toc-h" id="st-toc-h">Na tej strani</p>' +
+        '<p class="st-page-toc-h" id="st-toc-h" aria-label="Na tej strani">Na tej strani</p>' +
         "<ol>" +
         headed
           .map((x) => '<li><a href="#' + esc(x.id) + '">' + esc(x.h) + "</a></li>")

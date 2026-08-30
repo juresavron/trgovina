@@ -1875,7 +1875,15 @@ export function renderStudioHeader(ctx: RenderCtx): string {
 
   return (
     '<header class="st-chrome">' +
-    '<a class="st-skip" href="#st-vsebina">Preskočite na vsebino</a>' +
+    // ⚠️ aria-label IN SENTENCE CASE, and the reason is the same one pdp.ts
+    // gives for the configurator's group labels: this theme uppercases with
+    // CSS, and Chromium bakes text-transform INTO THE ACCESSIBLE NAME. Read
+    // back through CDP, this link's name was "PRESKOČITE NA VSEBINO" — the
+    // first tab stop on every page, in a form some screen readers pronounce
+    // letter by letter. The remedy was applied twice on the product page and
+    // nowhere else; this is the highest-traffic of the ones it missed.
+    '<a class="st-skip" href="#st-vsebina" aria-label="Preskočite na vsebino">' +
+    "Preskočite na vsebino</a>" +
     '<div class="st-chrome-bar">' +
     // aria-label as well as the split spans: the brand name as the shop states
     // it is the name a screen reader should read for the home link.
@@ -1886,7 +1894,12 @@ export function renderStudioHeader(ctx: RenderCtx): string {
       .map(
         ([k, label]) =>
           '<a href="' + esc(s.routeSlugs[k] + ctx.q) + '"' +
-          ((cur) => (cur ? ' aria-current="' + cur + '"' : ""))(current(k)) + "><span>" +
+          ((cur) => (cur ? ' aria-current="' + cur + '"' : ""))(current(k)) +
+          // The last of the uppercase-into-the-accessible-name fixes: these
+          // six are the menu, on every page, and "O NAS" is short enough for
+          // a reader to take as an initialism. The label is the same string;
+          // only its case survives into the name.
+          ' aria-label="' + esc(label) + '"><span>' +
           esc(label) + "</span></a>",
       )
       .join("") +
@@ -2067,7 +2080,12 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     title: string,
     items: readonly (readonly [string, string])[],
   ): string =>
-    '<div class="st-foot-col"><h2 id="' + id + '">' + esc(title) + "</h2>" +
+    // aria-label for the same reason the skip link and the on-page navs carry
+    // one: the heading is uppercased by CSS, it NAMES the list beside it, and
+    // Chromium resolves the name through this element — so the four footer
+    // columns announced as "PONUDBA", "POMOČ", "PODJETJE", "PRAVNO".
+    '<div class="st-foot-col"><h2 id="' + id + '" aria-label="' + esc(title) + '">' +
+    esc(title) + "</h2>" +
     '<ul aria-labelledby="' + id + '">' +
     items
       .map(

@@ -41,6 +41,17 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
       "kaj preveriti, preden izberete model. Ogled lokacije je brezplačen.",
     blocks: [
     {
+      // ⚠️ THE HEADING IS WHAT KEEPS THE OUTLINE WHOLE. A steps block renders
+      // its item titles as h3, which is right on /dostava-in-montaza and
+      // /ogled-lokacije because an h2 section heading precedes it there. Here
+      // the steps ARE the article, so the page went h1 straight to four h3s
+      // — the only skipped heading level on the site. The other two guides
+      // are h1 followed by h2s and were already clean.
+      //
+      // It earns its place editorially too: four numbered items hanging
+      // directly off the title had nothing framing them, and the lead
+      // promises an order ("štiri stvari po vrsti") that nothing then named.
+      h: "Kaj preveriti, po vrsti",
       kind: "steps",
       items: [
         [
