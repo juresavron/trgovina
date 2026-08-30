@@ -636,6 +636,14 @@ function pdpFor(m: PolaModel): PdpContent {
           // after they have committed — the opposite of the shop's argument,
           // and the one thing this page is selling.
           ". Nosilnost terase preverimo na brezplačnem ogledu, pred ponudbo.",
+        // ⚠️ THE PANELS ARE SUMMARIES AND THEY USED TO BE DEAD ENDS. Each of
+        // the three below is capped at 320 characters by studio.test.ts —
+        // correctly, they are two lines under a heading — and behind each one
+        // the site already has a whole page. A reader who opens "Mere in teža"
+        // because they are worried about the terrace was told the load is
+        // checked at a free visit and given no way to ask for one.
+        "Brezplačen ogled lokacije pred ponudbo",
+        "/showroom",
       ],
       [
         "Dostava in montaža",
@@ -643,10 +651,22 @@ function pdpFor(m: PolaModel): PdpContent {
           "brezplačno preverimo dostop, podlago in električni priklop. " +
           "Ceno dostave pripravimo po ponudbi. Odvisna je od naslova in " +
           "dostopa do mesta postavitve.",
+        // The anchor carries the words the page ranks for. /dostava-in-montaza
+        // takes 52 links from this site and not one of them said what it is
+        // about: the nav says "Dostava", the footer says "Dostava", the
+        // assurance strip says "Dostava po vsej Sloveniji".
+        "Kako poteka dostava in montaža masažnega bazena",
+        "/delivery",
       ],
       [
         "Garancija",
         "Tri leta. Rezervni deli in servis prek naše mreže.",
+        // The two-year statutory conformity right is NOT the three-year
+        // manufacturer's guarantee, and this panel names only the second. The
+        // page that sets them side by side is the terms page; sending the
+        // reader there is the difference between a number and their rights.
+        "Garancija in zakonsko jamstvo za skladnost blaga",
+        "/terms",
       ],
     ],
     finishes: [...SHELL_FINISHES],
@@ -825,16 +845,26 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
             : "Teže dobavitelj za ta model ne navaja; pred ponudbo jo pridobimo " +
               "in preverimo nosilnost podlage. ") +
           "Swim spa praviloma stoji na betonski plošči, ne na terasi.",
+        "Brezplačen ogled lokacije pred ponudbo",
+        "/showroom",
       ],
       [
         "Dostava in montaža",
         "Swim spa pripeljemo, postavimo, priklopimo in zaženemo. Zaradi " +
           "dolžine je zanj potreben izredni prevoz: dostop in prostor za dvig " +
           "preverimo na lokaciji pred potrditvijo termina.",
+        "Kako poteka dostava in montaža swim spa bazena",
+        "/delivery",
       ],
       [
         "Garancija",
         "Tri leta. Rezervni deli in servis prek naše mreže.",
+        // The two-year statutory conformity right is NOT the three-year
+        // manufacturer's guarantee, and this panel names only the second. The
+        // page that sets them side by side is the terms page; sending the
+        // reader there is the difference between a number and their rights.
+        "Garancija in zakonsko jamstvo za skladnost blaga",
+        "/terms",
       ],
     ],
     // ⚠️ NO SHELL LIST EITHER — the sheet states ONE shell colour for every

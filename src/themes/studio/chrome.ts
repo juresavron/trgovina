@@ -1432,11 +1432,19 @@ export const STUDIO_CHROME_CSS = `
     opacity: 1;
     visibility: visible;
   }
-  /* The product page owns its bottom edge with the sticky buy bar; the
-   * disc steps above it rather than sitting on the price. */
-  :root[data-theme="studio"] body:has(.st-pdp-bar) .st-top {
-    inset-block-end: calc(18px + 64px);
-  }
+  /* ⚠️ NOT ON THE PRODUCT PAGE. The disc used to step 64px above the buy bar
+   * there, which kept it off the bar and put it squarely on the add-on list:
+   * that column runs to the band's right edge and right-aligns its prices, so
+   * at 1280-1600 — where the page gutter (40px at 1440) is narrower than the
+   * 44px disc — the disc sat on top of a figure. Measured at 1440: the disc
+   * covered "115 EUR" on the LED osvetlitev obloge row, and one scroll
+   * position earlier, a shell-colour swatch.
+   *
+   * Hiding it costs nothing there. The chrome bar is position: fixed, so the
+   * nav, the phone number and the enquiry CTA never leave the screen, and the
+   * buy bar carries the price and the CTA along the bottom. The disc was the
+   * third fixed control on one page and the only one covering prices. */
+  :root[data-theme="studio"] body:has(.st-pdp-bar) .st-top { display: none; }
 
   /* ---- responsive ----
    * The breakpoints are the source's own tiers where the source has an answer,

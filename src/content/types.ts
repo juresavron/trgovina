@@ -187,8 +187,15 @@ export interface PdpContent {
    * Collapsible sections under the buy column, as [heading, body] — product
    * description, care, delivery terms. The spec table is generated separately
    * and always renders first.
+   *
+   * The optional third and fourth elements are a "read the whole thing" link:
+   * the anchor's WORDS and the ROUTE KEY it points at. A panel body is capped
+   * at 320 characters by studio.test.ts, which is right — these are summaries
+   * — and a summary with no way through to the page that carries the detail
+   * is a dead end. The key rather than a path so a shop that renames its
+   * routes does not leave six product pages pointing at a 404.
    */
-  panels?: [string, string][];
+  panels?: [string, string, string?, string?][];
   /** Shell finish names offered. Names rather than swatches; see catalog/pola.ts. */
   finishes?: string[];
   /**
