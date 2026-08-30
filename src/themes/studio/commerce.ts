@@ -1367,7 +1367,12 @@ export const STUDIO_COMMERCE_CSS = `
     /* Room for the card's focus ring, which would otherwise be clipped by
      * the scroll container. */
     padding-block: 4px;
-    -webkit-overflow-scrolling: touch;
+    /* ⚠️ NO -webkit-overflow-scrolling: touch. It stood here as the momentum
+     * hint iOS once needed, and it is dead in both directions: Chrome has
+     * never implemented it (audit-css-valid.mjs reports it as unknown to the
+     * engine), and Safari has scrolled overflow containers with momentum by
+     * default since iOS 13, which deprecated the property. A declaration no
+     * engine reads is bytes in a sheet at 98.8% of its budget. */
     scrollbar-width: none;
   }
   :root[data-theme="studio"] .st-rail::-webkit-scrollbar { display: none; }
@@ -1795,7 +1800,20 @@ export const STUDIO_COMMERCE_CSS = `
    * at 620 and 359px at 768, both above the 308px cells it already uses at
    * 1024, so the tier is comfortable at both ends. */
   @media (min-width: 620px) and (max-width: 809px) {
-    :root[data-theme="studio"] .st-card { flex-basis: 50%; }
+    /* ⚠️ flex-grow: 0, AND WITHOUT IT THIS TIER SHIPPED A CARD FIVE TIMES THE
+     * AREA OF ITS NEIGHBOURS. The base rule's growing trailing row is a
+     * deliberate trade (see the note at the top of this file: "an oversized
+     * cell still reads as a table, a missing cell reads as a bug"), and it
+     * holds at three columns, where a trailing card is at most half again as
+     * wide. At TWO columns with three cards it does not: the third card takes
+     * the whole row. Measured on /masazni-bazeni at 768 — 358x421, 358x421,
+     * then 716x719, with its picture frame at 642x535 against the siblings'
+     * 284x237. That is 2.3x the linear size and 5x the area, and it reads as
+     * a different component rather than as a wider cell.
+     *
+     * Held at 50% the orphan is a half-width card with the other half empty,
+     * which is what every grid on the web does with an odd count. */
+    :root[data-theme="studio"] .st-card { flex: 0 1 50%; }
   }
   @media (max-width: 619px) {
     :root[data-theme="studio"] .st-card { flex-basis: 100%; }

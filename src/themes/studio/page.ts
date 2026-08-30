@@ -1322,17 +1322,31 @@ export const STUDIO_PAGE_CSS = `
     list-style: none;
     margin: 0 0 clamp(28px, 2.8vw, 44px);
     padding: 0;
-    display: flex;
-    flex-wrap: wrap;
+    /* ⚠️ A GRID WITH auto-fill, AND IT WAS A WRAPPING FLEX ROW. Three cards
+     * in two columns put the third across the whole width: measured at 768 on
+     * /pogoji-poslovanja, 299x165, 299x165, then 608x135 — the NASLOV card
+     * twice as wide as the two above it and 20% shorter, for the whole
+     * 480-1023 band. Turning flex-grow off fixed that and broke the narrow
+     * end instead, where the cards stopped filling the row and sat at their
+     * 208px basis in a 390px column.
+     *
+     * A grid does both, and ⚠️ auto-FILL is what makes it: auto-fit COLLAPSES
+     * the tracks no item landed in, so a lone third card would stretch across
+     * the row exactly as the flex one did. auto-fill keeps them, so the third
+     * card is the same width as the two above it, and at a width that holds
+     * only one track it fills the row. This file's own history has this
+     * lesson in it — the product page's swatch grid was changed for the same
+     * reason.
+     *
+     * The tiles still stretch to the tallest in their row, which is a grid
+     * default too, so a two-line address stays level with a telephone. */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
     gap: clamp(10px, 1vw, 16px);
   }
-  /* Grow into the row, shrink no further than the basis, and stretch to the
-   * tallest tile beside it — flex's default align-items, which is what keeps
-   * a two-line address level with a one-line telephone. display:flex on the
-   * item itself is what gives the tile inside a definite box to fill. */
   :root[data-theme="studio"] .st-page-ch > li {
-    flex: 1 1 13rem;
     display: flex;
+    min-inline-size: 0;
   }
   /* The tile. A quiet panel rather than an outlined card: the two controls
    * above it are the page's emphasis, and three bordered boxes under two
@@ -1472,6 +1486,29 @@ export const STUDIO_PAGE_CSS = `
     outline: 2px solid var(--acc);
     outline-offset: 3px;
     border-radius: var(--r-ctrl);
+  }
+  /* The index shape: one destination a line, with the line that says what is
+   * behind it. The row above wraps short labels; this one cannot, because a
+   * label and its blurb have to stay together. */
+  :root[data-theme="studio"] .st-page-onward--rich ul {
+    display: grid;
+    gap: clamp(18px, 2vw, 30px);
+  }
+  :root[data-theme="studio"] .st-page-onward--rich li {
+    display: grid;
+    gap: 4px;
+    max-inline-size: 38rem;
+  }
+  :root[data-theme="studio"] .st-page-onward--rich a {
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    line-height: var(--lh-lead);
+  }
+  :root[data-theme="studio"] .st-page-onward-d {
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-mute);
   }
 
   /* The closing call to action. */
@@ -1767,6 +1804,9 @@ export const STUDIO_PAGE_CSS = `
    * colour, the text takes the medium weight, and focus is visible because the
    * paragraph is now a focus target when no field owns the problem. */
   :root[data-theme="studio"] .st-enq-err {
+    /* Focused on a refused submit, so it is what the browser scrolls to — and
+     * the chrome bar is fixed, so without this it scrolls to underneath it. */
+    scroll-margin-top: calc(var(--chrome-h) + 24px);
     margin: clamp(16px, 1.6vw, 24px) 0 0;
     padding: var(--gap-sm) var(--gap-md);
     border-inline-start: 3px solid var(--ink);
@@ -1964,20 +2004,37 @@ function links(ctx: RenderCtx, b: Extract<Block, { kind: "links" }>, id?: string
   if (b.items.length === 0) return "";
   const head = b.h ?? "Oglejte si";
   const hid = (id ?? "st-links") + "-h";
+  const rich = b.items.some((it) => typeof it[2] === "string" && it[2].length > 0);
   // The nav carries the section id itself. It used to sit on nothing — the
   // heading got id+"-h" and a data-anchor no selector ever consumed — so the
   // first links block with a real heading gave the TOC a fragment that
   // resolved to nowhere. structure.test.ts now proves every rail link lands.
   return (
-    '<nav class="st-page-onward"' + (id ? ' id="' + esc(id) + '"' : "") +
+    // ⚠️ TWO SHAPES, ONE BLOCK, decided by the CONTENT rather than by a flag.
+    // A links block at the foot of a page is a wrapped row of short labels —
+    // "Oglejte si" and four destinations — and a blurb under each would be
+    // noise there. An INDEX is the other device: /vodniki is three guides and
+    // nothing else, and a row of three bare titles asks the reader to choose
+    // between articles it has told them nothing about. So a block whose items
+    // carry a third element stacks instead, and one that does not is untouched.
+    '<nav class="st-page-onward' + (rich ? " st-page-onward--rich" : "") + '"' +
+    (id ? ' id="' + esc(id) + '"' : "") +
     ' aria-labelledby="' + esc(hid) + '">' +
-    '<p class="st-page-onward-h" id="' + esc(hid) + '">' + esc(head) + "</p><ul>" +
+    // Same uppercase-into-the-accessible-name trap as the skip link, and it
+    // bites harder here: this <p> NAMES the surrounding <nav>, so the shouted
+    // string is what a landmark menu lists. aria-label on the referenced
+    // element is what accname resolves first, so the region reads "Oglejte
+    // si" while the page still draws OGLEJTE SI.
+    '<p class="st-page-onward-h" id="' + esc(hid) + '" aria-label="' + esc(head) +
+    '">' + esc(head) + "</p><ul>" +
     b.items
       .map(
-        ([label, href]) =>
+        ([label, href, blurb]) =>
           // ctx.q, like cta() and onward(): the QA/theme override query
           // was dropped through every link of a links block.
-          '<li><a href="' + esc(href) + esc(ctx.q) + '">' + esc(label) + "</a></li>",
+          '<li><a href="' + esc(href) + esc(ctx.q) + '">' + esc(label) + "</a>" +
+          (blurb ? '<span class="st-page-onward-d">' + esc(blurb) + "</span>" : "") +
+          "</li>",
       )
       .join("") +
     "</ul></nav>"
@@ -2387,7 +2444,18 @@ function enquiry(
   if (ctx.enquiry?.done) {
     return (
       head +
-      '<div class="st-enq-done" role="status">' +
+      // ⚠️ tabindex + autofocus, AND WITHOUT THEM NOBODY SAW THIS. The page
+      // re-renders at scrollY 0 with focus on <body>, and this block sits
+      // 1.1 to 2.4 SCREENS DOWN — measured 1.28 screens at 1440x900, 2.09 at
+      // 390x844, 2.37 at 320x800. role="status" does not rescue it either: a
+      // live region that is already in the document at parse time is not
+      // announced, which is the rule this file states for the error path a
+      // hundred lines below and then did not apply here.
+      //
+      // So a visitor pressed "Pošljite povpraševanje" and the page appeared
+      // to do nothing — on the one interaction the whole site exists to
+      // produce. The error path got the focus fix; the success path did not.
+      '<div class="st-enq-done" role="status" tabindex="-1" autofocus>' +
       '<p class="st-enq-done-h">Povpraševanje je oddano.</p>' +
       "<p>Odgovorimo v enem delovnem dnevu. Če se mudi, pokličite — številka je " +
       "v nogi strani.</p>" +
@@ -2481,12 +2549,31 @@ function enquiry(
   // failure that is the shop's fault, on a page that exists because this shop
   // takes no orders online, the visitor was told nothing.
   //
-  // tabindex="-1" + autofocus makes the paragraph itself the focus target
-  // when no field owns the problem. Same device as the fields, no script.
+  // ⚠️ THE MESSAGE TAKES FOCUS, ALWAYS — NOT THE FIELD THAT FAILED.
+  //
+  // It used to be the other way round wherever a field owned the problem, and
+  // that put the error off the screen. autofocus scrolls the FOCUSED element
+  // into view, and the message sits above the form: measured on a refused
+  // enquiry arriving from a product page, the error paragraph landed at
+  // viewport y −195 at 320, −90 at 390, −148 at 1440x600, and BEHIND the
+  // fixed header (y 2–63) at 620, 900, 1024, 1200 and 1440 — nine of eleven
+  // viewports with no error text on screen at all, in front of a form with
+  // one orange-outlined empty field and no explanation.
+  //
+  // The bare /kontakt page passed, which is how it shipped: the fix was
+  // measured there, and the .st-enq-about summary card — 329–385px of it,
+  // rendered only when the enquiry comes from a product page, which is the
+  // path that matters — pushes the message up by exactly its own height.
+  // The consent branch failed at every width for the same reason: its field
+  // is the last control on the form.
+  //
+  // Focusing the message is also the accepted pattern (the error-summary
+  // convention): role="alert" announces it, the text names what to fix, and
+  // aria-describedby still ties it to the field, which keeps aria-invalid and
+  // its ring. scroll-margin-top on the rule keeps it clear of the fixed bar.
   const err = ctx.enquiry?.error
-    ? '<p class="st-enq-err" id="enq-err" role="alert"' +
-      (badField === null ? ' tabindex="-1" autofocus' : "") +
-      ">" + esc(ctx.enquiry.error) + "</p>"
+    ? '<p class="st-enq-err" id="enq-err" role="alert" tabindex="-1" autofocus>' +
+      esc(ctx.enquiry.error) + "</p>"
     : "";
 
   // What the visitor typed on a refused attempt. Escaped on the way back out,
@@ -2510,7 +2597,12 @@ function enquiry(
     opts: { req?: boolean; hint?: string; auto?: string; mode?: string } = {},
   ): string =>
     '<p class="st-enq-f">' +
-    '<label class="st-enq-l" for="enq-' + name + '">' + esc(label) +
+    // aria-label on the LABEL, which is what the input's name resolves
+    // through — otherwise every field on this form is announced shouted
+    // ("IME IN PRIIMEK"), and a shouted field label is the one place a
+    // spelled-out reading actively confuses somebody filling a form.
+    '<label class="st-enq-l" for="enq-' + name + '" aria-label="' + esc(label) + '">' +
+    esc(label) +
     (opts.req ? ' <span class="st-enq-req">*</span>' : "") + "</label>" +
     '<input class="st-enq-in" id="enq-' + name + '" name="' + name + '" type="' + type + '"' +
     (sent(name) ? ' value="' + esc(sent(name)) + '"' : "") +
@@ -2519,7 +2611,7 @@ function enquiry(
     // and focused, so a refused submission lands the visitor ON the problem
     // rather than at the top of the form. autofocus rather than a script,
     // because this form works with JavaScript off and so must its recovery.
-    (badField === name ? ' aria-invalid="true" autofocus' : "") +
+    (badField === name ? ' aria-invalid="true"' : ' aria-invalid="false"') +
     // ⚠️ THE HINT WAS NEVER ANNOUNCED. It carried no id and nothing referred
     // to it, so "Po njem izračunamo dostavo" — and, on the access field, the
     // three measurements the business actually needs — were visible text a
@@ -2561,9 +2653,10 @@ function enquiry(
     }) +
     "</div>" +
     '<p class="st-enq-f">' +
-    '<label class="st-enq-l" for="enq-dostop">Dostop do mesta postavitve</label>' +
+    '<label class="st-enq-l" for="enq-dostop" aria-label="Dostop do mesta postavitve">' +
+    "Dostop do mesta postavitve</label>" +
     '<textarea class="st-enq-in st-enq-ta" id="enq-dostop" name="dostop" rows="3"' +
-    (badField === "dostop" ? ' aria-invalid="true" autofocus' : "") +
+    (badField === "dostop" ? ' aria-invalid="true"' : ' aria-invalid="false"') +
     describedBy("dostop", true) + ">" +
     esc(sent("dostop")) + "</textarea>" +
     '<span class="st-enq-hint" id="enq-dostop-hint">Širina najožjega prehoda, stopnice ali škarpa na poti, ' +
@@ -2571,14 +2664,15 @@ function enquiry(
     "izvedljiv, še preden pridemo na ogled.</span>" +
     "</p>" +
     '<p class="st-enq-f">' +
-    '<label class="st-enq-l" for="enq-sporocilo">Vaše sporočilo</label>' +
+    '<label class="st-enq-l" for="enq-sporocilo" aria-label="Vaše sporočilo">' +
+    "Vaše sporočilo</label>" +
     '<textarea class="st-enq-in st-enq-ta" id="enq-sporocilo" name="sporocilo" rows="4"' +
-    (badField === "sporocilo" ? ' aria-invalid="true" autofocus' : "") +
+    (badField === "sporocilo" ? ' aria-invalid="true"' : ' aria-invalid="false"') +
     describedBy("sporocilo", false) + ">" +
     esc(sent("sporocilo")) + "</textarea>" +
     "</p>" +
     '<fieldset class="st-enq-fs">' +
-    '<legend class="st-enq-l">Kako naj se oglasimo?</legend>' +
+    '<legend class="st-enq-l" aria-label="Kako naj se oglasimo?">Kako naj se oglasimo?</legend>' +
     '<span class="st-enq-radios">' +
     '<span class="st-enq-r"><input type="radio" id="enq-k-t" name="kanal" value="telefon"' +
     (sent("kanal") === "telefon" ? " checked" : "") + ">" +
@@ -2594,7 +2688,7 @@ function enquiry(
     // is imported, not retyped.
     '<p class="st-enq-consent">' +
     '<input type="checkbox" id="enq-soglasje" name="soglasje" value="1" required' +
-    (badField === "soglasje" ? ' aria-invalid="true" autofocus' : "") +
+    (badField === "soglasje" ? ' aria-invalid="true"' : ' aria-invalid="false"') +
     describedBy("soglasje", false) + ">" +
     // ⚠️ THE ASTERISK AND THE LINK, and both were missing.
     //
@@ -2726,7 +2820,7 @@ function onward(ctx: RenderCtx, page: Page): string {
   if (links.length === 0) return "";
   return (
     '<nav class="st-page-onward" aria-labelledby="st-onward-h">' +
-    '<p class="st-page-onward-h" id="st-onward-h">Oglejte si</p>' +
+    '<p class="st-page-onward-h" id="st-onward-h" aria-label="Oglejte si">Oglejte si</p>' +
     "<ul>" +
     links
       .map(
@@ -2777,7 +2871,7 @@ export function renderStudioPage(ctx: RenderCtx, page: Page): string {
     headed.length < 3
       ? ""
       : '<nav class="st-page-toc" aria-labelledby="st-toc-h">' +
-        '<p class="st-page-toc-h" id="st-toc-h">Na tej strani</p>' +
+        '<p class="st-page-toc-h" id="st-toc-h" aria-label="Na tej strani">Na tej strani</p>' +
         "<ol>" +
         headed
           .map((x) => '<li><a href="#' + esc(x.id) + '">' + esc(x.h) + "</a></li>")

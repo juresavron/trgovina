@@ -24,9 +24,21 @@ export const CONTACT: Page = {
   key: "/contact",
   h1: "Kontakt",
   lead:
-    "Pokličite ali pišite. Na vprašanja o merah, dostopu in priklopu po telefonu " +
-    "odgovorimo sproti, na e-pošto v enem delovnem dnevu, " +
-    "za ponudbo pa potrebujemo le naslov in nekaj fotografij prostora.",
+    // ⚠️ THE RESPONSE TIME IS STATED ONCE ON THIS PAGE NOW, and it was stated
+    // FOUR TIMES — here, on the e-mail channel, under the form, and again in
+    // "Kaj sledi". This file's own header calls it "the one response-time
+    // claim". It stays on the channel row, which is where a reader is choosing
+    // between telephone and e-mail and the answer is the thing they are
+    // choosing on; everywhere else it was repetition of a promise nobody has
+    // confirmed. (Still on the owner's list — see the launch items.)
+    "Pokličite ali pišite. Na vprašanja o merah, dostopu in priklopu odgovorimo " +
+    "po telefonu ali po e-pošti, " +
+    // ⚠️ "ZA OGLED", NOT "ZA PONUDBO". Every other surface says the offer
+    // follows the site visit — /ogled-lokacije ("Ponudbo dobite pisno po
+    // njem"), the hub outro, /pogoji-poslovanja — and this lead said photos
+    // were enough for one. It also undersells the visit, which is the only
+    // thing separating this shop from a catalogue.
+    "za ogled pa potrebujemo le naslov in nekaj fotografij prostora.",
   metaDescription:
     "Kontakt za masažne bazene in swim spa bazene: telefon, e-pošta in naslov. " +
     "Svetovanje pred nakupom, ogled lokacije in dogovor za dostavo.",
@@ -61,7 +73,7 @@ export const CONTACT: Page = {
         // "Obvezna sta samo ime in en stik" was not true — the consent box
         // refuses the submit as well, and it carried no marker, so a visitor
         // could be refused twice for one attempt.
-        "Odgovorimo v enem delovnem dnevu. Obvezni so ime, telefon ali e-pošta " +
+        "Obvezni so ime, telefon ali e-pošta " +
         "(eno od njiju) in soglasje za obdelavo podatkov; vse drugo pomaga, da " +
         "je prvi odgovor uporaben.",
     },
@@ -120,7 +132,7 @@ export const CONTACT: Page = {
       kind: "steps",
       h: "Kaj sledi",
       items: [
-        ["Odgovor", "Na klic odgovorimo sproti, na e-pošto v enem delovnem dnevu."],
+        ["Odgovor", "Na klic odgovorimo sproti, na e-pošto pa čim prej."],
         ["Ogled lokacije", "Brezplačen. Preverimo dostop, podlago in električni priklop."],
         [
           "Ponudba",
@@ -152,7 +164,7 @@ export const CONTACT: Page = {
           "Polnjenje, zagon filtracije in ogrevanja, umeritev šob in predaja z navodili za " +
             "vzdrževanje.",
         ],
-        ["Ogled lokacije", "Brezplačen in opravljen pred dostavo, ne na dan dostave."],
+        ["Ogled lokacije", "Brezplačen in opravljen pred ponudbo, ne na dan dostave."],
         [
           "Česa v ponudbi ni",
           "Priprave podlage in elektroinštalacije na vaši strani. Za priklop dobite pisna " +

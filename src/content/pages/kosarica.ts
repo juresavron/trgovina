@@ -38,7 +38,7 @@ export const CART: Page = {
       kind: "prose",
       h: "Zakaj po telefonu",
       p: [
-        "Pred dostavo opravimo ogled lokacije, zato naročilo tako ali tako ni sklenjeno " +
+        "Pred ponudbo opravimo ogled lokacije, zato naročilo tako ali tako ni sklenjeno " +
           "v trenutku plačila. Dokler spletno plačilo ni vzpostavljeno, je pot krajša, če se za " +
           "model, konfiguracijo in termin dogovorimo neposredno.",
       ],

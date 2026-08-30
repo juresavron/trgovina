@@ -194,14 +194,19 @@ export function recommend(a: FinderAnswers): FinderResult {
         slugs: ["swim-580-maxi", "swim-580-hidro"],
         why:
           "SWIM 580 MAXI ima med vsemi modeli največ masažnih šob: 94 na pet " +
-          "črpalk, ob polni 5,8-metrski plavalni dolžini. Če toliko masaže ne " +
+          // ⚠️ "PLAVALNA DOLŽINA" IS NOT A FIGURE THE SHEET GIVES. 5,80 m is
+          // the SHELL length, and both 580s carry seven seats and a lounger
+          // inside it, so the swimmable run is shorter by an amount nobody has
+          // measured. Say the number the supplier states, about the thing it
+          // states it about.
+          "črpalk, v 5,80 m dolgi školjki. Če toliko masaže ne " +
           "potrebujete, je SWIM 580 HIDRO enaka školjka z 38 šobami.",
       };
     }
     return {
       slugs: ["swim-580-hidro", "swim-580-maxi"],
       why:
-        "SWIM 580 HIDRO združi 5,8-metrsko plavalno dolžino s 38 masažnimi " +
+        "SWIM 580 HIDRO združi 5,80 m dolgo školjko s 38 masažnimi " +
         "šobami, ležalnikom in šestimi sedeži. Če bi masaže radi še več, ima " +
         "SWIM 580 MAXI na isti dolžini 94 šob.",
     };
@@ -218,7 +223,9 @@ export function recommend(a: FinderAnswers): FinderResult {
     return {
       slugs: ["mali-195"],
       why:
-        "BAZEN 195 z 1,95 × 1,95 m stopi tja, kamor večja modela ne greta, " +
+        // "gresta", not "greta" — the 3rd-person dual of iti. The collection
+        // page two clicks away has it right ("kamor druga dva ne gresta").
+        "BAZEN 195 se pri 1,95 × 1,95 m umesti tja, kamor večja modela ne gresta, " +
         "in kljub temu obdrži dva ležalnika in 35 šob.",
     };
   }

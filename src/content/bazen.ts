@@ -582,7 +582,15 @@ function pdpFor(m: PolaModel): PdpContent {
       // costs nothing, and binds the visitor to nothing — which is the whole
       // reason it beats a showroom for a 400 kg object. See pages/salon.ts.
       ["Brezplačen ogled lokacije", "pred nakupom, brez obveznosti"],
-      ["Servis in rezervni deli", "lastna servisna mreža"],
+      // ⚠️ "SERVIS UREJAMO SAMI", NOT "LASTNA SERVISNA MREŽA". A network is a
+      // claim about scale — branches, engineers, coverage — and the note above
+      // heroTrust says in as many words that the service network "is among the
+      // claims still waiting on the owner". It was excluded from the hero for
+      // that reason and shipped one band lower and on all six product pages.
+      // What the shop can say without waiting for anybody is who is
+      // responsible, which is the part a buyer actually wants: not a
+      // subcontractor. One word from the owner puts the network back.
+      ["Servis in rezervni deli", "servis urejamo sami"],
     ],
     panels: [
       [
@@ -647,7 +655,14 @@ function pdpFor(m: PolaModel): PdpContent {
       ],
       [
         "Dostava in montaža",
-        "Bazen pripeljemo, postavimo, priklopimo in zaženemo. Pred dostavo " +
+        // ⚠️ "PRED PONUDBO", NOT "PRED DOSTAVO", and this panel used to say
+        // the second while the "Mere in teža" panel two boxes above it said
+        // the first — one product page stating both. The correction was made
+        // at the assurance strip and at that panel and never reached here.
+        // It is not a detail: a survey before DELIVERY is a logistics step
+        // after the customer has committed, and a survey before the OFFER is
+        // the shop's whole argument for having no showroom.
+        "Bazen pripeljemo, postavimo, priklopimo in zaženemo. Pred ponudbo " +
           "brezplačno preverimo dostop, podlago in električni priklop. " +
           "Ceno dostave pripravimo po ponudbi. Odvisna je od naslova in " +
           "dostopa do mesta postavitve.",
@@ -801,7 +816,15 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ["Dostava po vsej Sloveniji", "z ekipo in opremo za prenos"],
       ["14 dni za vračilo", "zakonska pravica ob nakupu na daljavo"],
       ["Brezplačen ogled lokacije", "pred nakupom, brez obveznosti"],
-      ["Servis in rezervni deli", "lastna servisna mreža"],
+      // ⚠️ "SERVIS UREJAMO SAMI", NOT "LASTNA SERVISNA MREŽA". A network is a
+      // claim about scale — branches, engineers, coverage — and the note above
+      // heroTrust says in as many words that the service network "is among the
+      // claims still waiting on the owner". It was excluded from the hero for
+      // that reason and shipped one band lower and on all six product pages.
+      // What the shop can say without waiting for anybody is who is
+      // responsible, which is the part a buyer actually wants: not a
+      // subcontractor. One word from the owner puts the network back.
+      ["Servis in rezervni deli", "servis urejamo sami"],
     ],
     panels: [
       [
@@ -982,12 +1005,21 @@ const collections: Collection[] = [
       (swimSpaFamilyHasSwimJets()
         ? "Tok za plavanje na mestu ustvarijo protitočne šobe, ki jih ima vsak " +
           "od treh modelov. "
-        : "Tok za plavanje na mestu ustvarijo protitočne šobe; koliko jih ima " +
-          "posamezen model, piše v njegovi specifikaciji. ") +
+        // ⚠️ NOT "KOLIKO JIH IMA POSAMEZEN MODEL" — that presupposes every
+        // model has some, and this branch runs precisely because one does not.
+        // The guard above knows it; the sentence under the guard did not.
+        : "Tok za plavanje na mestu ustvarijo protitočne šobe, ki jih nimajo vsi trije " +
+          "modeli: modela 580 imata po tri, za SWIM 450 pa jih dobaviteljev list ne " +
+          "navaja. ") +
       "Swim spa praviloma stoji na betonski plošči, ne na terasi. Dostop " +
       "in prostor za dvig preverimo na lokaciji pred potrditvijo termina.",
     metaDescription:
-      "Swim spa bazeni od 450 do 580 cm za plavanje na mestu in sprostitev. " +
+      // ⚠️ AND NOT "ZA PLAVANJE NA MESTU". The seoTitle six lines above
+      // carries a note explaining at length why it may not say this — SWIM
+      // 450 lists no counter-current jet and swimSpaFamilyHasSwimJets() is
+      // false — and the description then said it anyway, in the line the
+      // searcher actually reads under the title.
+      "Swim spa bazeni od 450 do 580 cm za tri do sedem oseb. " +
       "Akrilna školjka, ogrevanje in filtracija, dostava in zagon po Sloveniji.",
     products: swimSpas,
   },
@@ -1079,7 +1111,7 @@ export const bazenContent: ShopContent = {
   trust: [
     "Dostava in zagon po vsej Sloveniji",
     "Ogled lokacije pred ponudbo",
-    "Servisna mreža in rezervni deli",
+    "Servis in rezervne dele urejamo sami",
   ],
   // Every figure here is the supplier's own — the previous set led with a
   // temperature the price list does not state.
@@ -1158,7 +1190,12 @@ export const bazenContent: ShopContent = {
       ["Priprava priklopa", "Navodila za vašega električarja ali izvedba z našim partnerjem."],
       ["Dostava na teraso", "Ekipa z opremo za prenos, tudi čez ograjo, če je treba."],
       ["Priklop in zagon", "Napolnimo, zaženemo filtracijo in ogrevanje ter umerimo šobe."],
-      ["Predaja", "Pokažemo vzdrževanje: 10 minut na teden, nič več."],
+      // ⚠️ "PRIBLIŽNO", AND "NIČ VEČ" IS GONE. /dostava-in-montaza,
+      // /pogosta-vprasanja and /o-nas all hedge this figure ("Približno deset
+      // minut na teden"); the home page was the one surface that turned the
+      // estimate into a promise, and added an absolute to it. Nobody has
+      // measured a week of anybody's maintenance.
+      ["Predaja", "Pokažemo vzdrževanje: približno deset minut na teden."],
     ],
     // ⚠️ "ŠTIRISTO KILOGRAMOV" WAS ONE MODEL'S FIGURE STANDING FOR SIX.
     //
@@ -1232,9 +1269,12 @@ export const bazenContent: ShopContent = {
   // decision turns on. What used to be here — one nine-line paragraph doing
   // both jobs — is the reason hubChoice exists; see its note in types.ts.
   hubIntro:
-    "Najprej se odločite med dvema stvarema, ki nista različici iste stvari. Razlika " +
+    // "stvar" twice in one sentence, and then "Vsakega" — masculine, with no
+    // masculine noun anywhere in the paragraph to attach to. The reader had to
+    // reach back to "bazen" inside a subordinate clause to resolve it.
+    "Najprej se odločite med dvema bazenoma, ki nista različici istega. Razlika " +
     "ni v velikosti, ampak v tem, kaj v bazenu počnete. Od tega je odvisno " +
-    "vse drugo: podlaga, dostop, priprava priklopa in cena dostave. Vsakega " +
+    "vse drugo: podlaga, dostop, priprava priklopa in cena dostave. Oba " +
     "pripeljemo, priklopimo in zaženemo.",
   // EVERY FIGURE IS THE CATALOGUE'S — the same ranges the collection intros
   // walk model by model: 195/210/230 cm square at 1.500–2.210 kg filled, and
@@ -1284,8 +1324,10 @@ export const bazenContent: ShopContent = {
     {
       h: "Kako brati te številke",
       p: [
-        "Število šob ni ocena kakovosti. Šobo je treba pognati, in to delajo črpalke: pri " +
-          "vseh šestih modelih so 3 KM, razlikuje pa se, koliko jih je: od ene do petih. " +
+        // Two colons in one sentence, a clause with no subject ("so 3 KM"),
+        // and a "jih" whose antecedent could be the jets or the pumps.
+        "Število šob ni ocena kakovosti. Šobe poganjajo črpalke, in te so pri vseh šestih " +
+          "modelih po 3 KM — razlikuje se njihovo število, od ene do petih. " +
           "Zato ob številu šob poglejte število črpalk, saj to pove, koliko šob dela pod " +
           "polnim pritiskom hkrati.",
         // "od BAZENA 210": the preposition governs the genitive. /primerjava
@@ -1301,10 +1343,15 @@ export const bazenContent: ShopContent = {
           // table prints all three. Promising a EUR 16.790–21.690 buyer they
           // can shift it is the exact claim the free site visit exists to
           // protect against.
-          "Teža, ki šteje, je teža napolnjenega bazena, ne praznega. Prazen masažni bazen " +
-          "tehta od 300 do 410 kilogramov, prazen swim spa pa od 1.050 do 1.430; poln je " +
-          "od 1.500 do 8.490 kilogramov " +
-          "in to je številka, proti kateri mora zdržati podlaga. Največji swim spa v ponudbi " +
+          // ⚠️ TWO RANGES, NOT ONE. This read "poln je od 1.500 do 8.490
+          // kilogramov", which describes a continuum the catalogue does not
+          // have: nothing exists between 2.210 and 5.750, and the sentence had
+          // also lost the subject that would say which family it meant.
+          // "zdržati proti čemu" is not Slovenian either; the load is
+          // something the base has to carry, not something it faces.
+          "Teža, ki šteje, je teža napolnjenega bazena, ne praznega. Napolnjen masažni bazen " +
+          "tehta od 1.500 do 2.210 kilogramov, napolnjen swim spa pa od 5.750 do 8.490 — " +
+          "in to je številka, ki jo mora zdržati podlaga. Največji swim spa v ponudbi " +
           "tudi ni tisti z največ šobami: SWIM 580 MAXI ima 94 šob pri 7.360 kilogramih, " +
           "SWIM 580 HIDRO pa 38 pri 8.490.",
       ],
@@ -1317,7 +1364,10 @@ export const bazenContent: ShopContent = {
           "preden karkoli kupite. Ogled je brezplačen po vsej Sloveniji in vas k ničemur ne " +
           "zavezuje. Če se izkaže, da izbrani model pri vas ni izvedljiv, vam to povemo.",
         "Cene modelov na tej strani so v evrih in vključujejo DDV. Vključujejo zagon, " +
-          "umeritev in predajo; ogled lokacije ni zaračunan v ceni. Dostava z ekipo in " +
+          // "ni zaračunan v ceni" reads equally as "it is free" and as "it is
+          // not covered — you will be billed for it", on the one paragraph
+          // this page devotes to money. /pogoji-poslovanja says it plainly.
+          "umeritev in predajo; ogled lokacije opravimo brezplačno, že pred ponudbo. Dostava z ekipo in " +
           "opremo za prenos se obračuna po ponudbi, ker je odvisna od lokacije in dostopa. " +
           "Cene ne vključujejo priprave podlage, gradbenih del in elektroinštalacije na " +
           "strani kupca.",

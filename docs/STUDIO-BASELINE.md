@@ -194,9 +194,30 @@ choice was already in the theme's own palette. `--ink-mute` at `#6d6d6d` is the
 lightest rung clearing 4.5:1 on *both* grounds it appears on, so it keeps the
 source's quiet feel without failing on the darker one.
 
-Amber is usable on dark (9.10:1) and as large or decorative elements, never as
-body text on white. `scripts/verify-contrast.mjs` reads the real token values
-out of `tokens.ts` and fails the build on regression.
+`scripts/verify-contrast.mjs` reads the real token values out of `tokens.ts`
+and fails on regression. It checks each pair on **both** grounds a colour can
+land on — the page and the panel — because a rung that clears 3:1 on white can
+fail on `--bg-alt`, which is exactly how `--line-ctrl` shipped at 2.66:1 there
+for months with a comment recording the number.
+
+It also refuses an accent **outside sRGB**. `--acc-text` was
+`oklch(0.45 0.09 200)`, and hue 200 carries at most 0.0765 chroma at that
+lightness: the red channel resolved to −0.191 and every engine gamut-mapped it
+its own way, so the shop's link ink was not a determinate colour. The script's
+own converter had clamped before measuring, so it reported a ratio for a colour
+nobody was guaranteed to see.
+
+The source theme's `--amber`, `--cream` and `--coral` literals are **gone**.
+The note that kept them said the theme used them "as fixed punctuation"; it
+did not — nothing referenced them but the contrast script that measured them.
+
+`scripts/audit-css-valid.mjs` is the other half of this: it offers every
+declaration in the built sheet to the engine's own parser and reports the ones
+that will be **discarded**. It exists because a single invalid value —
+`minmax(0, fit-content(14rem))`, where `fit-content()` is not a permitted
+argument — silently took out the steps layout on six pages, and nothing else in
+the repo could see it: TypeScript compiles a template literal, the minifier
+does not validate, the sheet parses, and the rule still matches its element.
 
 ---
 

@@ -2060,7 +2060,6 @@ export const STUDIO_PDP_CSS = `
   @media print {
     :root[data-theme="studio"] .st-chrome,
     :root[data-theme="studio"] .st-foot,
-    :root[data-theme="studio"] .st-top,
     :root[data-theme="studio"] .st-pdp-gallery,
     :root[data-theme="studio"] .st-pdp-buy,
     :root[data-theme="studio"] .st-pdp-bar,

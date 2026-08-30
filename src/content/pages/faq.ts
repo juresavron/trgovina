@@ -92,7 +92,7 @@ export const FAQ: Page = {
       items: [
         [
           "Kaj je vključeno v ceno modela?",
-          "Ogled lokacije pred dostavo, zagon, umeritev in predaja. Dostavo z ekipo in opremo " +
+          "Brezplačen ogled lokacije pred ponudbo, zagon, umeritev in predaja. Dostavo z ekipo in opremo " +
             "za prenos obračunamo po ponudbi, ker je odvisna od lokacije in dostopa; znesek je " +
             "v pisni ponudbi, preden karkoli potrdite. V ceni ni priprave podlage in " +
             "elektroinštalacije na vaši strani.",
@@ -129,8 +129,12 @@ export const FAQ: Page = {
         ],
         [
           "Kdo popravi okvaro?",
-          "Naša servisna mreža. Rezervne dele za modele, ki jih prodajamo, imamo na zalogi; " +
-            "to je eden od razlogov, da je ponudba ozka.",
+          // "imamo na zalogi" is an inventory claim a customer can test on day
+          // one, and nobody has counted the shelf. What is true and checkable
+          // is that the range is narrow ON PURPOSE, which is the reason the
+          // sentence was making anyway.
+          "Mi. Servis opravimo sami, rezervne dele pa naročamo le za modele, ki jih " +
+            "prodajamo; to je eden od razlogov, da je ponudba ozka.",
         ],
         [
           "Ali lahko bazen vrnem?",
