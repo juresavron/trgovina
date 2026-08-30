@@ -285,7 +285,7 @@ export const STUDIO_HERO_CSS = `
    * new to check and the band cannot drift out of compliance. */
   :root[data-theme="studio"] .st-hero-rating {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     flex-wrap: wrap;
     gap: 4px clamp(10px, 1vw, 16px);
     margin: clamp(16px, 1.8vw, 26px) 0 0;
@@ -294,20 +294,37 @@ export const STUDIO_HERO_CSS = `
     font-weight: var(--w-label);
     letter-spacing: var(--ls-label);
   }
-  :root[data-theme="studio"] .st-hero-rating a,
-  :root[data-theme="studio"] .st-hero-rating-s {
+  /* ⚠️ A LIGHT PILL, AND THE GOOGLE MARK IS WHY. The multi-colour G wants a
+   * light ground — it is the one element here the theme does not get to
+   * restyle — so the chip carries its own, rather than the hairline-on-dark
+   * the hero's other pill uses. It also stops the rating reading as a third
+   * line of hero copy: it is a quotation, and a chip is what a quotation
+   * looks like.
+   *
+   * --bg rather than pure white so it is the page's own paper, and the same
+   * ground the reader meets one scroll down. Not --st-tap-tall either: at
+   * 40px it already clears 44px with the padding below. */
+  :root[data-theme="studio"] .st-hero-rating-p {
     display: inline-flex;
-    align-items: baseline;
+    align-items: center;
     gap: clamp(8px, 0.8vw, 12px);
-    padding-block: 10px;
-    margin-block: -10px;
-    color: var(--on-invert);
+    padding: 8px clamp(14px, 1.2vw, 18px);
+    border-radius: var(--r-pill);
+    background: var(--bg);
+    color: var(--ink);
     text-decoration: none;
+    transition: background-color .2s ease;
   }
-  :root[data-theme="studio"] .st-hero-rating a:hover .st-hero-rating-t,
-  :root[data-theme="studio"] .st-hero-rating a:focus-visible .st-hero-rating-t {
-    text-decoration: underline;
-    text-underline-offset: 3px;
+  :root[data-theme="studio"] a.st-hero-rating-p:hover,
+  :root[data-theme="studio"] a.st-hero-rating-p:focus-visible {
+    background: var(--bg-alt);
+  }
+  /* Google's mark, at the cap height of the figure beside it. */
+  :root[data-theme="studio"] .st-hero-g {
+    inline-size: 18px;
+    block-size: 18px;
+    flex: none;
+    display: block;
   }
   /* The glyph row rides a hair above the baseline the figures sit on: ★ has
    * no descender and its optical centre is high, so baseline-aligning it
@@ -316,27 +333,18 @@ export const STUDIO_HERO_CSS = `
     letter-spacing: 0.06em;
     font-size: 1.05em;
     line-height: 1;
-    translate: 0 1px;
   }
-  :root[data-theme="studio"] .st-hero-star-off { color: var(--on-invert-40); }
+  /* On the pill's light ground, so the theme's own ink rungs — not the
+   * on-invert ones the rest of the hero foot uses. */
+  :root[data-theme="studio"] .st-hero-star-on { color: var(--ink); }
+  :root[data-theme="studio"] .st-hero-star-off { color: var(--line-strong); opacity: 0.28; }
   :root[data-theme="studio"] .st-hero-rating-n {
     font-family: var(--f-display);
     font-weight: var(--w-display);
     font-size: var(--t-h6);
     letter-spacing: var(--ls-h6);
   }
-  :root[data-theme="studio"] .st-hero-rating-t { color: var(--on-invert-mute); }
-  :root[data-theme="studio"] .st-hero-rating-d {
-    text-transform: none;
-    font-family: var(--f-body);
-    font-size: var(--t-label);
-    letter-spacing: 0;
-    color: var(--on-invert-40);
-  }
-  @media (max-width: 620px) {
-    /* The date drops to its own line rather than squeezing the count. */
-    :root[data-theme="studio"] .st-hero-rating { display: grid; justify-items: start; }
-  }
+  :root[data-theme="studio"] .st-hero-rating-t { color: var(--ink-mute); }
   :root[data-theme="studio"] .st-hero-trust {
     list-style: none;
     margin: clamp(18px, 2vw, 30px) 0 0;
@@ -1004,7 +1012,31 @@ function reviewWord(n: number): string {
 }
 
 /**
- * The Google rating as a line under the hero's buttons — or nothing.
+ * Google's own G, unaltered.
+ *
+ * ⚠️ IT IS SOMEBODY ELSE'S TRADEMARK AND THE COLOURS ARE NOT OURS TO TUNE.
+ * The four fills below are Google's published brand values (#EA4335, #4285F4,
+ * #FBBC05, #34A853) and nothing here may recolour, rotate, outline or crop
+ * them — a modified mark is a worse problem than no mark. It is used the one
+ * way attribution allows: to say where a rating came from, beside the figure
+ * it belongs to, with no claim of partnership or endorsement anywhere near it.
+ *
+ * The multi-colour mark wants a light ground, which is the second reason the
+ * pill around it is light rather than a hairline on the dark band.
+ *
+ * aria-hidden, because the sentence beside it already says "na Googlu": a
+ * screen reader that meets both hears the source twice.
+ */
+const GOOGLE_MARK =
+  '<svg class="st-hero-g" viewBox="0 0 48 48" aria-hidden="true" focusable="false">' +
+  '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>' +
+  '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>' +
+  '<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>' +
+  '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>' +
+  "</svg>";
+
+/**
+ * The Google rating as a pill under the hero's buttons — or nothing.
  *
  * ⚠️ IT IS A QUOTATION, SO IT CARRIES ITS SOURCE. The stars alone would read
  * as this shop rating itself. What makes the line worth anything is that the
@@ -1050,35 +1082,31 @@ function googleRatingHtml(ctx: RenderCtx): string {
   const label =
     "Ocena na Googlu: " + score + " od 5, " + reviews +
     (href ? " — odpre Google v novem zavihku" : "");
-  // "30. 8. 2026", not "2026-08-30": the ISO form is for the config, where a
-  // sortable date is the useful one, and Slovenian prose is what the page is
-  // written in. Split rather than parsed — a Date here would apply a timezone
-  // to a plain calendar day and can move it by one.
-  const [y, m, d] = g.asOf.split("-");
-  const asOf = y && m && d ? Number(d) + ". " + Number(m) + ". " + y : g.asOf;
   // ⚠️ THE GLYPHS AND THE FIGURES ARE HIDDEN EITHER WAY, and the words are
   // said once. Linked, the anchor's own aria-label carries them; unlinked
   // there is no element whose name a reader would hear, so the sentence goes
   // in a visually-hidden span — a <p> with an aria-label is not reliably
   // announced, which is why this does not simply move the attribute up.
+  // ⚠️ THE LOGO REPLACES THE WORD, NOT THE SENTENCE. The visible run drops
+  // "na Googlu" because the mark says it — but the accessible name keeps it,
+  // because an aria-hidden logo says nothing at all to a reader who cannot
+  // see it, and "4,7 od 5, 34 mnenj" from an unnamed source is not the claim
+  // this line makes.
   const inner =
+    GOOGLE_MARK +
     '<span class="st-hero-stars" aria-hidden="true">' +
     '<span class="st-hero-star-on">' + "\u2605".repeat(on) + "</span>" +
     (on < 5 ? '<span class="st-hero-star-off">' + "\u2605".repeat(5 - on) + "</span>" : "") +
     "</span>" +
     '<span class="st-hero-rating-n" aria-hidden="true">' + esc(score) + "</span>" +
-    '<span class="st-hero-rating-t" aria-hidden="true">' +
-    esc(reviews + " na Googlu") + "</span>";
+    '<span class="st-hero-rating-t" aria-hidden="true">' + esc(reviews) + "</span>";
   return (
     '<p class="st-hero-rating">' +
     (href
-      ? '<a href="' + esc(href) + '" target="_blank" rel="noopener" ' +
-        'aria-label="' + esc(label) + '">' + inner + "</a>"
-      : '<span class="st-hero-rating-s">' +
+      ? '<a class="st-hero-rating-p" href="' + esc(href) + '" target="_blank" ' +
+        'rel="noopener" aria-label="' + esc(label) + '">' + inner + "</a>"
+      : '<span class="st-hero-rating-p">' +
         '<span class="st-vh">' + esc(label) + "</span>" + inner + "</span>") +
-    // The date the figures were read. Small, muted, and not optional: a
-    // rating with no date is a claim that ages silently.
-    '<span class="st-hero-rating-d">' + esc("stanje " + asOf) + "</span>" +
     "</p>"
   );
 }

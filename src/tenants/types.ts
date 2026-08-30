@@ -128,7 +128,16 @@ export type ShopConfig = {
      * number lives".
      */
     readonly url?: string;
-    /** ISO date the score and count were read, e.g. "2026-08-30". */
+    /**
+     * ISO date the score and count were read, e.g. "2026-08-30".
+     *
+     * ⚠️ CONFIG ONLY — IT REACHES NO PAGE. It was printed beside the score
+     * ("stanje 30. 8. 2026") until the owner asked for it to go, and the
+     * argument for printing it still holds against the argument for keeping
+     * it here: a rating with no date is a claim that ages silently, and this
+     * is where somebody asking "is 4,7 still right?" finds out when anybody
+     * last looked. Cheap to keep, and it costs the visitor nothing.
+     */
     readonly asOf: string;
   };
 
