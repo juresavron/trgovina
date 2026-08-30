@@ -779,7 +779,19 @@ export const STUDIO_PAGE_CSS = `
    *
    * Below 1000 it stays stacked: three columns in a phone's 340px is not a
    * table, it is a squeeze, and the note under this one already explains
-   * what the disc costs there. */
+   * what the disc costs there.
+   *
+   * ⚠️ AND 1000 IS RIGHT, WHICH TOOK A WRONG MEASUREMENT TO ESTABLISH. A pass
+   * over this rule moved the tier to 1060 on the grounds that the paragraph
+   * fell to "36 characters a line" at 1000 — a figure produced by dividing a
+   * paragraph's character count by its NUMBER OF LINE BOXES, which any short
+   * last line drags down: a three-line paragraph measuring 60/60/5 reports 41
+   * and is 60. Measured properly — the widest rendered line rect — the
+   * narrowest paragraph at the tier's start is 398px, about 57 Slovenian
+   * characters, inside the 45-75 band with room. The tier stays where it was.
+   *
+   * If this needs checking again: read the widest getClientRects() width of
+   * the paragraph, not chars over lines. */
   @media (min-width: 1000px) {
     :root[data-theme="studio"] .st-page-steps {
       border-block-start: var(--bw-line) solid var(--line);
@@ -791,8 +803,28 @@ export const STUDIO_PAGE_CSS = `
        * reader 27 characters a line: measured on /dostava-in-montaza step 1,
        * 550px and 67.3 cpl at 999px, then 340px and 40.4 cpl at 1000, five
        * lines instead of three. fit-content(14rem) sizes to the title and caps
-       * at the same limit, so "Elektrika" takes ~100px and returns the rest. */
-      grid-template-columns: auto minmax(0, fit-content(14rem)) minmax(0, 38rem);
+       * at the same limit, so "Elektrika" takes ~100px and returns the rest.
+       *
+       * ⚠️ AND IT IS BARE, NOT WRAPPED IN minmax(). fit-content() IS NOT A
+       * PERMITTED ARGUMENT TO minmax() — the grid spec allows only a length,
+       * a percentage, a flex, min-content, max-content or auto in there — so
+       * "minmax(0, fit-content(14rem))" is an invalid value and the browser
+       * throws the WHOLE declaration away. Nothing announces it: the sheet
+       * parses, the rule still matches, CDP still lists it among the matched
+       * rules, and only the USED value gives it away.
+       *
+       * What ran instead was the base rule two hundred lines above — "auto
+       * minmax(0, 1fr)", two tracks for three items — so the row read: disc
+       * in column one, TITLE in column two, and the paragraph wrapped onto
+       * row two under the disc, 600px to the left of its own heading. The
+       * disc had lost its row span to the rule below, so it sat alone above
+       * the text. Reported as "this looks terrible", which it did, on every
+       * page with a steps block at every width over 1000.
+       *
+       * The lesson is the check, not the value: after editing a template,
+       * read getComputedStyle(el).gridTemplateColumns and COUNT THE TRACKS.
+       * Three declared, three resolved, or the rule is not the one running. */
+      grid-template-columns: auto fit-content(14rem) minmax(0, 38rem);
       align-items: start;
       /* ⚠️ start, or the DISC column eats the slack. An auto track stretches
        * to absorb a grid's free space while justify-content is normal, and
@@ -805,6 +837,41 @@ export const STUDIO_PAGE_CSS = `
       column-gap: clamp(20px, 2vw, 34px);
       padding-block: clamp(18px, 1.8vw, 26px);
       border-block-end: var(--bw-line) solid var(--line);
+    }
+    /* ⚠️ ONE GRID FOR THE WHOLE LIST, NOT ONE PER ROW. The rule above puts a
+     * grid on each <li>, so fit-content sized the title track to THAT row's
+     * title and the paragraph column started somewhere different in every
+     * row — measured at 1440 on the terrace guide, 505 / 440 / 340 / 462. A
+     * ruled table whose columns do not line up is not a table.
+     *
+     * The tracks move to the <ol>; each row spans it whole and takes them
+     * back through subgrid, so the title column is sized by the LONGEST title
+     * on the page and every paragraph starts on one line.
+     *
+     * Subgrid and not display:contents, because the row keeps its own box:
+     * the hairline and the block padding above belong to the row, and
+     * display:contents would delete the box that draws them.
+     *
+     * ⚠️ AFTER the rule above, not before it. Both declare
+     * grid-template-columns on .st-page-step at the same specificity, so the
+     * later one wins; placed first, "subgrid" was overwritten by the row's
+     * own three tracks and every measurement came back exactly as it had
+     * been — a very quiet way to ship no change at all.
+     *
+     * Guarded, because an engine without subgrid drops the declaration and
+     * would leave the row a one-column grid with everything stacked. Without
+     * support the rows keep their own tracks: ragged, and legible. */
+    @supports (grid-template-columns: subgrid) {
+      :root[data-theme="studio"] .st-page-steps {
+        display: grid;
+        grid-template-columns: auto fit-content(14rem) minmax(0, 38rem);
+        justify-content: start;
+        column-gap: clamp(20px, 2vw, 34px);
+      }
+      :root[data-theme="studio"] .st-page-step {
+        grid-column: 1 / -1;
+        grid-template-columns: subgrid;
+      }
     }
     /* The rules carry the rhythm now; the old margin would double it. */
     :root[data-theme="studio"] .st-page-step + .st-page-step {
