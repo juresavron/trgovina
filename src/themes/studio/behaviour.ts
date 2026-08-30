@@ -465,9 +465,10 @@ else init();
 
 /**
  * Comments are for the reader of this file, not for every visitor's browser.
- * The same argument as the stylesheet's: this is inlined into every studio
- * document, so its comments are bytes on the wire that explain nothing to the
- * person waiting for the page.
+ * The same argument as the stylesheet's: this ships as a file every studio
+ * document fetches (render/assets.ts serves it at /assets/site-<hash>.js), so
+ * its comments are bytes on the wire that explain nothing to the person
+ * waiting for the page.
  *
  * Conservative on purpose. It strips block and line comments and collapses
  * runs of whitespace, and it is safe here only because this file contains no

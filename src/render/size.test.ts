@@ -3,13 +3,22 @@ import { BASE_CSS } from "./css";
 import { handleRequest } from "../worker";
 
 /**
- * The sheet is inlined into every document's head, so it is render-blocking
- * AND part of the HTML payload — charged twice against the budget in
- * docs/SEO.md §4. It is easy to grow it without noticing: these modules are
- * heavily commented by design, and at one point 43% of what shipped was
- * comments written for us, not for the browser.
+ * ⚠️ THE SHEET IS LINKED, NOT INLINED, AND THIS COMMENT SAID OTHERWISE. It
+ * ships as /assets/site-<hash>.css (render/assets.ts), immutable and cached
+ * for the whole visit — no document carries a <style> block; checked on /,
+ * /kontakt, /bazen/veliki-230 and /blog. The old note here described the
+ * inline sheet the site started with and claimed the bytes were "charged
+ * twice", against the HTML payload as well as the wire. They are not.
+ *
+ * The budget stands anyway, for the half that is still true: this file is
+ * render-blocking on the FIRST page of a visit, and a phone parses all of it
+ * before it paints anything. What changed is the shape of the cost — once per
+ * visit rather than once per page — not whether it is worth holding down. It
+ * is easy to grow without noticing: these modules are heavily commented by
+ * design, and at one point 43% of what shipped was comments written for us,
+ * not for the browser.
  */
-describe("the inlined stylesheet stays within budget", () => {
+describe("the stylesheet stays within budget", () => {
   it("carries no comments to the wire", () => {
     expect(BASE_CSS).not.toContain("/*");
   });
@@ -51,7 +60,7 @@ describe("the inlined stylesheet stays within budget", () => {
    *
    * Brotli at quality 11 is what Cloudflare serves for text by default.
    */
-  it("stays under the inline-CSS budget on the wire", async () => {
+  it("stays under the stylesheet budget on the wire", async () => {
     // Dynamic, and typed loosely on purpose: tsconfig targets the Workers
     // runtime and deliberately does not pull in Node's types. This is the one
     // place a test needs a Node built-in, so it borrows it here rather than
@@ -69,7 +78,7 @@ describe("the inlined stylesheet stays within budget", () => {
       params: { [zlib.constants["BROTLI_PARAM_QUALITY"]!]: 11 },
     }).length;
     const kb = br / 1024;
-    expect(kb, "inline CSS is " + kb.toFixed(1) + " KB brotli").toBeLessThan(20);
+    expect(kb, "the sheet is " + kb.toFixed(1) + " KB brotli").toBeLessThan(20);
   });
 
   /**
@@ -123,7 +132,7 @@ describe("the inlined stylesheet stays within budget", () => {
    */
   it("has not grown without anyone noticing", () => {
     const kb = BASE_CSS.length / 1024;
-    expect(kb, "raw inline CSS is " + kb.toFixed(1) + " KB").toBeLessThan(172);
+    expect(kb, "the raw sheet is " + kb.toFixed(1) + " KB").toBeLessThan(172);
   });
 
   it("still emits the rules that matter after minification", async () => {

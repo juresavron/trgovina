@@ -348,13 +348,18 @@ const SHEET = `
 /**
  * Strip the sheet down to what a browser needs.
  *
- * The stylesheet is inlined into every document's <head>, so it is both
- * render-blocking and part of the HTML payload — it is charged twice against
- * the budget in docs/SEO.md §4. These modules are heavily commented on
- * purpose (the comments carry the design rationale and the provenance for
- * transcribed values), and measured on the studio theme those comments were
- * 66 KB of a 154 KB sheet: 43% of what every visitor downloaded before
- * anything could paint, to read prose written for us.
+ * ⚠️ NOT BECAUSE THE SHEET IS INLINE — IT IS NOT, AND THIS NOTE SAID IT WAS.
+ * render/assets.ts ships it as a linked, content-addressed file, so it is
+ * render-blocking on the first page of a visit and cached for the rest of it,
+ * rather than "charged twice" against the document as this used to claim.
+ *
+ * The argument for stripping comments survives the correction whole: they are
+ * bytes between a visitor and the first paint, on a file every visitor
+ * fetches. These modules are heavily commented on purpose (the comments carry
+ * the design rationale and the provenance for transcribed values), and
+ * measured on the studio theme those comments were 66 KB of a 154 KB sheet:
+ * 43% of what every visitor downloaded before anything could paint, to read
+ * prose written for us.
  *
  * So comments live in the source and never reach the wire. This runs once at
  * module scope, not per request.

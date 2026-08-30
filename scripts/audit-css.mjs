@@ -2,11 +2,21 @@
 /**
  * How much of the stylesheet each page actually uses.
  *
- * ⚠️ THE WHOLE SHEET IS INLINED INTO EVERY DOCUMENT. That is deliberate — it
- * removes a render-blocking request on a site whose visitors mostly arrive
- * from a search result and read one page — but it means /kontakt carries the
- * product configurator, the card grids and the hero, and a phone parses all of
- * it before it can paint a paragraph.
+ * ⚠️ THE SHEET IS ONE LINKED ASSET, NOT AN INLINE BLOCK, AND THIS FILE USED TO
+ * SAY THE OPPOSITE. Every document links /assets/site-<hash>.css, which
+ * handleRequest serves; the header here still described the inlined sheet the
+ * site shipped when this was written, and the server below 404d every path
+ * that was not a route — including that stylesheet. So every run measured an
+ * UNSTYLED page and printed "0.0 kB, NaN%" for all twenty-five routes, which
+ * is what a coverage report of no stylesheet looks like.
+ *
+ * What the change means for the question this asks: the sheet is now fetched
+ * once and cached for the whole visit, so the unused bytes are paid once
+ * rather than on every document. Splitting per route is worth much less than
+ * the "unused" column suggests — it would save a first-visit parse, not a
+ * download per page. The number still bounds the work a phone does before it
+ * can paint: /kontakt parses the product configurator, the card grids and the
+ * hero before it paints a paragraph.
  *
  * This measures the cost rather than guessing at it, using Chromium's own CSS
  * coverage instrumentation: the browser reports which byte ranges of the sheet
@@ -86,14 +96,22 @@ for (const path of ROUTES) {
   html[path] = await res.text();
 }
 
-const server = createServer((req, res) => {
-  const path = decodeURIComponent((req.url ?? "/").split("?")[0]);
+// ⚠️ ANYTHING THAT IS NOT A PRE-RENDERED ROUTE GOES BACK THROUGH handleRequest,
+// because the stylesheet is one of those things. 404 it and the whole run
+// measures unstyled pages.
+const server = createServer(async (req, res) => {
+  const url = req.url ?? "/";
+  const path = decodeURIComponent(url.split("?")[0]);
   const doc = html[path];
-  if (doc === undefined) {
-    res.writeHead(404).end("no such route");
+  if (doc !== undefined) {
+    res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(doc);
     return;
   }
-  res.writeHead(200, { "content-type": "text/html; charset=utf-8" }).end(doc);
+  const r = handleRequest(new Request("https://" + HOST + url, { headers: { host: HOST } }));
+  const body = Buffer.from(await r.arrayBuffer());
+  res.writeHead(r.status, {
+    "content-type": r.headers.get("content-type") ?? "application/octet-stream",
+  }).end(body);
 });
 await new Promise((r) => server.listen(PORT, r));
 
@@ -170,9 +188,9 @@ const rows = [];
 for (const path of ROUTES) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await page.coverage.startCSSCoverage();
-  await page.goto("http://127.0.0.1:" + PORT + path, { waitUntil: "domcontentloaded" });
-  // Let the sheet apply before asking what it applied. domcontentloaded is
-  // enough for an inline stylesheet — there is no external CSS to wait on.
+  await page.goto("http://127.0.0.1:" + PORT + path, { waitUntil: "load" });
+  // Let the sheet apply before asking what it applied. The sheet IS external,
+  // so the wait is on load rather than on domcontentloaded.
   await page.waitForTimeout(120);
   const coverage = await page.coverage.stopCSSCoverage();
 
@@ -234,6 +252,6 @@ if (SHOW_MODULES && worst) {
 }
 
 console.log("");
-console.log("Splitting the sheet per route is worth roughly the unused column — but read");
-console.log("the caveat at the top of this file before deleting a single rule.");
+console.log("The unused column is what a route parses and never uses. It is paid once per");
+console.log("visit, not once per page — read the header before treating it as a download.");
 console.log("");
