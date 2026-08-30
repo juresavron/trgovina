@@ -294,7 +294,8 @@ export const STUDIO_HERO_CSS = `
     font-weight: var(--w-label);
     letter-spacing: var(--ls-label);
   }
-  :root[data-theme="studio"] .st-hero-rating a {
+  :root[data-theme="studio"] .st-hero-rating a,
+  :root[data-theme="studio"] .st-hero-rating-s {
     display: inline-flex;
     align-items: baseline;
     gap: clamp(8px, 0.8vw, 12px);
@@ -1030,11 +1031,13 @@ function reviewWord(n: number): string {
 function googleRatingHtml(ctx: RenderCtx): string {
   const g = ctx.shop.googleRating;
   if (!g) return "";
-  // Refused rather than rendered wrong: a score outside the scale, an empty
-  // count or a link that is not a link would each turn this from proof into
-  // a defect, and a hero that silently drops the line is the safe failure.
+  // Refused rather than rendered wrong: a score outside the scale or an empty
+  // count would turn this from proof into a defect, and a hero that silently
+  // drops the line is the safe failure.
   if (!(g.score >= 1 && g.score <= 5) || !(g.count >= 1)) return "";
-  if (!g.url.startsWith("https://")) return "";
+  // A link that is not a link is worse than no link: it is a promise to show
+  // the source that lands nowhere. Absent is a state; malformed is not.
+  const href = g.url && g.url.startsWith("https://") ? g.url : "";
 
   const on = Math.max(1, Math.min(5, Math.round(g.score)));
   // Slovenian writes the decimal with a comma.
@@ -1045,25 +1048,34 @@ function googleRatingHtml(ctx: RenderCtx): string {
   // then prefixed "Ocena na Googlu:" — so a screen reader read the shop's
   // proof line as "Ocena na Googlu: 4,9 od 5, 37 mnenj na Googlu".
   const label =
-    "Ocena na Googlu: " + score + " od 5, " + reviews + " — odpre Google v novem zavihku";
+    "Ocena na Googlu: " + score + " od 5, " + reviews +
+    (href ? " — odpre Google v novem zavihku" : "");
   // "30. 8. 2026", not "2026-08-30": the ISO form is for the config, where a
   // sortable date is the useful one, and Slovenian prose is what the page is
   // written in. Split rather than parsed — a Date here would apply a timezone
   // to a plain calendar day and can move it by one.
   const [y, m, d] = g.asOf.split("-");
   const asOf = y && m && d ? Number(d) + ". " + Number(m) + ". " + y : g.asOf;
-  return (
-    '<p class="st-hero-rating">' +
-    '<a href="' + esc(g.url) + '" target="_blank" rel="noopener" ' +
-    'aria-label="' + esc(label) + '">' +
+  // ⚠️ THE GLYPHS AND THE FIGURES ARE HIDDEN EITHER WAY, and the words are
+  // said once. Linked, the anchor's own aria-label carries them; unlinked
+  // there is no element whose name a reader would hear, so the sentence goes
+  // in a visually-hidden span — a <p> with an aria-label is not reliably
+  // announced, which is why this does not simply move the attribute up.
+  const inner =
     '<span class="st-hero-stars" aria-hidden="true">' +
     '<span class="st-hero-star-on">' + "\u2605".repeat(on) + "</span>" +
     (on < 5 ? '<span class="st-hero-star-off">' + "\u2605".repeat(5 - on) + "</span>" : "") +
     "</span>" +
     '<span class="st-hero-rating-n" aria-hidden="true">' + esc(score) + "</span>" +
     '<span class="st-hero-rating-t" aria-hidden="true">' +
-    esc(reviews + " na Googlu") + "</span>" +
-    "</a>" +
+    esc(reviews + " na Googlu") + "</span>";
+  return (
+    '<p class="st-hero-rating">' +
+    (href
+      ? '<a href="' + esc(href) + '" target="_blank" rel="noopener" ' +
+        'aria-label="' + esc(label) + '">' + inner + "</a>"
+      : '<span class="st-hero-rating-s">' +
+        '<span class="st-vh">' + esc(label) + "</span>" + inner + "</span>") +
     // The date the figures were read. Small, muted, and not optional: a
     // rating with no date is a claim that ages silently.
     '<span class="st-hero-rating-d">' + esc("stanje " + asOf) + "</span>" +

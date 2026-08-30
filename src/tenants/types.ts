@@ -87,11 +87,19 @@ export type ShopConfig = {
    * The shop's public Google rating, for the hero's proof line.
    *
    * ⚠️ ABSENT UNTIL A REAL PROFILE HAS REAL REVIEWS, and absent is the
-   * default. Every field is required together because a score without a
-   * count is not a rating and a rating without a link is not checkable: a
-   * number a reader cannot verify is worth less than no number, and under
-   * ZVPot-1 (Annex I 23b/23c) an unverifiable review claim is not a matter of
-   * degree. Leave it unset and the hero renders exactly as it does today.
+   * default. A score without a count is not a rating, so those two are
+   * required together and a count under one or a score off the scale is
+   * refused. Leave the whole thing unset and the hero renders exactly as it
+   * does today.
+   *
+   * The URL is optional and the note beside it says what that costs. It was
+   * required at first, on the reasoning that a number a reader cannot verify
+   * is worth less than no number — which is true of the DEVICE and was the
+   * wrong rule to enforce in the type: the shop knows its own rating, and a
+   * shop that has not got the link to hand should not be blocked from
+   * stating it. What ZVPot-1 (Annex I 23b/23c) forbids is inventing reviews
+   * or claiming they are verified when nobody checked, and neither is a
+   * question of whether the sentence carries a hyperlink.
    *
    * ⚠️ AND IT NEVER BECOMES AggregateRating STRUCTURED DATA. render/page.ts
    * emits none by design; a rating COLLECTED BY GOOGLE marked up as this
@@ -108,8 +116,18 @@ export type ShopConfig = {
     readonly score: number;
     /** How many reviews that score is computed from. */
     readonly count: number;
-    /** The public profile URL a reader can open and check. https only. */
-    readonly url: string;
+    /**
+     * The public profile URL, so a reader can open it and check. https only.
+     *
+     * ⚠️ OPTIONAL, AND THE LINE IS WEAKER WITHOUT IT. With a URL the whole
+     * line is an anchor and the rating is a QUOTATION a visitor can verify in
+     * one press; without one it is the shop's own statement about its own
+     * profile, which is a claim the shop is making rather than one it is
+     * citing. Both name the source in words. Add the link when you have it —
+     * it is the difference between "we are rated 4,7" and "here is where that
+     * number lives".
+     */
+    readonly url?: string;
     /** ISO date the score and count were read, e.g. "2026-08-30". */
     readonly asOf: string;
   };
