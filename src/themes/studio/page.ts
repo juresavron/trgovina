@@ -1473,6 +1473,29 @@ export const STUDIO_PAGE_CSS = `
     outline-offset: 3px;
     border-radius: var(--r-ctrl);
   }
+  /* The index shape: one destination a line, with the line that says what is
+   * behind it. The row above wraps short labels; this one cannot, because a
+   * label and its blurb have to stay together. */
+  :root[data-theme="studio"] .st-page-onward--rich ul {
+    display: grid;
+    gap: clamp(18px, 2vw, 30px);
+  }
+  :root[data-theme="studio"] .st-page-onward--rich li {
+    display: grid;
+    gap: 4px;
+    max-inline-size: 38rem;
+  }
+  :root[data-theme="studio"] .st-page-onward--rich a {
+    font-size: var(--t-lead);
+    font-weight: var(--w-body-med);
+    line-height: var(--lh-lead);
+  }
+  :root[data-theme="studio"] .st-page-onward-d {
+    font-family: var(--f-body);
+    font-size: var(--t-body);
+    line-height: var(--lh-body);
+    color: var(--ink-mute);
+  }
 
   /* The closing call to action. */
   :root[data-theme="studio"] .st-page-cta {
@@ -1964,20 +1987,31 @@ function links(ctx: RenderCtx, b: Extract<Block, { kind: "links" }>, id?: string
   if (b.items.length === 0) return "";
   const head = b.h ?? "Oglejte si";
   const hid = (id ?? "st-links") + "-h";
+  const rich = b.items.some((it) => typeof it[2] === "string" && it[2].length > 0);
   // The nav carries the section id itself. It used to sit on nothing — the
   // heading got id+"-h" and a data-anchor no selector ever consumed — so the
   // first links block with a real heading gave the TOC a fragment that
   // resolved to nowhere. structure.test.ts now proves every rail link lands.
   return (
-    '<nav class="st-page-onward"' + (id ? ' id="' + esc(id) + '"' : "") +
+    // ⚠️ TWO SHAPES, ONE BLOCK, decided by the CONTENT rather than by a flag.
+    // A links block at the foot of a page is a wrapped row of short labels —
+    // "Oglejte si" and four destinations — and a blurb under each would be
+    // noise there. An INDEX is the other device: /vodniki is three guides and
+    // nothing else, and a row of three bare titles asks the reader to choose
+    // between articles it has told them nothing about. So a block whose items
+    // carry a third element stacks instead, and one that does not is untouched.
+    '<nav class="st-page-onward' + (rich ? " st-page-onward--rich" : "") + '"' +
+    (id ? ' id="' + esc(id) + '"' : "") +
     ' aria-labelledby="' + esc(hid) + '">' +
     '<p class="st-page-onward-h" id="' + esc(hid) + '">' + esc(head) + "</p><ul>" +
     b.items
       .map(
-        ([label, href]) =>
+        ([label, href, blurb]) =>
           // ctx.q, like cta() and onward(): the QA/theme override query
           // was dropped through every link of a links block.
-          '<li><a href="' + esc(href) + esc(ctx.q) + '">' + esc(label) + "</a></li>",
+          '<li><a href="' + esc(href) + esc(ctx.q) + '">' + esc(label) + "</a>" +
+          (blurb ? '<span class="st-page-onward-d">' + esc(blurb) + "</span>" : "") +
+          "</li>",
       )
       .join("") +
     "</ul></nav>"

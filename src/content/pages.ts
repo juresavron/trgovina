@@ -119,12 +119,24 @@ export type Block =
    * crawler". On a site whose whole strategy is search, an article that
    * mentions three models and links to none of them is wasted.
    *
-   * Each entry is [label, path]. The PATH IS VALIDATED WHERE IT IS PARSED, to
-   * an internal absolute path and nothing else — no scheme, no host, no
-   * protocol-relative "//". A post may point at this shop's own pages; it may
-   * not become a way to publish an outbound link from a compromised account.
+   * Each entry is [label, path] with an OPTIONAL third element: one line
+   * saying what is behind the link. It is optional because most links blocks
+   * are a short list at the foot of a page, where a blurb each would be
+   * noise; it exists because an INDEX is a different device. /vodniki lists
+   * three guides and nothing else, which audit-seo.mjs reports as 40 words —
+   * a page that asks a reader to choose between three articles and tells them
+   * nothing about any of them.
+   *
+   * The blurb is a SUMMARY, never a copy: the guides' own opening sentences
+   * live on the guides, and a fourth copy of text that already has a URL is
+   * what the index was rewritten to stop being.
+   *
+   * The PATH IS VALIDATED WHERE IT IS PARSED, to an internal absolute path
+   * and nothing else — no scheme, no host, no protocol-relative "//". A post
+   * may point at this shop's own pages; it may not become a way to publish an
+   * outbound link from a compromised account.
    */
-  | { kind: "links"; h?: string; items: [string, string][] }
+  | { kind: "links"; h?: string; items: [string, string, string?][] }
   /**
    * A photograph between sections — an editorial band, not an illustration
    * of a specific claim.
