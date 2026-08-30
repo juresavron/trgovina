@@ -1091,6 +1091,12 @@ export const STUDIO_PDP_CSS = `
     letter-spacing: var(--ls-body);
     line-height: var(--lh-body);
     color: var(--ink-body);
+    /* ⚠️ FIVE LINES AT 99 CHARACTERS, which is running text by any reading —
+     * the panel bodies' "two lines, one return sweep" argument does not cover
+     * this one. Measured on the tub pages: 72 characters at 1440 and 99 at
+     * 1920, where the buy column stops growing. The same 34rem .st-pdp-note
+     * takes, which measures ~71 against this ramp. */
+    max-inline-size: 34rem;
   }
   /* The panel's way out to the page that carries the whole answer. Same ink
    * and the same underline as the configuration note's link, because it is

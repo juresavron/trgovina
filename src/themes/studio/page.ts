@@ -606,21 +606,36 @@ export const STUDIO_PAGE_CSS = `
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: clamp(4px, 0.5vw, 8px);
+    /* 20px, not a clamp: it is 2 x the link's 10px padding, and that is the
+     * whole point — see the rule below. A clamp that dips to 4px at the
+     * narrow end puts the overlap back exactly where the phone is. */
+    gap: 20px;
   }
-  /* 44px targets on 24px text: padding grows the hit area, the negative
-   * margin gives the same pixels back to the layout, so the rail's rhythm
-   * does not change. The theme's own bar is --st-tap on every control; these
-   * links were the three that undershot it (a11y audit, 2.5.5). */
-  :root[data-theme="studio"] .st-page-toc a,
-  :root[data-theme="studio"] .st-page-fv a {
-    display: inline-block;
-    padding-block: 10px;
-    margin-block: -10px;
-  }
+  /* ⚠️ THE PADDING USED TO EAT THE NEXT ENTRY'S FIRST CLICKABLE PIXELS. It is
+   * 10px of padding against a 4-8px gap, given back to the layout with
+   * margin-block:-10px so the rail's rhythm would not change — and a
+   * negative margin does not shrink the BOX, only the space it claims, so
+   * every entry's 43px target overlapped the next one's by 13px. Measured on
+   * /pogosta-vprasanja with elementFromPoint: at 390 and 768 a click on the
+   * last pixel row of an entry's own TEXT opened the entry BELOW it, for
+   * four of the five entries. "Postavitev" answered with "Obratovanje".
+   *
+   * So the gap now carries the target instead of the margin hiding it: 20px
+   * between 24px rows tiles the 44px targets exactly, edge to edge, with
+   * nothing overlapping and nothing lost between them. It costs 12px per
+   * entry of rail height, which is what a target that works is worth.
+   *
+   * ⚠️ .st-page-fv a IS NOT IN THIS RULE ANY MORE. It used to be, and it made
+   * that anchor an inline-block with margin-block:-10px while its own rule
+   * 500 lines below — later in the cascade, same specificity — kept its
+   * padding at 4px. The result was an outer height of 7px on a 27px box,
+   * and an inline-block cannot wrap mid-value, which is the one thing the
+   * comment on that rule says it must be able to do. */
   :root[data-theme="studio"] .st-page-toc a {
     display: inline-flex;
     align-items: center;
+    padding-block: 10px;
+    margin-block: -10px;
     /* 24px is WCAG 2.2 SC 2.5.8's floor and these are navigation, not links
      * inside a sentence, so the inline exception does not cover them. */
     min-block-size: 24px;
@@ -1718,6 +1733,13 @@ export const STUDIO_PAGE_CSS = `
     font-size: 0.875rem;
     line-height: 1.5;
     color: var(--ink-mute);
+    /* The access hint under "Dostop do prostora" is three sentences, and
+     * uncapped it ran the field's full 682px — 97 rendered characters on its
+     * widest line at 1440 and above, 29% past the 75 ceiling, in the smallest
+     * type on the form. 34rem is this theme's measure for microcopy (see
+     * .st-pdp-note) and lands at ~71. The FIELD keeps its own width; only the
+     * sentence under it is capped. */
+    max-inline-size: 34rem;
   }
   :root[data-theme="studio"] .st-enq-fs {
     margin: 0;
