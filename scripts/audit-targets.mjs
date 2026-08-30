@@ -81,6 +81,11 @@ async function bundle(entry, tag) {
 const { handleRequest } = await bundle("src/worker.ts", "worker");
 const { SHOPS } = await bundle("src/tenants/index.ts", "shops");
 const { CONTENT } = await bundle("src/content/index.ts", "content");
+// ⚠️ /blog IS NOT SERVED BY handleRequest. handlePosts() is async and takes
+// env, so a sync env-free harness gets the 404 page for it — this audited a
+// "route not found" screen and counted it as a clean route. blogIndexDoc is
+// pure, and its empty state is exactly what ships while there are no posts.
+const { blogIndexDoc } = await bundle("src/blog/routes.ts", "blog");
 
 const SHOP = SHOPS["bazen"];
 const C = CONTENT["bazen"];
@@ -101,6 +106,10 @@ function routes() {
 const ROUTES = routes();
 const html = {};
 for (const path of ROUTES) {
+  if (path === SHOP.routeSlugs["/blog"]) {
+    html[path] = blogIndexDoc(SHOP, C, [], true);
+    continue;
+  }
   // ⚠️ THE HOST HEADER IS THE TENANCY KEY — without it every route 404s.
   const res = handleRequest(
     new Request("https://" + HOST + path + "?shop=bazen", { headers: { host: HOST } }),

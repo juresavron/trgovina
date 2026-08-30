@@ -1517,6 +1517,24 @@ export const STUDIO_PAGE_CSS = `
     padding-block-start: clamp(20px, 2vw, 30px);
     border-block-start: var(--bw-line) solid var(--line);
   }
+  /* ⚠️ NO RULE WHEN THE NAV IS THE FIRST THING IN THE BODY, because then it is
+   * the SECOND rule in 129px of nothing. /vodniki is an index: its body holds
+   * the list of guides and no prose at all, so the page drew the head's own
+   * full-width hairline at y470, then 129px of white, then this block's
+   * 608px one at y599 above "VSI VODNIKI". Two rules of different lengths
+   * with nothing between them read as a row that failed to render — the same
+   * fault finder.ts already fixed on .st-fnd-skip, arrived at from the other
+   * end.
+   *
+   * The head's rule closes the head; the body's own 63px step is the space
+   * between them. Both selectors are needed: the nav is sometimes the body's
+   * first child and sometimes the first child of the block wrapper. */
+  :root[data-theme="studio"] .st-page-body > .st-page-onward:first-child,
+  :root[data-theme="studio"] .st-page-body > :first-child > .st-page-onward:first-child {
+    margin-block-start: 0;
+    padding-block-start: 0;
+    border-block-start: 0;
+  }
   :root[data-theme="studio"] .st-page-onward-h {
     margin: 0 0 clamp(10px, 1vw, 14px);
     font-family: var(--f-label);
