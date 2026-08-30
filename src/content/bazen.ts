@@ -1006,7 +1006,23 @@ export const bazenContent: ShopContent = {
   // sentence around it, and the question names what the visitor gets.
   nav: ["Trgovina", "O nas", "Vodniki", "Dostava", "Kontakt", "Primerjava", "Kateri bazen?"],
   artKey: "pool",
-  kicker: "Masažni bazen · Slovenija",
+  // ⚠️ A KEYWORD AND A COUNTRY JOINED BY A MIDDOT IS NOT A SENTENCE. This
+  // read "Masažni bazen · Slovenija": two nouns, no verb, nobody in it, and
+  // it repeated a word the h1 says two lines below it. It is the first line
+  // on the home page and it now sits beside a wordmark that says MASAŽNI
+  // BAZENI already, so the repetition was about to be threefold.
+  //
+  // The keyword stays in first position, which is the only SEO constraint
+  // this line has; the other two words go on the thing that separates this
+  // shop from a catalogue, in the voice the rest of the site uses — first
+  // person plural, present tense.
+  //
+  // ⚠️ NO "PO VSEJ SLOVENIJI" HERE. The obvious version reads "pripeljemo po
+  // vsej Sloveniji" and it is three lines above a marquee that already says
+  // "DOSTAVA, PRIKLOP IN ZAGON PO VSEJ SLOVENIJI" — both visible in the same
+  // first screen. The geography is not lost; it is stated by the device
+  // directly under this one.
+  kicker: "Masažni bazeni · pripeljemo in zaženemo",
   // ⚠️ THE H1 SELLS THE DIFFERENCE, NOT THE SPEC — and it keeps the keyword
   // in the first two words, which is the only SEO constraint it has.
   //
@@ -1314,7 +1330,23 @@ export const bazenContent: ShopContent = {
   pdps: [...OFFERED_MODELS.map(pdpFor), ...OFFERED_SWIMSPAS.map(pdpForSwim)],
   footNote:
     // The footer of EVERY page said "Razstavni bazen v Ljubljani — pridite ga
-    // pogledat v živo". There is no showroom; this now names the thing the
-    // shop really does, which is the same promise the moat band makes.
-    "Specialist za masažne bazene v Sloveniji. Dostava, priklop in zagon po vsej Sloveniji, z brezplačnim ogledom lokacije pred nakupom.",
+    // pogledat v živo". There is no showroom; this names the thing the shop
+    // really does, which is the same promise the moat band makes.
+    //
+    // ⚠️ AND IT SAID IT WITH NO VERB IN IT. The replacement read "Specialist
+    // za masažne bazene v Sloveniji. Dostava, priklop in zagon po vsej
+    // Sloveniji, z brezplačnim ogledom lokacije pred nakupom." — three faults
+    // in 131 characters. "Specialist za" is a status nobody can check,
+    // claimed as a noun, on a site whose /o-nas page refuses to state a
+    // founding year or an installation count for exactly that reason;
+    // "Sloveniji" appears twice; and the second sentence is four
+    // nominalisations with no verb at all, so the promise the whole shop
+    // rests on was written as a directory entry. It also quietly stopped
+    // selling the swim spas, which the footer's own link column lists.
+    //
+    // Five verbs now, all first-person plural, Slovenia once. It sits
+    // directly under the new signature, which is the other reason it had to
+    // stop being a label.
+    "Prodajamo masažne in swim spa bazene po vsej Sloveniji. Pred nakupom pridemo " +
+      "pogledat lokacijo, nato bazen pripeljemo, priklopimo in zaženemo.",
 };
