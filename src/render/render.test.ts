@@ -218,11 +218,30 @@ describe("the enquiry confirmation is a GET", () => {
  * unverifiable claim — which is what ZVPot-1 Annex I 23b/23c is about.
  */
 describe("the hero's rating", () => {
-  it("draws nothing while the shop has none configured", async () => {
-    expect(SHOPS["bazen"]!.googleRating).toBeUndefined();
+  it("prints the score the shop configured, and its count", async () => {
+    const g = SHOPS["bazen"]!.googleRating!;
+    // 24 five-star and 10 four-star: 34 reviews, sum 160, mean 4.7059.
+    expect(g.count).toBe(24 + 10);
+    expect(g.score).toBeCloseTo((24 * 5 + 10 * 4) / (24 + 10), 1);
     const html = await text(get("/"));
-    expect(html).not.toContain("st-hero-rating");
-    expect(html).not.toContain("na Googlu");
+    // The decimal is a comma in Slovenian, and the count takes the genitive
+    // plural at 34 — not the dual, which is what "34 mnenji" would be.
+    expect(html).toContain("4,7");
+    expect(html).toContain("34 mnenj na Googlu");
+    expect(html).not.toContain("34 mnenji");
+    // The exact figure is beside the glyphs precisely because they round up.
+    expect(html).toContain("Ocena na Googlu: 4,7 od 5, 34 mnenj");
+  });
+
+  it("is a plain statement while no profile URL is set, not a dead link", async () => {
+    expect(SHOPS["bazen"]!.googleRating!.url).toBeUndefined();
+    const html = await text(get("/"));
+    expect(html).toContain("st-hero-rating-s");
+    // ⚠️ A LINK THAT GOES NOWHERE IS WORSE THAN NO LINK: it promises to show
+    // the source and lands on the page it is already on. The unlinked line
+    // still names the source in words, and the day the URL arrives the whole
+    // line becomes an anchor with no other change.
+    expect(html).not.toContain('<a href="" target="_blank"');
   });
 
   // ⚠️ NEVER AS STRUCTURED DATA. A rating Google collected, marked up as this

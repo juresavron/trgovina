@@ -35,22 +35,27 @@ export const bazen: ShopConfig = {
   // offering a basket it cannot fill — see ordersOnline in tenants/types.ts.
   ordersOnline: false,
 
-  // THE GOOGLE RATING, UNSET.
+  // THE GOOGLE RATING, AS THE OWNER READ IT.
   //
-  // The hero draws nothing until all four fields are here, which is the
-  // correct state: this shop's profile has not been read, and a score typed
-  // from memory is exactly the claim ZVPot-1 Annex I 23b/23c is about. To
-  // turn it on, read the profile and copy what it says:
+  // 24 five-star and 10 four-star reviews: 34 in all, summing to 160, mean
+  // 4.7059 — 4,7 as one decimal, which is the figure Google displays and the
+  // one printed here. The stars round to five and the exact number sits
+  // beside them, so nothing rounds in the shop's favour on its own.
   //
-  //   googleRating: {
-  //     score: 4.9,                                   // as shown, one decimal
-  //     count: 37,                                    // as shown
-  //     url: "https://maps.app.goo.gl/…",             // the public profile
-  //     asOf: "2026-08-30",                           // the day you read it
-  //   },
+  // ⚠️ NO PROFILE URL YET, AND THE LINE IS WEAKER FOR IT. With one the whole
+  // line becomes an anchor and the rating is a quotation a visitor can check
+  // in one press; without one it is the shop stating its own rating and
+  // naming where it lives. Add the link the moment it is to hand — it is a
+  // one-field edit and it is the difference between "we are rated 4,7" and
+  // "here is where that number lives".
   //
-  // Nothing else changes: no structured data, no second component, and the
-  // proof row below it stays as it is.
+  // asOf is the day these were read. It is rendered, so it is also the cue
+  // to re-read the profile: reviews accumulate and this number will drift.
+  googleRating: {
+    score: 4.7,
+    count: 34,
+    asOf: "2026-08-30",
+  },
 
   keyword: {
     primary: "masažni bazen",
