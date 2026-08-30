@@ -606,21 +606,36 @@ export const STUDIO_PAGE_CSS = `
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: clamp(4px, 0.5vw, 8px);
+    /* 20px, not a clamp: it is 2 x the link's 10px padding, and that is the
+     * whole point — see the rule below. A clamp that dips to 4px at the
+     * narrow end puts the overlap back exactly where the phone is. */
+    gap: 20px;
   }
-  /* 44px targets on 24px text: padding grows the hit area, the negative
-   * margin gives the same pixels back to the layout, so the rail's rhythm
-   * does not change. The theme's own bar is --st-tap on every control; these
-   * links were the three that undershot it (a11y audit, 2.5.5). */
-  :root[data-theme="studio"] .st-page-toc a,
-  :root[data-theme="studio"] .st-page-fv a {
-    display: inline-block;
-    padding-block: 10px;
-    margin-block: -10px;
-  }
+  /* ⚠️ THE PADDING USED TO EAT THE NEXT ENTRY'S FIRST CLICKABLE PIXELS. It is
+   * 10px of padding against a 4-8px gap, given back to the layout with
+   * margin-block:-10px so the rail's rhythm would not change — and a
+   * negative margin does not shrink the BOX, only the space it claims, so
+   * every entry's 43px target overlapped the next one's by 13px. Measured on
+   * /pogosta-vprasanja with elementFromPoint: at 390 and 768 a click on the
+   * last pixel row of an entry's own TEXT opened the entry BELOW it, for
+   * four of the five entries. "Postavitev" answered with "Obratovanje".
+   *
+   * So the gap now carries the target instead of the margin hiding it: 20px
+   * between 24px rows tiles the 44px targets exactly, edge to edge, with
+   * nothing overlapping and nothing lost between them. It costs 12px per
+   * entry of rail height, which is what a target that works is worth.
+   *
+   * ⚠️ .st-page-fv a IS NOT IN THIS RULE ANY MORE. It used to be, and it made
+   * that anchor an inline-block with margin-block:-10px while its own rule
+   * 500 lines below — later in the cascade, same specificity — kept its
+   * padding at 4px. The result was an outer height of 7px on a 27px box,
+   * and an inline-block cannot wrap mid-value, which is the one thing the
+   * comment on that rule says it must be able to do. */
   :root[data-theme="studio"] .st-page-toc a {
     display: inline-flex;
     align-items: center;
+    padding-block: 10px;
+    margin-block: -10px;
     /* 24px is WCAG 2.2 SC 2.5.8's floor and these are navigation, not links
      * inside a sentence, so the inline exception does not cover them. */
     min-block-size: 24px;
@@ -1341,8 +1356,34 @@ export const STUDIO_PAGE_CSS = `
      * The tiles still stretch to the tallest in their row, which is a grid
      * default too, so a two-line address stays level with a telephone. */
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    /* ⚠️ AN EXPLICIT COLUMN COUNT, after both automatic ones failed at one end
+     * each. This list is the contact block: a telephone, an address and an
+     * e-mail, so never more than three items.
+     *
+     *   flex with grow   — a lone third tile took the whole row: 299/299/608
+     *                      at 768, twice as wide as the two above it.
+     *   auto-fill        — fixed that and over-provisioned instead: FOUR
+     *                      tracks for three tiles in the 902px column at 1440,
+     *                      so the row ended 229px short of its own box and the
+     *                      telephone number wrapped onto two lines beside the
+     *                      hole.
+     *   auto-fit + a cap — fixed both and stopped a single tile filling a
+     *                      390px phone row, leaving 70px beside it.
+     *
+     * With a known, small item count the count can simply be stated. Three
+     * tracks hold three tiles with nothing left over; two tracks put the third
+     * in column one at exactly one column's width; one track fills the row.
+     * No orphan can stretch, because no row is ever short of a track. */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: clamp(10px, 1vw, 16px);
+  }
+  @media (max-width: 767px) {
+    :root[data-theme="studio"] .st-page-ch {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 479px) {
+    :root[data-theme="studio"] .st-page-ch { grid-template-columns: minmax(0, 1fr); }
   }
   :root[data-theme="studio"] .st-page-ch > li {
     display: flex;
@@ -1350,11 +1391,21 @@ export const STUDIO_PAGE_CSS = `
   }
   /* The tile. A quiet panel rather than an outlined card: the two controls
    * above it are the page's emphasis, and three bordered boxes under two
-   * bordered buttons would be five rectangles arguing. align-content:start so
-   * a tile with a note and a tile without still align at the top. */
+   * bordered buttons would be five rectangles arguing. */
   :root[data-theme="studio"] .st-page-ch-t {
-    display: grid;
-    align-content: start;
+    /* ⚠️ A COLUMN FLEX BOX, AND IT WAS A GRID WITH grid-template-rows AND
+     * align-content:start. Two things were wrong with that at once. The tile
+     * has FOUR children — disc, label, value, note — so a three-row template
+     * put the 1fr on the VALUE and left the note in an implicit auto row;
+     * and align-content:start parks the tracks at the top and leaves the free
+     * space OUTSIDE them, so margin-block-start:auto on the note had nothing
+     * to consume. Both are why the note stayed where it was.
+     *
+     * A column flex box needs neither: auto margins in flex absorb the free
+     * space of the line, whatever the child count, so .st-page-ch-n pins to
+     * the bottom and a tile without a note simply packs from the top. */
+    display: flex;
+    flex-direction: column;
     gap: 6px;
     inline-size: 100%;
     padding: clamp(16px, 1.6vw, 22px);
@@ -1419,6 +1470,20 @@ export const STUDIO_PAGE_CSS = `
    * have already done once in this theme, and it silently ships whatever the
    * literal says while looking like it came from the ramp.) */
   :root[data-theme="studio"] .st-page-ch-n {
+    /* ⚠️ PUSHED TO THE BOTTOM, because the tiles are equal height and this was
+     * not. The runs stack from the top, so a value that wrapped to two lines
+     * pushed its own note down while the others stayed put: measured at 1440,
+     * "Odgovorimo sproti." sat at y=824 while its two neighbours sat at 856,
+     * and the same 32px step appeared at 1024, 1200 and 1920. Three notes at
+     * two heights inside three boxes of one height reads as a mistake rather
+     * than as a rhythm.
+     *
+     * The tile is a column flex box (see .st-page-ch-t for why it is not a
+     * grid), and an auto margin there consumes the line's free space — so the
+     * notes sit on the floor of their tiles and end level with each other,
+     * whatever the value above them did. */
+    margin-block-start: auto;
+    padding-block-start: 6px;
     font-family: var(--f-body);
     font-size: var(--t-label);
     line-height: var(--lh-body);
@@ -1451,6 +1516,24 @@ export const STUDIO_PAGE_CSS = `
     margin-block-start: clamp(44px, 4.6vw, 76px);
     padding-block-start: clamp(20px, 2vw, 30px);
     border-block-start: var(--bw-line) solid var(--line);
+  }
+  /* ⚠️ NO RULE WHEN THE NAV IS THE FIRST THING IN THE BODY, because then it is
+   * the SECOND rule in 129px of nothing. /vodniki is an index: its body holds
+   * the list of guides and no prose at all, so the page drew the head's own
+   * full-width hairline at y470, then 129px of white, then this block's
+   * 608px one at y599 above "VSI VODNIKI". Two rules of different lengths
+   * with nothing between them read as a row that failed to render — the same
+   * fault finder.ts already fixed on .st-fnd-skip, arrived at from the other
+   * end.
+   *
+   * The head's rule closes the head; the body's own 63px step is the space
+   * between them. Both selectors are needed: the nav is sometimes the body's
+   * first child and sometimes the first child of the block wrapper. */
+  :root[data-theme="studio"] .st-page-body > .st-page-onward:first-child,
+  :root[data-theme="studio"] .st-page-body > :first-child > .st-page-onward:first-child {
+    margin-block-start: 0;
+    padding-block-start: 0;
+    border-block-start: 0;
   }
   :root[data-theme="studio"] .st-page-onward-h {
     margin: 0 0 clamp(10px, 1vw, 14px);
@@ -1668,6 +1751,13 @@ export const STUDIO_PAGE_CSS = `
     font-size: 0.875rem;
     line-height: 1.5;
     color: var(--ink-mute);
+    /* The access hint under "Dostop do prostora" is three sentences, and
+     * uncapped it ran the field's full 682px — 97 rendered characters on its
+     * widest line at 1440 and above, 29% past the 75 ceiling, in the smallest
+     * type on the form. 34rem is this theme's measure for microcopy (see
+     * .st-pdp-note) and lands at ~71. The FIELD keeps its own width; only the
+     * sentence under it is capped. */
+    max-inline-size: 34rem;
   }
   :root[data-theme="studio"] .st-enq-fs {
     margin: 0;

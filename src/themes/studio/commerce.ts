@@ -1683,11 +1683,21 @@ export const STUDIO_COMMERCE_CSS = `
         mask-image:
           linear-gradient(to right, #000 0, #000 0, #000 calc(100% - 36px), transparent 100%);
       }
+      /* ⚠️ NO LEFT FADE AT THE END OF THE SCROLL — that stop used to read
+       * "transparent 0, #000 36px", and it now lands on the STICKY LABEL
+       * COLUMN. The two devices were saying opposite things: the fade says
+       * "there is more behind this edge", and the sticky column's whole job
+       * is that there is not — it is the row's legend, pinned. Scrolled
+       * right, every label was dimmed to half ink.
+       *
+       * The right-hand fade is the one that carries the affordance, and it is
+       * still here in the "from" stop; at the end of the scroll there is
+       * nothing to the right to promise, so this stop fades neither edge. */
       to {
         -webkit-mask-image:
-          linear-gradient(to right, transparent 0, #000 36px, #000 100%, #000 100%);
+          linear-gradient(to right, #000 0, #000 0, #000 100%, #000 100%);
         mask-image:
-          linear-gradient(to right, transparent 0, #000 36px, #000 100%, #000 100%);
+          linear-gradient(to right, #000 0, #000 0, #000 100%, #000 100%);
       }
     }
   }
@@ -1712,9 +1722,50 @@ export const STUDIO_COMMERCE_CSS = `
     padding: clamp(11px, 1vw, 20px) clamp(10px, 1.2vw, 24px);
     vertical-align: top;
   }
+  /* ⚠️ THE LABEL COLUMN STICKS, because without it the table loses its own
+   * legend the moment it is used. It scrolls sideways inside .st-cmp-scroll —
+   * correctly, and the page never moves — but the labels were static, so
+   * scrolled fully right at 390 the reader saw "5 oseb · 2 ležalnika / 50 /
+   * 9,3 m² (100 sf) / 3 leta / ZR801" with nothing on screen saying which
+   * figure was which. A comparison table whose rows are unlabelled is a grid
+   * of numbers.
+   *
+   * The background is opaque and not transparent: the sticky column is
+   * painted OVER the cells sliding under it, and --bg is the ground this
+   * table sits on. z-index above the row hover wash, below nothing else.
+   *
+   * ⚠️ THE EDGE IS PAINTED BY THE CELL'S OWN BACKGROUND, and it took three
+   * tries to get a line to appear at all. border-inline-end is out because
+   * the table is border-collapse:collapse and in that model the cell borders
+   * belong to the TABLE, not the cell — they stay where the table put them
+   * while the sticky cell slides away from them. box-shadow is out for a
+   * blunter reason: Chromium does not paint a box-shadow on a table cell in
+   * the collapsed border model AT ALL. It computes — the probe read back
+   * "rgb(223,223,223) 1px 0px 0px 0px" — and it renders nothing, so a whole
+   * scan line either side of the edge came back 255,255,255 for four
+   * different shadows including a 14px one at 0.28 alpha.
+   *
+   * A background gradient is painted, and it travels with the sticky cell.
+   * The line therefore sits one pixel INSIDE the cell rather than one pixel
+   * outside it, which is a difference nobody can see.
+   *
+   * It is a permanent rule rather than a scrolled-only one: where the table
+   * fits, a hairline between the row labels and the data is the legend rule a
+   * comparison table wants anyway.
+   *
+   * The wider inline-end padding is what keeps the sliced column readable as
+   * something passing BENEATH the labels. At 10px, the half-glyphs of the
+   * cell sliding under the edge sat two characters from the label's last
+   * letter and read as part of it: "Črpalke  a 0,35 KM", "Krmilnik  + ·". */
   :root[data-theme="studio"] .st-cmp-table th:first-child,
   :root[data-theme="studio"] .st-cmp-table td:first-child {
     padding-inline-start: 0;
+    padding-inline-end: clamp(18px, 1.2vw, 24px);
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    background:
+      linear-gradient(to right, var(--bg) calc(100% - 1px), var(--line) calc(100% - 1px));
   }
   /* The model names are the one display-face run in the table, at the product
    * name's own rung — these are the same objects the cards above name, and a

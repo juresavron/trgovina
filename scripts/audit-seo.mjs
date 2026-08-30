@@ -231,9 +231,15 @@ for (const route of PAGES) {
   /* --- weight, as it actually travels ---------------------------------- */
   //
   // Raw bytes are the wrong number to warn on: the edge serves brotli, and
-  // this document is ~85% inlined stylesheet which compresses to a seventh of
-  // itself. Reported compressed, with the raw figure beside it, so the line
-  // says what a visitor downloads rather than what the string weighs.
+  // markup compresses to a fraction of itself. Reported compressed, with the
+  // raw figure beside it, so the line says what a visitor downloads rather
+  // than what the string weighs.
+  //
+  // ⚠️ THIS IS THE DOCUMENT ALONE. It used to say the document is "~85%
+  // inlined stylesheet", which was true when the sheet sat in the head and is
+  // not now — render/assets.ts links it as a cached file, so the sheet's
+  // 170 kB is not in these numbers at all. src/render/size.test.ts holds the
+  // budget for that.
   const kb = Math.round(Buffer.byteLength(html, "utf8") / 1024);
   const br = Math.round(brotliCompressSync(Buffer.from(html)).length / 1024);
   if (br > 40) warn(route, "document is " + br + " kB brotli (" + kb + " kB raw)");

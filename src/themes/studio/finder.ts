@@ -91,8 +91,25 @@ export const STUDIO_FINDER_CSS = `
     margin: 0 0 clamp(26px, 3vw, 44px);
     max-inline-size: 36rem;
   }
-  /* The options: full-width rows on hairlines, the facts device's rhythm —
-   * each one a single large target with the hint under the label. */
+  /* The options: rows on hairlines, the facts device's rhythm — each one a
+   * single large target with the hint under the label.
+   *
+   * ⚠️ AND THEY WERE THE ONLY THING ON THE PAGE WITHOUT A MEASURE. .st-fnd-in
+   * sets max-inline-size:none precisely because every element below is meant
+   * to cap itself, and these three lists never did: measured at 1440 the rows
+   * ran 1360px against an h1 of 608 and a lead of 576, so each answer's arrow
+   * sat about 1036px to the right of its own last word — far enough that it
+   * reads as page furniture rather than as this row's affordance, and far
+   * enough that the eye loses the row on the way. The hairlines under them
+   * ran the same 1360 while everything above them stopped at 608.
+   *
+   * 38rem is the h1's own measure, so the question and its answers are one
+   * column. */
+  :root[data-theme="studio"] .st-fnd-opts,
+  :root[data-theme="studio"] .st-fnd-list,
+  :root[data-theme="studio"] .st-fnd-hits {
+    max-inline-size: 38rem;
+  }
   :root[data-theme="studio"] .st-fnd-opts {
     list-style: none;
     margin: 0;
