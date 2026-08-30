@@ -103,13 +103,20 @@ export interface SiteImage {
    * page — worse than whatever it replaced — and site-images.test.ts refuses
    * a slot with nothing to fall back to.
    *
-   * The finish swatches are the exception by construction. They are painted
+   * TWO EXCEPTIONS, both by construction rather than by omission.
+   *
+   * The finish swatches are the first. They are painted
    * as CSS backgrounds behind a named tile, so a colour nobody has
    * photographed yet paints its neutral ground and its name, which is
    * exactly the pill the configurator showed before swatches existed. There
    * is nothing to fall back TO — no stock photograph of "Odyssey" exists —
    * and inventing one by pointing at an unrelated product shot would be a
    * false statement about the colour a buyer is choosing.
+   *
+   * The installation photographs are the second, and for the sharper reason:
+   * that band exists to say "we installed these", so a stand-in would make
+   * the sentence false. Nothing renders until the owner lists the job, so an
+   * empty slot is an absent figure, not a broken one.
    */
   readonly optional?: true;
   /**
@@ -156,6 +163,7 @@ export interface SiteImage {
 
 const CHROME = "Slike strani";
 const PAGES = "Vsebinske strani";
+const INSTALLS = "Naše montaže";
 const HOME = "Domača stran";
 const GALLERY = "Galerija na dnu strani";
 const GUIDES = "Kartice vodnikov";
@@ -385,9 +393,15 @@ const GALLERY_IMAGES: readonly SiteImage[] = [6, 7, 8, 9, 10, 11].map(
  * (see content/pages.ts). Same mechanism as everything above: a fixed stem
  * the storefront names in code, a fallback into the shop's own photography
  * until the owner uploads something better — a picture of the team, the van,
- * a finished installation. The pages read correctly either way; these slots
- * exist so that the day such a photograph exists it can go live without a
- * deploy.
+ * the equipment. The pages read correctly either way; these slots exist so
+ * that the day such a photograph exists it can go live without a deploy.
+ *
+ * ⚠️ NOT A FINISHED INSTALLATION, which is what this note used to invite.
+ * These bands fall back to product photography and carry no caption, so a
+ * photograph of a real job put here says nothing about being one — and the
+ * band that WOULD say it is site/montaza-*, where the owner writes the model,
+ * the town and the month beside the picture. An installation photograph is
+ * worth more there and says less here.
  *
  * ⚠️ OFFSETS MUST RESOLVE DISTINCT — site-images.test.ts holds the whole
  * registry to that, because a prose list of taken numbers already went stale
@@ -486,12 +500,51 @@ const FINISH_IMAGES: readonly SiteImage[] = [
   ...finishSlots("obloga", CABINET_FINISH_ENTRIES, "Barve obloge", "obloge"),
 ];
 
+/* ---- our own installations ----------------------------------------------
+ *
+ * ⚠️ THESE SLOTS HAVE NO FALLBACK, AND THAT IS THE POINT. Every other slot
+ * here degrades to the shop's own product photography until it is replaced,
+ * because a hero that 404s is worse than a heavy one. This band is the
+ * opposite case: it exists to say "these are pools we actually installed",
+ * and a supplier's studio cutout standing in for one would make that sentence
+ * false — which is the single claim on this site that must not be borrowed.
+ *
+ * So nothing falls back, and nothing renders until the OWNER lists the
+ * installation in content (see `installations` in content/types.ts). The list
+ * entry is the assertion; the upload is what it points at. A slot uploaded
+ * but not listed shows nothing, which is the safe way round.
+ *
+ * 4:3 rather than the 5:2 the page bands take: a photograph taken on somebody's
+ * terrace with a phone is not a letterbox, and cropping one to 5:2 throws away
+ * the tub or the house.
+ */
+const INSTALL_IMAGES: readonly SiteImage[] = [1, 2, 3, 4, 5, 6].map(
+  (n): SiteImage => ({
+    key: "site/montaza-" + String(n) + ".webp",
+    group: INSTALLS,
+    label: "Montaža — slika " + String(n),
+    note:
+      "Fotografija bazena, ki smo ga zares postavili, pri stranki. Ležeča " +
+      "(razmerje 4 : 3), najbolje 1600 × 1200 px. Slika se prikaže šele, ko je " +
+      "montaža vpisana tudi v seznam (model, kraj, mesec) — brez vpisa je ne " +
+      "objavimo, da napis pod sliko ne bi opisoval nečesa drugega.",
+    ratio: [4, 3],
+    maxWidth: 1600,
+    // No fallback, and therefore no broken picture either: the storefront
+    // renders an installation only where the owner has LISTED it, so an
+    // unfilled slot paints nothing at all rather than an empty frame. That is
+    // the same shape of exception the finish swatches take — see `optional`.
+    optional: true,
+  }),
+);
+
 export const SITE_IMAGES: readonly SiteImage[] = [
   ...CHROME_IMAGES,
   ...HOME_IMAGES,
   ...GUIDE_IMAGES,
   ...GALLERY_IMAGES,
   ...PAGE_IMAGES,
+  ...INSTALL_IMAGES,
   ...FINISH_IMAGES,
 ];
 

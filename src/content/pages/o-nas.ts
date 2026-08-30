@@ -67,9 +67,13 @@ export const ABOUT: Page = {
     },
     // The photograph bands are SLOTS, not statements — see the figure note in
     // content/pages.ts. Until the owner uploads something real (the team, the
-    // van, an installation) each falls back to the shop's own product
+    // van, the equipment) each falls back to the shop's own product
     // photography, which is true by definition. No caption on any of them:
     // a caption would be a claim about a picture this file cannot see.
+    //
+    // A photograph of a finished job belongs in the installs band below
+    // instead, where it is captioned with the model, the town and the month —
+    // and where the caption is what makes it worth showing.
     { kind: "figure", slot: "o-nas-1" },
     {
       kind: "prose",
@@ -101,6 +105,19 @@ export const ABOUT: Page = {
           "preden odidemo, voda kroži in se greje. Nato vas naučimo vzdrževanja: približno " +
           "deset minut na teden in to je vse, kar bazen zahteva od vas.",
       ],
+    },
+    // ⚠️ DRAWS NOTHING TODAY, AND THAT IS THE POINT OF PUTTING IT HERE NOW.
+    // The band renders one figure per entry in `installations` (content/
+    // types.ts) and the list is empty, so this block is invisible until the
+    // first job is photographed and written down — no heading over an empty
+    // row, no gap in the page. It sits under "Kako delamo" because that is
+    // the paragraph it proves: the work described above, done.
+    {
+      kind: "installs",
+      h: "Naše montaže",
+      p:
+        "Vsaka slika je bazen, ki smo ga postavili pri stranki — model, kraj in " +
+        "mesec so pod njo. Naslovov ne objavljamo.",
     },
     {
       kind: "facts",

@@ -152,6 +152,21 @@ export type Block =
    */
   | { kind: "figure"; slot: string; caption?: string }
   /**
+   * The installations band: photographs of jobs this shop has done, each
+   * captioned with the model, the town and the month.
+   *
+   * ⚠️ IT RENDERS NOTHING OF ITS OWN. The pictures and their captions come
+   * from `installations` in content/types.ts, and an empty list draws no
+   * heading, no grid and no white space — so this block can sit on a page
+   * before the first photograph exists without leaving a hole in it. What a
+   * page may say is the heading above the band and one line of why.
+   *
+   * The claim under each picture is the reason the list exists: see the note
+   * on `installations` for why this band, alone on the site, may not fall
+   * back to the shop's product photography.
+   */
+  | { kind: "installs"; h?: string; p?: string }
+  /**
    * THE ENQUIRY FORM. One page carries it, and that is deliberate.
    *
    * This shop takes no orders online, so an enquiry is the transaction — and

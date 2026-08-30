@@ -238,6 +238,27 @@ describe("the hero's rating", () => {
   });
 });
 
+/**
+ * The installations band, in the state the shop is actually in.
+ *
+ * ⚠️ THE EMPTY CASE IS THE ONE THAT SHIPS. bazen has photographed no jobs, so
+ * what has to be true today is that the block on /o-nas leaves no trace: no
+ * heading, no grid, and — the part that failed first — no entry in the page
+ * index pointing at an id that was never emitted.
+ */
+describe("the installations band", () => {
+  it("leaves no heading and no index entry while the list is empty", async () => {
+    expect(CONTENT["bazen"]!.installations ?? []).toHaveLength(0);
+    const html = await text(get("/o-nas"));
+    expect(html).not.toContain("st-page-inst");
+    expect(html).not.toContain("Naše montaže");
+    // The index is built from the blocks, so a block that draws nothing must
+    // drop out of it too — structure.test.ts enumerates every fragment on
+    // every page and this is the assertion that says why one is missing.
+    expect(html).not.toContain("#s5-nase-montaze");
+  });
+});
+
 describe("canonicalization", () => {
   it("trailing slash and uppercase redirect with 308", () => {
     expect(get("/bazen/veliki-230/").status).toBe(308);
