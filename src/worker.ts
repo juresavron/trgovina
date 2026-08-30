@@ -22,6 +22,7 @@ import { THEME_CATALOG, type ThemeKey } from "./themes/catalog";
 import {
   buildCtx,
   organizationJsonLd,
+  websiteJsonLd,
   productJsonLd,
   renderDocument,
   renderHome,
@@ -413,7 +414,11 @@ export function handleRequest(
       noindex: dev,
       q,
       bodyHtml: renderHome(shop, content, theme, q),
-      jsonLd: [organizationJsonLd(shop)],
+      // The WebSite node is a home-page thing: it is where Google reads the
+      // name to print above a result instead of the bare domain, and putting
+      // it on all twenty-five routes would say the same thing twenty-five
+      // times. The Organization it names as publisher is right beside it.
+      jsonLd: [organizationJsonLd(shop), websiteJsonLd(shop)],
     });
     return htmlResponse(doc, 200, baseHeaders);
   }
