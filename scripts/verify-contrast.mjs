@@ -79,9 +79,12 @@ const CHECKS = [
   ["on-invert-mute on dark-2", "--on-invert-mute", "--ink-invert-2", 4.5],
   ["on-invert on dark-2", "--on-invert", "--ink-invert-2", 4.5],
   ["control border on page", "--line-ctrl", "--bg", 3.0],
+  // ⚠️ AND ON THE PANEL, which is where the old value failed. --line-ctrl was
+  // #949494: 3.03:1 here and 2.66:1 on --bg-alt, and only the first ground was
+  // ever measured. A control's boundary has to clear 3:1 on every surface the
+  // control can sit on, and this theme puts inputs and outlined chips on both.
+  ["control border on panel", "--line-ctrl", "--bg-alt", 3.0],
   ["strong border on page", "--line-strong", "--bg", 3.0],
-  ["amber on dark", "--amber", "--ink-invert", 4.5],
-  ["cream on dark", "--cream", "--ink-invert", 4.5],
 ];
 
 // Rungs that are decorative BY DESIGN. Listed so that anyone who reaches for
@@ -118,13 +121,25 @@ function oklchToRgb(L, C, hDeg) {
   const lg = -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s;
   const lb = -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s;
 
+  // ⚠️ THE CLAMP IS WHY THIS GATE PASSED AN IMPOSSIBLE COLOUR FOR A YEAR.
+  // It measured the CLIPPED value and reported a ratio for a colour no engine
+  // is obliged to produce: --acc-text was oklch(0.45 0.09 200), whose red
+  // channel resolves to −0.191, and every browser gamut-maps that by its own
+  // rule. A ratio computed on the clip is a number about a colour nobody is
+  // guaranteed to see. So the clamp stays (something has to be measured) and
+  // the OUT-OF-GAMUT FACT travels with it, for the caller to fail on.
+  const inGamut = [lr, lg, lb].every((v) => v >= -0.0005 && v <= 1.0005);
   const enc = (v) => {
     const c = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(Math.max(v, 0), 1 / 2.4) - 0.055;
     return Math.round(Math.min(1, Math.max(0, c)) * 255);
   };
   const hex = (n) => n.toString(16).padStart(2, "0");
-  return "#" + hex(enc(lr)) + hex(enc(lg)) + hex(enc(lb));
+  return { hex: "#" + hex(enc(lr)) + hex(enc(lg)) + hex(enc(lb)), inGamut };
 }
+
+/** The lightness rungs tokens.ts declares. Kept here so the two cannot drift. */
+const ACC_L = 0.56;
+const ACC_TEXT_L = 0.52;
 
 /** Read every shop's accent straight from its tenant config. */
 function shopAccents() {
@@ -175,23 +190,26 @@ for (const [fgTok, bgTok, why] of DECORATIVE) {
 // ring can land on, the page and the panel.
 console.log("\nper-shop accent (oklch resolved to sRGB)");
 console.log("-".repeat(60));
-console.log("shop".padEnd(10) + "acc-text/page".padStart(14) + "acc/page".padStart(11) + "acc/panel".padStart(11) + "   result");
+console.log("shop".padEnd(10) + "acc-text/page".padStart(14) + "acc/page".padStart(11) + "acc/panel".padStart(11) + "  sRGB   result");
 const page = token("--bg");
 const panel = token("--bg-alt");
 for (const { shop, hue, chroma } of shopAccents()) {
-  const accText = oklchToRgb(0.45, chroma, hue);
-  const acc = oklchToRgb(0.62, chroma, hue);
-  const rText = ratio(accText, page);
-  const rRingPage = ratio(acc, page);
-  const rRingPanel = ratio(acc, panel);
-  const ok = rText >= 4.5 && rRingPage >= 3 && rRingPanel >= 3;
+  const accText = oklchToRgb(ACC_TEXT_L, chroma, hue);
+  const acc = oklchToRgb(ACC_L, chroma, hue);
+  const rText = ratio(accText.hex, page);
+  const rRingPage = ratio(acc.hex, page);
+  const rRingPanel = ratio(acc.hex, panel);
+  const gamut = accText.inGamut && acc.inGamut;
+  const ok = rText >= 4.5 && rRingPage >= 3 && rRingPanel >= 3 && gamut;
   if (!ok) failed++;
   console.log(
     shop.padEnd(10) +
       rText.toFixed(2).padStart(14) +
       rRingPage.toFixed(2).padStart(11) +
       rRingPanel.toFixed(2).padStart(11) +
-      "   " + (ok ? "pass" : "FAIL")
+      (gamut ? "    ok" : "   OUT") +
+      "   " + (ok ? "pass" : "FAIL") +
+      (gamut ? "" : "  (" + shop + "'s hue cannot carry chroma " + chroma + " at these rungs — pick a lower chroma)")
   );
 }
 

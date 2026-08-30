@@ -56,8 +56,22 @@ export const bazen: ShopConfig = {
 
   design: {
     theme: "studio",
-    accentHue: 200, // warm aqua
-    accentChroma: 0.09,
+    // ⚠️ WARM, AND THE COMMENT HERE USED TO SAY "warm aqua" ABOUT A CYAN.
+    // Hue 200 at chroma 0.09 is #33969b — a greyed sky-cyan, and the single
+    // most predictable colour a hot-tub shop can pick: every competitor in
+    // this market (Bluewater, Waterwave, the whole blue-gradient-droplet
+    // trade) is already there, so the one place this brand spent colour, it
+    // spent it on the category's own cliché.
+    //
+    // Hue 48 at 0.14 is #b4561a. The product is hot water and "vrelec" is a
+    // thermal spring; the palette's only colour was cold. It is also the only
+    // warm accent in the Slovenian field, which is a difference visible in a
+    // result-page thumbnail, and it carries more contrast on every ground
+    // (see the rungs in tokens.ts).
+    //
+    // Two numbers. Reverting is two numbers.
+    accentHue: 48,
+    accentChroma: 0.14,
     // The chrome bar is what sits under the browser UI on a phone, so this
     // matches --ink-invert rather than a cream that appears nowhere.
     themeColor: "#151515",
