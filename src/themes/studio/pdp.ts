@@ -3113,8 +3113,15 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     "</div></details>" +
     (d.panels ?? [])
       .map(
-        (x) =>
-          '<details class="st-pdp-panel"><summary>' +
+        (x, i) =>
+          // ⚠️ THE FIRST ONE IS OPEN, and it is the description. Every other
+          // panel here lists (dimensions, delivery terms, warranty length);
+          // this one ARGUES, and it leads with standsOut() — the sentence
+          // that says why this model rather than the one 400 EUR cheaper
+          // beside it ("Največ masaže med masažnimi bazeni: 50 šob…"). That
+          // is the question a product page exists to answer, and it was
+          // behind a click while the spec table above it was open.
+          '<details class="st-pdp-panel"' + (i === 0 ? " open" : "") + "><summary>" +
           '<h3 class="st-pdp-panel-h">' + esc(x[0]) + "</h3></summary>" +
           '<div class="st-pdp-panel-b"><p>' + esc(x[1]) + "</p>" +
           panelMore(ctx, x[2], x[3]) +
