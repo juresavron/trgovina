@@ -265,6 +265,77 @@ export const STUDIO_HERO_CSS = `
    * sentence has landed, not the thing that lands. The middot separators are
    * ::before on every item but the first, so the row can wrap to two lines
    * on a phone without a dot ever opening one — the site's separator rule. */
+  /* ---- the Google rating ------------------------------------------------
+   *
+   * Between the buttons and the proof row, because that is where a reader
+   * looks for a reason to press the button they have just been offered —
+   * and because the row below it is claims the SHOP makes, while this is one
+   * it does not.
+   *
+   * ⚠️ THE WHOLE LINE IS THE LINK, and it is a link and not a decoration
+   * because the numbers are somebody else's: pressing it lands on the profile
+   * they came from. --st-tap is not used here for the same reason
+   * .st-page-ch-ico does not — the target already clears 44px across, and
+   * padding-block on an inline-flex box gives it the height without touching
+   * the hero's rhythm.
+   *
+   * Colour: the score and the stars take --on-invert (the hero's own ink at
+   * 13.58:1), the empty stars and the date take the declared dark-on-dark
+   * rungs. No new colour enters the palette, so verify-contrast has nothing
+   * new to check and the band cannot drift out of compliance. */
+  :root[data-theme="studio"] .st-hero-rating {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px clamp(10px, 1vw, 16px);
+    margin: clamp(16px, 1.8vw, 26px) 0 0;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+  }
+  :root[data-theme="studio"] .st-hero-rating a {
+    display: inline-flex;
+    align-items: baseline;
+    gap: clamp(8px, 0.8vw, 12px);
+    padding-block: 10px;
+    margin-block: -10px;
+    color: var(--on-invert);
+    text-decoration: none;
+  }
+  :root[data-theme="studio"] .st-hero-rating a:hover .st-hero-rating-t,
+  :root[data-theme="studio"] .st-hero-rating a:focus-visible .st-hero-rating-t {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  /* The glyph row rides a hair above the baseline the figures sit on: ★ has
+   * no descender and its optical centre is high, so baseline-aligning it
+   * against a numeral leaves the stars looking dropped. */
+  :root[data-theme="studio"] .st-hero-stars {
+    letter-spacing: 0.06em;
+    font-size: 1.05em;
+    line-height: 1;
+    translate: 0 1px;
+  }
+  :root[data-theme="studio"] .st-hero-star-off { color: var(--on-invert-40); }
+  :root[data-theme="studio"] .st-hero-rating-n {
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    font-size: var(--t-h6);
+    letter-spacing: var(--ls-h6);
+  }
+  :root[data-theme="studio"] .st-hero-rating-t { color: var(--on-invert-mute); }
+  :root[data-theme="studio"] .st-hero-rating-d {
+    text-transform: none;
+    font-family: var(--f-body);
+    font-size: var(--t-label);
+    letter-spacing: 0;
+    color: var(--on-invert-40);
+  }
+  @media (max-width: 620px) {
+    /* The date drops to its own line rather than squeezing the count. */
+    :root[data-theme="studio"] .st-hero-rating { display: grid; justify-items: start; }
+  }
   :root[data-theme="studio"] .st-hero-trust {
     list-style: none;
     margin: clamp(18px, 2vw, 30px) 0 0;
@@ -911,6 +982,95 @@ function compareAt(d: RenderCtx["content"]["pdp"]): string | null {
  *    same furniture bundle: fine as atmosphere, and labelled so it cannot be
  *    read as the product.
  */
+/**
+ * "37 mnenj" — and Slovenian counts in four forms, not two.
+ *
+ * ⚠️ A DUAL IS NOT AN EDGE CASE HERE, it is every second small number: 1
+ * mnenje, 2 mnenji, 3 mnenja, 5 mnenj. A shop with two reviews reading "2
+ * mnenj" tells a Slovenian reader that nobody at this company writes their
+ * own language — on the line whose entire job is to be believed. This file's
+ * history already carries two dual bugs (see "gresta" in content/finder.ts).
+ *
+ * The rule is CLDR's for sl and it is on the last two digits, so 101 takes
+ * the singular and 11 does not.
+ */
+function reviewWord(n: number): string {
+  const t = n % 100;
+  if (t === 1) return "mnenje";
+  if (t === 2) return "mnenji";
+  if (t === 3 || t === 4) return "mnenja";
+  return "mnenj";
+}
+
+/**
+ * The Google rating as a line under the hero's buttons — or nothing.
+ *
+ * ⚠️ IT IS A QUOTATION, SO IT CARRIES ITS SOURCE. The stars alone would read
+ * as this shop rating itself. What makes the line worth anything is that the
+ * reader can press it and land on the profile the numbers came from, which is
+ * also what keeps it on the right side of ZVPot-1: the reviews are Google's
+ * and the page says so rather than implying they were collected here.
+ *
+ * ⚠️ THE GLYPHS ARE ROUNDED AND THE NUMBER IS NOT. 4,7 draws five stars, so
+ * the exact score is printed beside them in figures and read out in the
+ * accessible name — nobody is asked to count glyphs, and nothing rounds in
+ * the shop's favour without the true figure next to it.
+ *
+ * ⚠️ aria-label ON THE ANCHOR, and the visible text is NOT what it says. The
+ * link's own content is five ★ glyphs, a numeral and a fragment — read out in
+ * order that is "black star black star black star black star black star, 4,9,
+ * 37 mnenj na Googlu", which is noise wrapped around a number. The label says
+ * the whole thing once, in words, and warns that the link leaves the site.
+ *
+ * The line is deliberately NOT uppercased like the proof row under it: those
+ * are claims the shop makes about itself, this is a quotation from somebody
+ * else, and letting them look identical is how a quotation stops reading as
+ * one.
+ */
+function googleRatingHtml(ctx: RenderCtx): string {
+  const g = ctx.shop.googleRating;
+  if (!g) return "";
+  // Refused rather than rendered wrong: a score outside the scale, an empty
+  // count or a link that is not a link would each turn this from proof into
+  // a defect, and a hero that silently drops the line is the safe failure.
+  if (!(g.score >= 1 && g.score <= 5) || !(g.count >= 1)) return "";
+  if (!g.url.startsWith("https://")) return "";
+
+  const on = Math.max(1, Math.min(5, Math.round(g.score)));
+  // Slovenian writes the decimal with a comma.
+  const score = g.score.toFixed(1).replace(".", ",");
+  const reviews = g.count + " " + reviewWord(g.count);
+  // ⚠️ THE SOURCE IS NAMED ONCE. The first version built the visible text and
+  // the accessible name from one string that already ended "na Googlu", and
+  // then prefixed "Ocena na Googlu:" — so a screen reader read the shop's
+  // proof line as "Ocena na Googlu: 4,9 od 5, 37 mnenj na Googlu".
+  const label =
+    "Ocena na Googlu: " + score + " od 5, " + reviews + " — odpre Google v novem zavihku";
+  // "30. 8. 2026", not "2026-08-30": the ISO form is for the config, where a
+  // sortable date is the useful one, and Slovenian prose is what the page is
+  // written in. Split rather than parsed — a Date here would apply a timezone
+  // to a plain calendar day and can move it by one.
+  const [y, m, d] = g.asOf.split("-");
+  const asOf = y && m && d ? Number(d) + ". " + Number(m) + ". " + y : g.asOf;
+  return (
+    '<p class="st-hero-rating">' +
+    '<a href="' + esc(g.url) + '" target="_blank" rel="noopener" ' +
+    'aria-label="' + esc(label) + '">' +
+    '<span class="st-hero-stars" aria-hidden="true">' +
+    '<span class="st-hero-star-on">' + "\u2605".repeat(on) + "</span>" +
+    (on < 5 ? '<span class="st-hero-star-off">' + "\u2605".repeat(5 - on) + "</span>" : "") +
+    "</span>" +
+    '<span class="st-hero-rating-n" aria-hidden="true">' + esc(score) + "</span>" +
+    '<span class="st-hero-rating-t" aria-hidden="true">' +
+    esc(reviews + " na Googlu") + "</span>" +
+    "</a>" +
+    // The date the figures were read. Small, muted, and not optional: a
+    // rating with no date is a claim that ages silently.
+    '<span class="st-hero-rating-d">' + esc("stanje " + asOf) + "</span>" +
+    "</p>"
+  );
+}
+
 export function renderStudioHero(ctx: RenderCtx): string {
   const c = ctx.content;
   // The shop's own photograph, or NOTHING. There used to be a fallback to a
@@ -988,6 +1148,9 @@ export function renderStudioHero(ctx: RenderCtx): string {
     '<a class="st-hero-alt" href="' + esc(ctx.shop.routeSlugs["/showroom"] + ctx.q) +
     '">Brezplačen ogled lokacije</a>' +
     "</div>" +
+    // THE RATING, WHERE IT IS CHECKABLE OR NOT AT ALL. See googleRating in
+    // tenants/types.ts: unset by default, and all four fields or nothing.
+    googleRatingHtml(ctx) +
     // THE PROOF ROW. See heroTrust in content/types.ts for why this list is
     // not `trust`: every item here is confirmed and backed by another page,
     // and the price is derived from the offered models rather than typed.

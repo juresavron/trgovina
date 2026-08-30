@@ -35,6 +35,23 @@ export const bazen: ShopConfig = {
   // offering a basket it cannot fill — see ordersOnline in tenants/types.ts.
   ordersOnline: false,
 
+  // THE GOOGLE RATING, UNSET.
+  //
+  // The hero draws nothing until all four fields are here, which is the
+  // correct state: this shop's profile has not been read, and a score typed
+  // from memory is exactly the claim ZVPot-1 Annex I 23b/23c is about. To
+  // turn it on, read the profile and copy what it says:
+  //
+  //   googleRating: {
+  //     score: 4.9,                                   // as shown, one decimal
+  //     count: 37,                                    // as shown
+  //     url: "https://maps.app.goo.gl/…",             // the public profile
+  //     asOf: "2026-08-30",                           // the day you read it
+  //   },
+  //
+  // Nothing else changes: no structured data, no second component, and the
+  // proof row below it stays as it is.
+
   keyword: {
     primary: "masažni bazen",
     accusative: "masažni bazen",

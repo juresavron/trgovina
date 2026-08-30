@@ -208,6 +208,36 @@ describe("the enquiry confirmation is a GET", () => {
   });
 });
 
+/**
+ * The hero's Google rating renders only where it can be checked.
+ *
+ * ⚠️ THE DEFAULT MATTERS MORE THAN THE FEATURE. bazen ships with no rating
+ * configured, so the assertion that earns its keep is the absence: a shop
+ * that has not read its profile must not grow stars, and a half-filled config
+ * (a score with no link, a count of zero) must draw nothing rather than an
+ * unverifiable claim — which is what ZVPot-1 Annex I 23b/23c is about.
+ */
+describe("the hero's rating", () => {
+  it("draws nothing while the shop has none configured", async () => {
+    expect(SHOPS["bazen"]!.googleRating).toBeUndefined();
+    const html = await text(get("/"));
+    expect(html).not.toContain("st-hero-rating");
+    expect(html).not.toContain("na Googlu");
+  });
+
+  // ⚠️ NEVER AS STRUCTURED DATA. A rating Google collected, marked up as this
+  // site's own, is against Google's structured-data policy and a manual-action
+  // risk on a network whose whole strategy is search. render/page.ts emits no
+  // AggregateRating anywhere and this is the test that keeps it that way.
+  it("never becomes AggregateRating markup, on any route", async () => {
+    for (const path of ["/", "/bazen/veliki-230", "/trgovina", "/o-nas"]) {
+      const html = await text(get(path));
+      expect(html, path).not.toContain("aggregateRating");
+      expect(html, path).not.toContain("AggregateRating");
+    }
+  });
+});
+
 describe("canonicalization", () => {
   it("trailing slash and uppercase redirect with 308", () => {
     expect(get("/bazen/veliki-230/").status).toBe(308);
