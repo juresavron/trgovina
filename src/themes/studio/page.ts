@@ -23,7 +23,7 @@
 import { esc, type RenderCtx } from "../../render/sections";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 import type { Block, Page } from "../../content/pages";
-import { decorativeImg, sitePhoto } from "./media";
+import { decorativeImg, productImg, sitePhoto } from "./media";
 import { contactIcon, type IconKey } from "./icons";
 // ⚠️ THE CONSENT SENTENCE IS IMPORTED, NEVER RETYPED. The same string is
 // written to the enquiries row, and a page that printed different words
@@ -514,6 +514,54 @@ export const STUDIO_PAGE_CSS = `
     letter-spacing: var(--ls-label);
     text-transform: uppercase;
     color: var(--ink-mute);
+  }
+  /* ---- our own installations --------------------------------------------
+   *
+   * Three across, then two, then one — the same ladder the contact tiles take,
+   * and for the same reason: a known small set (six slots) laid out by an
+   * explicit count, so no track can be left empty and no orphan can stretch.
+   *
+   * 4:3 frames, cropped: these are photographs somebody took on a terrace, and
+   * a uniform frame is what makes six of them read as a body of work rather
+   * than as six snapshots. object-fit: cover, because the alternative letters
+   * every portrait shot into a white box.
+   *
+   * The caption is the label rung and NOT uppercased — it carries a model
+   * name that is already uppercase in the catalogue ("BAZEN 230"), and
+   * uppercasing the town and month around it would flatten the three facts
+   * into one shout. */
+  :root[data-theme="studio"] .st-page-inst {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(14px, 1.6vw, 24px);
+  }
+  @media (max-width: 1023px) {
+    :root[data-theme="studio"] .st-page-inst {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 619px) {
+    :root[data-theme="studio"] .st-page-inst { grid-template-columns: minmax(0, 1fr); }
+  }
+  :root[data-theme="studio"] .st-page-inst figure { margin: 0; }
+  :root[data-theme="studio"] .st-page-inst-img {
+    inline-size: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--r-media);
+    display: block;
+    background: var(--bg-alt);
+  }
+  /* The figure band's caption rung, minus its shout: this one carries a model
+   * name the catalogue already writes in capitals ("BAZEN 230"), and
+   * uppercasing the town and the month around it flattens three facts into
+   * one. Shared rather than restated — the two are the same device. */
+  :root[data-theme="studio"] .st-page-inst-cap {
+    margin-block-start: 8px;
+    text-transform: none;
   }
   :root[data-theme="studio"] .st-page-block + .st-page-block {
     margin-block-start: clamp(38px, 4vw, 64px);
@@ -2487,6 +2535,11 @@ function isWide(b: Block): boolean {
     // A photograph is a band, not a paragraph: at the reading measure it
     // would be a small picture in a wide column, which is neither.
     b.kind === "figure" ||
+    // Three photographs across need the track; at 38rem they would be three
+    // thumbnails. The band draws nothing at all while the list is empty, and
+    // an empty block cannot widen a page it does not render into — see
+    // installs().
+    b.kind === "installs" ||
     // A form is a grid of labelled controls, not a sentence. At the 31rem
     // measure the two-up rows collapse and the message box is a slot.
     b.kind === "enquiry"
@@ -2830,6 +2883,67 @@ function figure(b: Extract<Block, { kind: "figure" }>): string {
   );
 }
 
+/**
+ * The installations band — jobs this shop has done, or nothing at all.
+ *
+ * ⚠️ EMPTY IS A FIRST-CLASS STATE, not an edge case. The band is meant to sit
+ * on /o-nas before the first photograph exists, so with no entries it returns
+ * "" and the page renders exactly as it did — no heading, no grid, no gap. A
+ * band that drew its heading over an empty row would be worse than absent:
+ * it would say "our installations" and show none.
+ *
+ * ⚠️ AND THE PICTURES ARE NOT DECORATIVE HERE, which is the opposite of every
+ * other operator-managed slot on the site. Elsewhere the page cannot know
+ * what the panel holds, so the img carries an empty alt; here the CAPTION
+ * asserts what the picture is, and a caption the owner wrote is exactly the
+ * knowledge that was missing. The alt therefore says the same thing in a
+ * sentence — a reader who cannot see the photograph gets the model, the town
+ * and the month, which is the whole content of the tile.
+ */
+function installs(ctx: RenderCtx, b: Extract<Block, { kind: "installs" }>, id?: string): string {
+  const rows = ctx.content.installations ?? [];
+  if (rows.length === 0) return "";
+  return (
+    (b.h
+      ? '<h2 class="st-page-h2"' + (id ? ' id="' + esc(id) + '"' : "") + ">" + esc(b.h) + "</h2>"
+      : "") +
+    (b.p ? '<p class="st-page-p">' + esc(b.p) + "</p>" : "") +
+    '<ul class="st-page-inst">' +
+    rows
+      .map((r) => {
+        const cap = r.model + " · " + r.place + " · " + r.month;
+        return (
+          "<li><figure>" +
+          productImg(
+            // No width ladder on a site slot (sitePhoto carries none), so
+            // this emits the one stored file — the panel caps it at 1600.
+            { ...sitePhoto(r.slot), widths: [] },
+            "st-page-inst-img",
+            "(max-width: 619px) 92vw, (max-width: 1023px) 46vw, 30vw",
+            "Postavljen " + r.model + " pri stranki, " + r.place + ", " + r.month,
+          ) +
+          '<figcaption class="st-page-fig-cap st-page-inst-cap">' + esc(cap) + "</figcaption>" +
+          "</figure></li>"
+        );
+      })
+      .join("") +
+    "</ul>"
+  );
+}
+
+/**
+ * Does this block put anything on the page?
+ *
+ * Every block draws something except the ones whose content lives outside the
+ * page — today that is `installs`, which is a window onto content.installations
+ * and is empty until the shop has photographed a job. The index above and the
+ * anchor it emits both have to agree with the body, so both ask this.
+ */
+function renders(ctx: RenderCtx, b: Block): boolean {
+  if (b.kind === "installs") return (ctx.content.installations ?? []).length > 0;
+  return true;
+}
+
 function block(ctx: RenderCtx, b: Block, id?: string): string {
   const inner =
     b.kind === "prose"
@@ -2852,6 +2966,8 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
                 ? imprint(ctx, b.h, id)
                 : b.kind === "figure"
                   ? figure(b)
+                  : b.kind === "installs"
+                    ? installs(ctx, b, id)
                   : b.kind === "enquiry"
                     ? enquiry(ctx, b, id)
                   : '<div class="st-page-cta">' +
@@ -2946,7 +3062,16 @@ export function renderStudioPage(ctx: RenderCtx, page: Page): string {
     // A closing call to action carries a heading and is not a section of the
     // document — "Ostalo vprašanje?" listed among the guides read as a fourth
     // guide. It keeps its heading and its id; it just does not get an entry.
-    .map((b, i) => (b.kind !== "cta" && "h" in b && b.h ? { h: b.h, id: ids[i]! } : null))
+    //
+    // ⚠️ AND A BLOCK THAT DRAWS NOTHING GETS NO ENTRY EITHER. installs renders
+    // "" while the shop has listed no jobs, so its heading and its id never
+    // reach the page — and an index built from the block LIST rather than
+    // from what was rendered listed "Naše montaže" pointing at an id that did
+    // not exist. structure.test.ts caught it on the first run, which is the
+    // whole reason that test enumerates fragments rather than trusting them.
+    .map((b, i) =>
+      b.kind !== "cta" && renders(ctx, b) && "h" in b && b.h ? { h: b.h, id: ids[i]! } : null,
+    )
     .filter((x): x is { h: string; id: string } => x !== null);
   const index =
     // ⚠️ THREE. It was raised to four for one evening on a critique that a

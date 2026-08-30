@@ -382,6 +382,44 @@ export interface ShopContent {
    * when the quote, the person and the order behind it are all real.
    */
   /**
+   * Installations this shop has actually done, newest first.
+   *
+   * ⚠️ THE LIST IS THE ASSERTION; THE UPLOAD IS ONLY WHAT IT POINTS AT. Every
+   * other picture on this site degrades to the shop's own product photography
+   * until somebody replaces it, and that is right for a band whose job is to
+   * be an editorial pause. It is wrong here: this band's whole claim is "we
+   * installed these", so a supplier's studio cutout standing in for one would
+   * make the claim false — the one place on the site where a borrowed
+   * photograph is a false statement rather than a placeholder.
+   *
+   * So the storefront draws an entry only where one is written here, and an
+   * uploaded slot nobody has listed shows nothing. Writing the entry is the
+   * moment somebody takes responsibility for the sentence under the picture:
+   * a model this shop sells, a place, and when.
+   *
+   * ⚠️ AND IT IS NOT A REVIEW. Nothing here may carry a customer's words, a
+   * name, or a rating — that is the testimonial band, and it answers to Annex
+   * I 23b/23c. This is a photograph of a job with a caption of facts. Keep
+   * `place` to a town, never an address: the buyer did not consent to having
+   * their house located, and "Domžale" carries the whole point anyway.
+   *
+   * Empty is the correct state until real photographs exist.
+   */
+  installations?: readonly {
+    /**
+     * The slot STEM, as the figure blocks write it: "montaza-1", which
+     * sitePhoto() resolves to /media/site/montaza-1.webp and the panel
+     * registers as site/montaza-1.webp. Six exist.
+     */
+    readonly slot: string;
+    /** The model as the catalogue names it, e.g. "BAZEN 230". */
+    readonly model: string;
+    /** The town. Never a street or a house number. */
+    readonly place: string;
+    /** When, as coarse as the caption reads: "marec 2026". */
+    readonly month: string;
+  }[];
+  /**
    * One line beside the testimonial heading.
    *
    * ⚠️ IT MAY DESCRIBE THE REVIEWS AND NOTHING ELSE. This sits at the top of

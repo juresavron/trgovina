@@ -153,10 +153,19 @@ describe("the stylesheet stays within budget", () => {
    *
    * What that means for the next feature: it pays for itself out of its own
    * module, or the budget moves deliberately with a line in this comment.
+   *
+   * ⚠️ AND THAT HAS NOW HAPPENED TWICE IN ONE SESSION — 172 -> 174 -> 176 —
+   * which is the trend this comment exists to make visible. Both raises were
+   * features rather than sprawl (the finder's answer cards; the installations
+   * band, which shares the figure band's caption rung rather than restating
+   * it), and both were trimmed before the number moved. The figure that
+   * matters moved 19.0 -> 19.29 of 20 KB brotli, so there is about 0.7 KB of
+   * wire left and the rail is worth 0.45 of it. The third raise should not be
+   * a raise.
    */
   it("has not grown without anyone noticing", () => {
     const kb = BASE_CSS.length / 1024;
-    expect(kb, "the raw sheet is " + kb.toFixed(1) + " KB").toBeLessThan(174);
+    expect(kb, "the raw sheet is " + kb.toFixed(1) + " KB").toBeLessThan(176);
   });
 
   it("still emits the rules that matter after minification", async () => {

@@ -180,15 +180,28 @@ describe("slots that declare an exact stored size", () => {
 describe("slots that may legitimately be empty", () => {
   const optional = SITE_IMAGES.filter((s) => s.optional);
 
-  it("are exactly the finish swatches", () => {
+  it("are exactly the finish swatches and the installation photographs", () => {
     // If another slot ever wants this, it is a deliberate decision that
     // should show up here as a failing test first: everything else renders
     // an <img>, where an empty slot is a broken picture on a live page and
     // a 404 is the right, visible answer.
-    expect(optional.every((s) => /^site\/(barva|obloga)-/.test(s.key))).toBe(true);
-    const swatches = SITE_IMAGES.filter((s) => /^site\/(barva|obloga)-/.test(s.key));
-    expect(optional).toHaveLength(swatches.length);
+    //
+    // The installations were the second family to earn it, and they did fail
+    // this test first. Their reason is not the swatches' reason: a swatch has
+    // nothing honest to fall back TO, while an installation photograph has
+    // plenty — the shop's whole product library — and must not use any of it,
+    // because the band's one claim is "we installed these". The storefront
+    // draws an installation only where the owner has listed the job, so an
+    // unfilled slot is an absent figure rather than an empty frame.
+    const MAY_BE_EMPTY = /^site\/(barva|obloga)-|^site\/montaza-/;
+    expect(optional.every((s) => MAY_BE_EMPTY.test(s.key))).toBe(true);
+    const allowed = SITE_IMAGES.filter((s) => MAY_BE_EMPTY.test(s.key));
+    expect(optional).toHaveLength(allowed.length);
     expect(optional.length).toBeGreaterThan(0);
+    // Both families are present, so neither can quietly disappear and leave
+    // the assertion above passing vacuously.
+    expect(optional.some((s) => s.key.startsWith("site/montaza-"))).toBe(true);
+    expect(optional.some((s) => /^site\/(barva|obloga)-/.test(s.key))).toBe(true);
   });
 
   it("declare no legacy fallback, because there is nothing to fall back to", () => {

@@ -1237,6 +1237,19 @@ export const bazenContent: ShopContent = {
   // whoever wrote it, while "kupile pri nas" is the purchase claim and answers
   // to `verified` exactly as the chip does. These four carry order_id NULL, so
   // today only the first line prints. See reviewsLeadVerified in types.ts.
+  // OUR OWN INSTALLATIONS — empty, and empty is the correct state.
+  //
+  // The band on /o-nas renders one figure per entry and nothing at all with
+  // none, so it costs the page nothing until the first job is photographed.
+  // Upload the picture to a montaza-* slot in /admin, then write the entry:
+  //
+  //   installations: [
+  //     { slot: "montaza-1", model: "BAZEN 230", place: "Domžale", month: "marec 2026" },
+  //   ],
+  //
+  // The entry is the assertion — see the note on `installations` in
+  // content/types.ts for why this band, alone on the site, may not fall back
+  // to the shop's product photography. Town only, never an address.
   reviewsLead: "Objavljena so tako, kot smo jih prejeli.",
   reviewsLeadVerified: "Zapisali so jih stranke, ki so pri nas kupile bazen.",
   reviews: GENERATED_REVIEWS["bazen"] ?? [],

@@ -84,6 +84,37 @@ export type ShopConfig = {
   ordersOnline: boolean;
 
   /**
+   * The shop's public Google rating, for the hero's proof line.
+   *
+   * ⚠️ ABSENT UNTIL A REAL PROFILE HAS REAL REVIEWS, and absent is the
+   * default. Every field is required together because a score without a
+   * count is not a rating and a rating without a link is not checkable: a
+   * number a reader cannot verify is worth less than no number, and under
+   * ZVPot-1 (Annex I 23b/23c) an unverifiable review claim is not a matter of
+   * degree. Leave it unset and the hero renders exactly as it does today.
+   *
+   * ⚠️ AND IT NEVER BECOMES AggregateRating STRUCTURED DATA. render/page.ts
+   * emits none by design; a rating COLLECTED BY GOOGLE marked up as this
+   * site's own is against Google's own structured-data policy and is a
+   * manual-action risk on a network whose whole strategy is search. On the
+   * page it is a quotation with a source, which is what it is.
+   *
+   * `asOf` is the date somebody read the two numbers off the profile. It is
+   * rendered, because "4,9 (37 mnenj)" with no date is a claim that silently
+   * ages, and it is the operator's cue that the figure needs re-reading.
+   */
+  googleRating?: {
+    /** The score as the profile shows it, 1–5, e.g. 4.9. */
+    readonly score: number;
+    /** How many reviews that score is computed from. */
+    readonly count: number;
+    /** The public profile URL a reader can open and check. https only. */
+    readonly url: string;
+    /** ISO date the score and count were read, e.g. "2026-08-30". */
+    readonly asOf: string;
+  };
+
+  /**
    * THE keyword strategy. Every shop exists to rank #1 in Slovenia for
    * exactly one commercial-intent head term. These tokens flow into titles,
    * H1s, descriptions and internal anchor text via shared templates.
