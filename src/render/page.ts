@@ -614,13 +614,25 @@ export function renderContentPage(
   // Spread rather than assign, because exactOptionalPropertyTypes draws a
   // distinction between "absent" and "present and undefined" — and `about`
   // being absent is the ordinary case.
+  // ⚠️ A GUIDE'S PATH IS THE BASE PLUS ITS SLUG, and this said only the base.
+  //
+  // Every GuidePage carries key "/guide", so routeSlugs gave "/vodnik" — the
+  // segment three guides live UNDER, and a URL that serves nothing. The chrome
+  // decides which menu item to underline by asking whether the path starts
+  // with "/vodnik/", so it missed by exactly one character and no guide page
+  // marked its section at all: the reader lost the "you are here" underline
+  // on three of the site's ranking pages, and aria-current with it.
+  //
+  // Ordinary pages have no slug and are unaffected.
+  const base = (shop.routeSlugs as Record<string, string>)[page.key] ?? "";
+  const slug = (page as { slug?: string }).slug;
   const ctx: RenderCtx = {
     ...buildCtx(
       shop,
       content,
       q,
       content.pdp,
-      (shop.routeSlugs as Record<string, string>)[page.key] ?? "",
+      slug ? base + "/" + slug : base,
     ),
     ...(about ? { about } : {}),
     ...(chosen && chosen.length > 0 ? { chosen } : {}),

@@ -416,22 +416,6 @@ function reveal(){
   });
 }
 
-/* The back-to-top disc: visible after roughly a screen of scroll, gone at
-   the top. A passive listener flipping one class — the CSS owns the fade,
-   and the kernel's reduced-motion strip removes that fade wholesale while
-   the disc itself stays functional: appearing is not motion. */
-function topDisc(){
-  var t = document.querySelector(".st-top");
-  if (!t) return;
-  var on = false;
-  function sync(){
-    var want = (window.scrollY || document.documentElement.scrollTop) > 600;
-    if (want !== on) { on = want; t.classList.toggle("is-on", want); }
-  }
-  addEventListener("scroll", sync, { passive: true });
-  sync();
-}
-
 /* ---- the buy bar defers to the buy column's own CTA ----------------------
    At scroll 0 the bar covers the bottom of the gallery: measured on
    /bazen/veliki-230, the thumbnail strip was 0% visible on EVERY desktop
@@ -470,7 +454,6 @@ function init(){
   barConfig();
   barDefer();
   reveal();
-  topDisc();
   [].forEach.call(document.querySelectorAll(".st-pdp-gallery"), lightbox);
   [].forEach.call(document.querySelectorAll("[data-st-slider]"), slider);
   [].forEach.call(document.querySelectorAll("[data-st-count]"), counter);

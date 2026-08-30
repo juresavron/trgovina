@@ -470,19 +470,45 @@ describe("a refused enquiry identifies the field it is about", () => {
       field,
     });
 
-  it("marks that field invalid, describes it by the message, and focuses it", async () => {
+  /**
+   * ⚠️ THE MESSAGE TAKES FOCUS, NOT THE FIELD — and this test asserted the
+   * opposite, because that is how it was first built.
+   *
+   * autofocus scrolls the focused element into view, and the message sits
+   * ABOVE the form, so focusing the field pushed the message off the top of
+   * the screen: measured at viewport y −195 at 320, −90 at 390, and behind
+   * the fixed header at 620 through 1440 — nine of eleven viewports with no
+   * error text visible at all. It passed on the bare /kontakt page, which is
+   * where it was measured; the .st-enq-about summary card, rendered only when
+   * the enquiry arrives from a product page, is 329–385px tall and sits
+   * between the two.
+   *
+   * So the contract, not the mechanism: the field is MARKED (aria-invalid,
+   * described by the message) and the MESSAGE is what the browser scrolls to.
+   */
+  it("marks that field invalid, describes it by the message, and focuses the message", async () => {
     const html = await (await refused("ime")).text();
-    expect(html).toContain('id="enq-err"');
+    const msg = /<p[^>]*id="enq-err"[^>]*>/.exec(html)?.[0] ?? "";
+    expect(msg, "the message is the focus target").toContain("autofocus");
+    expect(msg).toContain('tabindex="-1"');
     const input = /<input[^>]*id="enq-ime"[^>]*>/.exec(html)?.[0] ?? "";
     expect(input, "the field the message names").toContain('aria-invalid="true"');
-    expect(input).toContain("autofocus");
+    expect(input, "the field must not steal the scroll").not.toContain("autofocus");
     expect(input).toMatch(/aria-describedby="[^"]*enq-err/);
   });
 
+  /**
+   * "Alone" now means explicitly NOT invalid rather than unmarked. The
+   * consent box is required and empty, so Chromium maps its :invalid state
+   * straight into the accessibility tree — on a pristine page load it
+   * announced as invalid before the visitor had touched anything, and on a
+   * name error it announced as invalid alongside the name. Saying false is
+   * the only way to say it is fine.
+   */
   it("leaves the other fields alone", async () => {
     const html = await (await refused("ime")).text();
     const other = /<input[^>]*id="enq-eposta"[^>]*>/.exec(html)?.[0] ?? "";
-    expect(other).not.toContain("aria-invalid");
+    expect(other).toContain('aria-invalid="false"');
     expect(other).not.toContain("autofocus");
   });
 
@@ -496,7 +522,7 @@ describe("a refused enquiry identifies the field it is about", () => {
       const html = await (await refused(name)).text();
       const el = new RegExp("<" + tag + "[^>]*id=\"enq-" + name + "\"[^>]*>").exec(html)?.[0] ?? "";
       expect(el, name).toContain('aria-invalid="true"');
-      expect(el, name).toContain("autofocus");
+      expect(el, name).not.toContain("autofocus");
     }
   });
 
@@ -511,12 +537,17 @@ describe("a refused enquiry identifies the field it is about", () => {
     }
   });
 
-  /** Nothing is marked invalid on a form nobody has submitted yet. */
-  it("marks nothing on a first visit", async () => {
+  /**
+   * Nothing CLAIMS an error on a form nobody has submitted yet — and the way
+   * to guarantee that is to state the opposite, not to stay silent. See the
+   * consent note above: silence let the browser's own :invalid mapping speak.
+   */
+  it("claims no error on a first visit", async () => {
     const html = await (await handleRequest(
       new Request("https://trgovina.workers.dev/kontakt?shop=bazen"),
     )).text();
-    expect(html).not.toContain("aria-invalid");
+    expect(html).not.toContain('aria-invalid="true"');
     expect(html).not.toContain("autofocus");
+    expect(html, "and says so explicitly").toContain('aria-invalid="false"');
   });
 });

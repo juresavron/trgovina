@@ -706,7 +706,7 @@ export const STUDIO_CHROME_CSS = `
    * attribute is SERVER-SET now (RenderCtx.path — each renderer states its
    * own canonical path, so the marker survives JS-off and is section-aware);
    * behaviour.ts's exact-match setter stays as a harmless fallback. */
-  :root[data-theme="studio"] .st-chrome-nav a[aria-current="page"] > span::after {
+  :root[data-theme="studio"] .st-chrome-nav a[aria-current] > span::after {
     transform: scaleX(1);
   }
 
@@ -1423,47 +1423,26 @@ export const STUDIO_CHROME_CSS = `
    * plus a street address) runs ~38ch against the line's 56ch measure. */
   :root[data-theme="studio"] .st-foot-seg { white-space: nowrap; }
 
-  /* ---- back to top ----------------------------------------------------
-   * Hidden is the RESTING state and script is what earns the reveal — a
-   * visitor with no JS simply never sees a convenience, which is the right
-   * direction to fail. The first draft drove this from a scroll() timeline
-   * with an animation-range and measured differently on identical runs;
-   * a class flipped by the behaviour script is boring and always true.
-   * visibility rides along so the hidden disc is inert to tab and tap. */
-  :root[data-theme="studio"] .st-top {
-    position: fixed;
-    inset-block-end: 18px;
-    inset-inline-end: 18px;
-    z-index: 40;
-    display: grid;
-    place-items: center;
-    inline-size: var(--st-tap);
-    block-size: var(--st-tap);
-    border-radius: 999px;
-    background: var(--ink-invert);
-    color: var(--on-invert);
-    border: 1px solid var(--ink-invert);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease-out, visibility 0.3s;
-  }
-  :root[data-theme="studio"] .st-top.is-on {
-    opacity: 1;
-    visibility: visible;
-  }
-  /* ⚠️ NOT ON THE PRODUCT PAGE. The disc used to step 64px above the buy bar
-   * there, which kept it off the bar and put it squarely on the add-on list:
-   * that column runs to the band's right edge and right-aligns its prices, so
-   * at 1280-1600 — where the page gutter (40px at 1440) is narrower than the
-   * 44px disc — the disc sat on top of a figure. Measured at 1440: the disc
-   * covered "115 EUR" on the LED osvetlitev obloge row, and one scroll
-   * position earlier, a shell-colour swatch.
+  /* ---- NO BACK-TO-TOP DISC ---------------------------------------------
    *
-   * Hiding it costs nothing there. The chrome bar is position: fixed, so the
-   * nav, the phone number and the enquiry CTA never leave the screen, and the
-   * buy bar carries the price and the CTA along the bottom. The disc was the
-   * third fixed control on one page and the only one covering prices. */
-  :root[data-theme="studio"] body:has(.st-pdp-bar) .st-top { display: none; }
+   * ⚠️ IT PRINTED OVER THE ENDS OF LINES. A 44px opaque disc at right:18px
+   * spans vw-62 to vw-18, and the body column runs to vw-25 — so on a phone
+   * it sat ON the text. Measured by intersecting every text node's client
+   * rects with the disc at 350px scroll steps: twelve scroll positions on
+   * /pogoji-poslovanja at 320 with up to 35px of glyph covered, seven at 390,
+   * six on /zasebnost, five on the home page, five on /dostava-in-montaza,
+   * and 44px of a comparison-table cell at 768. It had already been taken off
+   * the product page for covering an add-on price and a colour swatch.
+   *
+   * What it bought was small. The chrome bar is position:fixed on every
+   * route, so the menu, the telephone number and the enquiry button never
+   * leave the screen; the disc returned the reader to the top of a document
+   * whose navigation was never lost. It was also the one interactive element
+   * on the site sitting outside every landmark, and it cost CSS in a sheet at
+   * 98.8% of its budget and a scroll listener in the behaviour script.
+   *
+   * Three findings, one deletion. If it comes back it needs a gutter reserved
+   * for it, not a z-index. */
 
   /* ---- responsive ----
    * The breakpoints are the source's own tiers where the source has an answer,
@@ -1860,16 +1839,30 @@ export function renderStudioHeader(ctx: RenderCtx): string {
   // can be SECTION-aware, which the client's exact-match fallback cannot: a
   // model page rests the underline under Trgovina, a guide under Vodniki,
   // because that is the drawer the visitor opened to get there.
-  const current = (key: (typeof links)[number][0]): boolean => {
+  /**
+   * Which menu item is highlighted, and — separately — WHETHER IT IS THE PAGE.
+   *
+   * ⚠️ aria-current="page" WAS BEING SAID ABOUT PAGES THE VISITOR WAS NOT ON.
+   * On /masazni-bazeni, /swim-spa and both product pages the nav marked
+   * "Trgovina" as the current PAGE, because the highlight is deliberately a
+   * SECTION highlight: a product or a collection lights up the shop link. On
+   * the two product pages that produced two "current page" markers in one
+   * document — the correct one in the breadcrumb, and this one.
+   *
+   * "page" and "true" are different tokens for exactly this: "page" is this
+   * page, "true" is this branch of the site. The highlight is unchanged; only
+   * what it claims is.
+   */
+  const current = (key: (typeof links)[number][0]): "page" | "true" | null => {
     const p = ctx.path;
-    if (!p) return false;
-    if (p === s.routeSlugs[key]) return true;
+    if (!p) return null;
+    if (p === s.routeSlugs[key]) return "page";
     if (key === "/products") {
-      if (p.startsWith(s.routeSlugs["/product"] + "/")) return true;
-      if ((c.collections ?? []).some((col) => col.path === p)) return true;
+      if (p.startsWith(s.routeSlugs["/product"] + "/")) return "true";
+      if ((c.collections ?? []).some((col) => col.path === p)) return "true";
     }
-    if (key === "/guides" && p.startsWith(s.routeSlugs["/guide"] + "/")) return true;
-    return false;
+    if (key === "/guides" && p.startsWith(s.routeSlugs["/guide"] + "/")) return "true";
+    return null;
   };
 
   // No cart session exists at SSR time, so the count is the honest 0 and the
@@ -1893,7 +1886,7 @@ export function renderStudioHeader(ctx: RenderCtx): string {
       .map(
         ([k, label]) =>
           '<a href="' + esc(s.routeSlugs[k] + ctx.q) + '"' +
-          (current(k) ? ' aria-current="page"' : "") + "><span>" +
+          ((cur) => (cur ? ' aria-current="' + cur + '"' : ""))(current(k)) + "><span>" +
           esc(label) + "</span></a>",
       )
       .join("") +
@@ -2226,16 +2219,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     '<span class="st-foot-seg">Register: ' + fact(s.company.register) + " ·</span> " +
     '<span class="st-foot-seg">Sedež: ' + addressHtml + "</span>" +
     "</p>" +
-    "</div></footer>" +
-    // Back to top — a fixed disc the stylesheet keeps hidden until
-    // behaviour.ts flips `.is-on` past one viewport of scroll (a scroll
-    // timeline drove it once; the class flip replaced it so the control
-    // works wherever the script runs and simply stays hidden where it
-    // does not — a convenience lost, never content). "#top" is the fragment
-    // every browser special-cases as document start, so no anchor needed.
-    '<a class="st-top" href="#top" aria-label="Na vrh strani">' +
-    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
-    'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" ' +
-    'focusable="false"><path d="M12 19V5.8M5.8 12 12 5.8 18.2 12"/></svg></a>'
+    // No back-to-top disc — see the note where its stylesheet block was.
+    "</div></footer>"
   );
 }
