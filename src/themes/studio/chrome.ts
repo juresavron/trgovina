@@ -282,99 +282,132 @@ export const STUDIO_CHROME_CSS = `
    * Size is independent of both. Every run stays --on-invert, so contrast is
    * exactly what it was before the brand existed, and the lockup still reads
    * name-first. */
-  /* ONE NAME, ONE SIZE. The two spans are halves of a single wordmark, not a
-   * title and a subtitle, so setting them at different sizes made the lockup
-   * read as two things stacked rather than as one name. Hierarchy comes from
-   * the break and the mark now, which costs nothing and cannot go wrong on a
-   * ground nobody has measured. */
-
-  /* THE FOOTER SIGNATURE STACKS, DELIBERATELY.
+  /* ⚠️ SEVENTY LINES OF FOOTER-ONLY WORDMARK RULES USED TO STAND HERE, and
+   * every one of them was fighting a lockup that ran on one line.
    *
-   * The footer sets the wordmark at 108px, which fitted while the shop was
-   * called "Masažni Bazen". "Masažni bazeni Vrelec" does not: measured at
-   * 1440 it was 748x230 — two lines — and the break fell MID-PHRASE, so the
-   * mark stood beside a lone "MASAŽNI" and "BAZENI VRELEC" ran underneath
-   * it. An accidental break inside the category is the worst of both
-   * layouts.
+   * They set the <p> to flex, wrapped it, forced the break with a 100%
+   * flex-basis, rebalanced the baseline of a two-size flex line, sized the
+   * glyph against the small line rather than the big one — and the note at
+   * the top recorded that the same block had once existed TWICE, with the
+   * older copy winning and setting the category at a quarter size for weeks
+   * after somebody changed it.
    *
-   * So the break is chosen rather than suffered: the mark and the category
-   * take the first line, the name takes the second at full size. That is
-   * what a signature does anyway — says the category quietly and the name
-   * loudly — and it means the lockup gets narrower as the viewport does
-   * instead of finding a new place to break.
+   * All of it was the cost of a one-line, twenty-one-character wordmark that
+   * had to find a place to break. It has two lines by construction now, and
+   * the same grid draws it in the bar and in the footer — so the footer
+   * declares its SIZE and nothing else. See the lockup below.
    *
-   * flex-basis on the brand is what forces it: a 100% basis cannot share a
-   * line, so the wrap lands between the two halves and nowhere else. */
+   * The rejected alternative is worth naming, because it is what this block
+   * used to draw: category on top, name underneath. It has the same geometry
+   * and needs no grid-area at all, and it is wrong twice — the first ink in
+   * the bar and at the top of the footer is then the generic noun every
+   * competitor also owns, and at 112px the small line floats over the big
+   * one and the signature reads top-heavy. */
+  /* ---- THE LOCKUP: NAME OVER DESCRIPTOR --------------------------------
+   *
+   * ⚠️ IT USED TO BE ONE LINE OF TWENTY-ONE CHARACTERS, and that is what was
+   * wrong with this identity. "MASAŽNI BAZENI VRELEC" set at h6, nowrap,
+   * measured 338px in the bar — the single largest term in the arithmetic
+   * two hundred lines below that decides whether the phone number fits — and
+   * it put the ownable half of the name LAST, after two words of category
+   * noun that every competitor in the country also owns. Every compression
+   * the brand actually undergoes drops exactly the wrong half. The card
+   * statement descriptor already knew better: stripe.statementDescriptor is
+   * "BAZENI VRELEC".
+   *
+   * So the name goes on top at full size and the category underneath as a
+   * tracked label. The DOM ORDER IS UNTOUCHED — the spans are still
+   * "Masažni bazeni" then "Vrelec", so the anchor text, the aria-label and
+   * the accessible name are exactly what they were; only grid-area swaps the
+   * drawing.
+   *
+   * The measured result in the live bar: 145 × 40 at 1440 against 338 × 32,
+   * 138px in a ~186px cell on a 390 phone against two wrapped lines, and a
+   * footer signature that does not break mid-phrase.
+   *
+   * ⚠️ calc(.16em + 6px) IS THE WHOLE TRICK, AND IT IS NOT A ROUNDED VALUE.
+   * This logotype spans 19px in the laptop bar to 112px in the footer — 5.9×
+   * — and one ratio cannot serve both: justify the descriptor to the name at
+   * 24px and it is 8px at display size; make it a caption at display size and
+   * it is 4px in the bar. The +6px term dominates at UI scale and the .16em
+   * term dominates at display scale, so ONE declaration gives a descriptor
+   * that is ~101% of the name's width at 24px and settles to 50–55% at
+   * 96–128px. The .045em on the name closes the last few percent.
+   *
+   * ⚠️ THE LINE-HEIGHTS ARE NOT DECORATION. Chivo's ascent plus descent is
+   * 1.19em and the caron on Ž sits above cap height; the spans carry
+   * overflow:hidden below 900 (the ellipsis belt for a long shop name), so a
+   * line box under ~1.2em CLIPS THE CARON and "MASAŽNI" prints as "MASAZNI".
+   * 1.1 is safe on the name because it is the display face at full size and
+   * the box is the grid row, not an overflow-hidden span; 1.3 is what the
+   * descriptor needs. Check at 8× zoom after touching either. */
+  :root[data-theme="studio"] .st-chrome-mark,
   :root[data-theme="studio"] .st-foot-mark {
-    /* display:flex is what makes any of this work. The element is a <p>, so
-     * the first version of this rule set flex-wrap, align-items and a
-     * flex-basis on a BLOCK container and every one of them was inert — the
-     * spans went on flowing inline and the 108px name simply sat after the
-     * 28px category on one line, overflowing its own box by 34px. */
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto auto;
     align-items: center;
-    row-gap: clamp(2px, 0.4vw, 8px);
+    align-content: center;
+    justify-content: start;
+    column-gap: 0.42em;
+    row-gap: 0;
+    font-family: var(--f-display);
+    font-weight: var(--w-display);
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
   }
-  /* Both lines at the wordmark's own size — see the header rule above. The
-   * SIZE of that wordmark is what changes instead: the longest line is now
-   * "MASAŽNI BAZENI" rather than "VRELEC", so the type has to be small
-   * enough for the longer of the two to fit the column. Measured rather than
-   * guessed; the clamp below is the largest that keeps line one intact from
-   * 1440 down to 320. */
-  :root[data-theme="studio"] .st-foot-mark > span:last-of-type {
-    flex-basis: 100%;
-  }
-  /* The space between the halves has no job once they are on two lines. */
-  :root[data-theme="studio"] .st-foot-mark .st-mark-gap { display: none; }
-  /* The glyph pairs with the small category line, not with the 108px name. */
-  :root[data-theme="studio"] .st-foot-mark .st-brand-mark {
-    inline-size: 0.86em;
-    block-size: 0.86em;
-    margin-inline-end: 0.24em;
+  /* The mark spans both rows, so it locks to the lockup's height rather than
+   * to either line. 1.62em is the cap-height match for the two-row stack. */
+  :root[data-theme="studio"] .st-brand-mark {
+    grid-area: 1 / 1 / 3 / 2;
+    align-self: center;
+    inline-size: 1.62em;
+    block-size: 1.62em;
+    margin: 0;
     transform: none;
   }
-  /* ⚠️ THIS BLOCK EXISTED TWICE. An older copy sat directly below with
-   * a font-size of 0.26em still on the first span, and being later it won —
-   * so the footer went on setting "MASAŽNI BAZENI" at a quarter the size of
-   * "VRELEC" long after that was changed, and the change looked like it had
-   * simply not worked. The duplicate is deleted; if the two lines ever need
-   * different sizes again, edit THIS rule rather than adding a second one. */
-
-  /* Two type sizes on one line have to sit on ONE baseline, and baseline is a
-   * property of the FLEX LINE, not of a single item: align-self on the small
-   * run alone left it aligned to a line whose other items were still
-   * centred, so it floated above the brand and the lockup read as two
-   * separate labels. The container aligns the line; the glyph, which has no
-   * text baseline of its own, is centred back. */
-  :root[data-theme="studio"] .st-foot-mark {
-    align-items: baseline;
+  /* VRELEC — last in the DOM, first on the page. */
+  :root[data-theme="studio"] .st-chrome-mark > span:last-of-type,
+  :root[data-theme="studio"] .st-foot-mark > span:last-of-type {
+    grid-area: 1 / 2;
+    font-size: 1em;
+    line-height: 1.1;
   }
-  :root[data-theme="studio"] .st-brand-mark { align-self: center; }
-  /* The lockup: mark, optical gap, words. The mark takes its size from the
-   * wordmark's own cap height rather than a fixed px, so the two stay locked
-   * as the bar retiers. */
-  :root[data-theme="studio"] .st-brand-mark {
-    flex: none;
-    inline-size: 1.16em;
-    block-size: 1.16em;
-    margin-inline-end: 0.46em;
-    /* Optical, not geometric: a solid square sits visually high against caps. */
-    transform: translateY(0.045em);
+  /* MASAŽNI BAZENI — the category, quietly, in the label face. */
+  :root[data-theme="studio"] .st-chrome-mark > span:first-of-type,
+  :root[data-theme="studio"] .st-foot-mark > span:first-of-type {
+    grid-area: 2 / 2;
+    font-family: var(--f-label);
+    font-weight: var(--w-label);
+    font-size: calc(0.16em + 6px);
+    letter-spacing: 0.13em;
+    line-height: 1.3;
+    min-inline-size: 0;
   }
+  /* The space between the halves has no job once they are on two lines. The
+   * anchor's aria-label carries the name for assistive tech either way. */
+  :root[data-theme="studio"] .st-chrome-mark .st-mark-gap,
+  :root[data-theme="studio"] .st-foot-mark .st-mark-gap { display: none; }
+  /* ⚠️ THE LOGOTYPE HAS ITS OWN SIZE, NOT THE h6 RUNG, and the reason is the
+   * 901–1199 band. --t-h6 retiers 24 / 19 / 22 across the ramp, so a laptop
+   * would render the mark SMALLER than a phone does; the bar there is 40px
+   * rather than 56 (--chrome-pad-y halves), which is exactly why the type has
+   * to come down, but only there. Three values, one variable, no clamp:
+   * a clamp on viewport width cannot see the bar's own retiering.
+   *
+   * The family, weight, tracking and case now come from the shared lockup
+   * rule above, which the footer takes too. */
+  :root[data-theme="studio"] {
+    --st-mark: 24px;
+  }
+  @media (max-width: 1199px) { :root[data-theme="studio"] { --st-mark: 19px; } }
+  @media (max-width: 900px) { :root[data-theme="studio"] { --st-mark: 22px; } }
   :root[data-theme="studio"] .st-chrome-mark {
     justify-self: start;
-    display: inline-flex;
-    align-items: center;
+    font-size: var(--st-mark);
     /* min-, for 200% text-only zoom — see .st-chrome-tel. */
     min-block-size: var(--st-tap);
     margin-block: -10px;
-    font-family: var(--f-display);
-    font-weight: var(--w-display);
-    font-size: var(--t-h6);
-    letter-spacing: var(--ls-h6);
-    line-height: var(--lh-h6);
-    text-transform: uppercase;
     text-decoration: none;
     /* ONE white word: studio drops the accent split the other themes use. */
     color: var(--on-invert);
@@ -487,7 +520,7 @@ export const STUDIO_CHROME_CSS = `
    * width: min-inline-size:0 lets the auto grid track shrink past max-content,
    * and the overflow is a swipeable/arrow-scrollable rail rather than a menu
    * that runs off the page. With the six-item menu and the 24px gap the rail
-   * is whole from ~1240 up and live below it (the 1400 tel threshold is
+   * is whole from ~1240 up and live below it (the 1200 tel threshold is
    * sized off the same arithmetic — see that rule). Either way the point
    * holds: the page must never scroll sideways.
    *
@@ -864,49 +897,45 @@ export const STUDIO_CHROME_CSS = `
   }
   :root[data-theme="studio"] .st-chrome-tel .st-ico { inline-size: 16px; block-size: 16px; }
 
-  /* ≥1400: THE NUMBER JOINS THE BAR. Below 900 it earns its place because the
+  /* ≥1200: THE NUMBER JOINS THE BAR. Below 900 it earns its place because the
    * two-row bar has a row to spend; on a wide desktop the single row has slack
    * instead, and a shop selling by enquiry hides its phone number at exactly
    * the widths where showing it costs nothing.
    *
-   * 1400 IS ARITHMETIC, NOT TASTE, and it has moved three times — 1360,
-   * 1560, 1500, now here — each time because one of the things it adds up
+   * IT IS ARITHMETIC, NOT TASTE, and it has moved four times — 1360, 1560,
+   * 1500, 1400, now 1200 — each time because one of the things it adds up
    * changed size. What it adds up, at the tier where each is largest:
    *
-   *   wordmark      338   "Masažni bazeni Vrelec" at h6, nowrap
+   *   wordmark      145   the two-row lockup (was 338 on one line)
    *   nav           571   six labels ~451 + five 24px gaps
    *   cluster       345   number 151 + 10 + enquiry button 184
    *   column gaps    48   two, at --gap-lg
    *                -----
-   *                 1302  against a container of min(1560, vw − 80)
+   *                 1109  against a container of min(1560, vw − 80)
    *
-   * so the number needs 1382 of viewport and waits for 1400. The middle line
-   * is the one that keeps moving, and twice for the same reason — the bar was
-   * spending its width on the menu and paying for it with the number. First
-   * the 50px gap turned out to be the SOURCE's value for a FIVE-item menu
-   * (tokens.ts); then KONTAKT turned out to be the bar's third route to the
-   * same page, beside the number itself and the button that names the act.
-   * Together they are 247px, and they bought the number four hundred pixels
-   * of viewport. Between 901 and 1399 the footer states it on every page, and
-   * the PDP and contact page carry it above the fold.
+   * so the number needs 1189 of viewport and waits for 1200. THE LAST MOVE
+   * WAS THE WORDMARK, and it is worth stating why that is the whole point of
+   * the lockup rather than a side effect: 193px of bar came back, and the
+   * band where a laptop could not be given a dialable number closed from
+   * 901–1399 to 901–1199. Every other line moved for the same reason in the
+   * other direction — the bar spending width on the menu and paying for it
+   * with the number: first the 50px gap that was the SOURCE's value for a
+   * FIVE-item menu (tokens.ts), then KONTAKT, which was the bar's third
+   * route to the same page beside the number itself and the button that
+   * names the act. Between 901 and 1199 the footer still states it on every
+   * page, and the PDP and contact page carry it above the fold.
    *
    * ⚠️ THE PIXEL AUDIT IS THIS BLOCK'S REGRESSION TEST. When 1560 was 1360,
    * the number sat ON "Kontakt" and the wordmark ran under "Trgovina", and
    * the gate reported the collisions as contrast failures of 1.13:1 and
    * 2.65:1 — which is what a layout bug looks like when only colour is being
    * measured. Re-run it after touching any of the four numbers above. */
-  /* 1240–1399: THE NUMBER AS A DISC. The full number needs ~160px this band
-   * does not have, but the shop sells by enquiry and this is the laptop band
-   * — the header carrying no phone affordance at 1280px was the cost of an
-   * earlier fit fix. A 36px disc in the mark's own two-disc vocabulary fits
-   * from 1240 up. Icon-only, like ≤460: the aria-label and the title carry
-   * the number, the tap carries the call.
-   *
-   * It sits INSIDE the action cluster now, beside the enquiry button, and
-   * that is what stopped this band looking broken: as the bar's own child
-   * the disc's 115px of collapse went to the 1fr tracks either side, so a
-   * laptop saw menu, small circle, hundred-pixel hole, button. See the
-   * markup. */
+  /* ⚠️ THE 1240–1399 PHONE DISC IS GONE, AND ITS BAND WITH IT. It existed
+   * because "the full number needs ~160px this band does not have" — true
+   * while the wordmark took 338 of them. It takes 145 now, so 1240–1399 gets
+   * the number in words, which is what the disc was standing in for: a 36px
+   * circle whose only affordance was a glyph, on the band where most laptops
+   * sit. Two rules and a media query list deleted. */
   /* ⚠️ NO FOURTH TRACK ANY MORE, and its removal is the fix.
    *
    * These two bands used to grow the bar's template to 1fr auto auto 1fr,
@@ -920,19 +949,8 @@ export const STUDIO_CHROME_CSS = `
    * does is SHOW the number. The :has() guard goes with the track it was
    * guarding: a bar with no phone set simply renders one fewer child in the
    * cluster, which needs no template of its own. */
-  @media (min-width: 1240px) {
+  @media (min-width: 1200px) {
     :root[data-theme="studio"] .st-chrome-tel { display: inline-flex; }
-  }
-
-  /* The disc's own dress, in its band only. */
-  @media (min-width: 1240px) and (max-width: 1399px) {
-    :root[data-theme="studio"] .st-chrome-tel {
-      inline-size: 36px;
-      min-inline-size: 36px;
-      border-radius: var(--r-pill);
-      border: var(--bw-line) solid var(--on-invert-24);
-      background: var(--on-invert-16);
-    }
   }
 
   /* Skip link: off-screen until focused, then a white plate. Its corners are
@@ -1011,30 +1029,31 @@ export const STUDIO_CHROME_CSS = `
   :root[data-theme="studio"] .st-foot-mark {
     font-family: var(--f-display);
     font-weight: var(--w-body);
-    /* MEASURED, NOT CHOSEN. Both lines are the wordmark's own size now, so
-     * the longest line is "MASAŽNI BAZENI" rather than "VRELEC" — half again
-     * as many characters — and the type has to be small enough for the
-     * LONGER one. Natural line-one width against the column it sits in, per
-     * candidate:
+    /* ⚠️ THE TABLE THAT USED TO BE HERE MEASURED THE WRONG LINE. It solved
+     * the clamp for "MASAŽNI BAZENI" — because that was line one, and line
+     * one was the long one, and the whole lockup was sized down so the
+     * CATEGORY would fit the column. The signature was small because the
+     * generic half of the name was long.
      *
-     *        1440      1200      1024
-     *   7.5vw  1015/748  848/616  724/536   wraps at all three
-     *   6vw     814/748  680/616  581/536   wraps at all three
-     *   5vw     680/748  568/616  486/536   fits everywhere
+     * Line one is "VRELEC" now: six characters, and the descriptor under it
+     * is a tracked label at a sixth of the size. The same column takes the
+     * signature at 112px at 1440 (672px of ink in 748px of column) where it
+     * took 72, and it never wraps — verified at 320 / 360 / 390 / 600 / 768 /
+     * 1024 / 1200 / 1440 / 1920.
      *
-     * So 5vw — and the CEILING matters as much as the floor. At 1920 the
-     * unclamped 5vw is 96px, which put line one back onto two lines on the
-     * widest screens; 4.5rem holds it at the 72px that was measured to fit.
-     * The floor came down from 2.2rem too: at 320px a 35px line one needs ~330px of a
-     * 270px column, so the old minimum would have reintroduced the
-     * mid-phrase break at the narrowest width — the one place nobody looks. */
-    font-size: clamp(1.6rem, 5vw, 4.5rem);
+     * The clamp keeps a floor for the narrowest phone and a ceiling so 8vw
+     * does not run away at 1920.
+     *
+     * ⚠️ overflow-wrap: anywhere IS GONE, and it has to be. It was the
+     * belt-and-braces against a long shop name pushing the page sideways
+     * while this was one long line; on a six-character line it would break
+     * VRELEC itself if the column ever got tight, which is the one failure
+     * this device cannot have. white-space: nowrap comes from the lockup
+     * rule instead, and the SIZE is what yields. */
+    font-size: clamp(2.6rem, 8vw, 7rem);
     letter-spacing: var(--ls-h1);
-    line-height: 0.88;
-    text-transform: uppercase;
     color: var(--on-invert);
-    /* A long shop name must wrap, never push the page sideways. */
-    max-width: 100%; overflow-wrap: anywhere; hyphens: none;
+    max-inline-size: 100%;
   }
 
   /* The newsletter column sits at the RIGHT EDGE of the top row rather than
@@ -1432,11 +1451,19 @@ export const STUDIO_CHROME_CSS = `
     opacity: 1;
     visibility: visible;
   }
-  /* The product page owns its bottom edge with the sticky buy bar; the
-   * disc steps above it rather than sitting on the price. */
-  :root[data-theme="studio"] body:has(.st-pdp-bar) .st-top {
-    inset-block-end: calc(18px + 64px);
-  }
+  /* ⚠️ NOT ON THE PRODUCT PAGE. The disc used to step 64px above the buy bar
+   * there, which kept it off the bar and put it squarely on the add-on list:
+   * that column runs to the band's right edge and right-aligns its prices, so
+   * at 1280-1600 — where the page gutter (40px at 1440) is narrower than the
+   * 44px disc — the disc sat on top of a figure. Measured at 1440: the disc
+   * covered "115 EUR" on the LED osvetlitev obloge row, and one scroll
+   * position earlier, a shell-colour swatch.
+   *
+   * Hiding it costs nothing there. The chrome bar is position: fixed, so the
+   * nav, the phone number and the enquiry CTA never leave the screen, and the
+   * buy bar carries the price and the CTA along the bottom. The disc was the
+   * third fixed control on one page and the only one covering prices. */
+  :root[data-theme="studio"] body:has(.st-pdp-bar) .st-top { display: none; }
 
   /* ---- responsive ----
    * The breakpoints are the source's own tiers where the source has an answer,
@@ -1716,35 +1743,17 @@ export const STUDIO_CHROME_CSS = `
        * the fade then advertises nothing. */
       gap: clamp(16px, 5vw, var(--gap-lg));
     }
-    /* THE LOCKUP GOES TO TWO LINES, because one line was arithmetic that
-     * could not come out. A shrink-only rule stood here with a comment
-     * claiming three words at ~16px "need 210 and fit whole"; measured in
-     * the rendered chrome they need 230px at 16.4px against a 230px cell at
-     * 390 — and 215px against 200 at 360, and 160 would take 11px type at
-     * 320, which is no longer a wordmark. Both halves ellipsized on every
-     * phone screenshot: "MASAŽNI BAZ… VREL…" in the one place the shop says
-     * who it is.
+    /* ⚠️ THE TWO-LINE BREAK USED TO BE FORCED HERE, and it is construction
+     * now rather than a rescue. This tier held a flex-wrap plus a 100%
+     * flex-basis on the gap span, because one line of twenty-one characters
+     * was arithmetic that could not come out: measured, the halves needed
+     * 230px at 16.4px against a 230px cell at 390, and both ellipsized —
+     * "MASAŽNI BAZ… VREL…" in the one place the shop says who it is.
      *
-     * So the gap span — until now a 0.3em spacer — becomes the line break:
-     * flex-basis 100% forces the halves onto their own rows, mark beside the
-     * first, and the longest half now needs ~150px at the same type size the
-     * shrink rule used. It fits the 160px cell of a 320px phone with room,
-     * so the per-span ellipsis above still exists only as a belt for a shop
-     * name this network has not met yet.
-     *
-     * The ceiling is 17px, not the tier's h6: the bar's fixed --st-tap block
-     * holds two lines of 17px at 1.2 (40.8px) and does not hold two of 22. */
-    :root[data-theme="studio"] .st-chrome-mark {
-      flex-wrap: wrap;
-      align-content: center;
-      font-size: clamp(13px, 4.2vw, 17px);
-      line-height: 1.2;
-    }
-    :root[data-theme="studio"] .st-chrome-mark .st-mark-gap {
-      flex-basis: 100%;
-      block-size: 0;
-      overflow: hidden;
-    }
+     * The lockup is two rows at every width now, so all this tier owes it is
+     * a size that fits a 320px phone's cell. --st-mark is 22px from 900 down;
+     * the clamp takes over below 620, where the cell gets tight. */
+    :root[data-theme="studio"] { --st-mark: clamp(15px, 4.6vw, 22px); }
   }
 
   /* ≤460: wordmark + number + basket stop fitting on one 360px row. The number
@@ -1752,15 +1761,12 @@ export const STUDIO_CHROME_CSS = `
    * in full a scroll away. It also has to keep its target, and a target is two
    * dimensions: the row already makes it --st-tap tall, so with the digits gone
    * the width has to be stated or a 16px glyph would be the whole hit area. */
-  /* ICON-ONLY, IN TWO DISJOINT BANDS — the phone tier and the laptop disc
-   * want the same thing, and a media query LIST is an OR, so they say it
-   * once. (min-inline-size stays on the phone tier alone: the disc band sets
-   * its own 36px above.) */
-  @media (max-width: 460px), (min-width: 1240px) and (max-width: 1399px) {
+  /* ICON-ONLY, ON THE PHONE TIER ALONE NOW. This used to be a media query
+   * LIST covering two disjoint bands, because the laptop disc wanted the same
+   * thing; the disc is gone and the second half of the OR with it. */
+  @media (max-width: 460px) {
     :root[data-theme="studio"] .st-chrome-tel span { display: none; }
     :root[data-theme="studio"] .st-chrome-tel { justify-content: center; }
-  }
-  @media (max-width: 460px) {
     :root[data-theme="studio"] .st-chrome-tel { min-inline-size: var(--st-tap); }
   }
 
@@ -1899,13 +1905,16 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     //
     // It used to be the bar's own third child, between the nav and the
     // buttons, which grew the template a fourth track. That reads correctly
-    // only while the number is at full width. Between 1240 and 1399 the tel
-    // collapses to a 36px disc, the track collapses with it, and the ~115px
-    // it gave up went to the two 1fr tracks either side — so a laptop saw the
-    // menu, then a small unlabelled circle, then a hundred-pixel hole, then
-    // the CTA. Measured at 1440: nav ends 1064, disc 1088–1124, button starts
-    // 1216. The hole was not slack the layout had spent; it was slack it had
-    // nowhere to put.
+    // only while the number is at full width, and it was not: there was a
+    // 1240–1399 band where the tel collapsed to a 36px disc, the track
+    // collapsed with it, and the ~115px it gave up went to the two 1fr tracks
+    // either side — so a laptop saw the menu, then a small unlabelled circle,
+    // then a hundred-pixel hole, then the CTA. Measured at 1440: nav ends
+    // 1064, disc 1088–1124, button starts 1216. The hole was not slack the
+    // layout had spent; it was slack it had nowhere to put. (The disc band
+    // itself is gone now — the smaller wordmark bought the number enough room
+    // to be a number from 1200 up — but the cluster is still where the phone
+    // belongs, and the fourth track is still the wrong shape.)
     //
     // Inside the cluster the phone is what it actually is — one of the two
     // things you can DO from the header, beside the enquiry button — so the
@@ -1923,9 +1932,8 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     // rather than restating); the header is the last place that was still
     // doing it.
     (isSetPhone(ctx.phoneDisplay)
-      ? // title as well as aria-label: in the disc band (1240–1399) the
-        // digits are hidden, and the tooltip is how a pointer reads them
-        // without committing to a call.
+      ? // title as well as aria-label: at ≤460 the digits are hidden and the
+        // tooltip is how a pointer reads them without committing to a call.
         '<a class="st-chrome-tel" href="' + esc(ctx.phoneHref) + '" aria-label="Pokličite ' +
         esc(ctx.phoneDisplay) + '" title="' + esc(ctx.phoneDisplay) + '">' + icon("phone") +
         "<span>" + esc(ctx.phoneDisplay) + "</span></a>"
@@ -2162,7 +2170,13 @@ export function renderStudioFooter(ctx: RenderCtx): string {
       // offer, approached from the other end — the visitor who knows what
       // they want reads the families, the one who does not answers three
       // questions.
-      [s.routeSlugs["/finder"], "Izbira bazena"] as const,
+      // ⚠️ THE LABEL IS THE PAGE'S OWN QUESTION. It read "Izbira bazena",
+      // which appears nowhere on the page it opens: the nav calls it "Kateri
+      // bazen?", the h1 asks "Kateri bazen je pravi za vas?" and the title
+      // repeats the h1. A footer link whose words are absent from its
+      // destination makes the reader check whether they clicked the right
+      // thing.
+      [s.routeSlugs["/finder"], "Kateri bazen?"] as const,
     ]) +
     col("st-foot-c2", "Pomoč", [
       [s.routeSlugs["/delivery"], "Dostava in montaža"],
@@ -2172,7 +2186,10 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     ] as const) +
     col("st-foot-c3", "Podjetje", [
       [s.routeSlugs["/about"], "O nas"],
-      [s.routeSlugs["/showroom"], "Ogled lokacije"],
+      // Same rule, and here the missing word is the offer: the page is
+      // "Brezplačen ogled lokacije" and dropping "Brezplačen" from the link
+      // to it gives away the only thing that makes it worth clicking.
+      [s.routeSlugs["/showroom"], "Brezplačen ogled lokacije"],
       [s.routeSlugs["/contact"], "Kontakt"],
     ] as const) +
     // Withdrawal sits SECOND, under the terms it belongs to: of the four, the

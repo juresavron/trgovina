@@ -636,6 +636,14 @@ function pdpFor(m: PolaModel): PdpContent {
           // after they have committed — the opposite of the shop's argument,
           // and the one thing this page is selling.
           ". Nosilnost terase preverimo na brezplačnem ogledu, pred ponudbo.",
+        // ⚠️ THE PANELS ARE SUMMARIES AND THEY USED TO BE DEAD ENDS. Each of
+        // the three below is capped at 320 characters by studio.test.ts —
+        // correctly, they are two lines under a heading — and behind each one
+        // the site already has a whole page. A reader who opens "Mere in teža"
+        // because they are worried about the terrace was told the load is
+        // checked at a free visit and given no way to ask for one.
+        "Brezplačen ogled lokacije pred ponudbo",
+        "/showroom",
       ],
       [
         "Dostava in montaža",
@@ -643,10 +651,22 @@ function pdpFor(m: PolaModel): PdpContent {
           "brezplačno preverimo dostop, podlago in električni priklop. " +
           "Ceno dostave pripravimo po ponudbi. Odvisna je od naslova in " +
           "dostopa do mesta postavitve.",
+        // The anchor carries the words the page ranks for. /dostava-in-montaza
+        // takes 52 links from this site and not one of them said what it is
+        // about: the nav says "Dostava", the footer says "Dostava", the
+        // assurance strip says "Dostava po vsej Sloveniji".
+        "Kako poteka dostava in montaža masažnega bazena",
+        "/delivery",
       ],
       [
         "Garancija",
         "Tri leta. Rezervni deli in servis prek naše mreže.",
+        // The two-year statutory conformity right is NOT the three-year
+        // manufacturer's guarantee, and this panel names only the second. The
+        // page that sets them side by side is the terms page; sending the
+        // reader there is the difference between a number and their rights.
+        "Garancija in zakonsko jamstvo za skladnost blaga",
+        "/terms",
       ],
     ],
     finishes: [...SHELL_FINISHES],
@@ -825,16 +845,26 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
             : "Teže dobavitelj za ta model ne navaja; pred ponudbo jo pridobimo " +
               "in preverimo nosilnost podlage. ") +
           "Swim spa praviloma stoji na betonski plošči, ne na terasi.",
+        "Brezplačen ogled lokacije pred ponudbo",
+        "/showroom",
       ],
       [
         "Dostava in montaža",
         "Swim spa pripeljemo, postavimo, priklopimo in zaženemo. Zaradi " +
           "dolžine je zanj potreben izredni prevoz: dostop in prostor za dvig " +
           "preverimo na lokaciji pred potrditvijo termina.",
+        "Kako poteka dostava in montaža swim spa bazena",
+        "/delivery",
       ],
       [
         "Garancija",
         "Tri leta. Rezervni deli in servis prek naše mreže.",
+        // The two-year statutory conformity right is NOT the three-year
+        // manufacturer's guarantee, and this panel names only the second. The
+        // page that sets them side by side is the terms page; sending the
+        // reader there is the difference between a number and their rights.
+        "Garancija in zakonsko jamstvo za skladnost blaga",
+        "/terms",
       ],
     ],
     // ⚠️ NO SHELL LIST EITHER — the sheet states ONE shell colour for every
@@ -905,6 +935,13 @@ const collections: Collection[] = [
     path: "/masazni-bazeni",
     navLabel: "Masažni bazeni",
     h1: "Masažni bazeni",
+    // The h1 names the page; the title has to win a result list. "Masažni
+    // bazeni | Masažni bazeni Vrelec" printed the category noun twice and
+    // offered a searcher nothing to choose on. No figures here on purpose:
+    // "za 5 ali 6 oseb" and "od 195 do 230 cm" are in the description, which
+    // is cheap to correct, while a title with a stale number is the line
+    // Google shows.
+    seoTitle: "Masažni bazeni za doma in vrt",
     intro:
       "Trije modeli, ki se ne razlikujejo samo po velikosti. BAZEN 195 meri " +
       "1,95 × 1,95 m in je edini, ki se umesti tja, kamor druga dva ne gresta: " +
@@ -926,6 +963,13 @@ const collections: Collection[] = [
     path: "/swim-spa",
     navLabel: "Swim spa",
     h1: "Swim spa bazeni",
+    // ⚠️ NO "ZA PLAVANJE NA MESTU" HERE. It is the obvious differentiator and
+    // it is a family promise this shop cannot make: SWIM 450 lists no
+    // counter-current jet at all, which is why swimSpaFamilyHasSwimJets()
+    // exists and why the intro above branches on it. A title is the one line
+    // a searcher reads before clicking; it may not claim what the range does
+    // not uniformly do.
+    seoTitle: "Swim spa bazeni — mere in cene",
     intro:
       "Tri školjke, pri katerih je prva številka dolžina. Od nje je odvisno, " +
       "koliko plavanja je v bazenu in koliko vrta potrebujete zanj. SWIM 450 " +
@@ -962,7 +1006,23 @@ export const bazenContent: ShopContent = {
   // sentence around it, and the question names what the visitor gets.
   nav: ["Trgovina", "O nas", "Vodniki", "Dostava", "Kontakt", "Primerjava", "Kateri bazen?"],
   artKey: "pool",
-  kicker: "Masažni bazen · Slovenija",
+  // ⚠️ A KEYWORD AND A COUNTRY JOINED BY A MIDDOT IS NOT A SENTENCE. This
+  // read "Masažni bazen · Slovenija": two nouns, no verb, nobody in it, and
+  // it repeated a word the h1 says two lines below it. It is the first line
+  // on the home page and it now sits beside a wordmark that says MASAŽNI
+  // BAZENI already, so the repetition was about to be threefold.
+  //
+  // The keyword stays in first position, which is the only SEO constraint
+  // this line has; the other two words go on the thing that separates this
+  // shop from a catalogue, in the voice the rest of the site uses — first
+  // person plural, present tense.
+  //
+  // ⚠️ NO "PO VSEJ SLOVENIJI" HERE. The obvious version reads "pripeljemo po
+  // vsej Sloveniji" and it is three lines above a marquee that already says
+  // "DOSTAVA, PRIKLOP IN ZAGON PO VSEJ SLOVENIJI" — both visible in the same
+  // first screen. The geography is not lost; it is stated by the device
+  // directly under this one.
+  kicker: "Masažni bazeni · pripeljemo in zaženemo",
   // ⚠️ THE H1 SELLS THE DIFFERENCE, NOT THE SPEC — and it keeps the keyword
   // in the first two words, which is the only SEO constraint it has.
   //
@@ -1139,16 +1199,18 @@ export const bazenContent: ShopContent = {
   reviewsLead: "Objavljena so tako, kot smo jih prejeli.",
   reviewsLeadVerified: "Zapisali so jih stranke, ki so pri nas kupile bazen.",
   reviews: GENERATED_REVIEWS["bazen"] ?? [],
-  // The fragments are the sections' derived ids on /vodniki — pinned by
-  // structure.test.ts, which renders that page and fails the moment a
-  // reworded heading changes an id out from under a card.
+  // ⚠️ SLUGS NOW, NOT FRAGMENTS. These used to be the derived section ids on
+  // /vodniki, because the three guides were three sections of that one page.
+  // They are pages now (content/pages/vodnik.ts), so a card is a door to a
+  // URL rather than a scroll position — which is also what lets each guide
+  // rank for the query it answers.
   guides: [
     ["Vodnik za nakup", "Masažni bazen na terasi: kaj preveriti pred nakupom?",
-      "s1-masazni-bazen-na-terasi-kaj-preveriti-pr"],
+      "masazni-bazen-na-terasi"],
     ["Cene 2026", "Koliko stane masažni bazen? Nakup in obratovanje.",
-      "s2-koliko-stane-masazni-bazen"],
+      "koliko-stane-masazni-bazen"],
     ["Pozimi", "Masažni bazen pozimi: stroški in nasveti.",
-      "s3-masazni-bazen-pozimi"],
+      "masazni-bazen-pozimi"],
   ],
   categories,
   collections,
@@ -1268,7 +1330,23 @@ export const bazenContent: ShopContent = {
   pdps: [...OFFERED_MODELS.map(pdpFor), ...OFFERED_SWIMSPAS.map(pdpForSwim)],
   footNote:
     // The footer of EVERY page said "Razstavni bazen v Ljubljani — pridite ga
-    // pogledat v živo". There is no showroom; this now names the thing the
-    // shop really does, which is the same promise the moat band makes.
-    "Specialist za masažne bazene v Sloveniji. Dostava, priklop in zagon po vsej Sloveniji, z brezplačnim ogledom lokacije pred nakupom.",
+    // pogledat v živo". There is no showroom; this names the thing the shop
+    // really does, which is the same promise the moat band makes.
+    //
+    // ⚠️ AND IT SAID IT WITH NO VERB IN IT. The replacement read "Specialist
+    // za masažne bazene v Sloveniji. Dostava, priklop in zagon po vsej
+    // Sloveniji, z brezplačnim ogledom lokacije pred nakupom." — three faults
+    // in 131 characters. "Specialist za" is a status nobody can check,
+    // claimed as a noun, on a site whose /o-nas page refuses to state a
+    // founding year or an installation count for exactly that reason;
+    // "Sloveniji" appears twice; and the second sentence is four
+    // nominalisations with no verb at all, so the promise the whole shop
+    // rests on was written as a directory entry. It also quietly stopped
+    // selling the swim spas, which the footer's own link column lists.
+    //
+    // Five verbs now, all first-person plural, Slovenia once. It sits
+    // directly under the new signature, which is the other reason it had to
+    // stop being a label.
+    "Prodajamo masažne in swim spa bazene po vsej Sloveniji. Pred nakupom pridemo " +
+      "pogledat lokacijo, nato bazen pripeljemo, priklopimo in zaženemo.",
 };

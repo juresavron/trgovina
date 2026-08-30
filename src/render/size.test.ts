@@ -15,6 +15,32 @@ describe("the inlined stylesheet stays within budget", () => {
   });
 
   /**
+   * ⚠️ THE SHEET IS A TEMPLATE LITERAL, SO tsc CANNOT SEE A MISSING BRACE.
+   *
+   * This is not hypothetical. Rewriting the ≤620 wordmark tier dropped the
+   * ONE closing brace that ended its @media block, and every check the repo
+   * had went on passing: tsc compiled it, 437 tests passed, the CSS file was
+   * written and served, and the missing brace was still there in the built
+   * bytes because the minifier does not balance either. What actually
+   * happened is that Chrome's parser hit the error and DISCARDED THE REST OF
+   * THE SHEET — 1008 rules parsed before, 251 after — so .st-hero lost its
+   * position:relative, its absolutely-positioned background image fell back
+   * to static at its intrinsic 2000px, and the whole site scrolled sideways
+   * on every page. It was found by measuring document.scrollWidth in a
+   * browser, which is a long way to travel for a typo.
+   *
+   * Counting braces is crude and it is enough: a sheet with a missing or
+   * extra one is broken from that point on, whatever else is true of it.
+   * Strings and comments cannot hide a brace here — comments are asserted
+   * away above, and this stylesheet contains no braces inside quotes.
+   */
+  it("has balanced braces, which is what a missing one costs", () => {
+    const open = (BASE_CSS.match(/\{/g) ?? []).length;
+    const close = (BASE_CSS.match(/\}/g) ?? []).length;
+    expect(close, open + " { against " + close + " }").toBe(open);
+  });
+
+  /**
    * The budget is on the COMPRESSED size, because that is the number a visitor
    * actually downloads. An earlier version gated the raw string at 100 KB and
    * duly failed at 104.9 KB — while the same sheet compressed to 12.9 KB, a

@@ -28,6 +28,9 @@ export const FAQ: Page = {
   // may carry FAQPage. See Page.faqPage.
   faqPage: true,
   h1: "Pogosta vprašanja",
+  // Every shop on the internet has a page titled "Pogosta vprašanja". This
+  // one answers questions about a specific object, and the title says so.
+  seoTitle: "Pogosta vprašanja o masažnih bazenih",
   lead: "Kar nas kupci vprašajo največkrat: o postavitvi, obratovanju, dostavi in garanciji.",
   metaDescription:
     "Pogosta vprašanja o masažnih bazenih: postavitev in podlaga, poraba, vzdrževanje, " +

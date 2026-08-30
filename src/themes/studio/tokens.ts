@@ -117,22 +117,56 @@ export const STUDIO_TOKENS = `
      *  The source outlines buttons with 2px #151515 (18.3:1) and that is what
      *  --line-strong is for; --line-ctrl is the quieter rung for inputs, where
      *  the source's #dfdfdf would fail. */
-    --line-ctrl: #949494;
+    /* ⚠️ #888888, NOT #949494, AND THE OLD VALUE FAILED ON THE PANEL. This
+     * rung exists to meet 1.4.11's 3:1 on a control's boundary, and #949494
+     * measures 3.03:1 on white but 2.66:1 on --bg-alt — 1% of headroom on one
+     * ground and a failure on the other. commerce.ts:588 has recorded both
+     * numbers in a comment since the chip outline was drawn; nothing acted on
+     * the second one. #888888 is 3.54 and 3.11. verify-contrast.mjs now gates
+     * BOTH grounds, which is why this could not stay. */
+    --line-ctrl: #888888;
     --line-strong: #151515;
 
     /* ---- Accent ---------------------------------------------------------
      * The source's accent is amber #f0aa13 with a cream #ffdfc4 companion and
      * a coral #ff8787. Our network needs each shop to differentiate, so --acc
-     * stays driven by the per-shop hue set in css.ts; the source literals are
-     * kept because the theme uses them as fixed punctuation (badges, the sale
-     * flag) where a per-shop hue would read as a bug rather than a brand. */
-    --acc: oklch(0.62 var(--c) var(--hue));
-    --acc-text: oklch(0.45 var(--c) var(--hue));
+     * is driven by the per-shop hue set in css.ts.
+     *
+     * ⚠️ THE THREE SOURCE LITERALS ARE GONE. The note here said they were
+     * "kept because the theme uses them as fixed punctuation (badges, the
+     * sale flag)". The theme does not: grep finds no use of --amber, --cream
+     * or --coral outside this block and the contrast script that measured
+     * them. They were an English furniture site's punctuation sitting in a
+     * Slovenian hot-tub shop's token file, costing bytes in a sheet that runs
+     * at 98.8% of its budget, and two of the three (amber 2.01:1, coral
+     * 2.32:1 on white) could not have carried a word if anything had used
+     * them. --star, which the rating rows do use, is its own token and
+     * stays. */
+    /* ⚠️ THE LIGHTNESS RUNGS MOVED, AND THE OLD --acc-text WAS NOT A COLOUR.
+     *
+     * oklch(0.45 0.09 200) is OUTSIDE sRGB: at L 0.45 and hue 200 the largest
+     * chroma sRGB can carry is 0.0765, and the token asked for 0.09. Its red
+     * channel resolves to −0.191, so every engine gamut-maps it by its own
+     * rule and the shop's link ink is whatever that engine decided. Measured
+     * across the hue circle the old pair leaves the gamut for 120 of 720
+     * hues, and this shop's own hue is one of them.
+     *
+     * 0.56 / 0.52 with the shop's 0.14 chroma resolves to #b4561a and
+     * #9f5021, both inside sRGB, and both with headroom the old pair never
+     * had: 4.91 / 4.31 / 3.72 against white, the panel and the dark band for
+     * --acc (was 3.50 / 3.07), and 5.77 / 5.07 for --acc-text.
+     *
+     * ⚠️ --acc IS NOT TEXT ON THE DARK BAND. 3.72:1 clears 1.4.11's 3:1 for a
+     * focus ring or a rule, which is all it is used for, and does not clear
+     * 1.4.3's 4.5:1 for a word. On white and on the panel it clears both.
+     *
+     * The formula is still per-shop, so a shop that picks a chroma its hue
+     * cannot carry still leaves the gamut — verify-contrast.mjs now fails the
+     * build for that rather than letting the browser decide. */
+    --acc: oklch(0.56 var(--c) var(--hue));
+    --acc-text: oklch(0.52 var(--c) var(--hue));
     --on-acc: #ffffff;
-    --wash: oklch(0.62 var(--c) var(--hue) / 0.1);
-    --amber: #f0aa13;
-    --cream: #ffdfc4;
-    --coral: #ff8787;
+    --wash: oklch(0.56 var(--c) var(--hue) / 0.1);
 
     /* ---- Edges -----------------------------------------------------------
      * Read from the DOM's inline styles, not the stylesheet: Framer emits most

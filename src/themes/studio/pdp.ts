@@ -903,7 +903,16 @@ export const STUDIO_PDP_CSS = `
   :root[data-theme="studio"] .st-pdp-sws {
     list-style: none; margin: clamp(12px, 1.1vw, 22px) 0 0; padding: 0;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+    /* ⚠️ 92px, AND THE FLOOR IS SET BY THE LONGEST NAME, NOT BY THE TILE.
+     * At 76 the grid fitted seven 86px columns at 1440 and four 77.5px ones
+     * at 390, and "Mediterranean" measures 89.7px — so the one finish whose
+     * name does not contain a space broke as "Mediterranea / n", an orphaned
+     * single letter under a colour swatch. break-word below is the safety net
+     * for a name longer still; it should not be doing the everyday work.
+     *
+     * A grid floor is not a guarantee: the cell can land exactly on it, so
+     * the floor has to clear 89.7 rather than meet it. */
+    grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
     gap: clamp(10px, 0.9vw, 16px);
   }
   :root[data-theme="studio"] .st-pdp-sws > li { min-inline-size: 0; }
@@ -946,7 +955,9 @@ export const STUDIO_PDP_CSS = `
     line-height: 1.3;
     color: var(--ink-mute);
     text-wrap: pretty;
-    /* "Mediterranean" is one character wider than an 86px tile. */
+    /* Safety net only: the grid floor above is sized so today's longest
+     * name fits on one line. A longer one added later breaks rather than
+     * spills past the column's right margin. */
     overflow-wrap: break-word;
   }
   /* CHOSEN: a ring the swatch wears, and the name in full ink. The tick the
@@ -1081,12 +1092,20 @@ export const STUDIO_PDP_CSS = `
     line-height: var(--lh-body);
     color: var(--ink-body);
   }
-  :root[data-theme="studio"] .st-pdp-cfg-note a {
+  /* The panel's way out to the page that carries the whole answer. Same ink
+   * and the same underline as the configuration note's link, because it is
+   * the same kind of thing: prose with one word to press. */
+  :root[data-theme="studio"] .st-pdp-panel-more {
+    margin: clamp(10px, 0.9vw, 18px) 0 0;
+  }
+  :root[data-theme="studio"] .st-pdp-cfg-note a,
+  :root[data-theme="studio"] .st-pdp-panel-more a {
     color: var(--ink);
     text-decoration: underline;
     text-underline-offset: 3px;
   }
-  :root[data-theme="studio"] .st-pdp-cfg-note a:focus-visible {
+  :root[data-theme="studio"] .st-pdp-cfg-note a:focus-visible,
+  :root[data-theme="studio"] .st-pdp-panel-more a:focus-visible {
     outline: 2px solid var(--acc);
     outline-offset: 3px;
     border-radius: var(--r-ctrl);
@@ -1778,7 +1797,8 @@ export const STUDIO_PDP_CSS = `
     text-transform: uppercase;
     color: var(--ink-body);
   }
-  :root[data-theme="studio"] .st-pdp-ao-list {
+  :root[data-theme="studio"] .st-pdp-ao-list,
+  :root[data-theme="studio"] .st-pdp-ao-sub {
     list-style: none; margin: 0; padding: 0;
   }
   /* 44px minimum, per WCAG 2.5.8 — and these rows are the one place on the
@@ -1854,11 +1874,11 @@ export const STUDIO_PDP_CSS = `
     color: var(--ink);
   }
   /* Group heading. The label rung again, but muted and without the hairline
-   * the section legend carries — it divides, it does not announce. aria-hidden
-   * because it is a visual grouping of controls that already name themselves;
-   * a screen reader meeting "Osvetlitev" as a list item between checkboxes
-   * learns nothing it cannot get from "LED osvetlitev roba". */
+   * the section legend carries — it divides, it does not announce. It names
+   * the nested list it heads (aria-labelledby), which is why it is a span and
+   * not a list item: see the renderer. */
   :root[data-theme="studio"] .st-pdp-ao-head {
+    display: block;
     padding-block: clamp(16px, 1.4vw, 26px) clamp(6px, 0.5vw, 10px);
     font-family: var(--f-label);
     font-size: var(--t-label);
@@ -1868,7 +1888,13 @@ export const STUDIO_PDP_CSS = `
     text-transform: uppercase;
     color: var(--ink-mute);
   }
-  :root[data-theme="studio"] .st-pdp-ao-head:first-child { padding-top: clamp(8px, 0.7vw, 14px); }
+  /* The first group needs less air above it — the legend's hairline is right
+   * there. It is the GROUP that has to be first, not the heading: the heading
+   * is now the first child of every group, so matching on it would tighten
+   * all four. */
+  :root[data-theme="studio"] .st-pdp-ao-grp:first-child .st-pdp-ao-head {
+    padding-top: clamp(8px, 0.7vw, 14px);
+  }
   :root[data-theme="studio"] .st-pdp-ao-line {
     display: flex; align-items: baseline; justify-content: space-between;
     gap: var(--gap-sm);
@@ -2451,6 +2477,29 @@ function compareAt(d: PdpContent): string | null {
 }
 
 /**
+ * A panel's link to the page that carries the whole answer.
+ *
+ * ⚠️ BOTH HALVES OR NOTHING, AND THE ROUTE HAS TO RESOLVE. The key comes from
+ * the content layer as a plain string, so a typo would otherwise render
+ * href="undefined" — a live link to a 404 on six product pages, which is
+ * worse than the dead end it was meant to fix. A shop that has no such route
+ * simply keeps the summary.
+ *
+ * ctx.q rides along like every other internal link here: it is what carries
+ * the preview/tenant query through a click.
+ */
+function panelMore(ctx: RenderCtx, label?: string, routeKey?: string): string {
+  if (!label || !routeKey) return "";
+  const slugs = ctx.shop.routeSlugs as Record<string, string | undefined>;
+  const href = slugs[routeKey];
+  if (typeof href !== "string" || href.length === 0) return "";
+  return (
+    '<p class="st-pdp-panel-more"><a href="' + esc(href + ctx.q) + '">' +
+    esc(label) + "</a></p>"
+  );
+}
+
+/**
  * The COLLECTION this model belongs to, or null.
  *
  * Read off the collection's own product list rather than guessed from the
@@ -2892,13 +2941,24 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   ];
   const rowNo = { n: 0 };
   const groups = order
-    .map((g) => {
+    .map((g, gi) => {
       const rows = all.filter((x) => x.group === g);
       if (rows.length === 0) return "";
-      const head = g ? '<li class="st-pdp-ao-head" aria-hidden="true">' + esc(g) + "</li>" : "";
-      return (
-        head +
-        rows
+      // ⚠️ THE HEADINGS USED TO BE aria-hidden LIST ITEMS IN A FLAT LIST, and
+      // the note that justified it ("a screen reader learns nothing it cannot
+      // get from the option's own label") was wrong twice over. It hid the
+      // grouping itself — sighted readers see four named sets, everyone else
+      // met one undifferentiated list of twelve checkboxes — and it lied about
+      // the count: 16 <li> in the DOM against 12 listitem in the AX tree, so
+      // "seznam, 12 elementov" and the visible list disagreed.
+      //
+      // Now each group is a nested <ul> named by its heading, so the tree
+      // reads four lists of three rather than one list of twelve. aria-label
+      // repeats the text in sentence case for the same reason .st-pdp-glabel
+      // carries one: the CSS uppercases the span and Chrome takes the
+      // transformed text into the accessible name.
+      const gid = "st-ao-g" + String(gi);
+      const body = rows
           .map((x) => {
             rowNo.n += 1;
             const id = "st-ao-" + String(rowNo.n);
@@ -2921,8 +2981,14 @@ export function renderStudioPdp(ctx: RenderCtx): string {
               "</label></li>"
             );
           })
-          .join("")
-      );
+          .join("");
+      // Ungrouped rows stay flat: they have no heading to name a list with,
+      // and a nameless nested list would add a level for nothing.
+      return g
+        ? '<li class="st-pdp-ao-grp"><span class="st-pdp-ao-head" id="' + gid +
+          '" aria-label="' + esc(g) + '">' + esc(g) + "</span>" +
+          '<ul class="st-pdp-ao-sub" aria-labelledby="' + gid + '">' + body + "</ul></li>"
+        : body;
     })
     .join("");
 
@@ -3047,10 +3113,19 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     "</div></details>" +
     (d.panels ?? [])
       .map(
-        (x) =>
-          '<details class="st-pdp-panel"><summary>' +
+        (x, i) =>
+          // ⚠️ THE FIRST ONE IS OPEN, and it is the description. Every other
+          // panel here lists (dimensions, delivery terms, warranty length);
+          // this one ARGUES, and it leads with standsOut() — the sentence
+          // that says why this model rather than the one 400 EUR cheaper
+          // beside it ("Največ masaže med masažnimi bazeni: 50 šob…"). That
+          // is the question a product page exists to answer, and it was
+          // behind a click while the spec table above it was open.
+          '<details class="st-pdp-panel"' + (i === 0 ? " open" : "") + "><summary>" +
           '<h3 class="st-pdp-panel-h">' + esc(x[0]) + "</h3></summary>" +
-          '<div class="st-pdp-panel-b"><p>' + esc(x[1]) + "</p></div></details>",
+          '<div class="st-pdp-panel-b"><p>' + esc(x[1]) + "</p>" +
+          panelMore(ctx, x[2], x[3]) +
+          "</div></details>",
       )
       .join("") +
     "</section>";

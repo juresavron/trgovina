@@ -9,6 +9,7 @@
  * nine on another.
  */
 
+import { GUIDE_PAGES } from "../content/pages/vodnik";
 import type { ShopConfig } from "../tenants/types";
 import type { ShopContent } from "../content/types";
 import { PAGES } from "../content/pages";
@@ -47,6 +48,10 @@ export function sitemapPaths(shop: ShopConfig, content: ShopContent): string[] {
     // The guided choice — stable, indexable entry content; the answered
     // permutations all canonicalize back to this URL.
     shop.routeSlugs["/finder"],
+    // ⚠️ THE GUIDES, ONE URL EACH. They were three sections of /vodniki and
+    // therefore one sitemap entry; docs/SEO.md §1 calls this ladder the
+    // topical-authority mechanism, and a mechanism with one URL is a page.
+    ...GUIDE_PAGES.map((g) => shop.routeSlugs["/guide"] + "/" + g.slug),
     ...PAGES.filter((p) => !p.noindex)
       .map((p) => shop.routeSlugs[p.key as keyof typeof shop.routeSlugs])
       .filter((slug): slug is string => typeof slug === "string" && slug !== ""),

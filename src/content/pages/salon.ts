@@ -34,6 +34,12 @@ import type { Page } from "../pages";
 export const SHOWROOM: Page = {
   key: "/showroom",
   h1: "Brezplačen ogled lokacije",
+  // "Brezplačen ogled lokacije" alone reads as an estate agent's viewing.
+  // One word fixes it, and it is the word this page is actually about: the
+  // visit happens at the buyer's house, which is the whole argument the page
+  // makes against having a showroom. The head term is not missing — every
+  // title on this site ends in "Masažni bazeni Vrelec".
+  seoTitle: "Brezplačen ogled lokacije doma",
   lead:
     "Preden karkoli kupite, pridemo pogledat, kam bi bazen postavili. Ogled je brezplačen " +
     "in vas k ničemur ne zavezuje.",

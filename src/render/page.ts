@@ -133,7 +133,17 @@ export function renderDocument(o: PageOptions): string {
     '<meta name="description" content="' + esc(o.description) + '">' +
     (o.noindex ? '<meta name="robots" content="noindex, nofollow">' : "") +
     '<link rel="canonical" href="' + esc(canonical) + '">' +
-    '<link rel="alternate" hreflang="' + esc(s.locale.hreflang) + '" href="' + esc(canonical) + '">' +
+    // ⚠️ NO hreflang. A self-referencing <link rel="alternate" hreflang="sl-SI"
+    // href="<this page>"> stood here, on every page, and it is a no-op: the
+    // annotation exists to tie a page to its OTHER-LANGUAGE versions, and a
+    // set of one names no alternative. Google's own rule is that a
+    // self-reference is required only when there are alternates to
+    // self-reference among. This network is one language per shop today; the
+    // day a shop ships a second, the annotation has to be emitted for BOTH
+    // and point at BOTH, which is a different line from this one. The lang
+    // attribute on <html> already carries the language for a crawler.
+    // s.locale.hreflang stays in the config for exactly that day.
+
     '<meta property="og:type" content="' + (o.ogType ?? "website") + '">' +
     '<meta property="og:site_name" content="' + esc(s.name) + '">' +
     '<meta property="og:title" content="' + esc(o.title) + '">' +
@@ -225,9 +235,21 @@ export function renderDocument(o: PageOptions): string {
  * and a URL is valid, honest and complete the day the rest lands — see
  * src/lib/filled.ts for the predicates and why they have one home.
  */
+/** The Organization's node id — one entity, referenced from everywhere. */
+export function orgId(s: ShopConfig): string {
+  return s.siteUrl + "/#organization";
+}
+
 export function organizationJsonLd(s: ShopConfig): object {
   const org: Record<string, unknown> = {
     "@context": "https://schema.org",
+    // ⚠️ A NODE ID, SO THE TWENTY-FIVE COPIES ARE ONE ENTITY. This block is
+    // emitted on every route, and without an @id each copy is an anonymous
+    // Organization that happens to share a name — nothing to attach a
+    // knowledge panel to, and nothing for an Offer's seller or a WebSite's
+    // publisher to point AT. A fragment on the site's own URL is the
+    // conventional identifier and costs nothing.
+    "@id": orgId(s),
     "@type": "Organization",
     name: s.name,
     url: s.siteUrl,
@@ -253,6 +275,35 @@ export function organizationJsonLd(s: ShopConfig): object {
   return org;
 }
 
+/**
+ * The site as an entity, for the home page only.
+ *
+ * WHAT IT BUYS. Google reads WebSite from a site's home page to decide what
+ * to print above a result instead of the bare domain — the "site name"
+ * feature. Without it the SERP shows "masazni-bazeni-vrelec.si"; with it,
+ * the shop's name. That is the whole of it, and it is worth one node.
+ *
+ * ⚠️ NO SearchAction. The obvious companion property advertises a search
+ * endpoint, and this site has no search: a sitelinks search box pointing at a
+ * URL that 404s is a promise the shop cannot keep, and Google has retired the
+ * feature for most sites anyway.
+ *
+ * publisher is a REFERENCE, not a second copy of the organization. The
+ * Organization node is already on this page (worker.ts emits it on every
+ * route); repeating its fields here would be two entities where there is one.
+ */
+export function websiteJsonLd(s: ShopConfig): object {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "@id": s.siteUrl + "/#website",
+    name: s.name,
+    url: s.siteUrl,
+    inLanguage: s.locale.lang,
+    publisher: { "@id": orgId(s) },
+  };
+}
+
 export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c.pdp): object {
   // NOTE deliberately absent: Review / AggregateRating. Placeholder reviews
   // render as page copy only — fabricated review schema is a manual-action
@@ -260,6 +311,9 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
   const product: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "Product",
+    // Its own node id, on its own URL, so a crawler that meets this model on
+    // the product page and again in a future ItemList sees one thing.
+    "@id": s.siteUrl + s.routeSlugs["/product"] + "/" + pdp.slug + "#product",
     name: pdp.title,
     description: pdp.sub,
     sku: pdp.code,
@@ -305,6 +359,30 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
         ? "https://schema.org/InStock"
         : "https://schema.org/PreOrder",
       itemCondition: "https://schema.org/NewCondition",
+      // The seller is the Organization node this page already carries, by
+      // reference. Without it an Offer names a price and nobody selling at it.
+      seller: { "@id": orgId(s) },
+      // ⚠️ EVERY FIELD HERE IS COPIED OFF /odstop-od-pogodbe, NOT CHOSEN.
+      // A return policy in structured data is a claim made to Google in the
+      // shop's name, and Merchant Center reads it: a policy here that
+      // contradicts the page is the mismatch that gets a listing suspended.
+      // So — 14 days from receipt, Slovenia, and the consumer bears the
+      // direct cost of returning the goods, which is what that page says in
+      // its own words ("Neposredne stroške vračila blaga nosi potrošnik").
+      //
+      // TWO PROPERTIES ARE DELIBERATELY ABSENT. returnMethod has three
+      // permitted values — by mail, in store, at a kiosk — and none of them
+      // is true of an object the same page says cannot be sent by post
+      // "zaradi teže in velikosti"; and returnShippingFeesAmount would state
+      // a figure the page explicitly does not fix in advance.
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: s.addressCountry,
+        returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
+        merchantReturnDays: 14,
+        returnFees: "https://schema.org/ReturnShippingFees",
+        merchantReturnLink: s.siteUrl + s.routeSlugs["/withdrawal"],
+      },
     };
   }
   return product;

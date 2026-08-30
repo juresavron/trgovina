@@ -1,34 +1,60 @@
 /**
- * The shop's mark.
+ * The shop's mark: V.
  *
- * WHY A MARK AT ALL, AND WHY THIS ONE. The business is called "Masažni
- * Bazen" — the product category, verbatim. That is deliberate and it is
- * excellent for search, because the domain matches it exactly. It is also
- * the hardest possible name to look like a company rather than a listings
- * page, and the wordmark alone cannot fix that: set any category noun in a
- * nice face and it still reads as a heading. A mark is what turns a noun
- * into a signature, so here the mark carries the identity and the words
- * carry the keyword.
+ * ⚠️ IT WAS TWO WAVES IN A ROUNDED SQUARE, AND AT 16px THAT WAS A FACE.
  *
- * WHAT IT DRAWS. The vessel and the water in it. Every model this shop sells
- * is a square acrylic shell — product-art.ts learned that the hard way, from
- * photographs, after drawing an oval one — so the silhouette is a rounded
- * square, and two waves are cut out of it. Not a droplet and not three loose
- * waves: both are the stock imagery of every plumber and pool cleaner in
- * Europe, and neither says "a thing you sit in".
+ * The note that stood here reasoned from a premise that had stopped being
+ * true. It opened "the business is called 'Masažni Bazen' — the product
+ * category, verbatim … the domain matches it exactly", and neither half
+ * holds: tenants/bazen.ts names the shop "Masažni bazeni Vrelec", and it
+ * records why the bare category name was abandoned — masazni-bazen.si
+ * belongs to somebody else and serves their site. The name has an ownable
+ * proper noun in it now.
+ *
+ * The drawing had a worse problem than its rationale. Rasterised at a TRUE
+ * 16×16 and magnified, the upper wave's crossing splits into two dark lobes
+ * with a light gap and the shorter lower wave sits under them: it is a face,
+ * on white and on the dark bar, and on the dark bar it is a white tile with a
+ * squint. Three independent explorations rendered it and reported the same
+ * thing; the fourth found the interior collapses to grey mush at 16px anyway.
+ * The doctrine below was right and the drawing did not satisfy it — the
+ * asymmetry defeated the hamburger glyph the note was worried about and did
+ * nothing about the archetype the eye actually reaches for first.
+ *
+ * WHAT IT DRAWS NOW. The V of Vrelec, knocked out of a square. Three things
+ * at once, which is why it beat a vessel, a spring, a bubble stream, a
+ * thermal wedge and a surveyor's benchmark in the drawing rounds:
+ *
+ *   - It is the half of the name the shop can own. Every compression this
+ *     brand undergoes drops "masažni bazeni" and keeps "Vrelec" — the card
+ *     statement descriptor already says "BAZENI VRELEC" — and the chrome
+ *     lockup now sets VRELEC over the category for the same reason.
+ *   - It is a vessel in section: a container that holds, drawn rather than
+ *     illustrated.
+ *   - It is a funnel converging on one point, which is what a vrelec is —
+ *     the place where the water comes up, not water as scenery.
+ *
+ * And it is the only shape in the category that is not blue, wavy or round.
  *
  * BUILT FOR 16px FIRST. A favicon is the smallest the identity ever gets and
  * the size at which most people meet it, so it was drawn there and checked
- * upward, not the reverse. Three consequences:
+ * upward, not the reverse. Four consequences:
  *
  *   - The shape is FILLED, not stroked. A 2px stroke on a 24 viewBox is
- *     1.3px at 16px, which a display renders as a grey smear.
- *   - The waves are KNOCKED OUT through a mask rather than painted on top,
- *     so the mark is one colour and reads on any ground — the dark chrome
- *     bar, a white page, a browser tab in either theme.
- *   - The two waves differ in length and offset. Two equal horizontal slots
- *     in a rounded square is the universal hamburger-menu glyph; the
- *     asymmetry is what stops a tab icon reading as a menu button.
+ *     1.3px at 16px, which a display renders as a grey smear. The mark this
+ *     replaces broke its own rule here: its waves were stroked paths.
+ *   - The V is KNOCKED OUT through a mask rather than painted on top, so the
+ *     mark is one colour and reads on any ground — the dark chrome bar, a
+ *     white page, a browser tab in either theme.
+ *   - ⚠️ EVERY EDGE SITS ON A MULTIPLE OF 1.5, which is what makes it crisp:
+ *     in a 24 viewBox, 1.5 lands on an integer device pixel at 16, 24, 32,
+ *     64 and 160. The old body was x=2, width=20 — off-grid at every one of
+ *     those sizes, picking up a grey fringe on all four edges. rx is 1.5 for
+ *     the same reason, and the squarer corner is deliberate: a squircle
+ *     inside the plate reads as a generic app tile.
+ *   - The V's terminals are flat and inside the frame, and its apex is
+ *     sharp. That is what separates it from a download chevron (a band open
+ *     to both edges) and a play button (a triangle) — both tested.
  *
  * currentColor throughout, so the host decides the ink and the mark inverts
  * for free.
@@ -42,19 +68,22 @@
  * error nobody reports and everybody half-notices.
  */
 const MARK_BODY =
-  // The shell: a rounded square, filled.
-  '<rect x="2" y="2" width="20" height="20" rx="5.5"/>';
+  // The plate: a square with just enough corner to not be a box. Every
+  // number is a multiple of 1.5 — see the note above on the pixel grid.
+  '<rect x="1.5" y="1.5" width="21" height="21" rx="1.5"/>';
 
 /**
- * The water, as a mask. Two waves at different lengths, the lower one
- * shifted right, each a stroked curve with round caps so the ends stay soft
- * when the renderer starts dropping pixels.
+ * The V, as a mask. One filled path, no strokes: a letterform with flat
+ * terminals inside the frame and a sharp apex, symmetric about x=12.
+ *
+ * ⚠️ THE NAME OF THIS CONSTANT IS NOW A LIE THAT COSTS NOTHING TO KEEP.
+ * It is MARK_WATER because three renderings reference it and the mask id in
+ * brandMark() is "st-brand-water-<key>"; renaming it would touch the header,
+ * the favicon and the touch icon for no reader's benefit. What it means is
+ * "the knockout".
  */
 const MARK_WATER =
-  '<path d="M6.4 10.2c1.3-1.15 2.6-1.15 3.9 0s2.6 1.15 3.9 0 2.6-1.15 3.9 0" ' +
-  'fill="none" stroke="#000" stroke-width="2.1" stroke-linecap="round"/>' +
-  '<path d="M8.3 15.1c1.1-1.05 2.2-1.05 3.3 0s2.2 1.05 3.3 0" ' +
-  'fill="none" stroke="#000" stroke-width="2.1" stroke-linecap="round"/>';
+  '<path d="M3.4 5h5l4.5 10.1L16.4 5h4.2l-6.9 14.6h-1.7Z" fill="#000"/>';
 
 /**
  * The mark for use inside the page, in the current ink.

@@ -17,6 +17,13 @@ import type { Page } from "../pages";
 export const DELIVERY: Page = {
   key: "/delivery",
   h1: "Dostava in montaža",
+  // ⚠️ THE TITLE HAS TO SAY WHAT IS DELIVERED. This page takes more internal
+  // links than any other on the site and titled itself "Dostava in montaža" —
+  // two words that describe a courier, a kitchen fitter or a boiler, and that
+  // match no query anyone types about a hot tub. The h1 stays short because a
+  // reader arriving here already knows what shop they are in; a searcher
+  // reading a result list does not.
+  seoTitle: "Dostava in montaža masažnega bazena",
   lead:
     "Bazen pripeljemo, prenesemo na mesto, priklopimo in zaženemo. " +
     "Vaša naloga je pripraviti podlago in električni priklop; pri obojem svetujemo vnaprej.",

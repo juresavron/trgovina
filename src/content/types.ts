@@ -40,6 +40,17 @@ export interface Collection {
   /** Route path under the shop, e.g. "/bazeni". Its own URL, not an anchor. */
   path: string;
   h1: string;
+  /**
+   * The <title>, where it should differ from the h1 — and on a collection it
+   * usually should.
+   *
+   * An h1 names the page for someone already on it ("Masažni bazeni"); a title
+   * competes in a result list against nine others, and a bare category noun
+   * there is the same string the shop's own name already carries. Without
+   * this, /masazni-bazeni titled itself "Masažni bazeni | Masažni bazeni
+   * Vrelec" — the head term twice and nothing a searcher could choose on.
+   */
+  seoTitle?: string;
   /** One paragraph under the H1 — what this family is and who it is for. */
   intro: string;
   metaDescription: string;
@@ -187,8 +198,15 @@ export interface PdpContent {
    * Collapsible sections under the buy column, as [heading, body] — product
    * description, care, delivery terms. The spec table is generated separately
    * and always renders first.
+   *
+   * The optional third and fourth elements are a "read the whole thing" link:
+   * the anchor's WORDS and the ROUTE KEY it points at. A panel body is capped
+   * at 320 characters by studio.test.ts, which is right — these are summaries
+   * — and a summary with no way through to the page that carries the detail
+   * is a dead end. The key rather than a path so a shop that renames its
+   * routes does not leave six product pages pointing at a 404.
    */
-  panels?: [string, string][];
+  panels?: [string, string, string?, string?][];
   /** Shell finish names offered. Names rather than swatches; see catalog/pola.ts. */
   finishes?: string[];
   /**

@@ -53,7 +53,11 @@ const SHEET = `
     --line-soft: color-mix(in srgb, var(--line) 55%, var(--bg));
     --ink-soft: var(--ink-body, #212121);
     --surface2: var(--bg-alt, #f0f0f0);
-    --wash-strong: oklch(0.62 var(--c) var(--hue) / 0.28);
+    /* ⚠️ 0.56, THE SAME RUNG --acc AND --wash TAKE IN tokens.ts. It read 0.62
+     * and was left behind when those moved, which would have shipped a
+     * shadow and a border one step lighter than the accent they are drawn
+     * from — the kind of mismatch nobody reports and everybody half-sees. */
+    --wash-strong: oklch(0.56 var(--c) var(--hue) / 0.28);
     --r-scene: var(--r-media, 8px);
     --stretch: 100%;
     --track-display: 0em;

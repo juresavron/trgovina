@@ -17,10 +17,12 @@ import type { InternalRouteKey } from "./tenants/types";
 import type { PdpContent, ShopContent } from "./content/types";
 import { CONTENT } from "./content";
 import { PAGES, type Page } from "./content/pages";
+import { GUIDE_PAGES } from "./content/pages/vodnik";
 import { THEME_CATALOG, type ThemeKey } from "./themes/catalog";
 import {
   buildCtx,
   organizationJsonLd,
+  websiteJsonLd,
   productJsonLd,
   renderDocument,
   renderHome,
@@ -412,7 +414,11 @@ export function handleRequest(
       noindex: dev,
       q,
       bodyHtml: renderHome(shop, content, theme, q),
-      jsonLd: [organizationJsonLd(shop)],
+      // The WebSite node is a home-page thing: it is where Google reads the
+      // name to print above a result instead of the bare domain, and putting
+      // it on all twenty-five routes would say the same thing twenty-five
+      // times. The Organization it names as publisher is right beside it.
+      jsonLd: [organizationJsonLd(shop), websiteJsonLd(shop)],
     });
     return htmlResponse(doc, 200, baseHeaders);
   }
@@ -517,7 +523,15 @@ export function handleRequest(
       content,
       theme,
       path,
-      title: "Trgovina — " + shop.keyword.primary + " | " + shop.name,
+      // ⚠️ NOT THE HEAD TERM. This read "Trgovina — masažni bazen", and so did
+      // the home page ("Masažni bazen — cena in dostava") and the hot-tub
+      // collection ("Masažni bazeni"): three URLs on one site, all titled for
+      // the same query, none of them saying which one a searcher wants. The
+      // head term belongs to the home page, which leads with it; this is the
+      // page that lists EVERY model with its price, and that is what it says.
+      // The term is not lost either way — shop.name is "Masažni bazeni
+      // Vrelec", so every title on this site carries it in the suffix.
+      title: "Vsi modeli in cene | " + shop.name,
       // NOT content.metaDescription: that is the home page's, and two
       // indexable pages sharing one description give a search engine nothing
       // to tell them apart. Falls back only if a shop has not written one.
@@ -568,7 +582,7 @@ export function handleRequest(
       content,
       theme,
       path,
-      title: collection.h1 + " | " + shop.name,
+      title: (collection.seoTitle ?? collection.h1) + " | " + shop.name,
       description: collection.metaDescription,
       noindex: dev,
       q,
@@ -603,6 +617,51 @@ export function handleRequest(
   // nav destination bar the shop and every page the law requires, all serving
   // one "Stran je v pripravi" card at 200 and noindex. Nothing was broken and
   // nothing was findable.
+  // ---- the buying guides, one URL each -----------------------------------
+  //
+  // ⚠️ THE "/guide" SEGMENT WAS CONFIGURED AND ROUTED NOWHERE. Every tenant
+  // has carried routeSlugs["/guide"] since the start and both /vodnik and
+  // /vodnik/<anything> answered 404, while the three articles it was meant to
+  // serve sat as sections of one 375-word page — so the three queries
+  // docs/SEO.md names as the topical-authority mechanism had no page to rank.
+  //
+  // Modelled on the product route above: a segment, a slug, and a hard 404 for
+  // one that does not resolve. An unknown guide must never fall through to a
+  // page that renders something else.
+  const guideBase = shop.routeSlugs["/guide"] + "/";
+  if (path.startsWith(guideBase)) {
+    const guide = GUIDE_PAGES.find((g) => g.slug === path.slice(guideBase.length));
+    if (guide) {
+      const noindex = dev || !shop.live;
+      const doc = renderDocument({
+        shop,
+        content,
+        theme,
+        path,
+        title: (guide.seoTitle ?? guide.h1) + " | " + shop.name,
+        description: guide.metaDescription,
+        noindex,
+        q,
+        bodyHtml: renderContentPage(
+          shop, content, q, theme, guide, undefined, [], undefined,
+        ),
+        jsonLd: [
+          organizationJsonLd(shop),
+          breadcrumbJsonLd(shop, [
+            { name: "Domov", path: "/" },
+            { name: "Vodniki", path: shop.routeSlugs["/guides"] },
+            { name: guide.h1 },
+          ]),
+        ],
+      });
+      return htmlResponse(
+        doc,
+        200,
+        noindex ? { ...baseHeaders, "x-robots-tag": "noindex, nofollow" } : baseHeaders,
+      );
+    }
+  }
+
   for (const page of PAGES) {
     if (path !== shop.routeSlugs[page.key as InternalRouteKey]) continue;
     // Pre-live the whole site is noindex anyway; once live, the basket and
