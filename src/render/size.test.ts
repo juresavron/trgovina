@@ -118,10 +118,18 @@ describe("the stylesheet stays within budget", () => {
    * because a figure in prose goes stale silently while the assertion above
    * it stays true; the brotli test is the one that knows.
    *
-   * What earned the last two raises, so the next person can judge whether
+   * What earned the last three raises, so the next person can judge whether
    * the trend is features or sprawl: the enquiry form (inputs, textareas,
    * the consent row and two result states — a component the site genuinely
-   * did not have) and the sample-book call to action on the product page.
+   * did not have), the sample-book call to action on the product page, and
+   * the finder's answers becoming cards — a device the page did not have,
+   * paid for in part by dropping a :focus-visible outline that restated the
+   * kernel's own rule for every anchor.
+   *
+   * ⚠️ READ THE BROTLI TEST BEFORE SPENDING THE ROOM THIS RAISE MAKES. At the
+   * raise it stood at 19.1 of 20 KB — 96% of the real budget, and the raw
+   * number here is not the one that will stop you. The next feature of any
+   * size has to pay for itself, and the note below says where.
    *
    * WHERE THE HEADROOM IS, when it runs out: ~5 KB raw of .st-rail-*
    * styles a device this shop never renders. It is not dead — the rail is
@@ -132,7 +140,7 @@ describe("the stylesheet stays within budget", () => {
    */
   it("has not grown without anyone noticing", () => {
     const kb = BASE_CSS.length / 1024;
-    expect(kb, "the raw sheet is " + kb.toFixed(1) + " KB").toBeLessThan(172);
+    expect(kb, "the raw sheet is " + kb.toFixed(1) + " KB").toBeLessThan(174);
   });
 
   it("still emits the rules that matter after minification", async () => {
