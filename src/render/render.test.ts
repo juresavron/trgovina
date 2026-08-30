@@ -227,16 +227,39 @@ describe("the hero's rating", () => {
     // The decimal is a comma in Slovenian, and the count takes the genitive
     // plural at 34 — not the dual, which is what "34 mnenji" would be.
     expect(html).toContain("4,7");
-    expect(html).toContain("34 mnenj na Googlu");
+    expect(html).toContain("34 mnenj");
     expect(html).not.toContain("34 mnenji");
     // The exact figure is beside the glyphs precisely because they round up.
     expect(html).toContain("Ocena na Googlu: 4,7 od 5, 34 mnenj");
   });
 
+  it("names its source with the mark, and still says it in words", async () => {
+    const html = await text(get("/"));
+    // ⚠️ THE LOGO REPLACES THE WORD, NOT THE SENTENCE. The visible run drops
+    // "na Googlu" because Google's own mark is beside it — but the mark is
+    // aria-hidden, so a reader who cannot see it would otherwise get
+    // "4,7 od 5, 34 mnenj" from an unnamed source, which is not the claim
+    // this line makes.
+    expect(html).toContain("st-hero-g");
+    expect(html).toContain("Ocena na Googlu:");
+    // Google's published brand values, unaltered — a recoloured mark is a
+    // worse problem than no mark.
+    for (const hex of ["#EA4335", "#4285F4", "#FBBC05", "#34A853"]) {
+      expect(html, hex).toContain(hex);
+    }
+  });
+
+  it("prints no date beside the score", async () => {
+    // Dropped on the owner's instruction. asOf stays in the config as the
+    // record of when the figures were read; it reaches no page.
+    expect(SHOPS["bazen"]!.googleRating!.asOf).toBeTruthy();
+    expect(await text(get("/"))).not.toContain("stanje ");
+  });
+
   it("is a plain statement while no profile URL is set, not a dead link", async () => {
     expect(SHOPS["bazen"]!.googleRating!.url).toBeUndefined();
     const html = await text(get("/"));
-    expect(html).toContain("st-hero-rating-s");
+    expect(html).toContain("st-hero-rating-p");
     // ⚠️ A LINK THAT GOES NOWHERE IS WORSE THAN NO LINK: it promises to show
     // the source and lands on the page it is already on. The unlinked line
     // still names the source in words, and the day the URL arrives the whole

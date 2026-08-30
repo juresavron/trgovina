@@ -1621,14 +1621,41 @@ export const STUDIO_PAGE_CSS = `
   /* The index shape: one destination a line, with the line that says what is
    * behind it. The row above wraps short labels; this one cannot, because a
    * label and its blurb have to stay together. */
+  /* ⚠️ ACROSS THE BAND, AND IT USED TO BE A STACK. Three guides one under the
+   * other at the 38rem measure left /vodniki as a narrow column against 800px
+   * of empty screen — reported twice, and the same complaint the pdp panels
+   * and the finder's answers were rebuilt for. Three columns is the shape the
+   * content already had: each entry is a title and one line, which is a
+   * column, not a paragraph.
+   *
+   * Two at the tablet tier and one on a phone, stated rather than auto-fit:
+   * with three items an auto-fit grid can leave a lone entry stretched across
+   * the whole band, which is the orphan this file has now fixed twice.
+   *
+   * The hairline over each is what makes three columns read as one index
+   * rather than as three unrelated notes — the rule the stacked version got
+   * from the gap between entries. */
   :root[data-theme="studio"] .st-page-onward--rich ul {
     display: grid;
-    gap: clamp(18px, 2vw, 30px);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(18px, 2vw, 32px);
+  }
+  @media (max-width: 1023px) {
+    :root[data-theme="studio"] .st-page-onward--rich ul {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 619px) {
+    :root[data-theme="studio"] .st-page-onward--rich ul {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
   :root[data-theme="studio"] .st-page-onward--rich li {
     display: grid;
-    gap: 4px;
-    max-inline-size: 38rem;
+    gap: 6px;
+    align-content: start;
+    padding-block-start: clamp(12px, 1.2vw, 18px);
+    border-block-start: var(--bw-line) solid var(--line);
   }
   :root[data-theme="studio"] .st-page-onward--rich a {
     font-size: var(--t-lead);
@@ -2483,6 +2510,13 @@ function isWide(b: Block): boolean {
     b.kind === "compare" ||
     // A row of links is navigation laid out across the column, not a sentence
     // to read at the measure — same reason onward() spans the body.
+    //
+    // ⚠️ AND THAT WAS ALREADY TRUE WHILE /vodniki READ AS A NARROW COLUMN. The
+    // block had the wide TRACK all along; what pinned it was
+    // .st-page-onward--rich li's own max-inline-size, which capped each entry
+    // at the 38rem measure and stacked three of them down the left of a
+    // 1216px band. The fix is in that rule, not here — worth saying, because
+    // the obvious place to look for "make it full width" is this function.
     b.kind === "links" ||
     // ⚠️ A FILLED PANEL IS NOT RUNNING TEXT. `cta` draws a --bg-alt box with a
     // --r-lg radius and 48px of padding, and it was capped at the 38rem
