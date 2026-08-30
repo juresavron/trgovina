@@ -2170,7 +2170,13 @@ export function renderStudioFooter(ctx: RenderCtx): string {
       // offer, approached from the other end — the visitor who knows what
       // they want reads the families, the one who does not answers three
       // questions.
-      [s.routeSlugs["/finder"], "Izbira bazena"] as const,
+      // ⚠️ THE LABEL IS THE PAGE'S OWN QUESTION. It read "Izbira bazena",
+      // which appears nowhere on the page it opens: the nav calls it "Kateri
+      // bazen?", the h1 asks "Kateri bazen je pravi za vas?" and the title
+      // repeats the h1. A footer link whose words are absent from its
+      // destination makes the reader check whether they clicked the right
+      // thing.
+      [s.routeSlugs["/finder"], "Kateri bazen?"] as const,
     ]) +
     col("st-foot-c2", "Pomoč", [
       [s.routeSlugs["/delivery"], "Dostava in montaža"],
@@ -2180,7 +2186,10 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     ] as const) +
     col("st-foot-c3", "Podjetje", [
       [s.routeSlugs["/about"], "O nas"],
-      [s.routeSlugs["/showroom"], "Ogled lokacije"],
+      // Same rule, and here the missing word is the offer: the page is
+      // "Brezplačen ogled lokacije" and dropping "Brezplačen" from the link
+      // to it gives away the only thing that makes it worth clicking.
+      [s.routeSlugs["/showroom"], "Brezplačen ogled lokacije"],
       [s.routeSlugs["/contact"], "Kontakt"],
     ] as const) +
     // Withdrawal sits SECOND, under the terms it belongs to: of the four, the
