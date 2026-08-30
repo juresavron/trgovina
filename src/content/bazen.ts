@@ -681,7 +681,9 @@ function pdpFor(m: PolaModel): PdpContent {
         // page that sets them side by side is the terms page; sending the
         // reader there is the difference between a number and their rights.
         "Garancija in zakonsko jamstvo za skladnost blaga",
-        "/terms",
+        // The SECTION, not the top of the page: the terms run nine headings
+        // and this link names one of them. See panelMore in themes/studio/pdp.ts.
+        "/terms#s6-jamstvo-za-skladnost-blaga-in-garancija",
       ],
     ],
     finishes: [...SHELL_FINISHES],
@@ -887,7 +889,9 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
         // page that sets them side by side is the terms page; sending the
         // reader there is the difference between a number and their rights.
         "Garancija in zakonsko jamstvo za skladnost blaga",
-        "/terms",
+        // The SECTION, not the top of the page: the terms run nine headings
+        // and this link names one of them. See panelMore in themes/studio/pdp.ts.
+        "/terms#s6-jamstvo-za-skladnost-blaga-in-garancija",
       ],
     ],
     // ⚠️ NO SHELL LIST EITHER — the sheet states ONE shell colour for every

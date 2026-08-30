@@ -348,6 +348,37 @@ for (const r of PAGES) {
   else note(r, "is linked from no other page (noindex — intended)");
 }
 
+/* --- every fragment resolves ------------------------------------------ */
+//
+// ⚠️ A LINK THAT NAMES A SECTION AND LANDS AT THE TOP OF A PAGE IS A BROKEN
+// LINK THAT ANSWERS 200. The product page's warranty panel says "Garancija in
+// zakonsko jamstvo za skladnost blaga" and points into the terms; the id it
+// points at is GENERATED from that heading's own text and position, so an
+// editor who rewords the heading, or inserts a section above it, silently
+// turns the link into "here is a nine-section legal page, find it yourself".
+//
+// Same-page fragments are checked too — the tables of contents are built from
+// the headings beside them, but the "skip to content" link and any hand-written
+// href are not.
+for (const r of PAGES) {
+  const html = docs[r] || "";
+  for (const href of all(/href="([^"]*#[^"]+)"/g, html)) {
+    const [target, frag] = [href.slice(0, href.indexOf("#")), href.slice(href.indexOf("#") + 1)];
+    // Off-site and mailto/tel fragments are none of this audit's business.
+    if (target !== "" && !target.startsWith("/")) continue;
+    const path = (target.split("?")[0] || r).replace(/\/$/, "") || "/";
+    const page = docs[path];
+    if (page === undefined) {
+      warn(r, 'links to "' + href + '" — a page this audit does not render');
+      continue;
+    }
+    const ids = new Set(all(/\sid="([^"]+)"/g, page));
+    if (!ids.has(decodeURIComponent(frag))) {
+      err(r, 'links to "' + href + '" and that page has no such id — the reader lands at the top');
+    }
+  }
+}
+
 /* --- robots.txt and sitemap.xml --------------------------------------- */
 const rb = await get("/robots.txt");
 if (rb.status !== 200) {

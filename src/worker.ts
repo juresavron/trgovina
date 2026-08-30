@@ -140,6 +140,34 @@ function htmlResponse(body: string, status: number, extra?: Record<string, strin
 // any per-request state exists. No CSP here yet: the admin has a strict one,
 // and a public one is worth doing deliberately once, not as a header dropped
 // in a list.
+/**
+ * The mark on the address that says an enquiry was filed.
+ *
+ * Slovenian, like every other parameter this site reads (?model=, ?barva=),
+ * and valueless: it is a flag, and "?poslano=1" would invite somebody to
+ * wonder what 2 means.
+ */
+const SENT_PARAM = "poslano";
+
+/**
+ * The mark the sample-book link carries, and the sentence it puts in the box.
+ *
+ * ⚠️ THE LINK PROMISED SOMETHING THE PAGE AT THE OTHER END DID NOT KNOW ABOUT.
+ * "Naročite vzorčnik barv" on every product page went to /kontakt?model=…,
+ * which renders a general enquiry form headed "Povprašujete za BAZEN 230" and
+ * says nothing about swatches anywhere. The visitor asked for one thing and
+ * was handed a different form; the shop received an enquiry with no way to
+ * tell it apart from any other.
+ *
+ * A FLAG, AND THE WORDS COME FROM HERE. The parameter carries no value — its
+ * presence is the whole message — because this file's rule is that a string
+ * off the wire never becomes page text, and a prefilled textarea is page
+ * text. What lands in the box is this constant, which the visitor can edit or
+ * delete like anything else they typed.
+ */
+const SWATCH_PARAM = "vzorcnik";
+const SWATCH_MESSAGE = "Prosim za vzorčnik barv školjke.";
+
 const SECURITY = {
   "x-content-type-options": "nosniff",
   "referrer-policy": "strict-origin-when-cross-origin",
@@ -161,7 +189,18 @@ const PLACEHOLDER_TITLES: Partial<Record<InternalRouteKey, string>> = {
   // Routed even though nothing links to it yet: the slug exists in
   // routeSlugs, and a configured route that 404s is a landmine for the day
   // checkout wires up and redirects here.
-  "/order-success": "Naročilo uspešno",
+  //
+  // ⚠️ "Naročilo", NOT "Naročilo uspešno", AND IT SAID THE SECOND. This is the
+  // one route left that still falls through to the placeholder, so the page
+  // rendered an h1 reading "Naročilo uspešno" above a paragraph reading
+  // "Stran je v pripravi" — a page announcing that an order succeeded and
+  // that it does not exist yet, in that order. bazen sets ordersOnline:false
+  // and takes enquiries, so no order can have succeeded: nothing on the site
+  // can produce this page, and anyone who reaches it by URL is being told
+  // something that did not happen. A heading may not assert an outcome the
+  // shop cannot have produced. The enquiry confirmation is a different page
+  // and has its own address — see SENT_PARAM.
+  "/order-success": "Naročilo",
   "/terms": "Pogoji poslovanja",
   "/privacy": "Zasebnost",
   "/cookies": "Piškotki",
@@ -207,6 +246,48 @@ export function handleRequest(
   }
 
   const dev = isDevHost(host);
+
+  /**
+   * ⚠️ THE CONFIRMATION IS A GET NOW — POST/REDIRECT/GET.
+   *
+   * The success page used to be the 200 answering the POST itself, and the
+   * comment in the async layer defended it: "the page a visitor sees after
+   * pressing the button is the page they pressed it on, re-rendered, with no
+   * redirect and no second template". Everything in that sentence is still
+   * true of the FAILURE path, where it earns its keep — the typed values are
+   * still in the body and re-rendering keeps them.
+   *
+   * It does not hold for success. A POST result left in the history entry is
+   * a page that re-submits when the visitor pulls to refresh or presses back
+   * and forward: the browser asks "Confirm form resubmission", and whoever
+   * says yes files the same enquiry twice — into a table this shop reads by
+   * hand. So a written enquiry answers 303 to ?poslano and the confirmation
+   * is rendered by an ordinary GET, which is safe to refresh, bookmark,
+   * share and go back to.
+   *
+   * There is no second template: the done state is the same block the POST
+   * used to render, reached through the same outcome value. Nothing here can
+   * fake a submission that matters — a visitor who types ?poslano gets a
+   * sentence saying we will be in touch and no row is written.
+   */
+  const onContact =
+    request.method === "GET" && url.pathname === shop.routeSlugs["/contact"];
+  const confirmed = onContact && url.searchParams.has(SENT_PARAM);
+  const swatches = onContact && url.searchParams.has(SWATCH_PARAM);
+  /**
+   * ⚠️ TWO GETs NOW REACH THE ENQUIRY BLOCK, and neither is a submission. The
+   * outcome value was built for the POST alone; it is the only channel the
+   * renderer has for "draw the form differently", and both of these want
+   * exactly that — one replaces the form with the confirmation, the other
+   * arrives with a sentence already in the message box. Neither writes a row.
+   */
+  const outcome =
+    enquiry ??
+    (confirmed
+      ? { done: true }
+      : swatches
+        ? { sent: { sporocilo: SWATCH_MESSAGE } }
+        : undefined);
 
   // The storefront speaks GET and HEAD, and POST on exactly one path.
   //
@@ -303,7 +384,7 @@ export function handleRequest(
   // this line a shared cache could hold one visitor's "Povpraševanje je
   // oddano" and hand it to the next person who asked for /kontakt. The reply
   // is also personal: it re-renders the page around what THEY configured.
-  if (isEnquiryPost) baseHeaders["cache-control"] = "no-store";
+  if (isEnquiryPost || confirmed) baseHeaders["cache-control"] = "no-store";
 
   // The stylesheet and the behaviour script, content-addressed and immutable
   // — see render/assets.ts. Before the live gate on purpose: a pre-live
@@ -667,7 +748,12 @@ export function handleRequest(
     // Pre-live the whole site is noindex anyway; once live, the basket and
     // the checkout stay out of the index because they are per-visitor
     // surfaces rather than content.
-    const noindex = dev || !shop.live || page.noindex === true;
+    // ⚠️ AND THE CONFIRMATION IS NEVER INDEXED. It is a real URL now, so it
+    // can be linked, pasted and crawled; a search result reading
+    // "Povpraševanje je oddano" for a shop's contact page would be the worst
+    // possible listing for the page the whole site funnels into.
+    const noindex =
+      dev || !shop.live || page.noindex === true || confirmed || swatches;
     const doc = renderDocument({
       shop,
       content,
@@ -685,7 +771,7 @@ export function handleRequest(
       bodyHtml: (() => {
         const about = modelParam(url, content);
         return renderContentPage(
-          shop, content, q, theme, page, about, chosenParams(url, about), enquiry,
+          shop, content, q, theme, page, about, chosenParams(url, about), outcome,
         );
       })(),
       jsonLd: [
@@ -822,6 +908,9 @@ async function handleEnquiry(
   const parsed = parseEnquiry(form, {
     modelSlug: about?.slug ?? null,
     configuration: Object.fromEntries(chosen.map(([k, v]) => [k, v])),
+    // Where the enquiry was filed from, read from the request rather than
+    // from a field the page had to carry — see sourcePath in submit.ts.
+    sourcePath: url.pathname + url.search,
   });
 
   if (!parsed.ok) {
@@ -886,6 +975,22 @@ export default {
       // visitor sees after pressing the button is the page they pressed it
       // on, re-rendered, with no redirect and no second template.
       const enquiry = await handleEnquiry(request, env);
+      if (enquiry?.done) {
+        // POST/REDIRECT/GET — see the note beside SENT_PARAM in
+        // handleRequest. 303 and not 302: 303 is the status that MEANS "the
+        // answer to your POST is at this other address, fetch it with GET",
+        // and it is the one every browser follows with a GET.
+        const url = new URL(request.url);
+        return new Response(null, {
+          status: 303,
+          headers: {
+            location: url.pathname + "?" + SENT_PARAM,
+            "cache-control": "no-store",
+            "x-robots-tag": "noindex, nofollow",
+            ...SECURITY,
+          },
+        });
+      }
       if (enquiry) return handleRequest(request, enquiry);
       return handleRequest(request);
     } catch (err) {

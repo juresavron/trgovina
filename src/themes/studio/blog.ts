@@ -281,8 +281,12 @@ export function renderStudioBlogIndex(
         // apologetic sentence turns that minute into a dead end for both the
         // reader and the crawler, which is why the paragraph carries the
         // pages that answer the same questions and do not need a database.
-        '<p class="st-blog-empty">Prvi zapis pripravljamo. Do takrat vam na vsako ' +
-        "vprašanje odgovorimo po telefonu ali e-pošti — v " +
+        // "na vprašanja odgovorimo", not "na VSAKO vprašanje": the absolute
+        // was a promise the shop cannot keep about questions it has not been
+        // asked yet, on the page whose lead says it makes no promises it
+        // cannot keep.
+        '<p class="st-blog-empty">Prvi zapis pripravljamo. Do takrat na vprašanja ' +
+        "odgovorimo po telefonu ali e-pošti — v " +
         '<a href="' + esc(ctx.shop.routeSlugs["/guides"] + ctx.q) + '">vodnikih</a> ' +
         "pa je že zdaj zapisano, kaj je treba pripraviti pred dostavo, kako " +
         "poteka priklop in koliko prostora model zares potrebuje. Če se " +

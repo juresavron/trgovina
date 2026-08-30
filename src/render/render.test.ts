@@ -172,6 +172,42 @@ describe("production domains (gated by live)", () => {
   });
 });
 
+/**
+ * POST/REDIRECT/GET, from the GET half — which is the half handleRequest owns.
+ *
+ * The write and the 303 live in the async layer (worker.ts's default export)
+ * because they need env; what can be asserted here is the contract that makes
+ * the redirect worth anything: that the address it sends the browser to
+ * renders the confirmation, drops the form, and is never indexed or cached.
+ * Without that, a 303 to ?poslano would be a redirect to an empty contact
+ * page and the visitor would think the enquiry vanished.
+ */
+describe("the enquiry confirmation is a GET", () => {
+  const CONTACT = SHOPS["bazen"]!.routeSlugs["/contact"]!;
+
+  it("renders the confirmation and removes the form", async () => {
+    const html = await text(get(CONTACT + "?poslano"));
+    expect(html).toContain("st-enq-done");
+    expect(html).toContain("Povpraševanje je oddano.");
+    // ⚠️ THE FORM MUST BE GONE. Leaving a filled form under a success message
+    // invites a second submission of the same enquiry — the reason the done
+    // state replaces it rather than captioning it.
+    expect(html).not.toContain('<form class="st-enq"');
+  });
+
+  it("is never indexed and never cached", () => {
+    const r = get(CONTACT + "?poslano");
+    expect(r.headers.get("x-robots-tag")).toContain("noindex");
+    expect(r.headers.get("cache-control")).toBe("no-store");
+  });
+
+  it("the contact page without the mark still carries the form", async () => {
+    const html = await text(get(CONTACT));
+    expect(html).toContain('<form class="st-enq"');
+    expect(html).not.toContain("st-enq-done");
+  });
+});
+
 describe("canonicalization", () => {
   it("trailing slash and uppercase redirect with 308", () => {
     expect(get("/bazen/veliki-230/").status).toBe(308);

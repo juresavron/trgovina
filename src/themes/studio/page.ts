@@ -2732,7 +2732,6 @@ function enquiry(
     '<label for="enq-website">Ne izpolnjujte tega polja</label>' +
     '<input id="enq-website" name="website" type="text" tabindex="-1" autocomplete="off">' +
     "</div>" +
-    '<input type="hidden" name="od" value="' + esc(ctx.path ?? "") + '">' +
     '<div class="st-enq-grid">' +
     field("ime", "Ime in priimek", "text", { req: true, auto: "name" }) +
     field("telefon", "Telefon", "tel", { auto: "tel", mode: "tel" }) +
