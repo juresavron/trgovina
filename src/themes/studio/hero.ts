@@ -692,6 +692,24 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-mq-viewport {
     flex: 1 1 auto; min-width: 0;
     overflow: hidden;
+    /* ⚠️ THE EDGES WERE A GUILLOTINE. This is a scrolling strip inside an
+     * overflow:hidden box, so text was cut mid-letter at both ends — and the
+     * left end is 2px from the "USTAVI" pill, which parked a permanent sliced
+     * half-glyph against a control. The chrome's nav rail solved exactly this
+     * with a mask and this did not; now they agree.
+     *
+     * A MASK, not a gradient overlay, for the same reason chrome.ts gives:
+     * this strip sits on the page ground in one place and on the dark band in
+     * another, and a painted wedge would have to know which. A mask fades the
+     * strip's own ink over whatever is behind it.
+     *
+     * 24px rather than the rail's 40: the rail's fade has to dissolve a whole
+     * glyph so a clipped label reads as scrollable, while this one only has
+     * to stop a hard cut on text that is already moving. */
+    -webkit-mask-image:
+      linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
+    mask-image:
+      linear-gradient(to right, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
   }
   :root[data-theme="studio"] .st-mq-group,
   :root[data-theme="studio"] .st-mq-set { display: flex; align-items: center; }

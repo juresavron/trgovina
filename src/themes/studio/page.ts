@@ -1341,8 +1341,34 @@ export const STUDIO_PAGE_CSS = `
      * The tiles still stretch to the tallest in their row, which is a grid
      * default too, so a two-line address stays level with a telephone. */
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+    /* ⚠️ AN EXPLICIT COLUMN COUNT, after both automatic ones failed at one end
+     * each. This list is the contact block: a telephone, an address and an
+     * e-mail, so never more than three items.
+     *
+     *   flex with grow   — a lone third tile took the whole row: 299/299/608
+     *                      at 768, twice as wide as the two above it.
+     *   auto-fill        — fixed that and over-provisioned instead: FOUR
+     *                      tracks for three tiles in the 902px column at 1440,
+     *                      so the row ended 229px short of its own box and the
+     *                      telephone number wrapped onto two lines beside the
+     *                      hole.
+     *   auto-fit + a cap — fixed both and stopped a single tile filling a
+     *                      390px phone row, leaving 70px beside it.
+     *
+     * With a known, small item count the count can simply be stated. Three
+     * tracks hold three tiles with nothing left over; two tracks put the third
+     * in column one at exactly one column's width; one track fills the row.
+     * No orphan can stretch, because no row is ever short of a track. */
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: clamp(10px, 1vw, 16px);
+  }
+  @media (max-width: 767px) {
+    :root[data-theme="studio"] .st-page-ch {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+  @media (max-width: 479px) {
+    :root[data-theme="studio"] .st-page-ch { grid-template-columns: minmax(0, 1fr); }
   }
   :root[data-theme="studio"] .st-page-ch > li {
     display: flex;
@@ -1350,11 +1376,21 @@ export const STUDIO_PAGE_CSS = `
   }
   /* The tile. A quiet panel rather than an outlined card: the two controls
    * above it are the page's emphasis, and three bordered boxes under two
-   * bordered buttons would be five rectangles arguing. align-content:start so
-   * a tile with a note and a tile without still align at the top. */
+   * bordered buttons would be five rectangles arguing. */
   :root[data-theme="studio"] .st-page-ch-t {
-    display: grid;
-    align-content: start;
+    /* ⚠️ A COLUMN FLEX BOX, AND IT WAS A GRID WITH grid-template-rows AND
+     * align-content:start. Two things were wrong with that at once. The tile
+     * has FOUR children — disc, label, value, note — so a three-row template
+     * put the 1fr on the VALUE and left the note in an implicit auto row;
+     * and align-content:start parks the tracks at the top and leaves the free
+     * space OUTSIDE them, so margin-block-start:auto on the note had nothing
+     * to consume. Both are why the note stayed where it was.
+     *
+     * A column flex box needs neither: auto margins in flex absorb the free
+     * space of the line, whatever the child count, so .st-page-ch-n pins to
+     * the bottom and a tile without a note simply packs from the top. */
+    display: flex;
+    flex-direction: column;
     gap: 6px;
     inline-size: 100%;
     padding: clamp(16px, 1.6vw, 22px);
@@ -1419,6 +1455,20 @@ export const STUDIO_PAGE_CSS = `
    * have already done once in this theme, and it silently ships whatever the
    * literal says while looking like it came from the ramp.) */
   :root[data-theme="studio"] .st-page-ch-n {
+    /* ⚠️ PUSHED TO THE BOTTOM, because the tiles are equal height and this was
+     * not. The runs stack from the top, so a value that wrapped to two lines
+     * pushed its own note down while the others stayed put: measured at 1440,
+     * "Odgovorimo sproti." sat at y=824 while its two neighbours sat at 856,
+     * and the same 32px step appeared at 1024, 1200 and 1920. Three notes at
+     * two heights inside three boxes of one height reads as a mistake rather
+     * than as a rhythm.
+     *
+     * The tile is a column flex box (see .st-page-ch-t for why it is not a
+     * grid), and an auto margin there consumes the line's free space — so the
+     * notes sit on the floor of their tiles and end level with each other,
+     * whatever the value above them did. */
+    margin-block-start: auto;
+    padding-block-start: 6px;
     font-family: var(--f-body);
     font-size: var(--t-label);
     line-height: var(--lh-body);
