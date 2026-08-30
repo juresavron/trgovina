@@ -1139,16 +1139,18 @@ export const bazenContent: ShopContent = {
   reviewsLead: "Objavljena so tako, kot smo jih prejeli.",
   reviewsLeadVerified: "Zapisali so jih stranke, ki so pri nas kupile bazen.",
   reviews: GENERATED_REVIEWS["bazen"] ?? [],
-  // The fragments are the sections' derived ids on /vodniki — pinned by
-  // structure.test.ts, which renders that page and fails the moment a
-  // reworded heading changes an id out from under a card.
+  // ⚠️ SLUGS NOW, NOT FRAGMENTS. These used to be the derived section ids on
+  // /vodniki, because the three guides were three sections of that one page.
+  // They are pages now (content/pages/vodnik.ts), so a card is a door to a
+  // URL rather than a scroll position — which is also what lets each guide
+  // rank for the query it answers.
   guides: [
     ["Vodnik za nakup", "Masažni bazen na terasi: kaj preveriti pred nakupom?",
-      "s1-masazni-bazen-na-terasi-kaj-preveriti-pr"],
+      "masazni-bazen-na-terasi"],
     ["Cene 2026", "Koliko stane masažni bazen? Nakup in obratovanje.",
-      "s2-koliko-stane-masazni-bazen"],
+      "koliko-stane-masazni-bazen"],
     ["Pozimi", "Masažni bazen pozimi: stroški in nasveti.",
-      "s3-masazni-bazen-pozimi"],
+      "masazni-bazen-pozimi"],
   ],
   categories,
   collections,

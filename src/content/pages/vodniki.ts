@@ -1,87 +1,35 @@
 import type { Page } from "../pages";
 
 /**
- * The guides page. content.guides carries three titles the home page prints as
- * cards; the articles behind them are not written yet, so this page answers
- * the three questions directly rather than linking to pages that do not exist.
- * A card that links nowhere is worse than no card.
+ * The guides INDEX.
+ *
+ * ⚠️ IT USED TO BE THE GUIDES THEMSELVES. The note that stood here said the
+ * articles "are not written yet, so this page answers the three questions
+ * directly rather than linking to pages that do not exist" — true when it was
+ * written, and it cost the whole long-tail ladder: 375 words under one title,
+ * one h1 and one URL, so none of the three queries had a page to rank. They
+ * are written now, one per URL, in ./vodnik.ts. This page lists them.
  */
 export const GUIDES: Page = {
   key: "/guides",
-  h1: "Vodniki",
+  h1: "Vodniki za nakup masažnega bazena",
+  seoTitle: "Vodniki za nakup masažnega bazena",
   lead:
-    "Kar je treba vedeti pred nakupom masažnega bazena: kje sme stati, koliko stane " +
-    "obratovanje in kaj se z njim dogaja pozimi.",
+    "Trije vodniki: kaj preveriti pred nakupom, koliko stane nakup in obratovanje, " +
+    "in kako je z bazenom pozimi.",
   metaDescription:
-    "Vodniki za nakup masažnega bazena: kaj preveriti pred nakupom, koliko stane nakup in " +
-    "obratovanje ter kako bazen deluje pozimi.",
+    "Vodniki za nakup masažnega bazena: nosilnost podlage in dostop, cena nakupa in " +
+    "obratovanja, ter delovanje pozimi.",
   blocks: [
-    // A `steps` block, not prose — and it was prose once. The guide's whole
-    // argument is an ORDER ("prvo … drugo … tretje … šele četrto"), and as
-    // four paragraphs that order was buried in a wall the eye cannot rank.
-    // The ordinals moved out of the sentences and into the numerals; not a
-    // fact changed.
+    // The index IS the links. Each card's own page carries the article; a
+    // summary here would be a fourth copy of text that already has a URL.
     {
-      kind: "steps",
-      h: "Masažni bazen na terasi: kaj preveriti pred nakupom",
+      kind: "links",
+      h: "Vsi vodniki",
       items: [
-        [
-          "Podlaga, ne model",
-          "Napolnjen masažni bazen tehta od 1.500 do 2.210 kilogramov, z ljudmi v njem pa " +
-            "še nekaj sto več; napolnjen swim spa od 5.750 do 8.490 kilogramov. Betonska " +
-            // ⚠️ "brez razmisleka" TOLD A READER NOT TO CHECK, about 2.210 kg plus
-            // bathers on a slab of unstated thickness over unstated ground. It
-            // was the only sentence on the site that did; every other surface
-            // hedges ("ali to velja za vašo lokacijo, preverimo ob ogledu").
-            "plošča navadno ni sporna, lesena terasa in balkon pa pogosto sta, in to " +
-            "je stvar konstrukcije, ne občutka.",
-        ],
-        [
-          "Pot do lokacije",
-          "Izmerite najožje mesto na poti: vrata, prehod med hišo in ograjo, ovinek na " +
-            "stopnišču. Bazen se prenaša postrani, a širina školjke je fizična meja, ki se " +
-            "je ne da obiti.",
-        ],
-        [
-          "Elektrika",
-          "Bazen potrebuje svoj odklopnik in zaščitno stikalo; koliko natanko, je odvisno " +
-            "od grelca in števila črpalk v modelu. Za vsak model damo pisna navodila, ki " +
-            "jih vaš električar preprosto izvede.",
-        ],
-        [
-          "Šele nato model",
-          "Koliko oseb, koliko šob, kakšna ležalna pozicija. Ta izbira je prijetna in jo " +
-            "lahko naredite v miru; prve tri točke pa določijo, kaj je sploh mogoče.",
-        ],
-      ],
-    },
-    {
-      kind: "prose",
-      // The site's only three-line h2 stair-stepped 20/12/14 characters at
-      // every width. The dropped subtitle is the first sentence's job anyway.
-      h: "Koliko stane masažni bazen",
-      p: [
-        "Nakupna cena modela je na strani vsakega modela; ogled lokacije, zagon in predaja so " +
-          "vključeni, dostavo pa obračunamo po ponudbi, ker je odvisna od lokacije in dostopa. " +
-          "Cena modela ne vključuje priprave podlage in elektroinštalacije na vaši strani.",
-        "Pri obratovanju sta glavni postavki ogrevanje in filtracija. Obe sta odvisni od stvari, " +
-          "ki jih ne moremo napovedati namesto vas: kako pogosto bazen uporabljate, na kateri " +
-          "temperaturi ga držite, kako dobro je pokrit in kakšna je vaša cena elektrike. Zato " +
-          "nikjer ne navajamo mesečnega zneska; vsaka taka številka bi bila ugibanje.",
-        "Kar zanesljivo drži: dobro pokrit bazen porabi bistveno manj kot slabo pokrit, zato je " +
-          "termo pokrov prvi in ne zadnji dodatek.",
-      ],
-    },
-    {
-      kind: "prose",
-      h: "Masažni bazen pozimi",
-      p: [
-        "Bazen pozimi dela in se uporablja. To je zanj najboljši letni čas. Voda ostane topla, " +
-          "izolacija školjke in pokrov pa opravita večino dela.",
-        "Praznjenje čez zimo je pogosta napaka. Prazen bazen v mrazu je bolj ogrožen kot poln " +
-          "in delujoč, ker v ceveh in črpalkah ostane voda. Če bazena res ne boste " +
-          "uporabljali, mora biti za zimo pravilno pripravljen. Povejte nam, pa vam razložimo " +
-          "postopek za vaš model.",
+        ["Masažni bazen na terasi: kaj preveriti pred nakupom", "/vodnik/masazni-bazen-na-terasi"],
+        ["Koliko stane masažni bazen", "/vodnik/koliko-stane-masazni-bazen"],
+        ["Masažni bazen pozimi", "/vodnik/masazni-bazen-pozimi"],
       ],
     },
     {

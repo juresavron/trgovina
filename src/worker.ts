@@ -17,6 +17,7 @@ import type { InternalRouteKey } from "./tenants/types";
 import type { PdpContent, ShopContent } from "./content/types";
 import { CONTENT } from "./content";
 import { PAGES, type Page } from "./content/pages";
+import { GUIDE_PAGES } from "./content/pages/vodnik";
 import { THEME_CATALOG, type ThemeKey } from "./themes/catalog";
 import {
   buildCtx,
@@ -603,6 +604,51 @@ export function handleRequest(
   // nav destination bar the shop and every page the law requires, all serving
   // one "Stran je v pripravi" card at 200 and noindex. Nothing was broken and
   // nothing was findable.
+  // ---- the buying guides, one URL each -----------------------------------
+  //
+  // ⚠️ THE "/guide" SEGMENT WAS CONFIGURED AND ROUTED NOWHERE. Every tenant
+  // has carried routeSlugs["/guide"] since the start and both /vodnik and
+  // /vodnik/<anything> answered 404, while the three articles it was meant to
+  // serve sat as sections of one 375-word page — so the three queries
+  // docs/SEO.md names as the topical-authority mechanism had no page to rank.
+  //
+  // Modelled on the product route above: a segment, a slug, and a hard 404 for
+  // one that does not resolve. An unknown guide must never fall through to a
+  // page that renders something else.
+  const guideBase = shop.routeSlugs["/guide"] + "/";
+  if (path.startsWith(guideBase)) {
+    const guide = GUIDE_PAGES.find((g) => g.slug === path.slice(guideBase.length));
+    if (guide) {
+      const noindex = dev || !shop.live;
+      const doc = renderDocument({
+        shop,
+        content,
+        theme,
+        path,
+        title: (guide.seoTitle ?? guide.h1) + " | " + shop.name,
+        description: guide.metaDescription,
+        noindex,
+        q,
+        bodyHtml: renderContentPage(
+          shop, content, q, theme, guide, undefined, [], undefined,
+        ),
+        jsonLd: [
+          organizationJsonLd(shop),
+          breadcrumbJsonLd(shop, [
+            { name: "Domov", path: "/" },
+            { name: "Vodniki", path: shop.routeSlugs["/guides"] },
+            { name: guide.h1 },
+          ]),
+        ],
+      });
+      return htmlResponse(
+        doc,
+        200,
+        noindex ? { ...baseHeaders, "x-robots-tag": "noindex, nofollow" } : baseHeaders,
+      );
+    }
+  }
+
   for (const page of PAGES) {
     if (path !== shop.routeSlugs[page.key as InternalRouteKey]) continue;
     // Pre-live the whole site is noindex anyway; once live, the basket and

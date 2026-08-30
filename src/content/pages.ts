@@ -210,6 +210,20 @@ export interface Page {
   readonly faqPage?: boolean;
 }
 
+/**
+ * A page that lives under a SEGMENT rather than at a fixed route key.
+ *
+ * The buying guides are the only ones today: they all answer to "/guide"
+ * (/vodnik) and are told apart by their slug, exactly as the product pages
+ * answer to "/product" (/bazen). A fixed key per guide would mean a new
+ * InternalRouteKey and a new routeSlugs entry in every tenant every time
+ * somebody writes an article, which is the wrong shape for content.
+ */
+export interface GuidePage extends Page {
+  /** The last path segment: /vodnik/<slug>. */
+  readonly slug: string;
+}
+
 /* ------------------------------------------------------------- registry */
 
 import { ABOUT } from "./pages/o-nas";

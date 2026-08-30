@@ -1,3 +1,4 @@
+import { GUIDE_PAGES } from "../content/pages/vodnik";
 import { describe, it, expect } from "vitest";
 import { handleRequest } from "../worker";
 import { SHOPS } from "../tenants";
@@ -286,21 +287,39 @@ describe("no in-page link points at nothing", () => {
    * changes out from under every card pointing at it, silently, the browser
    * simply not moving. This renders both pages and holds them together.
    */
-  it("lands every home guide card on a real section of the guides page", async () => {
-    const page = async (path: string) =>
-      await handleRequest(
+  /**
+   * ⚠️ THE CARDS POINT AT PAGES NOW, AND THIS TEST USED TO ENCODE THE OLD
+   * MECHANISM. It asserted a fragment into /vodniki and walked that page's ids
+   * — correct while the three guides were three sections of one page, and it
+   * failed the moment they became three URLs, which is exactly what a test
+   * pinned to a mechanism does.
+   *
+   * The contract is the same as it always was and survives the next change of
+   * mechanism: every card on the home page lands somewhere that EXISTS. So it
+   * follows each card's href through the router and requires a 200 with the
+   * guide's own h1 on it — a 404, a redirect loop or a page that renders
+   * something else all fail.
+   */
+  it("lands every home guide card on a guide that exists", async () => {
+    const get = (path: string) =>
+      handleRequest(
         new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
           headers: { host: "trgovina.workers.dev" },
         }),
-      ).text();
-    const home = await page("/");
-    const vodniki = await page("/vodniki");
-    const ids = new Set([...vodniki.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!));
-    const targets = [...home.matchAll(/href="\/vodniki#([^"]+)"/g)].map((m) => m[1]!);
-    expect(targets.length, "no guide card carries a fragment").toBeGreaterThan(0);
+      );
+    const home = await get("/").text();
+    const targets = [...home.matchAll(/href="(\/vodnik\/[^"?]+)/g)].map((m) => m[1]!);
+    expect(targets.length, "the home page carries no guide cards").toBe(GUIDE_PAGES.length);
     for (const t of targets) {
-      expect(ids.has(t), "guide card points at /vodniki#" + t + " which does not exist").toBe(true);
+      const res = get(t);
+      expect(res.status, t + " does not resolve").toBe(200);
+      const html = await res.text();
+      const guide = GUIDE_PAGES.find((g) => t.endsWith("/" + g.slug));
+      expect(guide, t + " matches no guide").toBeTruthy();
+      expect(html, t + " does not render its own heading").toContain(guide!.h1);
     }
+    // And an unknown guide is a 404, not a page that renders something else.
+    expect(get("/vodnik/ni-tega-vodnika").status).toBe(404);
   });
 });
 

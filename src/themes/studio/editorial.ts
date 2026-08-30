@@ -1364,7 +1364,7 @@ function quoteCard(r: {
 export function renderStudioGuides(ctx: RenderCtx): string {
   const guides = ctx.content.guides;
   if (!guides.length) return "";
-  const href = esc(ctx.shop.routeSlugs["/guides"] + ctx.q);
+  const base = ctx.shop.routeSlugs["/guide"] + "/";
   return (
     '<section class="st-gd" id="vodniki"><div class="st-gd-in">' +
     '<h2 class="st-gd-h">Preden kupite ' + esc(ctx.shop.keyword.accusative) + "</h2>" +
@@ -1372,12 +1372,13 @@ export function renderStudioGuides(ctx: RenderCtx): string {
     guides
       .map(
         (g, i) =>
-          // The card is a door to THE guide — the fragment scrolls the
-          // guides page to its own section, with the offset the anchor
-          // system already pays for. Without it every card landed at the
-          // top of the page and the reader scrolled, looking for the title
-          // they had just clicked.
-          '<a class="st-gd-card" href="' + href + "#" + esc(g[2]) + '">' +
+          // ⚠️ THE GUIDE'S OWN URL, NOT A FRAGMENT ON THE INDEX. The third
+          // field used to be a derived section id and this built
+          // /vodniki#s2-…, because all three guides lived on that page. They
+          // are pages now, so the card lands on the article rather than
+          // scrolling to it — and the link finally passes authority to the
+          // URL that is trying to rank for the query the card names.
+          '<a class="st-gd-card" href="' + esc(base + g[2] + ctx.q) + '">' +
           // ⚠️ THE PHOTOGRAPH IS BACK, AND THE NOTE THAT REMOVED IT WAS RIGHT
           // AT THE TIME. It said: these were borrowed room interiors argued
           // for as atmosphere, the argument was fine and the render was a
