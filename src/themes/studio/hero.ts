@@ -180,7 +180,23 @@ export const STUDIO_HERO_CSS = `
       );
   }
 
-  /* The foot block: pill, heading, one button. */
+  /* The foot block: what the shop says, and what can be checked.
+   *
+   * ⚠️ IT WAS ONE COLUMN OF FIVE ROWS and that is what "put some thinking
+   * into the hero layout" was looking at. Pill, heading, two controls,
+   * rating and proof row were five siblings in a single left-hand stack:
+   * measured at 1440 the widest of them was 507px, so a 1440px photograph
+   * carried a 507px ribbon of type down its left edge and 933px of nothing
+   * beside it, each row a little shorter than the one above — a shape that
+   * reads as a column that ran out rather than a composition.
+   *
+   * The split is not cosmetic, it is the one line that already ran through
+   * the block: the pill, the heading and the button are the shop TALKING,
+   * and the rating and the three facts under it are things a visitor can go
+   * and CHECK — the rating on someone else's profile, each fact on a page of
+   * this site. So they became two blocks, and at the tier where there is
+   * room they sit side by side on one baseline: the claim on the left where
+   * the eye starts, the evidence on the right where the frame was empty. */
   :root[data-theme="studio"] .st-hero-foot {
     position: relative; z-index: 4;
     align-self: end;
@@ -189,8 +205,54 @@ export const STUDIO_HERO_CSS = `
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: clamp(14px, 1.6vw, 24px);
+    gap: clamp(22px, 2.4vw, 34px);
     color: var(--on-invert);
+  }
+  :root[data-theme="studio"] .st-hero-say,
+  :root[data-theme="studio"] .st-hero-proof {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: clamp(14px, 1.6vw, 24px);
+    min-inline-size: 0;
+  }
+  /* ⚠️ 1000px, THE SAME THRESHOLD AS EVERY OTHER TWO-COLUMN TIER on this
+   * site (the subpage rail, the product page). Below it the two blocks stay
+   * stacked, which is the page a phone and a tablet already had.
+   *
+   * end, so the two blocks share a baseline rather than a top edge: the
+   * proof block is the shorter of the two and hanging it from the heading's
+   * top left it floating in the middle of the frame. The first column takes
+   * the free space so the second sits out at the container's right edge,
+   * where the composition needed something. */
+  @media (min-width: 1000px) {
+    :root[data-theme="studio"] .st-hero-foot {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      column-gap: clamp(48px, 5vw, 104px);
+    }
+    /* The three facts become a stack in the right-hand column — a row of
+     * middots is a footer device and this is no longer a footer strip. The
+     * hairlines are the site's own list rule (see .st-fnd-list, the guide
+     * index): one above each line, so the block reads as a short table of
+     * things that are true rather than a sentence broken by dots. */
+    :root[data-theme="studio"] .st-hero-proof .st-hero-trust {
+      display: grid;
+      gap: 0;
+      /* ⚠️ NOT justify-items: start. The three facts are different lengths,
+       * so start-sizing each row gave three hairlines of three different
+       * widths — 197, 344 and 356px at 1440, a stack that read as ragged
+       * rather than ruled. Stretched, every row is the width of the longest
+       * fact and the rules share both edges. */
+    }
+    :root[data-theme="studio"] .st-hero-proof .st-hero-trust li {
+      padding-block: 9px;
+      border-block-start: var(--bw-line) solid var(--on-invert-24);
+    }
+    :root[data-theme="studio"] .st-hero-proof .st-hero-trust li + li::before {
+      content: none;
+    }
   }
   /* The source's badge, with one measured change: its wash is 8% WHITE, and a
    * white wash under white type is the wrong direction. With the blur pulling
@@ -288,7 +350,9 @@ export const STUDIO_HERO_CSS = `
     align-items: center;
     flex-wrap: wrap;
     gap: 4px clamp(10px, 1vw, 16px);
-    margin: clamp(16px, 1.8vw, 26px) 0 0;
+    /* No top margin: .st-hero-proof's gap owns the rhythm between the rating
+     * and the facts under it, so the two sit on one system instead of two. */
+    margin: 0;
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -347,7 +411,7 @@ export const STUDIO_HERO_CSS = `
   :root[data-theme="studio"] .st-hero-rating-t { color: var(--ink-mute); }
   :root[data-theme="studio"] .st-hero-trust {
     list-style: none;
-    margin: clamp(18px, 2vw, 30px) 0 0;
+    margin: 0;
     padding: 0;
     display: flex;
     flex-wrap: wrap;
@@ -1168,6 +1232,13 @@ export function renderStudioHero(ctx: RenderCtx): string {
     // is where a delivery promise belongs.
 
     '<div class="st-hero-foot">' +
+    // TWO BLOCKS, NOT FIVE STACKED ROWS. Pill, heading, button, rating and
+    // proof row used to be five siblings in one left-hand column: a 1440px
+    // frame with a 500px column of small type down its left edge and nothing
+    // else in it, each row a little shorter than the one above. Splitting
+    // what the SHOP says from what can be CHECKED gives the frame a second
+    // anchor and lets the two sit on one baseline — see .st-hero-foot.
+    '<div class="st-hero-say">' +
     '<span class="st-hero-pill">' + esc(c.kicker) + "</span>" +
     "<h1>" + esc(c.h1) + "</h1>" +
     // NO SUB PARAGRAPH. The hero was pill, heading, four lines of prose and a
@@ -1186,11 +1257,19 @@ export function renderStudioHero(ctx: RenderCtx): string {
     // their terrace at all has a different first move, and it is the one
     // this shop is actually differentiated on. The second is a link rather
     // than a second button so the primary action keeps its weight.
+    // ONE CONTROL. There were two — the second a link to the free site visit
+    // — and the note here argued that a hero with one button asks every
+    // visitor the same question. Removed on the owner's instruction. The
+    // visit is not lost from the fold: it is the second item of the proof
+    // block beside this one, and it keeps its own route in the nav and a
+    // page of its own.
     '<div class="st-hero-acts">' +
     '<a class="st-hero-cta" href="#izbor">' + esc(c.cta) + "</a>" +
-    '<a class="st-hero-alt" href="' + esc(ctx.shop.routeSlugs["/showroom"] + ctx.q) +
-    '">Brezplačen ogled lokacije</a>' +
     "</div>" +
+    "</div>" +
+    // WHAT CAN BE CHECKED, in its own block: a rating this shop did not
+    // collect and three facts each backed by a page of its own.
+    '<div class="st-hero-proof">' +
     // THE RATING, WHERE IT IS CHECKABLE OR NOT AT ALL. See googleRating in
     // tenants/types.ts: unset by default, and all four fields or nothing.
     googleRatingHtml(ctx) +
@@ -1202,6 +1281,7 @@ export function renderStudioHero(ctx: RenderCtx): string {
         c.heroTrust.map((t) => "<li>" + esc(t) + "</li>").join("") +
         "</ul>"
       : "") +
+    "</div>" +
     "</div>" +
     // Bottom-right, out of the reading path but on the same frame as the
     // photograph it qualifies — and absent entirely once the photograph is

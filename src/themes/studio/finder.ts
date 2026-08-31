@@ -646,7 +646,26 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     "modela je napisana na njegovi strani in je za vse obiskovalce enaka; " +
     "zavezujoča cena za vašo konfiguracijo pride v pisni ponudbi.</p>" +
     "</div>" +
-    "</div>"
+    "</div>" +
+    // THE ONE ROUTE THAT ENDED WITHOUT AN EXIT. Every other page on this site
+    // closes on a panel that names the next move; the finder's entry state
+    // closed on three paragraphs of small print about itself. A visitor who
+    // wants neither the questions nor a model off the list — the one this
+    // page has nothing else to offer — was left to find the header.
+    //
+    // It reuses .st-page-cta rather than growing a finder-only panel: the
+    // stylesheet is 19.3 KB brotli against a 20 KB wall, and the panel that
+    // closes all sixteen editorial routes is what this one should look like
+    // anyway. ⚠️ IT SITS OUTSIDE .st-fnd-skip DELIBERATELY — that block
+    // styles a DESCENDANT h2 as an uppercase muted label, at (0,3,1) against
+    // .st-page-cta-h's (0,3,0), so nested it would win and the closing
+    // heading would render as small print.
+    '<div class="st-page-cta">' +
+    '<h2 class="st-page-cta-h">Bi raje vprašali človeka?</h2>' +
+    '<p class="st-page-cta-p">Povejte, koliko je prostora in koliko ljudi se bo ' +
+    "kopalo, in predlagamo model iz ponudbe — po telefonu ali po e-pošti.</p>" +
+    '<a class="st-page-cta-a" href="' + esc(shop.routeSlugs["/contact"]) + '">' +
+    "Kontakt</a></div>"
   );
 }
 

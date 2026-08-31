@@ -163,46 +163,46 @@ export const STUDIO_PAGE_CSS = `
     :root[data-theme="studio"] .st-page-grid {
       display: grid;
       max-inline-size: none;
-      /* 56rem, not 46: this track is the WIDE measure — the width a compare
-       * table, a facts list, a contact grid and a photograph band get to
-       * use. Running text never sees it (.st-page-block caps itself), so
-       * widening the track costs prose nothing and buys the data blocks
-       * 160px. Measured at 1920: the page's right edge moves out by that
-       * much, which is what closes the gap the container was leaving. */
-      /* ⚠️ 1fr, NOT 56rem. The track used to cap at 56rem, and measured at
-       * 2560 the widest thing on a content page ended 368px before the band
-       * it sits in — 371px at 1920, 190px at 1440. That is a strip of
-       * content in a wide frame, and it is what "the width is still not ok"
-       * is looking at.
+      /* ⚠️ NO SECOND CAP. THE BAND IS THE DOCUMENT'S WIDTH.
        *
-       * The cap was protecting running text, which does not need protecting
-       * here: prose carries its own measure (see .st-page-p and friends
-       * below), so widening the track costs it nothing and lets the things
-       * that SHOULD span — a photograph, a fact table, a compare table, a
-       * row of question hairlines — reach the band's own right edge. */
-      /* ⚠️ THE DOCUMENT HAS A WIDTH. It used to have the viewport's.
+       * This grid has been capped twice before and both caps were reverted
+       * from the same report — "the width is not ok" — because both left the
+       * page ending before the band it sits in. The measurements, taken on
+       * /primerjava and /dostava-in-montaza with the masthead's own hairline
+       * as the marker, are how far short of the band's right edge the
+       * document stopped:
        *
-       * The track is 1fr, so the wide blocks — a fact table, a compare
-       * table, a photograph — grew with the window while the prose beside
-       * them kept its 38rem measure, as prose must. Measured: the gap
-       * between where a paragraph ends and where the table under it ends
-       * was 438px at 1440 and 619px at 1920. It TRACKED THE VIEWPORT, so
-       * the page looked more broken the bigger the screen, which is why it
-       * kept being reported after each fix.
+       *          1440   1728   1920   2560
+       *   56rem   190    ...    371    368     (a cap on the BODY TRACK)
+       *   76rem   184    428    524    844     (a cap on the GRID)
+       *   none      0      0      0      0
        *
-       * 76rem is the cap: 16rem of rail, 80px of gutter and 54rem of body.
-       * The gap between the two edges is then ~294px at every width above
-       * it instead of growing without limit, and the leftover becomes page
-       * margin — which is what a document with a definite width looks like.
+       * The footer and the header start and end on the band's edges at every
+       * one of those widths. With either cap the document did not, and the
+       * gap grew with the screen — so the bigger the monitor, the more the
+       * page read as a strip pinned to the left of an empty frame.
        *
-       * ⚠️ AND IT IS ON THE GRID, NOT THE TRACK. An earlier pass capped the
-       * track at 56rem and was reverted because the widest thing on the page
-       * then stopped 368px before the band it sat in — a strip of content in
-       * a wide frame. The difference is that the band now ends where the
-       * document ends: nothing is left hanging inside a wrapper that runs on
-       * past it. justify-content stays start, so the h1 keeps the left edge
-       * the wordmark and the footer are on. */
-      max-inline-size: 76rem;
+       * ⚠️ AND THERE IS NO THIRD WIDTH TO INVENT. .st-page-in is layout.ts's
+       * container — min(1640px, 100% − gutters) — which is already the
+       * definite width every band on this site is built to. A cap here is a
+       * second, narrower width that only the document knows about, and that
+       * is precisely what a reader sees as a misalignment.
+       *
+       * WHAT THE CAPS WERE PROTECTING, and why it does not need this. Prose
+       * carries its own 38rem measure (.st-page-block), so a wide band leaves
+       * white to the right of a paragraph and none to the right of the table
+       * under it — 619px apart at 1920, bounded at ~696px because the
+       * container stops growing at 1728. That is a ragged right edge between
+       * two elements of different kinds, which is what an editorial page with
+       * a measure looks like; the cap traded it for the whole document being
+       * short, which is what a broken page looks like. Widening the measure
+       * to close it is not on the table — see .st-page-cta-p for what 122
+       * characters per line did to the one paragraph that must be read.
+       *
+       * Only pages carrying a --wide block move: the two rules below give
+       * everything else fixed tracks, so the grid box grows and the content
+       * in it does not. justify-content stays start, so the h1 keeps the left
+       * edge the wordmark and the footer are on. */
       /* ⚠️ 0, NOT auto. The single-column rule above sets margin-inline:auto
        * to centre a 38rem page on a phone, and that declaration survives into
        * this tier — where, the moment the grid gained a cap, it started
