@@ -640,25 +640,34 @@ export function handleRequest(
         // ⚠️ THE HUB CARRIES EVERY MODEL AND EMITTED NO LIST. Both collection
         // pages got an ItemList when that gap was found; the page that holds
         // the WHOLE catalogue was missed, so to a crawler the shop's index was
-        // six anchors in a div. Same helper, same reasoning as the two
-        // collections — a URL per entry, because each product's own page
-        // carries its Product node and repeating it here is two sources for
-        // one fact.
+        // six anchors in a div.
+        //
+        // It now passes the RECORDS rather than the slugs — see
+        // itemListJsonLd for why a list of bare URLs was the pattern that
+        // asks a search engine for nothing.
         itemListJsonLd(
           shop,
+          content,
           "Vsi modeli",
           // Derived from the collections rather than listed here, so the hub's
           // list cannot drift from the two category lists that are built from
-          // the same arrays. Deduped: a model in two families would otherwise
-          // appear twice in one ItemList.
-          [
-            ...new Set(
-              (content.collections ?? [])
-                .flatMap((c) => c.products)
-                .map((p) => ("slug" in p ? p.slug : undefined))
-                .filter((x): x is string => typeof x === "string"),
-            ),
-          ],
+          // the same arrays. Deduped by slug: a model in two families would
+          // otherwise appear twice in one ItemList.
+          (() => {
+            const seen = new Set<string>();
+            const out = [];
+            for (const c of content.collections ?? []) {
+              for (const p of c.products) {
+                if (!("slug" in p) || typeof p.slug !== "string") continue;
+                if (seen.has(p.slug)) continue;
+                const d = (content.pdps ?? []).find((x) => x.slug === p.slug);
+                if (!d) continue;
+                seen.add(p.slug);
+                out.push(d);
+              }
+            }
+            return out;
+          })(),
         ),
       ],
     });
@@ -693,10 +702,13 @@ export function handleRequest(
         // shorter list.
         itemListJsonLd(
           shop,
+          content,
           collection.h1,
           collection.products
             .map((p) => ("slug" in p ? p.slug : undefined))
-            .filter((x): x is string => typeof x === "string"),
+            .filter((x): x is string => typeof x === "string")
+            .map((slug) => (content.pdps ?? []).find((d) => d.slug === slug))
+            .filter((d): d is NonNullable<typeof d> => d !== undefined),
         ),
       ],
     });

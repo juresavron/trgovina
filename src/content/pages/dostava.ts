@@ -16,7 +16,14 @@ import type { Page } from "../pages";
  */
 export const DELIVERY: Page = {
   key: "/delivery",
-  h1: "Dostava in montaža",
+  // ⚠️ THE H1 CARRIES THE QUALIFIER TOO NOW, and the note below explains only
+  // half of why it did not. It is right that a reader who has arrived already
+  // knows what shop they are in — and an h1 is not written only for them. It
+  // is the strongest on-page signal after the title, and a strict scan of
+  // this page's rendered content headings found the product named in 0 of
+  // them. The three guide pages already do it the other way (their h1 IS the
+  // query), so the content layer was inconsistent with itself.
+  h1: "Dostava in montaža masažnega bazena",
   // ⚠️ THE TITLE HAS TO SAY WHAT IS DELIVERED. This page takes more internal
   // links than any other on the site and titled itself "Dostava in montaža" —
   // two words that describe a courier, a kitchen fitter or a boiler, and that

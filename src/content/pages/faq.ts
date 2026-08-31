@@ -27,7 +27,14 @@ export const FAQ: Page = {
   // The one page whose main content IS the question set, so the one page that
   // may carry FAQPage. See Page.faqPage.
   faqPage: true,
-  h1: "Pogosta vprašanja",
+  // ⚠️ THE H1 CARRIES THE QUALIFIER TOO NOW, and the note below explains only
+  // half of why it did not. It is right that a reader who has arrived already
+  // knows what shop they are in — and an h1 is not written only for them. It
+  // is the strongest on-page signal after the title, and a strict scan of
+  // this page's rendered content headings found the product named in 0 of
+  // them. The three guide pages already do it the other way (their h1 IS the
+  // query), so the content layer was inconsistent with itself.
+  h1: "Pogosta vprašanja o masažnih bazenih",
   // Every shop on the internet has a page titled "Pogosta vprašanja". This
   // one answers questions about a specific object, and the title says so.
   seoTitle: "Pogosta vprašanja o masažnih bazenih",
@@ -36,6 +43,44 @@ export const FAQ: Page = {
     "Pogosta vprašanja o masažnih bazenih: postavitev in podlaga, poraba, vzdrževanje, " +
     "dostava in montaža, garancija in servis.",
   blocks: [
+    // ⚠️ THE FIRST QUESTION IS A NAMING QUESTION, and it is here because the
+    // shop was silently ceding half its own category.
+    //
+    // Counted over all 29 rendered documents — titles, meta, alt attributes
+    // and JSON-LD included: jacuzzi 0, džakuzi 0, whirlpool 0, "vroča kad" 0,
+    // hidromasažni 0, "masažna kad" 0. Those are not slang; Slovenian
+    // retailers index them as category words, and a buyer who types one of
+    // them found nothing here. This is one answer rather than a sprinkle,
+    // because a sprinkle is what it would be: the question is real, people
+    // ask it, and answering it puts four of the terms into body copy AND
+    // into the FAQPage nodes this page already emits, in one edit.
+    //
+    // ⚠️ IT DESCRIBES USAGE AND CLAIMS NOTHING. Jacuzzi is somebody's
+    // trademark and this shop does not sell their tubs, so the sentence says
+    // where the word comes from and what people mean by it. For the same
+    // reason none of these words may go in a title or an h1 — a title
+    // carrying a brand the shop does not stock is a different problem from
+    // the one this fixes.
+    {
+      kind: "qa",
+      h: "Kaj je kaj",
+      items: [
+        [
+          "Je masažni bazen isto kot jacuzzi ali whirlpool?",
+          "V pogovoru da. Džakuzi (jacuzzi) je ime proizvajalca, ki se je prijelo za celo " +
+            "kategorijo, whirlpool pa opisuje delovanje — vrtinčenje vode. Ljudje uporabljajo " +
+            "tudi izraz vroča kad. Vse to je akrilna školjka s toplo vodo, masažnimi šobami, " +
+            "ogrevanjem in filtracijo; mi ji rečemo masažni bazen. Naši trije modeli merijo " +
+            "195, 210 in 230 cm.",
+        ],
+        [
+          "In kaj je swim spa?",
+          "Daljša školjka, v kateri se plava na mestu proti toku vode, ne samo sedi. Naši " +
+            "swim spa bazeni merijo 4,50 in 5,80 m, kar je razlika, ki jo najprej občuti " +
+            "vaš vrt: primerjava obeh družin je na strani Masažni bazen ali swim spa.",
+        ],
+      ],
+    },
     {
       kind: "qa",
       h: "Postavitev",
