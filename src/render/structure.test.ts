@@ -496,17 +496,34 @@ describe("rich results", () => {
     expect(items[0].item).toBe(SHOPS["bazen"]!.siteUrl + "/trgovina");
   });
 
-  it("lists a collection's models as a set, each at a real URL", async () => {
+  // ⚠️ THE ENTRIES NEST A PRODUCT NOW, and this test used to read el.url.
+  //
+  // A ListItem carrying only a url is the summary-page pattern, which makes a
+  // category page eligible for nothing; the all-in-one pattern nests the whole
+  // Product and is what lets /masazni-bazeni and /swim-spa — two of the three
+  // pages this shop is built to rank — compete as categories. So the test
+  // asserts the richer shape rather than the shape that happened to ship: a
+  // name, an offer with a price and a currency, and a URL that names a real
+  // product. Reading el.url again would pass on an empty item.
+  it("lists a collection's models as products, each at a real URL", async () => {
     const list = (await ldOn("/masazni-bazeni")).find((n) => n["@type"] === "ItemList");
     expect(list).toBeTruthy();
     expect(list.numberOfItems).toBe(list.itemListElement.length);
     expect(list.numberOfItems).toBeGreaterThan(1);
     const content = CONTENT["bazen"]!;
     for (const el of list.itemListElement) {
-      const slug = String(el.url).split("/").pop();
+      const item = el.item;
+      expect(item, "a ListItem with no nested item asks Google for nothing").toBeTruthy();
+      expect(item["@type"]).toBe("Product");
+      expect(item.name).toBeTruthy();
+      expect(item.offers?.price).toBeTruthy();
+      expect(item.offers?.priceCurrency).toBeTruthy();
+      // The nested copies carry no @context: it belongs on the document node.
+      expect(item["@context"]).toBeUndefined();
+      const slug = String(item.url).split("/").pop();
       expect(
         (content.pdps ?? []).some((p) => p.slug === slug),
-        el.url + " names no product",
+        item.url + " names no product",
       ).toBe(true);
     }
   });

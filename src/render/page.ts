@@ -500,25 +500,50 @@ export function breadcrumbJsonLd(
  * category page compete as a category rather than as an article that happens
  * to mention some products.
  *
- * Each entry is a URL rather than an inlined Product: the product's own page
- * carries its Product node with the price and the offer, and repeating that
- * here would be two sources for one fact, which is how they drift.
+ * ⚠️ EACH ENTRY NESTS ITS PRODUCT, and the note that stood here argued the
+ * opposite: a bare URL per entry, because the product's own page carries the
+ * Product node and repeating it would be two sources for one fact that then
+ * drift. The instinct is right and the conclusion was wrong on both halves.
+ *
+ * On the standard: a ListItem carrying only a url is the SUMMARY-page pattern
+ * Google documents for a listing whose items live elsewhere — it makes the
+ * page eligible for nothing. The pattern for a category page that wants its
+ * products to appear as products is the ALL-IN-ONE one, where each ListItem
+ * nests a full Product with name, image and offers. This shop's two category
+ * pages are among the pages it is built to rank; they were shipping the
+ * pattern that asks for nothing.
+ *
+ * On the drift: the second source never existed. The node here is produced by
+ * productJsonLd from the same PdpContent record the product page passes it, so
+ * there is exactly one generator and one set of figures. What would drift is
+ * two hand-written literals, which is what the note was really warning about.
+ *
+ * The @context is stripped from the nested copies — it belongs on the document
+ * node, and repeating it inside every item is noise a parser has to skip.
  */
 export function itemListJsonLd(
   s: ShopConfig,
+  c: ShopContent,
   name: string,
-  slugs: readonly string[],
+  pdps: readonly PdpContent[],
 ): object {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
     name,
-    numberOfItems: slugs.length,
-    itemListElement: slugs.map((slug, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      url: s.siteUrl + s.routeSlugs["/product"] + "/" + slug,
-    })),
+    numberOfItems: pdps.length,
+    itemListElement: pdps.map((pdp, i) => {
+      const { "@context": _ctx, ...product } =
+        productJsonLd(s, c, pdp) as Record<string, unknown>;
+      return {
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          ...product,
+          url: s.siteUrl + s.routeSlugs["/product"] + "/" + pdp.slug,
+        },
+      };
+    }),
   };
 }
 

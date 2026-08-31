@@ -42,7 +42,14 @@ import type { Page } from "../pages";
  */
 export const COMPARE: Page = {
   key: "/compare",
-  h1: "Primerjava modelov",
+  // ⚠️ THE H1 CARRIES THE QUALIFIER TOO NOW, and the note below explains only
+  // half of why it did not. It is right that a reader who has arrived already
+  // knows what shop they are in — and an h1 is not written only for them. It
+  // is the strongest on-page signal after the title, and a strict scan of
+  // this page's rendered content headings found the product named in 0 of
+  // them. The three guide pages already do it the other way (their h1 IS the
+  // query), so the content layer was inconsistent with itself.
+  h1: "Masažni bazen ali swim spa: primerjava modelov",
   seoTitle: "Swim spa ali masažni bazen?",
   lead:
     "Prva odločitev ni model, ampak vrsta bazena. Masažni bazen je za sedenje in sprostitev, " +
@@ -51,6 +58,24 @@ export const COMPARE: Page = {
     "Primerjava masažnih bazenov in swim spa bazenov: mere, teža, prostor in namen. " +
     "Kateri tip bazena je pravi za vašo teraso ali vrt.",
   blocks: [
+    // ⚠️ THE NAMING QUESTION, ANSWERED BEFORE THE COMPARISON. This page is
+    // where a searcher lands on "kateri bazen" queries, and a good share of
+    // them arrive having typed jacuzzi or whirlpool: those words appeared
+    // nowhere on the site until the FAQ's first question, and one page
+    // answering a disambiguation query is thin coverage of it.
+    //
+    // Same rule as there: it describes what people MEAN by the words, and
+    // claims nothing about a trademark the shop does not stock. The full
+    // answer stays on /pogosta-vprasanja rather than being copied here.
+    {
+      kind: "prose",
+      p: [
+        "Najprej o besedah, ker jih je za isto stvar več. Jacuzzi (džakuzi) je ime " +
+          "proizvajalca, ki se je prijelo za vso kategorijo, whirlpool opisuje vrtinčenje " +
+          "vode, sliši se tudi vroča kad — vse to je pri nas masažni bazen. Swim spa je " +
+          "nekaj drugega: daljša školjka, v kateri se plava na mestu proti toku.",
+      ],
+    },
     // The same six axes and the same figures the facts rows carried — only
     // the SHAPE changed: label | masažni | swim spa, so the eye runs down a
     // family's own column instead of re-parsing each row for the middot that
