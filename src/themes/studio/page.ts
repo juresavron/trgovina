@@ -2415,8 +2415,8 @@ function contact(
       notes?.email,
     ) +
     // The seat, unless the page says otherwise: on the showroom page this
-    // row printed the company's Koper address as "Naslov" directly under a
-    // headline about Ljubljana — the seat is not that page's address.
+    // row printed the company's registered seat as "Naslov" directly under
+    // a headline about Ljubljana — the seat is not that page's address.
     (omitAddress ? "" : channel("pin", "Naslov", fact(place, placeSet), null, notes?.address)) +
     "</ul>"
   );

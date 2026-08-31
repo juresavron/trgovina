@@ -183,8 +183,8 @@ export const ABOUT: Page = {
       ],
     },
     { kind: "imprint", h: "Podatki o podjetju" },
-    // omitAddress, same reasoning salon.ts spells out: the seat in Koper is
-    // an office, not a place to visit, and the imprint above already states
+    // omitAddress, same reasoning salon.ts spells out: the seat at Zgornje
+    // Škofije is not a place to visit, and the imprint above already states
     // it as Sedež — under "kje nas dobite" it read as an invitation.
     { kind: "contact", h: "Kako nas dobite", omitAddress: true },
     {

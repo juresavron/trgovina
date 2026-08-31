@@ -46,8 +46,8 @@ export const CONTACT: Page = {
     // The notes are RESTATEMENTS, not new promises: both response times are
     // this page's own lead sentence, and "seat, not a showroom" is what
     // /pogosta-vprasanja and the showroom copy already say. A visitor who
-    // reads an address on a contact page and drives to Koper expecting to
-    // see a pool is the failure this one line prevents.
+    // reads an address on a contact page and drives to Škofije expecting
+    // to see a pool is the failure this one line prevents.
     {
       kind: "contact",
       h: "Kako do nas",

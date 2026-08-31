@@ -389,9 +389,38 @@ describe("a live shop can identify itself", () => {
     const shop = SHOPS[key]!;
     it(key + (shop.live ? " (LIVE)" : " (pre-live)") + " honours the legal-identity gate", () => {
       if (!shop.live) {
-        // Pre-live: assert the gate is CLOSED and says why, so the day someone
-        // flips live the failure names the six fields rather than a boolean.
-        expect(legalPagesReady(shop.company, shop.contact)).toBe(false);
+        // ⚠️ THIS USED TO ASSERT THE GATE WAS CLOSED, and that made finishing
+        // the data a test failure.
+        //
+        // The reasoning was that a pre-live shop has placeholders, so pinning
+        // the gate shut would make the day someone flips `live` name the six
+        // fields rather than a boolean. It held right up until the owner sent
+        // the AJPES record and bazen's identity became complete while the shop
+        // was still pre-live — which is the ORDER YOU WANT (get the company
+        // details right, then launch), and the suite called it a regression.
+        //
+        // What is worth asserting about a pre-live shop is not that it is
+        // incomplete but that any remaining gap is DELIBERATE: the declared
+        // placeholder, not a field that silently went blank. A shop can be
+        // ready before it is live; it may not be corrupt.
+        const co = shop.company;
+        const filled = legalPagesReady(co, shop.contact);
+        if (!filled) {
+          const unset = [
+            co.vatId === "SI00000000" || co.vatId === "",
+            co.regNumber === "0000000000" || co.regNumber === "",
+            co.register === "",
+            co.legalName === "",
+            shop.contact.phone === "",
+            shop.contact.address.street === "",
+          ];
+          expect(
+            unset.some(Boolean),
+            key + " fails the legal-identity gate but none of its fields is a " +
+              "declared placeholder — something has gone blank rather than " +
+              "being left blank on purpose",
+          ).toBe(true);
+        }
         return;
       }
       expect(
