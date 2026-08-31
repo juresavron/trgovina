@@ -74,7 +74,9 @@ const MARK_BODY =
 
 /**
  * The V, as a mask. One filled path, no strokes: a letterform with flat
- * terminals inside the frame and a sharp apex, symmetric about x=12.
+ * terminals inside the frame, symmetric about x=12 — and that last clause is
+ * now CHECKED rather than asserted, because for three drawing rounds it was
+ * asserted and false. See the geometry note on MARK_WATER itself.
  *
  * ⚠️ THE NAME OF THIS CONSTANT IS NOW A LIE THAT COSTS NOTHING TO KEEP.
  * It is MARK_WATER because three renderings reference it and the mask id in
@@ -83,7 +85,28 @@ const MARK_BODY =
  * "the knockout".
  */
 const MARK_WATER =
-  '<path d="M3.4 5h5l4.5 10.1L16.4 5h4.2l-6.9 14.6h-1.7Z" fill="#000"/>';
+  // ⚠️ SEVEN VERTICES, AND EVERY ONE OF THEM MIRRORS. The drawing this
+  // replaces did not, and the note above claimed it did.
+  //
+  //   x=3   outer top left        mirrors x=21   outer top right
+  //   x=7.5 inner top left        mirrors x=16.5 inner top right
+  //   x=12  inner apex            on the axis
+  //   x=10.5, 13.5                the flat terminal, centred
+  //
+  // What was there ran "h5" on the left arm and "h4.2" on the right, and its
+  // terminal spanned x=12 to x=13.7 — a point sitting 0.85 units right of the
+  // axis of a 24-unit box, which is a 3.5% lean. Three rounds of drawing
+  // review looked at it and nobody saw it, because that is exactly the size
+  // of error an eye corrects for and a raster does not. It is now a gate:
+  // scripts/verify-mark-symmetry.mjs mirrors the rendered bitmap and counts
+  // the pixels that disagree — 2578 of them before this change, against a
+  // budget of 5.
+  //
+  // Both arms are cut 4.5 wide at the top and both run at dx/dy = 0.5, so
+  // they are parallel and the stroke is one constant 4.02 units across —
+  // 2.7px at 16px, over the floor a display can render. Every coordinate is a
+  // multiple of 1.5, which is the pixel-grid rule the plate already follows.
+  '<path d="M3 4.5h4.5L12 13.5 16.5 4.5H21l-7.5 15h-3Z" fill="#000"/>';
 
 /**
  * The mark for use inside the page, in the current ink.
