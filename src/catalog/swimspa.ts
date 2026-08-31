@@ -623,6 +623,17 @@ export function swimSpaBySlug(slug: string): SwimSpaModel | undefined {
  * meta wrapped it to "1,95 ×" / "1,95 m", the classic spec-line typo. The
  * meta line still breaks freely at its middot separators.
  */
+/**
+ * The LENGTH alone, for a <title>.
+ *
+ * A swim spa is chosen on length — it is the first number in its own model
+ * name — and the full footprint costs eight more characters than a title has
+ * to spare. The width is on the page, in the spec table and in the standfirst.
+ */
+export function length(m: SwimSpaModel): string {
+  return (m.mm[0] / 1000).toFixed(2).replace(".", ",") + "\u00a0m";
+}
+
 export function footprint(m: SwimSpaModel): string {
   const s = (mm: number) => (mm / 1000).toFixed(2).replace(".", ",");
   return s(m.mm[0]) + "\u00a0×\u00a0" + s(m.mm[1]) + "\u00a0m";

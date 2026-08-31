@@ -187,6 +187,27 @@ export interface PdpContent {
   note: string;
   spec: [string, string][];
   bar: [string, string, string, string];
+  /**
+   * The two facts that go in the <title>, as one already-formatted phrase.
+   *
+   * ⚠️ THE SIX PRODUCT TITLES USED TO CARRY NO DECISION FACT. They were built
+   * as `title + " — " + family + " | " + shop.name`, which rendered "BAZEN 195
+   * — masažni bazen | Masažni bazeni Vrelec": six results in a row reading as
+   * one product with six serial numbers, and of 49 characters only 9 said
+   * anything a searcher could choose on. Two of the six differed only by
+   * HIDRO and MAXI, whose actual difference — 38 against 94 masažnih šob —
+   * appeared nowhere in either title.
+   *
+   * So the title takes the footprint and the seats (or, where seats do not
+   * separate two models, the jet count). DERIVED, never typed: it is built by
+   * the same footprint()/seating()/counted() helpers the standfirst uses, so
+   * a supplier's figure changing moves the title with it instead of leaving a
+   * stale number on the line Google prints.
+   *
+   * Optional: a shop with nothing extra to say falls back to `family`, which
+   * is the title these pages had.
+   */
+  titleSpec?: string;
   /** Options priced separately from the product. Absent where there are none. */
   addons?: PdpAddon[];
   /**

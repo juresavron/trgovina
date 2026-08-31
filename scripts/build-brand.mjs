@@ -23,6 +23,14 @@ writeFileSync("public/favicon.svg", faviconSvg());
 const png32 = await sharp(Buffer.from(faviconSvg())).resize(32, 32).png().toBuffer();
 writeFileSync("public/favicon-32.png", png32);
 
+// ⚠️ AND A 96, WHICH IS THE ONE GOOGLE WILL ACTUALLY USE. The favicon printed
+// beside a search result has to be a square whose side is a multiple of 48px,
+// and 32 is not one — it was chosen for a tab strip, which is a different job
+// and still its own. Same drawing, so the SERP icon cannot drift from the tab
+// icon or from the header mark either.
+const png96 = await sharp(Buffer.from(faviconSvg())).resize(96, 96).png().toBuffer();
+writeFileSync("public/favicon-96.png", png96);
+
 // iOS draws this one on the home screen with no ground of its own, so the
 // plate is part of the artwork rather than something the platform supplies.
 const touch = await sharp(Buffer.from(touchIconSvg())).resize(180, 180).png().toBuffer();
@@ -31,5 +39,6 @@ writeFileSync("public/apple-touch-icon.png", touch);
 console.log(
   "favicon.svg " + faviconSvg().length + " B · " +
   "favicon-32.png " + png32.length + " B · " +
+  "favicon-96.png " + png96.length + " B · " +
   "apple-touch-icon.png " + touch.length + " B",
 );

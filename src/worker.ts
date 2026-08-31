@@ -520,8 +520,20 @@ export function handleRequest(
         // The FAMILY keyword, not the shop's primary: "SWIM 450 — swim spa",
         // "BAZEN 230 — masažni bazen". The collection pages hold these two
         // apart as different queries; the titles must not merge them back.
-        title: pdp.title + " — " + pdp.family + " | " + shop.name,
-        description: pdp.sub,
+        title: pdp.title + " — " + (pdp.titleSpec ?? pdp.family) + " | " + shop.wordmark[1],
+        // ⚠️ THE PRICE, AND ONLY IN THE HEAD TAG. pdp.sub is three strings at
+        // once — the sentence under the h1, the JSON-LD Product description and
+        // this meta description — and it stopped one clause short of the number
+        // that decides the click. On a product result the price is what
+        // pre-qualifies a visitor and suppresses the bounce from somebody
+        // expecting 3.000 €; swim-450's whole snippet was 83 characters for a
+        // 16.790 € object, with roughly 70 unused.
+        //
+        // Appended HERE rather than in pdp.sub so the on-page sentence and the
+        // structured description are untouched — the page renders the price in
+        // its own bar and the Offer states it as a number, and repeating it in
+        // both would be saying it three times.
+        description: pdp.sub + " Cena " + pdp.price + " z DDV.",
         noindex: dev,
         ogType: "product",
         q,
@@ -719,7 +731,18 @@ export function handleRequest(
         content,
         theme,
         path,
-        title: (guide.seoTitle ?? guide.h1) + " | " + shop.name,
+        // ⚠️ THE SHORT BRAND, ON THESE PAGES ONLY. A guide's title already
+        // states the category in its own first two words — "Masažni bazen na
+        // terasi", "Koliko stane masažni bazen" — so " | Masažni bazeni
+        // Vrelec" spends 24 characters restating it, and all three titles ran
+        // 76-79 and were cut mid-brand: the reader saw "| Masažni bazeni
+        // Vre…". wordmark[1] is the half that identifies the shop, and the
+        // head-term check in scripts/audit-seo.mjs still passes because the
+        // term is in the title proper rather than in the suffix.
+        //
+        // Product pages keep the full name: their titles lead with a model
+        // code, so the suffix is where the category comes from.
+        title: (guide.seoTitle ?? guide.h1) + " | " + shop.wordmark[1],
         description: guide.metaDescription,
         noindex,
         q,
@@ -759,6 +782,14 @@ export function handleRequest(
       content,
       theme,
       path,
+      // ⚠️ NO CANONICAL ON THE TWO PER-VISITOR VARIANTS. Both are noindexed
+      // and both would otherwise canonicalise to /kontakt, because the
+      // canonical is built from the path and the query string is dropped —
+      // and every product page carries a crawlable anchor to ?vzorcnik. See
+      // PageOptions.canonical for why that pair is the dangerous one. The
+      // other reasons for noindex here (dev host, pre-live, page.noindex) are
+      // whole URLs that ARE their own canonical, so they keep it.
+      ...(confirmed || swatches ? { canonical: null } : {}),
       title: (page.seoTitle ?? page.h1) + " | " + shop.name,
       description: page.metaDescription,
       noindex,
