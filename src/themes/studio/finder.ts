@@ -586,8 +586,18 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
   return (
     '<div class="st-fnd-skip">' +
     "<h2>Ali pa kar preskočite vprašanja</h2>" +
+    // ⚠️ "bližnjica" IS GONE, AND IT WAS THE PAGE UNDERMINING ITSELF. This
+    // paragraph called the questionnaire a SHORTCUT; the note below the list
+    // then says the comparison table is "krajša pot kot ta vprašalnik" — a
+    // shorter path than the shortcut. On the one page whose job is to run
+    // those questions, that reads as the page recommending against itself.
+    //
+    // The true half is that the questions are not a precondition, which is
+    // what "ne pogoj" already says. So the claim about which route is quicker
+    // is made in exactly one place — the note below, which names the one
+    // decision the table genuinely settles faster.
     "<p>Vseh " + pdps.length + " modelov v ponudbi, z merami in ceno na strani " +
-    "vsakega. Vprašanja zgoraj so bližnjica, ne pogoj — če veste, kaj iščete, " +
+    "vsakega. Vprašanja zgoraj niso pogoj — če veste, kaj iščete, " +
     "pojdite naravnost na model.</p>" +
     '<ul class="st-fnd-list">' +
     pdps

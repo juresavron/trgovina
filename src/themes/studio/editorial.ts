@@ -331,7 +331,22 @@ export const STUDIO_EDITORIAL_CSS = `
     /* h5 is 24px at this tier and the title is now in a ~200px column, so
      * the display rung drops one step. h6 (22px) is barely a step; the body
      * lead rung is the honest size for a card title at this width. */
-    :root[data-theme="studio"] .st-imp-t { font-size: var(--t-h6); }
+    /* The step number: a label-rung numeral above the heading, in the muted ink
+   * so it counts without competing with the words it counts. Sits in the flow
+   * rather than in a disc — the delivery page's numbered rows use a ring
+   * because they are a table of five rows, and five rings across a photograph
+   * grid would be five more circles on a band that already has five pictures. */
+  :root[data-theme="studio"] .st-imp-n {
+    display: block;
+    font-family: var(--f-label);
+    font-size: var(--t-label);
+    font-weight: var(--w-label);
+    letter-spacing: var(--ls-label);
+    line-height: 1;
+    color: var(--ink-mute);
+    font-variant-numeric: tabular-nums;
+  }
+  :root[data-theme="studio"] .st-imp-t { font-size: var(--t-h6); }
   }
   :root[data-theme="studio"] .st-imp-tile {
     position: relative;
@@ -1169,6 +1184,18 @@ export function renderStudioImpact(ctx: RenderCtx): string {
         '<li class="st-imp-tile st-imp-quiet">' +
         tileShot(ctx, slot, "st-imp-photo", "(max-width: 700px) 46vw, (max-width: 1100px) 30vw, 18vw") +
         '<div class="st-imp-label">' +
+        // ⚠️ THE NUMBER, BECAUSE THE ROW BREAKS AND THE ORDER IS THE CONTENT.
+        // These five are a SEQUENCE — the same five the delivery page prints
+        // as "Pet korakov", where they are numbered — and this row only holds
+        // all five on one line from 1280 up. Measured: five across at 1440
+        // and 1280, then 3+2 at 1024, 834 and 768, 2+2+1 at 620, one per row
+        // at 390. So on every tier between a phone and a laptop the reader
+        // met five unnumbered cards in two rows and had nothing to tell them
+        // which came first — the wrap silently turned a process into a set.
+        //
+        // aria-hidden: the <ol> below already gives assistive technology the
+        // order, and "1" read before every heading is the same fact twice.
+        '<span class="st-imp-n" aria-hidden="true">' + String(i + 1) + "</span>" +
         '<h3 class="st-imp-t">' + esc(step[0]) + "</h3>" +
         '<p class="st-imp-p">' + esc(step[1]) + "</p>" +
         "</div></li>"
@@ -1198,7 +1225,11 @@ export function renderStudioImpact(ctx: RenderCtx): string {
     '<p class="st-imp-more"><a href="' + esc(ctx.shop.routeSlugs["/delivery"] + ctx.q) +
     '">Kako potekata dostava in zagon</a></p>' +
     "</div>" +
-    '<ul class="st-imp-row">' + cards + "</ul>" +
+    // ⚠️ <ol>, NOT <ul>. Five steps in a fixed order is the definition of an
+    // ordered list, and the markup said "set" while the copy said "process".
+    // It is also what carries the order to a screen reader now that the
+    // visible numbers are aria-hidden.
+    '<ol class="st-imp-row">' + cards + "</ol>" +
     "</div></section>"
   );
 }
