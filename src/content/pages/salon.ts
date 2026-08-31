@@ -182,7 +182,7 @@ export const SHOWROOM: Page = {
           "poln, kar je edino stanje, v katerem se to res sliši.",
       ],
     },
-    // No Naslov row: the seat in Koper is an office, not a place to visit,
+    // No Naslov row: the seat at Zgornje Škofije is not a place to visit,
     // and printing it here would rebuild the very expectation this page was
     // rewritten to remove.
     { kind: "contact", h: "Dogovor za ogled", omitAddress: true },

@@ -122,11 +122,20 @@ export const bazen: ShopConfig = {
   contact: {
     phone: "+386 40 202 488",
     email: "info@masazni-bazeni-vrelec.si",
-    address: { // "Ferrarska", double r — the Koper street is named after Ferrara and the
-      // single-r spelling this field first carried is not a street that
-      // exists. Corrected against the street register; the owner should
-      // still confirm it matches the seat on the AJPES extract.
-      street: "Ferrarska ulica 30", zip: "6000", city: "Koper" },
+    // ⚠️ THE SEAT IS ŠKOFIJE, NOT KOPER, and this field said Koper until the
+    // owner sent the AJPES record on 31 Aug 2026.
+    //
+    // It carried "Ferrarska ulica 30, 6000 Koper" — a real street, spelt
+    // right after one correction, and the wrong address. The register gives
+    // Zgornje Škofije 4A, 6281 Škofije as the company's seat, and the seat is
+    // what ZGD-1 and ZEPT put on the web pages: it is also the address the
+    // 14-day withdrawal notice sends goods back to, so an imprint address
+    // that does not match the register is not a typo, it is a notice that
+    // does not work.
+    //
+    // Nothing else in the codebase held a copy — every page reads this one
+    // field — so the correction is this literal and no other.
+    address: { street: "Zgornje Škofije 4A", zip: "6281", city: "Škofije" },
   },
   company: {
     // The registered entity, which is NOT the brand — normal, and exactly
@@ -134,16 +143,27 @@ export const bazen: ShopConfig = {
     // terms, the withdrawal notice and the privacy notice all identify the
     // company by it, so it is this string a customer would sue.
     legalName: "Mediašped d.o.o.",
-    // ⚠️ BOTH UNSET — owner to supply from the AJPES extract, same launch
-    // item as the VAT id below. Placeholders follow the same convention the
-    // footer and the launch gate already read.
-    regNumber: "0000000000",
-    register: "",
-    // STILL MISSING, and the launch gate is still closed because of it:
-    // ZGD-1 and ZEPT require the VAT number and the registered address on a
-    // company's web pages, and the withdrawal notice needs an address to
-    // send goods back to. legalPagesReady() reports false until both land.
-    vatId: "SI00000000",
+    // FROM THE OWNER'S OWN AJPES/Bizi RECORD, supplied 31 Aug 2026. Both were
+    // placeholders until then and the imprint printed "podatek še ni vpisan"
+    // in their place.
+    //
+    // The matična številka. Ten digits, and it is the number ZGD-1 čl. 45
+    // means by "številka registrskega vpisa" for a d.o.o.
+    regNumber: "5327784000",
+    // The registrar, confirmed by the owner. čl. 45 wants the register a
+    // company is entered in as well as the number, and the number is the
+    // matična številka above.
+    //
+    // NO "vl. št." YET. The type's own note gives the fuller form —
+    // "Okrožno sodišče v Kopru, vl. št. …" — and the entry number is not on
+    // the extract that was sent. The court alone satisfies the requirement
+    // to name the register, and appending the entry number later is a
+    // one-string change; inventing one would not be.
+    register: "Okrožno sodišče v Kopru",
+    // The VAT id, confirmed by the same extract: "Zavezanec za DDV: Da
+    // (SI53828305)", davčna številka 53828305. This was the last identity
+    // field the imprint was inventing a placeholder for.
+    vatId: "SI53828305",
   },
 
   // What a customer sees on their card statement. It has to be recognisable

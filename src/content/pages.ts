@@ -80,8 +80,8 @@ export type Block =
       /**
        * Skip the Naslov row. For pages where the company seat is NOT the
        * place the page is about — the showroom page headlines Ljubljana, and
-       * printing the Koper seat under it as "Naslov" read as the showroom's
-       * address.
+       * printing the registered seat under it as "Naslov" read as the
+       * showroom's address.
        */
       omitAddress?: boolean;
       /**
