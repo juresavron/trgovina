@@ -38,6 +38,13 @@ const RUNS = [
   [".st-chrome-nav a", 4.5],
   [".st-hero-pill", 4.5],
   [".st-hero-foot h1", 4.5],
+  /* The proof block's three facts. They were never listed while they ran as a
+   * middot strip along the very bottom edge, where the veil is at its
+   * darkest; the two-column foot lifts them to the heading's own band, which
+   * is exactly the kind of move that turns a passing run into a failing one
+   * without anything looking different. --on-invert-mute is small uppercase
+   * type, so the floor is the full 4.5. */
+  [".st-hero-trust li", 4.5],
 ];
 
 const rel = (v) => {
