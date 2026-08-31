@@ -94,6 +94,7 @@
  */
 
 import { dotBind, esc, type RenderCtx } from "../../render/sections";
+import { counted } from "../../lib/plural";
 import { productArt } from "./product-art";
 import { productImg } from "./media";
 import { arrowIcon } from "./icons";
@@ -2366,6 +2367,10 @@ export function renderStudioRail(ctx: RenderCtx): string {
  * keep. The model rail keeps its arrows because a catalogue grows.
  */
 function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
+  // Both figures come from what this band and this catalogue actually hold —
+  // families from the row being rendered, models from the shop's own list.
+  const families = cats.length;
+  const models = (ctx.content.pdps ?? []).length;
   const cards = cats
     .map((c, i) => {
       // A photograph where the family has one, its drawing where it does not.
@@ -2423,7 +2428,20 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
     // bazen"), and two consecutive bands both opening with an imperative
     // "Izberite …" read as the same band rendered twice. This one names the
     // fact, the next one makes the ask.
-    '<h2 class="st-sec-h" id="st-cat-h">Dve družini, šest modelov</h2>' +
+    // ⚠️ IT SAID "Dve družini, šest modelov" — TYPED, on a page that derives
+    // the same two figures correctly one band away (hero.ts's wordmark chip
+    // renders "6 modelov" from ctx.content.pdps.length). A shop that gains a
+    // seventh model, or a second shop with three, got a heading stating a
+    // number the catalogue under it contradicts — and the spelled-out
+    // numerals carry Slovenian's dual, so "Dve družini" is ungrammatical for
+    // any shop with one family or with five.
+    '<h2 class="st-sec-h" id="st-cat-h">' +
+    esc(
+      counted(ctx.shop.locale.intl, families, ["družina", "družini", "družine", "družin"]) +
+      ", " +
+      counted(ctx.shop.locale.intl, models, ["model", "modela", "modeli", "modelov"]),
+    ) +
+    "</h2>" +
     // The guided choice offered AT the moment of choosing. This band asks the
     // visitor to pick a family; the finder exists for the visitor who cannot,
     // and until now it was reachable only from the hub and the comparison —

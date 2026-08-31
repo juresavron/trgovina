@@ -473,11 +473,31 @@ describe("a live shop can identify itself", () => {
       // edited on its way to the page. reviews.generated.ts is machine-
       // written on every deploy; anything typed into it is overwritten, and
       // anything typed anywhere else fails here.
-      expect(
-        content.reviews,
-        key + ": reviews reach the page from somewhere other than the " +
-          "generator — a quote has been hand-written into the content",
-      ).toBe(GENERATED_REVIEWS[key] ?? []);
+      //
+      // ⚠️ AND THE `?? []` MADE IT UNSATISFIABLE FOR EVERY OTHER SHOP. toBe is
+      // Object.is and the fallback allocates a fresh array on each evaluation,
+      // so a shop the generator has no key for compared two distinct empty
+      // arrays and could never pass — "expected [] to be [], compared values
+      // have no visual difference". A second shop failed this the moment it
+      // was registered, on a shop with no reviews at all.
+      //
+      // The identity check is the point and it survives: where the generator
+      // HAS a key, it must be that exact array. Where it has none, the shop
+      // must render no reviews — same invariant, stated so it can be met.
+      const generated = GENERATED_REVIEWS[key];
+      if (generated) {
+        expect(
+          content.reviews,
+          key + ": reviews reach the page from somewhere other than the " +
+            "generator — a quote has been hand-written into the content",
+        ).toBe(generated);
+      } else {
+        expect(
+          content.reviews ?? [],
+          key + ": has reviews the generator never produced — the database is " +
+            "the source, so a quote here was typed by hand",
+        ).toEqual([]);
+      }
 
       if (!shop.live) continue;
       expect(

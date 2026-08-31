@@ -65,7 +65,21 @@ function audit(html: string): string[] {
     "swim", "spa",
   ]);
   const ENGLISH =
-    /\b(the|and|with|for|from|your|our|this|that|have|will|colour|color|white|black|grey|gray|brown|gold|silver|light|dark|blue|green|red|marble|wave|ocean|sunset|midnight|canyon|opal|oyster|gypsum|mediterranean|odyssey|delivery|price|contact|about|home|search|cart|checkout|submit|close|open|next|page|swim|spa)\b/gi;
+    /\b(the|and|with|for|from|your|our|this|that|have|will|colour|color|white|black|grey|gray|brown|gold|silver|light|dark|blue|green|marble|wave|ocean|sunset|midnight|canyon|opal|oyster|gypsum|mediterranean|odyssey|delivery|price|contact|about|home|search|cart|checkout|submit|close|open|next|page|swim|spa)\b/gi;
+  /**
+   * ⚠️ HOMOGRAPHS, MATCHED CASE-SENSITIVELY. "red" was in the list above and
+   * it is an ordinary Slovenian noun — vrstni red, "sequence" — so widening
+   * this audit from two hard-coded routes to the shop's real ones immediately
+   * failed it on /trgovina and /primerjava for a word that is correct
+   * Slovenian on both pages.
+   *
+   * Dropping it entirely would give up the check that catches an untranslated
+   * shell colour, which is exactly what the colour words in the list are for.
+   * A swatch label is capitalised and the Slovenian noun in running text is
+   * not, so the capital carries the distinction — and a sentence that happens
+   * to open with "Red" is a false positive worth having over a silent one.
+   */
+  const HOMOGRAPHS = /\b(Red)\b/g;
   {
     const text = body
       .replace(/<script[\s\S]*?<\/script>/g, " ")
@@ -75,6 +89,9 @@ function audit(html: string): string[] {
     for (const m of text.matchAll(ENGLISH)) {
       const w = m[0].toLowerCase();
       if (!ALLOWED.has(w)) found.add(m[0]);
+    }
+    for (const m of text.matchAll(HOMOGRAPHS)) {
+      if (!ALLOWED.has(m[0].toLowerCase())) found.add(m[0]);
     }
     for (const w of found) problems.push("untranslated English in visible copy: " + w);
   }
@@ -208,16 +225,32 @@ function audit(html: string): string[] {
 }
 
 describe("every rendered page is structurally sound", () => {
-  const routes = ["/", "/savne", "/kontakt"];
   for (const key of Object.keys(SHOPS)) {
     it(key + " passes the structural audit on every route", async () => {
       const found: string[] = [];
+      // ⚠️ THE LIST USED TO BE `["/", "/savne", "/kontakt"]`, HARD-CODED
+      // OUTSIDE THE LOOP — and "/savne" is the DELETED sauna shop's collection
+      // slug. bazen has no such route, so this audit spent its whole life
+      // rendering a 404 page ("Te strani ni.") and reporting it structurally
+      // sound. A test that surveys "every route" was surveying two, one of
+      // which did not exist, and it would have gone on doing that for a second
+      // shop too because the list could not know what that shop's routes were.
+      //
+      // Derived from the shop, like the product list below it already is.
       // Every product page the shop serves, not just the flagship. A shop
       // with a catalogue has most of its pages here, and they are generated
       // rather than hand-written — exactly the ones a structural slip would
       // reach nine at a time.
       const shop = SHOPS[key]!;
       const content = CONTENT[key]!;
+      const routes = [
+        "/",
+        shop.routeSlugs["/products"],
+        shop.routeSlugs["/contact"],
+        shop.routeSlugs["/finder"],
+        shop.routeSlugs["/compare"],
+        ...(content.collections ?? []).map((c) => c.path),
+      ];
       const pdps = (content.pdps ?? [content.pdp]).map(
         (d) => shop.routeSlugs["/product"] + "/" + d.slug,
       );

@@ -678,10 +678,19 @@ export function renderStudioMembership(ctx: RenderCtx): string {
     '<div class="st-mem-in">' +
     '<h2 class="st-mem-h" id="st-mem-h">Pomagamo vam izbrati ' +
     esc(ctx.shop.keyword.accusative) + "</h2>" +
+    // ⚠️ THIS SENTENCE WAS NETWORK-NEUTRAL AND REGRESSED TO ONE SHOP'S COPY.
+    //
     // "Oglejte si modele v živo" invited the visitor to a showroom that does
-    // not exist. The band now offers the errand that does: we come to them.
-    '<p class="st-mem-p">Pridemo pogledat, kam bi bazen postavili, ' +
-    "brezplačno in brez obveznosti.</p>" +
+    // not exist, so it had to go — but what replaced it was written for a hot
+    // tub and typed into shared code, on a band every shop on this Worker
+    // renders. The version it replaced carried a comment explaining that no
+    // adjective in it agreed with any keyword ON PURPOSE, because the six
+    // shops that existed then split across two genders; the comment went with
+    // the sentence and the discipline went with the comment.
+    //
+    // It is the shop's own now — ShopContent.membershipBody — and the heading
+    // above it was already correct, taking the keyword in the accusative.
+    '<p class="st-mem-p">' + esc(ctx.content.membershipBody) + "</p>" +
     '<a class="st-btn-light" href="' +
     esc(ctx.shop.routeSlugs["/showroom"] + ctx.q) +
     '">Naročite brezplačen ogled</a>' +

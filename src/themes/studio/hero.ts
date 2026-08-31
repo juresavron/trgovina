@@ -45,6 +45,7 @@
  */
 
 import { esc, type RenderCtx } from "../../render/sections";
+import { counted, pluralForm } from "../../lib/plural";
 import { discWatermark } from "./icons";
 import { SHOP_HERO, decorativeImg } from "./media";
 import { productArt } from "./product-art";
@@ -1067,16 +1068,16 @@ function compareAt(d: RenderCtx["content"]["pdp"]): string | null {
  * The rule is CLDR's for sl and it is on the last two digits, so 101 takes
  * the singular and 11 does not.
  */
-function sloPlural(n: number, one: string, two: string, few: string, other: string): string {
-  const t = n % 100;
-  if (t === 1) return one;
-  if (t === 2) return two;
-  if (t === 3 || t === 4) return few;
-  return other;
-}
-
-const reviewWord = (n: number): string =>
-  sloPlural(n, "mnenje", "mnenji", "mnenja", "mnenj");
+// ⚠️ THE RULE MOVED TO src/lib/plural.ts, AND THE REASON IS THE NETWORK.
+// It lived here as a private `sloPlural` — Slovenian grammar inside a
+// rendering component, on a Worker whose one theme is meant to serve shops in
+// more than one language. A German shop rendering through this file would have
+// had Slovenian's four-form rule applied to its numerals with nowhere else to
+// put the right one. The rule itself is unchanged, still CLDR's for sl, still
+// on the last two digits; it now takes the shop's locale and lives where a
+// second language can be added beside it.
+const reviewWord = (locale: string, n: number): string =>
+  pluralForm(locale, n, ["mnenje", "mnenji", "mnenja", "mnenj"]);
 
 /**
  * Google's own G, unaltered.
@@ -1141,7 +1142,7 @@ function googleRatingHtml(ctx: RenderCtx): string {
   const on = Math.max(1, Math.min(5, Math.round(g.score)));
   // Slovenian writes the decimal with a comma.
   const score = g.score.toFixed(1).replace(".", ",");
-  const reviews = g.count + " " + reviewWord(g.count);
+  const reviews = g.count + " " + reviewWord(ctx.shop.locale.intl, g.count);
   // ⚠️ THE SOURCE IS NAMED ONCE. The first version built the visible text and
   // the accessible name from one string that already ended "na Googlu", and
   // then prefixed "Ocena na Googlu:" — so a screen reader read the shop's
@@ -1341,7 +1342,7 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
   const families = (ctx.content.collections ?? []).map((c) => c.h1);
   const chip =
     models > 0
-      ? models + " " + sloPlural(models, "model", "modela", "modeli", "modelov")
+      ? counted(ctx.shop.locale.intl, models, ["model", "modela", "modeli", "modelov"])
       : ctx.shop.keyword.plural;
   // ⚠️ SENTENCE CASE ON EVERYTHING BUT THE FIRST. The collection headings are
   // titles ("Masažni bazeni", "Swim spa bazeni") and joining them raw gave

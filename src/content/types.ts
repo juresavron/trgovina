@@ -186,6 +186,27 @@ export interface PdpContent {
   freight: [string, string, boolean][];
   note: string;
   spec: [string, string][];
+  /**
+   * The manufacturer's brand, where it is not the shop's own.
+   *
+   * ⚠️ ABSENT, productJsonLd PUBLISHED THE SHOP AS THE BRAND. Product.brand
+   * was `{ "@type": "Brand", name: shop.name }` unconditionally, so every
+   * model on the network was asserted to Google as a product of the shop that
+   * retails it. It happens to read acceptably for a white-label range sold
+   * under the shop's own name; it is simply false for a dealer — a motorcycle
+   * shop would be telling a search engine it manufactures the motorcycles.
+   */
+  brand?: string;
+  /**
+   * schema.org itemCondition. Absent means new, which is what the literal
+   * asserted for every product on the network. A dealer with used stock says
+   * so per model rather than by editing a shared renderer.
+   */
+  condition?: "new" | "used" | "refurbished" | "damaged";
+  /** Trade identifiers, where the product carries them. Absent on white-label
+   *  goods — this catalogue's models have a supplier code and no GTIN. */
+  gtin?: string;
+  mpn?: string;
   bar: [string, string, string, string];
   /**
    * The two facts that go in the <title>, as one already-formatted phrase.
@@ -277,6 +298,48 @@ export interface ShopContent {
   sub: string;
   cta: string;
   metaDescription: string;
+  /**
+   * What follows the keyword in the HOME PAGE TITLE — the single
+   * highest-value string on the site.
+   *
+   * ⚠️ IT WAS FOUR WORDS TYPED INTO THE ROUTER, beside a correctly
+   * interpolated keyword: `cap(shop.keyword.primary) + " — cena in dostava | "
+   * + shop.name`. Half the line knew which shop it was on and half did not, so
+   * a motorcycle dealer's home page would have offered Google "Motorno kolo —
+   * cena in dostava". The keyword half stays derived; this is the other half.
+   */
+  homeTitleTail: string;
+  /**
+   * The band that offers the site visit, on the home page's closing sequence.
+   *
+   * ⚠️ THIS SENTENCE WAS NETWORK-NEUTRAL WHEN SIX SHOPS EXISTED AND REGRESSED
+   * AFTER THE NARROWING. The deleted version read "Oglejte si modele v živo in
+   * se posvetujte z našo ekipo", under a comment explaining that no adjective
+   * in it agreed with any keyword ON PURPOSE, because the six shops' head
+   * terms split across two genders. The showroom claim in it turned out to be
+   * false and the replacement — "Pridemo pogledat, kam bi bazen postavili" —
+   * was written for one shop and typed into shared code, which is how the
+   * discipline was lost along with the comment that carried it.
+   */
+  membershipBody: string;
+  /**
+   * The blog index's own three strings.
+   *
+   * ⚠️ THEY WERE MODULE CONSTANTS UNDER THE COMMENT "Not in a content module:
+   * it is two strings." That is the rule this network cannot afford: no
+   * user-visible sentence is too short to belong to a shop, and these three
+   * named hot tubs in the title, the lead and the meta description of every
+   * shop's blog.
+   */
+  blogLead: string;
+  blogMetaDescription: string;
+  /**
+   * The message prefilled into the enquiry form when a visitor asks for the
+   * colour swatch. It is presented to them as something they typed, so it has
+   * to be a sentence THIS shop's customer would write — "Prosim za vzorčnik
+   * barv školjke" is a hot-tub shell, and it lived in the router.
+   */
+  swatchMessage: string;
   trust: string[];
   stats: [string, string][];
   /**
