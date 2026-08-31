@@ -1003,13 +1003,16 @@ function compareAt(d: RenderCtx["content"]["pdp"]): string | null {
  * The rule is CLDR's for sl and it is on the last two digits, so 101 takes
  * the singular and 11 does not.
  */
-function reviewWord(n: number): string {
+function sloPlural(n: number, one: string, two: string, few: string, other: string): string {
   const t = n % 100;
-  if (t === 1) return "mnenje";
-  if (t === 2) return "mnenji";
-  if (t === 3 || t === 4) return "mnenja";
-  return "mnenj";
+  if (t === 1) return one;
+  if (t === 2) return two;
+  if (t === 3 || t === 4) return few;
+  return other;
 }
+
+const reviewWord = (n: number): string =>
+  sloPlural(n, "mnenje", "mnenji", "mnenja", "mnenj");
 
 /**
  * Google's own G, unaltered.
@@ -1242,9 +1245,39 @@ export function renderStudioHero(ctx: RenderCtx): string {
  * <p>, not a heading — the hero owns the page's only h1.
  */
 export function renderStudioWordmarkBand(ctx: RenderCtx): string {
-  const d = ctx.pdp;
+  // ⚠️ THE RANGE, NOT THE FLAGSHIP — AND THE BUTTON IS WHY. This foot used to
+  // print the flagship's eyebrow and title ("VELIKI", "BAZEN 230") in display
+  // type above a control that goes to the FINDER. A reader met one model's
+  // name and the only thing to press asked them "Kaj naj bazen zna?" — the
+  // band named a tub and offered a questionnaire.
+  //
+  // The note below the CTA already argued the destination is right: the
+  // BAZEN 230 card two bands up owns that route, so sending this one there
+  // adds nothing. What it did not do is make the WORDS agree, and the words
+  // were the half that could move. So the foot now states what the shop
+  // sells — the count and the two families, both derived from the catalogue
+  // rather than typed — and the button chooses between them.
+  const models = ctx.content.pdps?.length ?? 0;
+  const families = (ctx.content.collections ?? []).map((c) => c.h1);
+  const chip =
+    models > 0
+      ? models + " " + sloPlural(models, "model", "modela", "modeli", "modelov")
+      : ctx.shop.keyword.plural;
+  // ⚠️ SENTENCE CASE ON EVERYTHING BUT THE FIRST. The collection headings are
+  // titles ("Masažni bazeni", "Swim spa bazeni") and joining them raw gave
+  // "Masažni bazeni in Swim spa bazeni" — a capital in the middle of a
+  // Slovenian sentence, which is an English habit. Lowercased through the
+  // shop's own locale, because casing is not the same operation everywhere.
+  const title =
+    families.length >= 2
+      ? families
+          .map((f, i) =>
+            i === 0 ? f : f.charAt(0).toLocaleLowerCase(ctx.shop.locale.intl) + f.slice(1),
+          )
+          .join(" in ")
+      : ctx.shop.keyword.plural;
   return (
-    '<section class="st-band" aria-label="' + esc(ctx.shop.name) + " — " + esc(d.title) + '">' +
+    '<section class="st-band" aria-label="' + esc(ctx.shop.name) + " — " + esc(title) + '">' +
     '<div class="st-band-photo" aria-hidden="true"></div>' +
     // The object lives INSIDE the wordmark so it is positioned against the
     // letters rather than against the band's floor — see .st-band-object for
@@ -1261,11 +1294,11 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
     // ticker and the impact band, where it is read rather than pointed at.
     "" +
     '<div class="st-band-foot">' +
-    '<span class="st-band-chip">' + esc(d.eyebrow) + "</span>" +
-    '<span class="st-band-title">' + esc(d.title) + "</span>" +
-    // The finder, not the flagship PDP: the BAZEN 230 card two bands above
-    // already links that page, so the band added no route. "Which one is
-    // mine?" is the question a brand statement leaves a reader with.
+    '<span class="st-band-chip">' + esc(chip) + "</span>" +
+    '<span class="st-band-title">' + esc(title) + "</span>" +
+    // The finder, and now the words above it agree: the foot names the range
+    // and the button chooses within it. "Which one is mine?" is the question
+    // a brand statement leaves a reader with.
     '<a class="st-btn-light" href="' + esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
     '">Kateri je pravi za vas?</a>' +
     "</div></section>"
