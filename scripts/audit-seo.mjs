@@ -33,6 +33,16 @@ async function bundle(entry, tag) {
 const { handleRequest } = await bundle("src/worker.ts", "worker");
 const { SHOPS } = await bundle("src/tenants/index.ts", "shops");
 const { CONTENT } = await bundle("src/content/index.ts", "content");
+// ⚠️ THE GUIDES ARE A ROUTE FAMILY THIS AUDIT COULD NOT SEE. routes() derived
+// its list from the slug map, the collections and the catalogue — which is the
+// right instinct, and it has a fourth source: GUIDE_PAGES. /vodnik/<slug> is
+// in the sitemap and indexable, so three of the site's most commercial URLs
+// were shipping unaudited while the gate enforced titles, descriptions,
+// canonicals, heading trees, thin copy and dead-end links on every other page.
+// Every finding the guides carry today — over-long titles cut mid-brand, body
+// copy under the thin-copy floor, no outbound link to a single product page —
+// was invisible for exactly this reason.
+const { GUIDE_PAGES } = await bundle("src/content/pages/vodnik.ts", "guides");
 // See the note in audit-site.mjs: /blog is served by the async layer because
 // posts are rows, so the synchronous handler would hand this audit a 404.
 const { blogIndexDoc } = await bundle("src/blog/routes.ts", "blog");
@@ -55,6 +65,7 @@ function routes() {
   }
   for (const c of C.collections ?? []) r.add(c.path);
   for (const p of C.pdps ?? []) r.add(SHOP.routeSlugs["/product"] + "/" + p.slug);
+  for (const g of GUIDE_PAGES) r.add(SHOP.routeSlugs["/guide"] + "/" + g.slug);
   return [...r].filter((p) => p && p.startsWith("/"));
 }
 
@@ -319,14 +330,29 @@ const fold = (v) => v.toLowerCase()
   .replace(/[čć]/g, "c").replace(/š/g, "s").replace(/ž/g, "z");
 const KW = fold(SHOP.keyword.primary);
 const KWP = fold(SHOP.keyword.plural);
+// ⚠️ A PAGE MAY COMPETE FOR ITS OWN FAMILY'S TERM INSTEAD. The check above
+// assumed one head term for the whole shop, which is the strategy and is not
+// the whole truth: this catalogue has two families, and a swim spa page that
+// leads on "masažni bazen" is competing for a query it does not answer, which
+// is worse than not carrying the term. So a money page passes on the shop's
+// keyword OR on the term its own products are called — pdp.family, which is
+// the same string the collection h1 and the comparison table use.
+//
+// It is not a loophole. family comes from the catalogue, not from whoever
+// wrote the title, so a page can only pass on a term the shop actually sells
+// under; a title carrying neither still warns.
+const FAMILIES = [...new Set((C.pdps ?? []).map((d) => d.family))].map(fold);
 const money = ["/", SHOP.routeSlugs["/products"], ...collectionPaths, ...productPaths];
 for (const r of money) {
   const html = docs[r] || "";
   const t = fold(one(/<title>([^<]*)<\/title>/, html) || "");
   const h = fold(text(all(/<h1[^>]*>([\s\S]*?)<\/h1>/g, html)[0] || ""));
-  const has = (v) => v.includes(KW) || v.includes(KWP);
-  if (!has(t)) warn(r, "title carries neither " + JSON.stringify(SHOP.keyword.primary) + " nor its plural");
-  if (!has(h)) note(r, "h1 carries neither the keyword nor its plural");
+  const has = (v) => v.includes(KW) || v.includes(KWP) || FAMILIES.some((f) => v.includes(f));
+  if (!has(t)) {
+    warn(r, "title carries neither " + JSON.stringify(SHOP.keyword.primary) +
+      ", nor its plural, nor any family this shop sells");
+  }
+  if (!has(h)) note(r, "h1 carries no term this shop sells under");
 }
 
 /* --- the link graph --------------------------------------------------- */
@@ -415,7 +441,12 @@ const show = (label, rows) => {
   console.log("");
   console.log("=== " + label + " (" + rows.length + ") ===");
   console.log("");
-  for (const [r, m] of rows) console.log("  " + r.padEnd(26) + m);
+  // ⚠️ THE COLUMN IS MEASURED, NOT GUESSED. It was a fixed 26, which was wide
+  // enough for every route until the guides joined the audited set:
+  // "/vodnik/koliko-stane-masazni-bazen" is 34 characters, so the route ran
+  // straight into its own message — "…masazni-bazenhas 172 words".
+  const w = Math.max(26, ...rows.map(([r]) => r.length)) + 2;
+  for (const [r, m] of rows) console.log("  " + r.padEnd(w) + m);
 };
 console.log("ROUTES AUDITED: " + PAGES.length);
 show("ERRORS", ERR);

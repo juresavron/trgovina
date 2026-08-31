@@ -28,7 +28,7 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
     slug: "masazni-bazen-na-terasi",
     key: "/guide",
     h1: "Masažni bazen na terasi: kaj preveriti pred nakupom",
-    seoTitle: "Masažni bazen na terasi — kaj preveriti pred nakupom",
+    seoTitle: "Masažni bazen na terasi: kaj preveriti pred nakupom",
     lead:
       // The model is the LAST of the four, and saying so as "model je zadnja
       // od njih" made the reader resolve a feminine adjective against a
@@ -84,6 +84,26 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
         ],
       ],
     },
+    // ⚠️ THE GUIDES PASSED NOTHING ON. All three ended on the same contact
+    // panel and linked to not one model page, so the topical-authority ladder
+    // docs/SEO.md describes carried a reader — and a crawler — to a form
+    // rather than to the catalogue it exists to sell. This block is the rung.
+    //
+    // The three tubs and not the swim spas: this guide is about a TERRACE,
+    // and a swim spa is 5,80 m on a concrete slab in the garden. Naming it
+    // here would be an answer to a question the page did not ask.
+    {
+      kind: "links",
+      h: "Kje so mere in teže",
+      items: [
+        ["BAZEN 195", "/bazen/mali-195"],
+        ["BAZEN 210", "/bazen/srednji-210"],
+        ["BAZEN 230", "/bazen/veliki-230"],
+        ["Primerjava obeh družin", "/primerjava"],
+        ["Dostava in montaža", "/dostava-in-montaza"],
+        ["Brezplačen ogled lokacije", "/ogled-lokacije"],
+      ],
+    },
     {
       kind: "cta",
       h: "Ostalo vprašanje?",
@@ -97,7 +117,7 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
     slug: "koliko-stane-masazni-bazen",
     key: "/guide",
     h1: "Koliko stane masažni bazen",
-    seoTitle: "Koliko stane masažni bazen — cena nakupa in obratovanja",
+    seoTitle: "Koliko stane masažni bazen — cena in obratovanje",
     lead:
       "Nakupna cena, kaj je v njej in kaj ni, in zakaj mesečnega zneska za " +
       "obratovanje nihče ne more pošteno napovedati.",
@@ -137,6 +157,22 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
           "termo pokrov prvi in ne zadnji dodatek.",
       ],
     },
+    // The prices this page talks about, on the pages that state them. A guide
+    // that names a range and then offers only a contact form makes the reader
+    // search for the figure it just promised.
+    {
+      kind: "links",
+      h: "Cena po modelih",
+      items: [
+        ["Vsi modeli in cene", "/trgovina"],
+        ["BAZEN 195", "/bazen/mali-195"],
+        ["BAZEN 210", "/bazen/srednji-210"],
+        ["BAZEN 230", "/bazen/veliki-230"],
+        ["SWIM 450", "/bazen/swim-450"],
+        ["SWIM 580 HIDRO", "/bazen/swim-580-hidro"],
+        ["SWIM 580 MAXI", "/bazen/swim-580-maxi"],
+      ],
+    },
     {
       kind: "cta",
       h: "Ostalo vprašanje?",
@@ -150,7 +186,13 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
     slug: "masazni-bazen-pozimi",
     key: "/guide",
     h1: "Masažni bazen pozimi",
-    seoTitle: "Masažni bazen pozimi — delovanje, stroški in praznjenje",
+    // ⚠️ "STROŠKI" IS GONE FROM THIS TITLE, and it was the only place the
+    // word appeared on this page. The body says the bazen works better in
+    // winter and that draining it is a mistake; it does not carry one figure
+    // or one sentence about what it costs. A title that promises a third
+    // subject the page never reaches is a pogo-stick result, and it put this
+    // guide in competition with the cost guide, which does answer it.
+    seoTitle: "Masažni bazen pozimi — delovanje in praznjenje",
     lead:
       // ⚠️ "PRIDE NA SVOJ RAČUN", NOT "JE NA SVOJEM". Biti na svojem means to
       // be on one's own land, or to insist on one's own view — neither of
@@ -170,6 +212,19 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
           "in delujoč, ker v ceveh in črpalkah ostane voda. Če bazena res ne boste " +
           "uporabljali, mora biti za zimo pravilno pripravljen. Povejte nam, pa vam razložimo " +
           "postopek za vaš model.",
+      ],
+    },
+    // ⚠️ THE COST QUESTION GOES TO THE PAGE THAT ANSWERS IT. This guide's
+    // title used to promise "stroški" and its body has never contained a
+    // figure or a sentence about cost — the cost guide does, and two pages
+    // competing for the same query is how a site outranks itself.
+    {
+      kind: "links",
+      h: "Naprej",
+      items: [
+        ["Koliko stane masažni bazen", "/vodnik/koliko-stane-masazni-bazen"],
+        ["Vsi modeli in cene", "/trgovina"],
+        ["Pogosta vprašanja", "/pogosta-vprasanja"],
       ],
     },
     {

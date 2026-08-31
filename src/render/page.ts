@@ -81,6 +81,26 @@ export interface PageOptions {
   description: string;
   /** noindex on dev hosts, placeholders and pre-live pages. */
   noindex: boolean;
+  /**
+   * Suppress the canonical link entirely. Null on a noindexed URL variant
+   * that has no indexable self to point at.
+   *
+   * ⚠️ noindex PLUS A CANONICAL TO ANOTHER URL IS THE ONE COMBINATION GOOGLE
+   * WARNS ABOUT. The two directives contradict each other — "do not index
+   * this" and "credit this to that" — and the documented failure mode is that
+   * the noindex is carried across to the canonical target. /kontakt?poslano
+   * and /kontakt?vzorcnik are exactly that shape: both are noindexed because
+   * they are per-visitor states, both canonicalised to /kontakt because the
+   * canonical is built from the path with the query dropped, and all six
+   * product pages link to ?vzorcnik with a crawlable anchor. The page the
+   * whole site funnels into was one interpretation away from being dropped
+   * from the index by its own product pages.
+   *
+   * noindex with NO canonical is the unambiguous pair, so those two variants
+   * pass null. ?model= is untouched: it is not noindexed, and its canonical
+   * to /kontakt is correct consolidation.
+   */
+  canonical?: string | null;
   /** Dev-only query suffix propagated on internal links. */
   q: string;
   /** Dev-only switcher bar. */
@@ -113,7 +133,12 @@ export interface PageOptions {
 
 export function renderDocument(o: PageOptions): string {
   const s = o.shop;
-  const canonical = s.siteUrl + (o.path === "/" ? "/" : o.path);
+  // The page's own absolute URL, always. og:url is a share-card identity —
+  // "what is this link" — not an indexing directive, so it is still correct on
+  // a variant that has no canonical: a shared /kontakt?poslano should preview
+  // as the contact page.
+  const pageUrl = s.siteUrl + (o.path === "/" ? "/" : o.path);
+  const canonical = o.canonical === null ? null : pageUrl;
   const jsonLd = (o.jsonLd ?? [])
     .map(
       (obj) =>
@@ -131,8 +156,18 @@ export function renderDocument(o: PageOptions): string {
     '<meta name="viewport" content="width=device-width, initial-scale=1">' +
     "<title>" + esc(o.title) + "</title>" +
     '<meta name="description" content="' + esc(o.description) + '">' +
-    (o.noindex ? '<meta name="robots" content="noindex, nofollow">' : "") +
-    '<link rel="canonical" href="' + esc(canonical) + '">' +
+    // ⚠️ THE EMPTY BRANCH WAS A MISSED PERMISSION, on a catalogue whose whole
+    // product is a photograph. A page with no robots meta gets the default
+    // image-preview size, which is a thumbnail; max-image-preview:large is
+    // what puts a full-width photograph in a result and in Discover. It is a
+    // permission granted to Google, not a claim about the goods, so it
+    // asserts nothing — and the images it applies to are the /media/ URLs
+    // robots.txt already leaves crawlable on purpose. Noindex pages keep the
+    // exact string they had.
+    (o.noindex
+      ? '<meta name="robots" content="noindex, nofollow">'
+      : '<meta name="robots" content="max-image-preview:large">') +
+    (canonical === null ? "" : '<link rel="canonical" href="' + esc(canonical) + '">') +
     // ⚠️ NO hreflang. A self-referencing <link rel="alternate" hreflang="sl-SI"
     // href="<this page>"> stood here, on every page, and it is a no-op: the
     // annotation exists to tie a page to its OTHER-LANGUAGE versions, and a
@@ -148,7 +183,7 @@ export function renderDocument(o: PageOptions): string {
     '<meta property="og:site_name" content="' + esc(s.name) + '">' +
     '<meta property="og:title" content="' + esc(o.title) + '">' +
     '<meta property="og:description" content="' + esc(o.description) + '">' +
-    '<meta property="og:url" content="' + esc(canonical) + '">' +
+    '<meta property="og:url" content="' + esc(pageUrl) + '">' +
     '<meta property="og:locale" content="' + esc(s.locale.ogLocale) + '">' +
     // THE CARD HAD NO PICTURE, on any page.
     //
@@ -192,6 +227,12 @@ export function renderDocument(o: PageOptions): string {
     // scripts/build-brand.mjs, so the tab icon cannot drift from the logo.
     '<link rel="icon" href="/favicon.svg" type="image/svg+xml">' +
     '<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">' +
+    // ⚠️ 96, BECAUSE GOOGLE WILL NOT USE THE 32. The favicon it prints beside
+    // every result has to be a square whose side is a multiple of 48px, and
+    // this site declared 32 (chosen for a tab strip, which is a different
+    // job) and a 180 that carries no rel="icon" and is therefore not
+    // considered. Same drawing, same generator, so it cannot drift.
+    '<link rel="icon" href="/favicon-96.png" type="image/png" sizes="96x96">' +
     '<link rel="apple-touch-icon" href="/apple-touch-icon.png">' +
     // theme-color paints the browser UI around the page on mobile. It was
     // #faf7f2, a cream that matches nothing this theme renders — the chrome
@@ -253,6 +294,14 @@ export function organizationJsonLd(s: ShopConfig): object {
     "@type": "Organization",
     name: s.name,
     url: s.siteUrl,
+    // THE ENTITY NEEDS A PICTURE. Without a logo the Organization Google is
+    // asked to build has no image to attach to a knowledge panel or to print
+    // beside the brand — and the file already ships: apple-touch-icon.png is
+    // 180×180, over Google's 112px floor, served from public/ at the shop's
+    // own origin, and generated by scripts/build-brand.mjs from the single
+    // drawing in brand.ts. So it cannot drift from the header mark, which is
+    // that module's whole reason for generating these files.
+    logo: s.siteUrl + "/apple-touch-icon.png",
   };
   if (isSetPhone(s.contact.phone)) org["telephone"] = s.contact.phone;
   if (isSet(s.contact.email)) org["email"] = s.contact.email;
@@ -355,9 +404,19 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
       // asserted InStock at a URL whose only control is an enquiry form. That
       // is the merchant-listing mismatch that suppresses a price snippet and
       // fails a Merchant Center review.
-      availability: s.ordersOnline
-        ? "https://schema.org/InStock"
-        : "https://schema.org/PreOrder",
+      //
+      // ⚠️ AND THE FALSE BRANCH WAS STILL A CLAIM NOBODY MAKES. Both earlier
+      // notes argued about WHICH availability to assert and neither asked
+      // whether to assert one. PreOrder means the goods can be ordered now
+      // for delivery later, and Google reads it that way — it wants an
+      // availabilityStarts date behind it. No page here says pre-order and no
+      // page names a date: the product pages say "Povprašajte za ponudbo" and
+      // /kosarica says online ordering is not open. So while the shop cannot
+      // be transacted with online the property is OMITTED, not guessed.
+      // availability is recommended rather than required, so the price,
+      // currency, condition, seller and return policy all still ship and the
+      // offer stays eligible for a product snippet.
+      ...(s.ordersOnline ? { availability: "https://schema.org/InStock" } : {}),
       itemCondition: "https://schema.org/NewCondition",
       // The seller is the Organization node this page already carries, by
       // reference. Without it an Offer names a price and nobody selling at it.
@@ -370,17 +429,27 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
       // direct cost of returning the goods, which is what that page says in
       // its own words ("Neposredne stroške vračila blaga nosi potrošnik").
       //
-      // TWO PROPERTIES ARE DELIBERATELY ABSENT. returnMethod has three
-      // permitted values — by mail, in store, at a kiosk — and none of them
-      // is true of an object the same page says cannot be sent by post
-      // "zaradi teže in velikosti"; and returnShippingFeesAmount would state
-      // a figure the page explicitly does not fix in advance.
+      // returnMethod IS DELIBERATELY ABSENT. It has three permitted values —
+      // by mail, in store, at a kiosk — and none is true of an object the
+      // same page says cannot be sent by post "zaradi teže in velikosti";
+      // the page says the shop collects it.
+      //
+      // ⚠️ AND returnFees WAS THE WRONG VALUE FOR THAT REASONING. The note
+      // here used to say returnShippingFeesAmount was omitted because the
+      // page does not fix a figure in advance — which is true, and which
+      // makes ReturnShippingFees the one value that may not be used: Google
+      // requires the amount WITH it, so the block as it stood was an
+      // incomplete policy rather than a modest one.
+      // ReturnFeesCustomerResponsibility says exactly what the linked page
+      // says in its own words — "Neposredne stroške vračila blaga nosi
+      // potrošnik, razen če se dogovorimo drugače" — and takes no amount.
+      // Nothing is invented and no figure is fixed.
       hasMerchantReturnPolicy: {
         "@type": "MerchantReturnPolicy",
         applicableCountry: s.addressCountry,
         returnPolicyCategory: "https://schema.org/MerchantReturnFiniteReturnWindow",
         merchantReturnDays: 14,
-        returnFees: "https://schema.org/ReturnShippingFees",
+        returnFees: "https://schema.org/ReturnFeesCustomerResponsibility",
         merchantReturnLink: s.siteUrl + s.routeSlugs["/withdrawal"],
       },
     };

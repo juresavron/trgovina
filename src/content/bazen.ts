@@ -13,6 +13,7 @@ import {
   OFFERED_SWIMSPAS,
   swimSpaFamilyHasSwimJets,
   footprint as swimFootprint,
+  length as swimLength,
   metaLine as swimMetaLine,
   modelPrice as swimModelPrice,
   modelPriceCents as swimModelPriceCents,
@@ -277,7 +278,14 @@ const swimSpas: ProductCard[] = OFFERED_SWIMSPAS.map((m) => ({
  *   3, 4     modeli     (plural)
  *   5 and up modelov    (genitive plural)
  */
-/** The sticky buy bar is a cramped strip, so the noun is bare — still agreeing. */
+/**
+ * The bare noun, still agreeing. Two callers, both fighting for room: the
+ * sticky buy bar is a cramped strip, and a <title> has about sixty characters
+ * — "38 masažnih šob" spends fifteen of them on an adjective, and the jet
+ * count is the only figure separating the two SWIM 580s, so it has to fit.
+ * On the page proper the adjective stays (MASSAGE_JETS), where telling a
+ * masažna šoba from a protitočna one is worth the words.
+ */
 const JETS_SHORT = ["šoba", "šobi", "šobe", "šob"] as const;
 
 const ADJUSTABLE_JETS = [
@@ -494,6 +502,11 @@ function pdpFor(m: PolaModel): PdpContent {
       ": " +
       counted(m.jets, ADJUSTABLE_JETS) +
       ", ogrevanje in filtracija.",
+    // Footprint and seats: the two things a tub is chosen on, and the two a
+    // model code cannot say. seating() returns "5 oseb · 2 ležalnika" — the
+    // lounger count belongs on the page, not in a 60-character line.
+    titleSpec:
+      "masažni bazen " + footprint(m) + " za " + seating(m).split(" · ")[0],
     price: modelPrice(m),
     priceCents: modelPriceCents(m),
     // Option names without figures: the supplier prices these in USD FOB too,
@@ -675,7 +688,16 @@ function pdpFor(m: PolaModel): PdpContent {
       ],
       [
         "Garancija",
-        "Tri leta. Rezervni deli in servis prek naše mreže.",
+        // ⚠️ "PREK NAŠE MREŽE" IS GONE, AND IT WAS THE ONE CLAIM THIS SHOP
+        // HAD ALREADY DECIDED IT MAY NOT MAKE. A network is an assertion
+        // about scale — branches, engineers, coverage — and the note beside
+        // the hero's assurance strip (content/bazen.ts, `assure`) says in as
+        // many words that the service network "is among the claims still
+        // waiting on the owner", which is why the strip says "servis urejamo
+        // sami" instead. Both product panels then said the other thing, on
+        // the six pages where a buyer is deciding. One word from the owner
+        // puts the network back; until then the two say the same thing.
+        "Tri leta. Rezervne dele in servis urejamo sami.",
         // The two-year statutory conformity right is NOT the three-year
         // manufacturer's guarantee, and this panel names only the second. The
         // page that sets them side by side is the terms page; sending the
@@ -745,6 +767,12 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       swimJets +
       counted(m.jets, MASSAGE_JETS) +
       ", ogrevanje in filtracija.",
+    // Length and JETS, not seats. The two 580s are the same length and seat
+    // the same seven people; the jet count is the only figure that separates
+    // them, and it is the one the family's own copy leads with.
+    titleSpec:
+      "swim spa " + swimLength(m) + ", " +
+      swimSeating(m).split(" · ")[0] + ", " + counted(m.jets, JETS_SHORT),
     price: swimModelPrice(m),
     priceCents: swimModelPriceCents(m),
     cfg: [
@@ -883,7 +911,16 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
       ],
       [
         "Garancija",
-        "Tri leta. Rezervni deli in servis prek naše mreže.",
+        // ⚠️ "PREK NAŠE MREŽE" IS GONE, AND IT WAS THE ONE CLAIM THIS SHOP
+        // HAD ALREADY DECIDED IT MAY NOT MAKE. A network is an assertion
+        // about scale — branches, engineers, coverage — and the note beside
+        // the hero's assurance strip (content/bazen.ts, `assure`) says in as
+        // many words that the service network "is among the claims still
+        // waiting on the owner", which is why the strip says "servis urejamo
+        // sami" instead. Both product panels then said the other thing, on
+        // the six pages where a buyer is deciding. One word from the owner
+        // puts the network back; until then the two say the same thing.
+        "Tri leta. Rezervne dele in servis urejamo sami.",
         // The two-year statutory conformity right is NOT the three-year
         // manufacturer's guarantee, and this panel names only the second. The
         // page that sets them side by side is the terms page; sending the
@@ -1263,7 +1300,10 @@ export const bazenContent: ShopContent = {
       "masazni-bazen-na-terasi"],
     ["Cene 2026", "Koliko stane masažni bazen? Nakup in obratovanje.",
       "koliko-stane-masazni-bazen"],
-    ["Pozimi", "Masažni bazen pozimi: stroški in nasveti.",
+    // ⚠️ NOT "stroški in nasveti". The card promised a cost answer this guide
+    // does not give — see the note on its seoTitle in pages/vodnik.ts. The
+    // cost question has its own guide one card above.
+    ["Pozimi", "Masažni bazen pozimi: zakaj deluje bolje kot poleti.",
       "masazni-bazen-pozimi"],
   ],
   categories,
