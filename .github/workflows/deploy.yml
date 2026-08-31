@@ -112,6 +112,13 @@ jobs:
       - name: Tests (freight engine + renderer invariants)
         run: npm test
 
+      # A ratchet, not a budget: one shop's product vocabulary inside modules
+      # every shop renders through. It cannot live in a .test.ts because the
+      # Worker tsconfig deliberately has no node types — see the note at the
+      # top of the script.
+      - name: One shop's words stay out of shared render code
+        run: node scripts/audit-shared-copy.mjs
+
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy
         env:

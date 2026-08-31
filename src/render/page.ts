@@ -2,6 +2,7 @@ import type { ShopConfig } from "../tenants/types";
 import type { Collection, PdpContent, ShopContent } from "../content/types";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
 import type { Page } from "../content/pages";
+import { SHOP_HERO } from "../themes/studio/media";
 import { renderStudioPage } from "../themes/studio/page";
 import { renderStudioBlogIndex, renderStudioBlogPost } from "../themes/studio/blog";
 import type { Post, PostCard } from "../blog/post";
@@ -139,6 +140,9 @@ export function renderDocument(o: PageOptions): string {
   // as the contact page.
   const pageUrl = s.siteUrl + (o.path === "/" ? "/" : o.path);
   const canonical = o.canonical === null ? null : pageUrl;
+  const heroSrc = SHOP_HERO[s.key]?.src;
+  const ogPath = o.image ?? heroSrc;
+  const ogImage = ogPath ? s.siteUrl + ogPath : "";
   const jsonLd = (o.jsonLd ?? [])
     .map(
       (obj) =>
@@ -208,8 +212,16 @@ export function renderDocument(o: PageOptions): string {
     // zgoraj na akrilno školjko s petimi sedeži" — describes the image, which
     // is the whole point of the property. The title stands in only where a
     // caller has no picture of its own to describe.
-    '<meta property="og:image" content="' +
-      esc(s.siteUrl + (o.image ?? "/media/site/hero.webp")) + '">' +
+    // ⚠️ AND THE FALLBACK WAS A LITERAL, SO EVERY SHOP SHARED ONE PICTURE.
+    // The shop contributed only the origin: "/media/site/hero.webp" is a
+    // constant, and a second shop on this Worker rendered
+    // https://its-own-domain/media/site/hero.webp pointing at the SAME bucket
+    // object — one social preview image for the whole network, on the tag
+    // whose entire job is to show what THIS shop sells. It now reads the
+    // shop's own hero, and omits the tag rather than borrowing a sibling's:
+    // a link with no picture is a worse card, a link with the wrong shop's
+    // picture is a wrong one.
+    (ogImage ? '<meta property="og:image" content="' + esc(ogImage) + '">' : "") +
     // ⚠️ ONLY WHERE THERE IS SOMETHING TRUE TO SAY. The title fallback put a
     // page name with a pipe and a brand suffix — "Vodniki | Masažni bazeni
     // Vrelec" — into an IMAGE description on the nineteen routes that share
@@ -366,7 +378,12 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
     name: pdp.title,
     description: pdp.sub,
     sku: pdp.code,
-    brand: { "@type": "Brand", name: s.name },
+    // The manufacturer where the model names one, the shop where it does not.
+    // See PdpContent.brand: unconditional shop-as-brand is false the moment a
+    // shop sells somebody else's goods.
+    brand: { "@type": "Brand", name: pdp.brand ?? s.name },
+    ...(pdp.gtin ? { gtin: pdp.gtin } : {}),
+    ...(pdp.mpn ? { mpn: pdp.mpn } : {}),
   };
   // The model's own photography, absolute. Google will not show a product
   // rich result without an image, so an Offer with no image is markup doing
@@ -417,7 +434,12 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
       // currency, condition, seller and return policy all still ship and the
       // offer stays eligible for a product snippet.
       ...(s.ordersOnline ? { availability: "https://schema.org/InStock" } : {}),
-      itemCondition: "https://schema.org/NewCondition",
+      itemCondition:
+        "https://schema.org/" +
+        { new: "NewCondition", used: "UsedCondition",
+          refurbished: "RefurbishedCondition", damaged: "DamagedCondition" }[
+          pdp.condition ?? "new"
+        ],
       // The seller is the Organization node this page already carries, by
       // reference. Without it an Offer names a price and nobody selling at it.
       seller: { "@id": orgId(s) },

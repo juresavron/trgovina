@@ -166,7 +166,12 @@ const SENT_PARAM = "poslano";
  * delete like anything else they typed.
  */
 const SWATCH_PARAM = "vzorcnik";
-const SWATCH_MESSAGE = "Prosim za vzorčnik barv školjke.";
+// ⚠️ THE MESSAGE MOVED TO THE SHOP; THE FLAG DID NOT. Carrying a flag in the
+// URL rather than the sentence is still right — a message a visitor could
+// type into the address bar and see rendered back is the bug that design
+// avoids. What was wrong is that the sentence itself was a module constant
+// describing a hot tub's shell, prefilled into the form as something the
+// visitor had written. See ShopContent.swatchMessage.
 
 const SECURITY = {
   "x-content-type-options": "nosniff",
@@ -281,13 +286,9 @@ export function handleRequest(
    * exactly that — one replaces the form with the confirmation, the other
    * arrives with a sentence already in the message box. Neither writes a row.
    */
-  const outcome =
-    enquiry ??
-    (confirmed
-      ? { done: true }
-      : swatches
-        ? { sent: { sporocilo: SWATCH_MESSAGE } }
-        : undefined);
+  // ⚠️ BUILT LOWER DOWN NOW, because the swatch sentence belongs to the shop
+  // and the shop's content is not resolved yet at this point in the request.
+  // See below the CONTENT lookup.
 
   // The storefront speaks GET and HEAD, and POST on exactly one path.
   //
@@ -368,6 +369,14 @@ export function handleRequest(
   if (!content) {
     return new Response("Shop content missing", { status: 500 });
   }
+
+  const outcome =
+    enquiry ??
+    (confirmed
+      ? { done: true }
+      : swatches
+        ? { sent: { sporocilo: content.swatchMessage } }
+        : undefined);
 
   // Security headers on everything public. nosniff stops a browser
   // reinterpreting a response against its declared type; the referrer policy
@@ -490,7 +499,12 @@ export function handleRequest(
       // matters most. The head keeps the keyword and the two words a buyer
       // searches with; "montaža" is in the nav, in the trust strip and on its
       // own page, so losing it here costs nothing and buys the brand back.
-      title: cap(shop.keyword.primary) + " — cena in dostava | " + shop.name,
+      // ⚠️ HALF THIS LINE USED TO KNOW WHICH SHOP IT WAS ON. The keyword was
+      // interpolated and "cena in dostava" was typed, on the single
+      // highest-value string the site emits. The tail is now the shop's own —
+      // see ShopContent.homeTitleTail.
+      title:
+        cap(shop.keyword.primary) + " — " + content.homeTitleTail + " | " + shop.name,
       description: content.metaDescription,
       noindex: dev,
       q,

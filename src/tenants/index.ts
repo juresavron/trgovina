@@ -50,8 +50,26 @@ export function isDevHost(host: string | null | undefined): boolean {
 
 const byHost = new Map<string, ShopConfig>();
 for (const s of Object.values(SHOPS)) {
-  byHost.set(s.domain, s);
-  byHost.set(`www.${s.domain}`, s);
+  // ⚠️ THROW, DO NOT OVERWRITE. This map was built with plain Map.set in
+  // object-key order and no duplicate check, which means the note above —
+  // that cross-shop canonical leakage "is how a keyword network gets itself
+  // devalued as one site" — was a warning with nothing behind it. A typo
+  // repeating a sibling's domain, or one shop declaring www.x.si while
+  // another declares x.si, silently overwrote an entry and one shop began
+  // serving the other's pages under the other's canonicals.
+  //
+  // Module scope, so a bad registry fails the BUNDLE rather than a customer's
+  // request. tenancy.test.ts asserts the same thing against SHOPS so the
+  // failure names the shop rather than the host.
+  for (const host of [s.domain, `www.${s.domain}`]) {
+    const taken = byHost.get(host);
+    if (taken) {
+      throw new Error(
+        "two shops claim the host " + host + ": " + taken.key + " and " + s.key,
+      );
+    }
+    byHost.set(host, s);
+  }
 }
 
 /**

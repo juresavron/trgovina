@@ -42,14 +42,15 @@ import type { Env } from "../admin/supabase";
 import { anonApi, getBySlug, listPublished } from "./store";
 import { parseSource, readMinutes, type PostCard } from "./post";
 
-/** The index's own copy. Not in a content module: it is two strings. */
+// ⚠️ "Not in a content module: it is two strings." THAT COMMENT WAS THE BUG.
+// Two of the three named hot tubs — the lead and the meta description of every
+// shop's blog index — and a second shop on this Worker published them under
+// its own domain. No user-visible sentence is too small to belong to a shop;
+// they are ShopContent.blogLead and ShopContent.blogMetaDescription now.
+//
+// H1 stays here because "Blog" is the word in every language this network is
+// likely to serve, and a shop that needs another can have the field then.
 const H1 = "Blog";
-const LEAD =
-  "Kaj je pri masažnem bazenu res pomembno — velikost, poraba, priprava " +
-  "terase in vzdrževanje. Brez prodajnih obljub, ki jih ne moremo držati.";
-const META =
-  "Nasveti o masažnih bazenih in swim spa bazenih: izbira velikosti, priprava " +
-  "podlage in priklopa, poraba, vzdrževanje in dostava po Sloveniji.";
 
 /**
  * The blog index as a whole document.
@@ -80,10 +81,10 @@ export function blogIndexDoc(
     theme: shop.design.theme,
     path: shop.routeSlugs["/blog"],
     title: H1 + " — " + shop.keyword.plural + " | " + shop.name,
-    description: META,
+    description: content.blogMetaDescription,
     noindex,
     q: "",
-    bodyHtml: renderBlogIndex(shop, content, "", H1, LEAD, posts),
+    bodyHtml: renderBlogIndex(shop, content, "", H1, content.blogLead, posts),
     jsonLd: [
       organizationJsonLd(shop),
       breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: H1 }]),
@@ -223,7 +224,7 @@ export async function handlePosts(request: Request, env: Env): Promise<Response 
     theme: shop.design.theme,
     path: base + "/" + post.slug,
     title: post.title + " | " + shop.name,
-    description: post.excerpt || META,
+    description: post.excerpt || content.blogMetaDescription,
     noindex: dev,
     q: "",
     ...(post.coverUrl ? { image: post.coverUrl } : {}),

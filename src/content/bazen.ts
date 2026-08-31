@@ -1149,6 +1149,18 @@ export const bazenContent: ShopContent = {
     "Brezplačen ogled lokacije pred nakupom",
     "Dostava, priklop in zagon po vsej Sloveniji",
   ],
+  // The four strings that used to live in shared render code. See the notes
+  // beside each field in content/types.ts for what each one was doing there.
+  homeTitleTail: "cena in dostava",
+  membershipBody:
+    "Pridemo pogledat, kam bi bazen postavili, brezplačno in brez obveznosti.",
+  blogLead:
+    "Kaj je pri masažnem bazenu res pomembno — velikost, poraba, priprava " +
+    "terase in vzdrževanje. Brez prodajnih obljub, ki jih ne moremo držati.",
+  blogMetaDescription:
+    "Nasveti o masažnih bazenih in swim spa bazenih: izbira velikosti, priprava " +
+    "podlage in priklopa, poraba, vzdrževanje in dostava po Sloveniji.",
+  swatchMessage: "Prosim za vzorčnik barv školjke.",
   trust: [
     "Dostava in zagon po vsej Sloveniji",
     "Ogled lokacije pred ponudbo",
