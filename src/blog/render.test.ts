@@ -139,3 +139,39 @@ describe("articleJsonLd", () => {
     expect(withCover["image"]).toBe(shop.siteUrl + "/media/blog/a--b.webp");
   });
 });
+
+/**
+ * AN EMPTY BLOG IS NOT A PAGE TO INDEX, AND FOR A WHILE IT WAS ONE.
+ *
+ * Before the first post exists /blog is a real page in a real state — its
+ * chrome, its measure and its standing paragraph are all exactly what a post
+ * list carries — and a visitor who follows the footer link should see it. A
+ * CRAWLER should not be invited to file it: the whole content is the sentence
+ * saying nothing is published yet, which is the soft-404 signal, on a domain
+ * whose crawl budget and authority are both new.
+ *
+ * Both halves of that invitation were open. The index rendered indexable at
+ * zero posts, and render/sitemap.ts listed the URL unconditionally with a
+ * comment saying it was "an indexable page linked from every footer in either
+ * state" — so the sitemap advertised it too.
+ *
+ * The two must agree, which is why they are asserted together: a sitemap that
+ * lists a noindex URL is the one inconsistency Search Console reports by name,
+ * and fixing one of these without the other produces exactly that.
+ */
+describe("the blog index before anything is published", () => {
+  it("tells crawlers to skip it, and stops the moment a post exists", async () => {
+    const { blogIndexDoc } = await import("./routes");
+    const empty = blogIndexDoc(shop, content, [], false);
+    expect(empty).toMatch(/<meta name="robots" content="noindex/);
+    const full = blogIndexDoc(shop, content, [card()], false);
+    expect(full).not.toMatch(/<meta name="robots" content="noindex/);
+  });
+
+  it("is left out of the sitemap in the same state", async () => {
+    const { sitemapPaths } = await import("../render/sitemap");
+    const blog = shop.routeSlugs["/blog"];
+    expect(sitemapPaths(shop, content, false)).not.toContain(blog);
+    expect(sitemapPaths(shop, content, true)).toContain(blog);
+  });
+});

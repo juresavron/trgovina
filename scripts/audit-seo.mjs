@@ -72,7 +72,16 @@ function routes() {
 const BLOG = SHOP.routeSlugs["/blog"];
 const get = async (path) => {
   if (path === BLOG) {
-    const html = blogIndexDoc(SHOP, C, [], true);
+    // ⚠️ false, NOT true, AND THE FLAG IS THE POINT. This used to force
+    // noindex, which meant the audit could never see what the page decides
+    // for itself. blog/routes.ts marks an empty index noindex on its own —
+    // there is nothing published yet, so the whole body is a sentence saying
+    // so — and the audit renders it with an empty list because a build
+    // sandbox cannot reach the database. Passing false lets that rule show
+    // through instead of being masked by the dev flag, which is how the
+    // thin-copy check below comes to know that this route is not competing
+    // for anything.
+    const html = blogIndexDoc(SHOP, C, [], false);
     return { status: 200, headers: new Headers(), html };
   }
   const res = handleRequest(
@@ -123,7 +132,22 @@ for (const route of PAGES) {
     SHOP.routeSlugs["/checkout"],
     SHOP.routeSlugs["/order-success"],
   ]);
-  const indexable = !PRIVATE.has(route);
+  // ⚠️ AND WHATEVER THE PAGE ITSELF SAYS. A hardcoded list is the right
+  // instrument for the basket and the checkout, which are private by design
+  // whatever the markup does — but it cannot see a page that decides its own
+  // robots meta from its own state, and /blog is exactly that: noindex until
+  // the first post exists, which is the state this audit renders it in.
+  //
+  // Reading the meta rather than only the list means a page that opts itself
+  // out is no longer judged on how well it would rank. It also means adding a
+  // noindex page in future costs nothing here.
+  //
+  // The whole SHOP is noindex before launch (live: false), so this cannot be
+  // the only test — hence "the list OR the meta", never the meta alone: with
+  // the meta alone every check below would switch off on a pre-live shop and
+  // the audit would report a clean site by measuring nothing.
+  const selfNoindex = route === BLOG && /<meta name="robots" content="noindex/.test(html);
+  const indexable = !PRIVATE.has(route) && !selfNoindex;
 
   /* --- the three strings a SERP is built from ------------------------- */
   const title = one(/<title>([^<]*)<\/title>/, html);
@@ -262,9 +286,27 @@ for (const route of PAGES) {
   // cheapest signal of thinness there is. Measured on the BODY with script,
   // style and nav stripped, so the shared chrome — which is most of the words
   // on a short page — cannot make a thin page look substantial.
+  // ⚠️ ONLY THE TABLE OF CONTENTS COMES OUT, NOT EVERY <nav>.
+  //
+  // The rule used to be "strip <nav>", with the reasoning that shared chrome
+  // must not make a thin page look substantial. That reasoning is sound and
+  // the <main> above already delivers it: the header and the footer are
+  // outside it. What the second strip actually removed was the on-page LINK
+  // BLOCKS — the "Oglejte si" and "Vsi vodniki" rows, correctly marked up as
+  // <nav> because they are navigation — and those carry a title and a
+  // sentence per entry that a reader reads and a crawler indexes.
+  //
+  // /vodniki is the page that made it visible: an index whose whole body is
+  // three links with three descriptions measured 132 words, all of them the
+  // lead paragraph, because everything below it was invisible to the count by
+  // construction. The number was not a finding about the page, it was a
+  // finding about this line.
+  //
+  // .st-page-toc is the section index — a nav that restates the page's own
+  // h2s — and it IS the thing the original rule wanted gone. It goes.
   const body = (one(/<main\b[^>]*>([\s\S]*)<\/main>/, html) || html)
     .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/g, " ")
-    .replace(/<nav\b[^>]*>[\s\S]*?<\/nav>/g, " ");
+    .replace(/<nav\b[^>]*class="[^"]*st-page-toc[^"]*"[^>]*>[\s\S]*?<\/nav>/g, " ");
   const words = text(body).split(/\s+/).filter(Boolean).length;
   // A legal page is not competing for anything. The terms, the privacy
   // notice, the cookie notice and the withdrawal form exist because ZVarPO-2,

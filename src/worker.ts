@@ -450,7 +450,10 @@ export function handleRequest(
     // builds this document too — it has to add the posts, and it cannot ask a
     // synchronous renderer what has been published. Two implementations of
     // "which pages does this shop have" is how one of them ends up stale.
-    const body = sitemapXml(shop, sitemapPaths(shop, content));
+    // ⚠️ false, AND IT IS NOT A GUESS — see the parameter's own note. This
+    // fallback runs exactly when the blog layer could not confirm a single
+    // published post, and an empty blog index is noindex.
+    const body = sitemapXml(shop, sitemapPaths(shop, content, false));
     return new Response(body, {
       headers: { "content-type": "application/xml; charset=utf-8", ...baseHeaders },
     });
@@ -782,6 +785,14 @@ export function handleRequest(
             { name: "Vodniki", path: shop.routeSlugs["/guides"] },
             { name: guide.h1 },
           ]),
+          // ⚠️ THE GUIDES WERE THE ONE PAGE TYPE THAT ASKED QUESTIONS AND DID
+          // NOT SAY SO. faqFor() has always been called for the editorial
+          // pages and never here — so /pogosta-vprasanja was eligible for an
+          // FAQ rich result and the three pages built to rank for the actual
+          // long-tail queries were not, on the same markup, from the same
+          // renderer. Same opt-in flag, same two-question floor: a guide that
+          // carries no qa block still emits nothing.
+          ...faqFor(guide),
         ],
       });
       return htmlResponse(

@@ -82,7 +82,20 @@ export function blogIndexDoc(
     path: shop.routeSlugs["/blog"],
     title: H1 + " — " + shop.keyword.plural + " | " + shop.name,
     description: content.blogMetaDescription,
-    noindex,
+    // ⚠️ AN EMPTY INDEX IS NOINDEX, AND IT WAS NOT. Before the first post
+    // exists this page is 85 words that say nothing has been published, it
+    // was indexable, AND render/sitemap.ts advertised it — so a brand-new
+    // domain with no authority to spend was inviting Google to crawl its one
+    // page whose whole content is an absence. That is the textbook soft-404
+    // signal, and it was pointed at from every footer on the site as well.
+    //
+    // The page itself does not change: a visitor who follows the footer link
+    // still gets the real page in its real empty state, which is honest. What
+    // changes is that the crawler is not asked to file it. The moment one
+    // post is published the flag flips on its own — there is no switch to
+    // remember, which is the point of deriving it from the list rather than
+    // from a setting.
+    noindex: noindex || posts.length === 0,
     q: "",
     bodyHtml: renderBlogIndex(shop, content, "", H1, content.blogLead, posts),
     jsonLd: [
@@ -171,11 +184,11 @@ export async function handlePosts(request: Request, env: Env): Promise<Response 
     // knows the first set — see render/sitemap.ts on why that is not restated
     // here. The index goes in even when no post has a cover or a date; the
     // posts follow in publication order, which is the order they were listed.
-    // sitemapPaths already lists the index (unconditionally, since the
-    // storefront's own fallback has to carry it too) — only the posts are
-    // this branch's to add.
+    // sitemapPaths lists the index when it is told there are posts, which
+    // this branch has just established (cards.length === 0 returns null
+    // above) — only the posts themselves are this branch's to add.
     const body = sitemapXml(shop, [
-      ...sitemapPaths(shop, content),
+      ...sitemapPaths(shop, content, true),
       ...cards.map((c) => base + "/" + c.slug),
     ]);
     return new Response(body, {

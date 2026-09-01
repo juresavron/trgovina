@@ -1,5 +1,16 @@
 import type { GuidePage } from "../pages";
-import { priceRangeText } from "../price-range";
+import {
+  priceRangeText,
+  reheatHoursText,
+  reheatKWhText,
+  tubAddonRangeText,
+  tubAreaListText,
+  tubFootprintListText,
+  tubHeightRangeText,
+  tubLitreRangeText,
+  tubLoadRangeText,
+  tubMaxLitresText,
+} from "../price-range";
 
 /**
  * THE BUYING GUIDES, EACH AT ITS OWN URL.
@@ -27,6 +38,9 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
   {
     slug: "masazni-bazen-na-terasi",
     key: "/guide",
+    // The qa block below is eligible for an FAQ rich result; worker.ts reads
+    // this opt-in flag exactly as it does for /pogosta-vprasanja.
+    faqPage: true,
     h1: "Masažni bazen na terasi: kaj preveriti pred nakupom",
     seoTitle: "Masažni bazen na terasi: kaj preveriti pred nakupom",
     lead:
@@ -84,6 +98,88 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
         ],
       ],
     },
+    // ⚠️ THE GUIDE TOLD THE READER A TOTAL AND LEFT THEM THE DIVISION. Step
+    // one above says a full tub weighs 1.500-2.210 kg and that a wooden deck
+    // "je stvar konstrukcije, ne občutka" — correct, and unusable: nobody
+    // can take a total mass to a builder, because what a builder works in is
+    // load per square metre. That division needed two numbers off two
+    // different pages, so in practice nobody did it.
+    //
+    // Every figure below is derived from catalog/pola.ts (see price-range.ts)
+    // rather than typed, for the reason the price range already is: this is
+    // the page most likely to be read for the number, so it is the worst page
+    // to leave a stale one on.
+    {
+      kind: "prose",
+      h: "Koliko je to na kvadratni meter",
+      p: [
+        "Skupna teža sama pove malo — 2.210 kilogramov je veliko na balkonu in nič " +
+          "posebnega na betonski plošči. Uporabna postane, ko jo razdelite na površino, " +
+          "na kateri bazen stoji. Naši trije modeli stojijo na " + tubAreaListText() +
+          " kvadratnega metra, kar pri polni vodi pomeni " + tubLoadRangeText() +
+          " kilogramov na kvadratni meter — in to preden vanj kdo stopi. Pet odraslih " +
+          "po 80 kilogramov doda še 400.",
+        "Obremenitev je porazdeljena po dnu školjke in ni točkovna, a ohišje tudi ni " +
+          "plošča. Betonska plošča na terenu to navadno prenese brez vprašanj. Pri " +
+          "leseni terasi in balkonu odloča konstrukcija pod desko — nosilci, njihov " +
+          "razpon in način pritrditve — in tega z gledanjem ne oceni nihče.",
+        "Zato je ta številka namenjena naprej: vzemite jo s seboj k izvajalcu, ki je " +
+          "teraso naredil, ali k statiku. Ob ogledu lokacije pogledamo, kod bo bazen " +
+          "prišel in kje bo stal; nosilnost lesene konstrukcije pa je vprašanje za " +
+          "tistega, ki jo je načrtoval, in naša ocena na oko tega ne nadomesti.",
+      ],
+    },
+    // The access step above says "izmerite najožje mesto" and names no number
+    // to measure against, which leaves the reader with a tape measure and no
+    // target. These are the targets, and they are the same three dimensions
+    // the model pages publish.
+    {
+      kind: "prose",
+      h: "Katere tri mere nam povejte",
+      p: [
+        "Bazen pride do mesta postavitve v enem kosu. Školjke merijo " +
+          tubFootprintListText() + ", visoke pa so " + tubHeightRangeText() +
+          " centimetrov. Ko gre postrani skozi ozko mesto, ni merodajna njena širina, " +
+          "ampak višina: odprtina mora preseči tistih " + tubHeightRangeText() +
+          " centimetrov in še nekaj za roke. V ovinku in na stopnišču pa šteje " +
+          "daljša stranica.",
+        "Tri meritve nam povedo največ: najožje mesto na poti, najnižja ovira nad njo " +
+          "(nadstrešek, veja, garažna vrata) in najtesnejši ovinek. Prehod čez ograjo " +
+          "ali po stopnicah ni izključen, treba pa je zanj vedeti vnaprej — to je " +
+          "razlika med pripravljenim in improviziranim dnem dostave.",
+      ],
+    },
+    // ⚠️ THE FIRST qa BLOCK ON A GUIDE, AND IT IS WHY faqPage IS SET. Three
+    // questions that the FAQ page does NOT ask: it has "Kam lahko postavim
+    // masažni bazen?" and answers it with the total weight, which is the
+    // answer this guide exists to go past. Two pages answering one question
+    // is how a site outranks itself; two pages answering a question and its
+    // follow-up is the ladder docs/SEO.md describes.
+    {
+      kind: "qa",
+      h: "Pogosta vprašanja o postavitvi",
+      items: [
+        [
+          "Koliko kilogramov na kvadratni meter pomeni poln masažni bazen?",
+          "Pri naših treh modelih " + tubLoadRangeText() + " kilogramov na kvadratni " +
+            "meter, preden vanj kdo stopi. Razlika med modeli je majhna, ker z večjo " +
+            "školjko raste tudi površina, na kateri stoji.",
+        ],
+        [
+          "Kdo presodi, ali lesena terasa zdrži?",
+          "Izvajalec, ki je teraso naredil, ali statik — na podlagi konstrukcije pod " +
+            "desko, ne videza. Mi ob ogledu pogledamo dostop in mesto postavitve; " +
+            "presoje nosilnosti lesene konstrukcije ne opravljamo.",
+        ],
+        [
+          "Kako široka mora biti pot do mesta postavitve?",
+          "Školjka se prenaša postrani, zato mora najožje mesto preseči njeno višino, " +
+            "torej " + tubHeightRangeText() + " centimetrov in še nekaj za roke. V " +
+            "ovinku šteje daljša stranica; mere vseh treh školjk so " +
+            tubFootprintListText() + ".",
+        ],
+      ],
+    },
     // ⚠️ THE GUIDES PASSED NOTHING ON. All three ended on the same contact
     // panel and linked to not one model page, so the topical-authority ladder
     // docs/SEO.md describes carried a reader — and a crawler — to a form
@@ -116,6 +212,9 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
   {
     slug: "koliko-stane-masazni-bazen",
     key: "/guide",
+    // The qa block below is eligible for an FAQ rich result; worker.ts reads
+    // this opt-in flag exactly as it does for /pogosta-vprasanja.
+    faqPage: true,
     h1: "Koliko stane masažni bazen",
     seoTitle: "Koliko stane masažni bazen — cena in obratovanje",
     lead:
@@ -157,6 +256,71 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
           "termo pokrov prvi in ne zadnji dodatek.",
       ],
     },
+    // ⚠️ THE PAGE NAMED A RANGE AND NEVER SAID WHAT MOVES INSIDE IT. A reader
+    // who has just been told the three tubs run from one figure to another
+    // asks the obvious next question — why — and the guide sent them to three
+    // spec tables to work it out. The answer is two facts, and neither is a
+    // price: the pump count and the jet count. Stated here, no euro figure
+    // goes stale, and the model pages keep the numbers that do move.
+    {
+      kind: "prose",
+      h: "Kaj loči tri masažne bazene po ceni",
+      p: [
+        "Med modeloma BAZEN 195 in BAZEN 210 se školjka poveča, vode je za 300 litrov " +
+          "več in šobi sta dve več — masažna črpalka je pri obeh ena. Med 210 in 230 je " +
+          "spet 300 litrov več, a šob je trinajst več in črpalki sta dve namesto ene. " +
+          "Zato je drugi korak v ceni večji od prvega: plača se druga črpalka, ne " +
+          "dodatni centimetri.",
+        "Kar je pri vseh treh enako: 3-kilovatni grelec, krmilnik Balboa, filter z " +
+          "9,3 kvadratnega metra površine, školjka iz ameriškega akrila z dvema " +
+          "centimetroma izolacije in tri leta garancije. Cena ne kupuje boljše " +
+          "tehnike, ampak več prostora in več šob.",
+        "Swim spa bazeni so druga kategorija in ne le večji model: stanejo " +
+          priceRangeText("swim") + " z DDV, ker so daljši, težji in držijo nekajkrat " +
+          "več vode. Če je namen plavanje in ne masaža, je primerjava po ceni z " +
+          "masažnim bazenom primerjava dveh različnih stvari.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Dodatna oprema",
+      p: [
+        "Dodatki so na strani vsakega modela, s ceno ob vsaki postavki, in se sproti " +
+          "seštevajo v skupni znesek — nič se ne odkrije šele v ponudbi. Posamezne " +
+          "postavke gredo " + tubAddonRangeText() + " z DDV, od LED slapa do termo " +
+          "pokrova, ki je največja med njimi in tudi edina, ki se pozna pri " +
+          "obratovanju.",
+        "Kaj od tega je smiselno, je odvisno od tega, kje bazen stoji in kdaj ga " +
+          "uporabljate. Ni pa nobeden od dodatkov pogoj za delovanje: bazen deluje s " +
+          "tem, kar je v osnovni ceni.",
+      ],
+    },
+    // The FAQ page asks "Kaj je vključeno v ceno modela?" and answers it. It
+    // does NOT ask any of these three, which are the questions that follow.
+    {
+      kind: "qa",
+      h: "Pogosta vprašanja o ceni",
+      items: [
+        [
+          "Zakaj je razlika med 210 in 230 večja kot med 195 in 210?",
+          "Ker BAZEN 230 dobi drugo masažno črpalko in trinajst šob več, medtem ko je " +
+            "korak z 195 na 210 predvsem večja školjka z dvema šobama več. Vode je pri " +
+            "obeh korakih za 300 litrov več.",
+        ],
+        [
+          "Koliko stanejo posamezni dodatki?",
+          "Od " + tubAddonRangeText().replace("od ", "") + " z DDV, odvisno od modela " +
+            "in postavke. Cena vsake je izpisana ob njej na strani modela, skupni " +
+            "znesek pa se sešteva sproti.",
+        ],
+        [
+          "Ali je cena na strani modela z DDV?",
+          "Da. Vse cene na tej strani in na straneh modelov so z DDV in enake za vse " +
+            "obiskovalce. Kar se obračuna posebej, je dostava, ker je odvisna od " +
+            "naslova in dostopa; znesek je v pisni ponudbi.",
+        ],
+      ],
+    },
     // The prices this page talks about, on the pages that state them. A guide
     // that names a range and then offers only a contact form makes the reader
     // search for the figure it just promised.
@@ -185,6 +349,9 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
   {
     slug: "masazni-bazen-pozimi",
     key: "/guide",
+    // The qa block below is eligible for an FAQ rich result; worker.ts reads
+    // this opt-in flag exactly as it does for /pogosta-vprasanja.
+    faqPage: true,
     h1: "Masažni bazen pozimi",
     // ⚠️ "STROŠKI" IS GONE FROM THIS TITLE, and it was the only place the
     // word appeared on this page. The body says the bazen works better in
@@ -212,6 +379,77 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
           "in delujoč, ker v ceveh in črpalkah ostane voda. Če bazena res ne boste " +
           "uporabljali, mora biti za zimo pravilno pripravljen. Povejte nam, pa vam razložimo " +
           "postopek za vaš model.",
+      ],
+    },
+    // ⚠️ THE PAGE ASSERTED THE CONCLUSION AND NEVER SHOWED THE MECHANISM. It
+    // said the shell's insulation and the cover "opravita večino dela" and
+    // stopped — which is exactly the sentence a reader has already read on
+    // four other sites, and the one they cannot check. What is checkable is
+    // in the spec table of every model on this site: the shell, the heater,
+    // the circulation pump and the surface the cover has to cover.
+    {
+      kind: "prose",
+      h: "Kaj v resnici drži vodo toplo",
+      p: [
+        "Tri stvari, in vse tri so v specifikaciji vsakega modela. Školjka je iz " +
+          "ameriškega akrila z dvema centimetroma izolacije. Grelec je 3-kilovatni pri " +
+          "vseh treh modelih. Obtočna črpalka 0,35 KM pa vodo ves čas premika skozi " +
+          "filter, tudi kadar masažne šobe mirujejo — voda v delujočem bazenu nikoli " +
+          "ne stoji.",
+        "Največ toplote uide skozi gladino, zato o porabi pozimi odloča pokrov in ne " +
+          "grelec. Pokriti je treba " + tubAreaListText() + " kvadratnega metra, " +
+          "odvisno od modela; to je edina ploskev, ki vodo ločuje od zunanjega zraka, " +
+          "in odkrit bazen jo greje neprekinjeno.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Zakaj izklop ni prihranek",
+      p: [
+        "Bazen drži " + tubLitreRangeText() + " litrov vode. Segreti " +
+          tubMaxLitresText() + " litrov za trideset stopinj — približno iz zimske " +
+          "vodovodne vode do kopalne temperature — pomeni okoli " + reheatKWhText() +
+          " kilovatnih ur, kar s 3-kilovatnim grelcem traja vsaj " + reheatHoursText() +
+          " ur, preden odštejete izgube med samim segrevanjem. Tega ni mogoče " +
+          "pospešiti; grelec je toliko močan, kot je.",
+        "Zato izklop ni prihranek, ampak zamenjava: majhna dnevna poraba pokritega " +
+          "bazena se zamenja za en dolg cikel, ki ga je treba načrtovati dan vnaprej. " +
+          "Za bazen, ki se uporablja, se to ne izide.",
+        // ⚠️ THIS PARAGRAPH USED TO RESTATE THE ONE AT THE TOP OF THE PAGE,
+        // almost word for word — "prazen bazen v mrazu je bolj ogrožen kot poln
+        // in delujoč, ker voda ostane v ceveh in črpalkah", twice on one
+        // screen. It draws the distinction and leaves the argument where it
+        // was already made.
+        "Ločnica, ki se pogosto zabriše: izklop in praznjenje nista isto. Prvo je " +
+          "vprašanje ekonomike in odgovor je zgoraj. Drugo je vprašanje tveganja in " +
+          "je opisano v uvodu te strani — bazen, ki res ne bo delal, je treba za zimo " +
+          "pripraviti, ne le izprazniti.",
+      ],
+    },
+    {
+      kind: "qa",
+      h: "Pogosta vprašanja o zimi",
+      items: [
+        [
+          "Kako dolgo traja, da se ohlajen bazen spet segreje?",
+          "Pri največjem modelu vsaj " + reheatHoursText() + " ur: " +
+            tubMaxLitresText() + " litrov, trideset stopinj razlike in 3-kilovatni " +
+            "grelec so okoli " + reheatKWhText() + " kilovatnih ur. Z izgubami med " +
+            "segrevanjem je to še dlje.",
+        ],
+        [
+          "Kaj se zgodi, če bazen pozimi izklopim?",
+          "Voda se ohladi in nič je ne premika. Nevarnost ni v školjki, ampak v " +
+            "ceveh, črpalkah in grelcu, kjer voda ostane. Bazen naj pozimi dela; če " +
+            "ne bo delal, mora biti pripravljen za zimo, in to ni isto kot izklop.",
+        ],
+        [
+          "Ali je pokrov pozimi res tako pomemben?",
+          "Je edina stvar med toplo vodo in zunanjim zrakom, in pokriti mora " +
+            tubAreaListText() + " kvadratnega metra, odvisno od modela. Grelca ni " +
+            "mogoče izbrati močnejšega; pokrov je edina postavka, pri kateri se " +
+            "poraba pozimi res spremeni.",
+        ],
       ],
     },
     // ⚠️ THE COST QUESTION GOES TO THE PAGE THAT ANSWERS IT. This guide's
