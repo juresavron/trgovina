@@ -22,7 +22,7 @@ import {
 import type { PolaModel } from "../catalog/pola";
 import { jetsText } from "../catalog/count";
 import { catalogPricingReady } from "../catalog/pricing";
-import { filterAreaText, kgText } from "../catalog/count";
+import { filterAreaText, kgText, litresText } from "../catalog/count";
 import {
   CABINET_FINISHES,
   OFFERED_MODELS,
@@ -666,6 +666,33 @@ function pdpFor(m: PolaModel): PdpContent {
         "Brezplačen ogled lokacije pred ponudbo",
         "/showroom",
       ],
+      // ⚠️ THE FOUR THINGS BUYERS ASK MOST WERE ON NO PRODUCT PAGE.
+      //
+      // Rendered, each of these six pages contained zero occurrences of
+      // vzdrževan*, pozim*, strošk*, klor, brom, kemij* or poraba — while
+      // /pogosta-vprasanja answers exactly them ("Koliko elektrike porabi?",
+      // "Koliko dela je z vzdrževanjem?", "Kako pogosto je treba zamenjati
+      // vodo?", "Ali lahko bazen uporabljam pozimi?") and no product page
+      // linked to it except through the global footer.
+      //
+      // EVERY FIGURE HERE IS ALREADY ON THE PAGE OR DERIVED FROM IT. The
+      // litres are filledKg − dryKg, the same subtraction /primerjava
+      // publishes; the filter area is the spec row; the ten minutes is the
+      // site's own figure at faq.ts:119, dostava.ts:74 and o-nas.ts:106.
+      //
+      // ⚠️ AND NO RUNNING-COST NUMBER. The cost guide refuses to quote one
+      // because it depends on use, temperature, cover and tariff — none of
+      // which this shop knows — and that refusal is right. The panel links to
+      // the guide instead of undermining it.
+      [
+        "Voda in vzdrževanje",
+        "Bazen drži približno " + litresText(m.dryKg, m.filledKg) +
+          " vode, filtracija pa teče prek filtra " + filterAreaText(m.filterSf) +
+          ". Vzdrževanje je preverjanje vode, čiščenje filtra in doziranje — " +
+          "približno deset minut na teden; postopek pokažemo ob predaji.",
+        "Poraba, vzdrževanje in zimska uporaba",
+        "/faq",
+      ],
       [
         "Dostava in montaža",
         // ⚠️ "PRED PONUDBO", NOT "PRED DOSTAVO", and this panel used to say
@@ -901,6 +928,26 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
         "Brezplačen ogled lokacije pred ponudbo",
         "/showroom",
       ],
+      // The same panel the tubs carry — see the note there for why the four
+      // questions buyers ask most were on no product page.
+      //
+      // ⚠️ THE LITRE SENTENCE IS CONDITIONAL HERE. Three models in the
+      // supplier's list state no mass and one of the three we sell is among
+      // them (see the note on pdpForSwim), so the subtraction that gives the
+      // litres has nothing to work from. The panel drops that clause rather
+      // than estimating, exactly as "Mere in prostor" above drops the weights.
+      [
+        "Voda in vzdrževanje",
+        (typeof m.dryKg === "number" && typeof m.filledKg === "number"
+          ? "Swim spa drži približno " + litresText(m.dryKg, m.filledKg) +
+            " vode, filtracija pa teče prek filtra " + filterAreaText(m.filterSf) + ". "
+          : "Filtracija teče prek filtra " + filterAreaText(m.filterSf) +
+            "; količino vode dobimo iz teže, ki je dobavitelj za ta model ne navaja. ") +
+          "Vzdrževanje je preverjanje vode, čiščenje filtra in doziranje — " +
+          "približno deset minut na teden; postopek pokažemo ob predaji.",
+        "Poraba, vzdrževanje in zimska uporaba",
+        "/faq",
+      ],
       [
         "Dostava in montaža",
         "Swim spa pripeljemo, postavimo, priklopimo in zaženemo. Zaradi " +
@@ -1035,6 +1082,23 @@ const collections: Collection[] = [
     // not uniformly do.
     seoTitle: "Swim spa bazeni — mere in cene",
     intro:
+      // ⚠️ THE OTHER NAMES, AS NAMES — AND THE FAMILY IS NOT RENAMED AFTER
+      // THEM. The owner asked for this family to be called "Plavalni
+      // (protitočni) bazeni", and the second word is a claim it cannot carry:
+      // protitok IS the counter-current, SWIM 450 lists swimJets: 0
+      // (catalog/swimspa.ts), swimSpaFamilyHasSwimJets() returns false, and
+      // swimspa.test.ts pins that with "does not advertise a counter-current
+      // jet the range cannot deliver". A family named after the jet asserts it
+      // for all three, and the h1 would then contradict the sentence four
+      // lines below it on the same screen; the SWIM 450 breadcrumb would carry
+      // a swimming-pool label into the SERP on the one model with no swim jet.
+      //
+      // So the words arrive the way jacuzzi and whirlpool did on the FAQ: as
+      // what people CALL the thing, in a sentence that describes usage and
+      // asserts nothing about any model. "swim spa" stays the family name and
+      // stays in all 27 internal anchors that use navLabel.
+      "Swim spa bazenu se reče tudi plavalni bazen, tisti s tokom pa " +
+      "protitočni — pri nas ostaja swim spa, ker vsi trije modeli niso enaki. " +
       "Tri školjke, pri katerih je prva številka dolžina. Od nje je odvisno, " +
       "koliko plavanja je v bazenu in koliko vrta potrebujete zanj. SWIM 450 " +
       "meri 4,50 × 2,28 m in je vstopni model: najkrajša školjka v ponudbi, " +
