@@ -2021,6 +2021,81 @@ export const STUDIO_PAGE_CSS = `
     white-space: nowrap;
   }
 
+  /* ⚠️ THE READING MEASURE WIDENS ON A WIDE SCREEN — AND THIS BLOCK IS LAST
+   * IN THE FILE ON PURPOSE.
+   *
+   * It was first written 1600 lines earlier and appeared to do nothing on
+   * /kontakt, because a media query adds no specificity: .st-enq-lead and the
+   * two .st-page-cta lines are declared further down and simply won on source
+   * order. Prose on /primerjava widened and prose on /kontakt did not, from
+   * one rule. Last in the file is the only place this can sit.
+   *
+   * WHY AT ALL. Removing the grid's own cap made the WIDE blocks reach the
+   * band — the comparison table is 1227px at 1920 — and the prose did not
+   * move, because the measure is set TWICE: on .st-page-block, and again on
+   * each text element (.st-page-p, .st-page-a, .st-page-step-p, .st-page-li).
+   * Overriding either alone changes nothing, which is what made this look
+   * like the same bug three times running.
+   *
+   * Measured on /primerjava at 1920, table left at full width:
+   *
+   *          prose   empty to its right   characters
+   *   38rem   608                  799          ~70
+   *   46rem   736                  671          ~85
+   *   52rem   832                  575          ~96
+   *
+   * 46rem on the owner's decision. Past the 45-75 band the original
+   * calibration aimed at, inside the range Medium and Substack set at: a
+   * deliberate trade of measure for a page that does not read as half-empty.
+   * Re-measure if --t-body or the body face moves.
+   *
+   * ⚠️ 1400px AND UP ONLY — below that the track is not wide enough for the
+   * void to be the problem, and a phone or a laptop keeps the page it had.
+   * ⚠️ AND :not(--wide), because an earlier attempt capped the comparison
+   * table along with the sentences.
+   *
+   * TWO-COLUMN TEXT WAS TRIED AND REJECTED. CSS columns split each block
+   * mid-paragraph: "Globina in vstop" rendered its heading in the left column
+   * with its own first sentence continuing at the top of the right one. The
+   * reading order was unrecoverable. */
+  @media (min-width: 1400px) {
+    :root[data-theme="studio"] .st-page-block:not(.st-page-block--wide),
+    :root[data-theme="studio"] .st-page-p,
+    :root[data-theme="studio"] .st-page-a,
+    :root[data-theme="studio"] .st-page-step-p,
+    :root[data-theme="studio"] .st-page-li,
+    :root[data-theme="studio"] .st-page-list,
+    :root[data-theme="studio"] .st-page-lead,
+    /* The closing panel's two lines carry the same 38rem and would otherwise
+     * sit visibly narrower than the prose above them. */
+    :root[data-theme="studio"] .st-page-cta-h,
+    :root[data-theme="studio"] .st-page-cta-p,
+    /* The enquiry lead is a SENTENCE, so it takes the sentence measure — not
+     * the form's. See below for why those two now differ. */
+    :root[data-theme="studio"] .st-enq-lead {
+      max-inline-size: 46rem;
+    }
+    /* THE FORM ITSELF GOES WIDER THAN ITS OWN LEAD, which the 44rem cap
+     * deliberately did not allow.
+     *
+     * That cap existed so the heading, the lead-in and the form shared one
+     * right edge instead of three — and the three it was fixing were
+     * 1400 / 962 / 1058, which is chaos, not a considered pair. What it could
+     * not anticipate is the contact tiles directly above it, which span the
+     * whole band: at 1920 the tiles ended at 1740 and the form at 1217, so the
+     * page's one transaction surface read as an afterthought pinned to the
+     * left of its own section.
+     *
+     * 60rem and not the full 1227px track: the rows are two-up, and a field
+     * for a person's name 590px wide reads as a mistake even when it is not.
+     * At 60rem each field is about 460px. The lead keeps the sentence measure
+     * above it — two right edges, both explicable, which is the trade the
+     * original note was right to care about and wrong to resolve by pinning
+     * the form. */
+    :root[data-theme="studio"] .st-page-block--wide:has(> .st-enq) {
+      max-inline-size: 60rem;
+    }
+  }
 `;
 
 /* -------------------------------------------------------------- render */
