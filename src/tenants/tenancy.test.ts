@@ -385,3 +385,65 @@ describe("the pages every shop can publish", () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * THE GUIDED CHOICE RECOMMENDS MODELS, AND THEY HAD BETTER BE THIS SHOP'S.
+ *
+ * ⚠️ content/finder.ts IS STILL A MODULE-LEVEL TREE, which is the same shape
+ * of defect ShopContent.pages was created to fix and has not been fixed the
+ * same way: the questions ("Kaj naj bazen zna?"), the branches and the
+ * recommended slugs are all constants, so a second shop that declares a
+ * /finder route gets this shop's questionnaire and this shop's models at the
+ * end of it. Moving it is a larger job than moving a page list — the tree is
+ * entangled with a recommendation FUNCTION, not just data — and it is not
+ * done here.
+ *
+ * What is done is turning the silent version into a loud one. A shop that
+ * declares the route and inherits this tree now fails, because the slugs it
+ * recommends are not in that shop's catalogue. A shop that wants no finder
+ * omits the route and never reaches this.
+ *
+ * It earns its place on the bazen shop too, and that is not incidental: the
+ * recommendations are typed slugs, so renaming or retiring a model leaves the
+ * quiz pointing at a 404 from its own terminal page — the one screen whose
+ * entire job is to hand the visitor a product.
+ */
+describe("the guided choice", () => {
+  for (const key of KEYS) {
+    const shop = SHOPS[key]!;
+    const content = CONTENT[key]!;
+    if (typeof shop.routeSlugs["/finder"] !== "string") continue;
+
+    it(key + ": only ever recommends models this shop sells", async () => {
+      const { nextStep, recommend, walk } = await import("../content/finder");
+      const slugs = new Set((content.pdps ?? [content.pdp]).map((p) => p.slug));
+
+      // Every terminal path through the tree, enumerated by replaying it —
+      // the same technique previousAnswers() uses, so a branch added to
+      // nextStep() is covered here without anyone remembering to add it.
+      const terminals: Record<string, string>[] = [];
+      const visit = (answers: Record<string, string>) => {
+        const step = nextStep(answers as never);
+        if (!step) { terminals.push(answers); return; }
+        for (const c of step.choices) visit({ ...answers, [step.param]: c.value });
+      };
+      visit({});
+      expect(terminals.length, key + " finder tree has no terminal path").toBeGreaterThan(0);
+
+      const dangling: string[] = [];
+      for (const t of terminals) {
+        const res = recommend(t as never);
+        expect(res.slugs.length, key + " recommends nothing for " + JSON.stringify(t))
+          .toBeGreaterThan(0);
+        for (const s of res.slugs) if (!slugs.has(s)) dangling.push(JSON.stringify(t) + " -> " + s);
+        // The walk must accept the whole path, or the terminal is unreachable
+        // from a URL and the enumeration above is measuring a tree the router
+        // cannot serve.
+        expect(walk(t as never).order.length, "unreachable terminal " + JSON.stringify(t))
+          .toBe(Object.keys(t).length);
+      }
+      expect(dangling, key + " finder recommends models it does not sell: " + dangling.join(", "))
+        .toEqual([]);
+    });
+  }
+});
