@@ -2059,6 +2059,38 @@ export const STUDIO_PAGE_CSS = `
    * with its own first sentence continuing at the top of the right one. The
    * reading order was unrecoverable. */
   @media (min-width: 1400px) {
+    /* ⚠️ THE TYPE GROWS WITH THE COLUMN, AND THAT IS THE WHOLE FIX.
+     *
+     * Widening the measure alone was reported as not enough three times, and
+     * the reports were right: --t-body is a fixed 16px while every measure is
+     * in rem, so a wider column could only ever mean LONGER LINES. 46rem at
+     * 16px is 736px and ~85 characters; pushing to 52 or 56rem buys width by
+     * spending readability, which is why each step felt like the same
+     * compromise again.
+     *
+     * Scaling both together spends nothing. At 20px the same ~85-89
+     * characters occupy 960px:
+     *
+     *          prose   characters   gap to the table's right edge
+     *   16/46   736          ~85                             491
+     *   19/56   896          ~87                             331
+     *   20/60   960          ~89                             267
+     *
+     * So a 1920 screen gets bigger type AND a fuller page, which is what a
+     * large screen should get anyway — the page stops being a phone layout
+     * stretched sideways.
+     *
+     * ⚠️ SCOPED TO .st-page, not :root. The document pages are what was
+     * reported; the home page, the product pages and the card grids have
+     * their own compositions and fixed-width components, and a global body
+     * bump would have to be re-verified against every one of them. That is a
+     * separate change with its own screenshots.
+     *
+     * Headings keep their own tokens, so the hierarchy tightens slightly
+     * rather than scaling: --t-h5 is 32px against a 20px body, still 1.6x. */
+    :root[data-theme="studio"] .st-page {
+      --t-body: 20px;
+    }
     :root[data-theme="studio"] .st-page-block:not(.st-page-block--wide),
     :root[data-theme="studio"] .st-page-p,
     :root[data-theme="studio"] .st-page-a,
@@ -2070,10 +2102,12 @@ export const STUDIO_PAGE_CSS = `
      * sit visibly narrower than the prose above them. */
     :root[data-theme="studio"] .st-page-cta-h,
     :root[data-theme="studio"] .st-page-cta-p,
-    /* The enquiry lead is a SENTENCE, so it takes the sentence measure — not
-     * the form's. See below for why those two now differ. */
+    /* The enquiry lead lands on 60rem too, which is the same number the form
+     * below takes — so the heading, the lead-in and the form share one right
+     * edge, which is exactly what the 44rem cap was protecting and could only
+     * achieve by pinning all three narrow. Scaling the type got it for free. */
     :root[data-theme="studio"] .st-enq-lead {
-      max-inline-size: 46rem;
+      max-inline-size: 60rem;
     }
     /* THE FORM ITSELF GOES WIDER THAN ITS OWN LEAD, which the 44rem cap
      * deliberately did not allow.
@@ -2088,10 +2122,9 @@ export const STUDIO_PAGE_CSS = `
      *
      * 60rem and not the full 1227px track: the rows are two-up, and a field
      * for a person's name 590px wide reads as a mistake even when it is not.
-     * At 60rem each field is about 460px. The lead keeps the sentence measure
-     * above it — two right edges, both explicable, which is the trade the
-     * original note was right to care about and wrong to resolve by pinning
-     * the form. */
+     * At 60rem each field is about 460px, and the lead above it lands on the
+     * same 60rem — so the one right edge the original note wanted is back,
+     * without pinning anything narrow to get it. */
     :root[data-theme="studio"] .st-page-block--wide:has(> .st-enq) {
       max-inline-size: 60rem;
     }
