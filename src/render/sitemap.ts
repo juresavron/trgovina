@@ -31,7 +31,22 @@ import { PAGES } from "../content/pages";
  * excluded by the same flag the robots meta reads — the two can never
  * disagree about what a crawler is invited to.
  */
-export function sitemapPaths(shop: ShopConfig, content: ShopContent): string[] {
+export function sitemapPaths(
+  shop: ShopConfig,
+  content: ShopContent,
+  /**
+   * Whether the blog has anything published.
+   *
+   * ⚠️ EXPLICIT AND NOT OPTIONAL, because the two callers know different
+   * things and a default would silently give one of them the other's answer.
+   * blog/routes.ts is the only caller that can see the post list, and it
+   * reaches its sitemap branch ONLY when that list is non-empty — it returns
+   * null otherwise, which is precisely how the storefront's fallback below
+   * comes to be served. So `false` here is not a guess: it is the state that
+   * routed the request to this function in the first place.
+   */
+  blogHasPosts: boolean,
+): string[] {
   return [
     "/",
     // The shop hub and every collection. These are the pages built to rank —
@@ -40,11 +55,15 @@ export function sitemapPaths(shop: ShopConfig, content: ShopContent): string[] {
     ...((content.collections ?? []).length > 0 ? [shop.routeSlugs["/products"]] : []),
     ...(content.collections ?? []).map((c) => c.path),
     ...(content.pdps ?? [content.pdp]).map((d) => shop.routeSlugs["/product"] + "/" + d.slug),
-    // The blog index, unconditionally. The async layer replaces this sitemap
-    // with one that also lists the posts — but that branch returns null when
-    // the database is unreachable or before the first post exists, and the
-    // index is an indexable page linked from every footer in either state.
-    shop.routeSlugs["/blog"],
+    // ⚠️ THE BLOG INDEX ONLY ONCE SOMETHING IS PUBLISHED, and it used to be
+    // listed unconditionally with the note that it "is an indexable page
+    // linked from every footer in either state". The first half of that
+    // stopped being true: blog/routes.ts marks an empty index noindex, so
+    // listing it here would advertise a URL whose own robots meta refuses it
+    // — the one inconsistency Search Console reports by name. The second half
+    // was never a reason: a footer link is how a visitor reaches it, not how
+    // a crawler is told to file it.
+    ...(blogHasPosts ? [shop.routeSlugs["/blog"]] : []),
     // The guided choice — stable, indexable entry content; the answered
     // permutations all canonicalize back to this URL.
     shop.routeSlugs["/finder"],

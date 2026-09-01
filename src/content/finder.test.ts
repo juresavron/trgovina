@@ -84,8 +84,13 @@ describe("the finder route", () => {
   it("is in the sitemap exactly once", async () => {
     const { sitemapPaths } = await import("../render/sitemap");
     const { SHOPS } = await import("../tenants");
-    const paths = sitemapPaths(SHOPS["bazen"]!, CONTENT["bazen"]!);
-    expect(paths.filter((p) => p === "/izbira").length).toBe(1);
+    // The blog flag does not touch /izbira, and both states are asserted so
+    // this test cannot start passing for the wrong reason if the guided
+    // choice is ever made conditional on something else.
+    for (const hasPosts of [false, true]) {
+      const paths = sitemapPaths(SHOPS["bazen"]!, CONTENT["bazen"]!, hasPosts);
+      expect(paths.filter((p) => p === "/izbira").length).toBe(1);
+    }
   });
 });
 

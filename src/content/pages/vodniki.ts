@@ -45,6 +45,21 @@ export const GUIDES: Page = {
           "pripraviti električar. Drugi pove, koliko stane nakup in kaj se " +
           "obračuna posebej. Tretji odgovarja na vprašanje, ki pride za tem — " +
           "kako je z bazenom pozimi.",
+        // ⚠️ THE INDEX NAMES WHAT ITS CHILDREN ACTUALLY CARRY, and until the
+        // guides were deepened it had nothing concrete to name. Three titles
+        // and an ordering do not help a reader choose; three FIGURES do, and
+        // each of these is the thing its guide was rewritten around. None of
+        // it is a guide's opening sentence reworded — the note below rules
+        // that out and still does.
+        "Kaj v njih dobite, konkretno. Prvi vodnik pove, koliko kilogramov na " +
+          "kvadratni meter pomeni poln bazen — številka, ki jo lahko pokažete " +
+          "izvajalcu terase ali statiku — in katere tri mere na poti do mesta " +
+          "postavitve nam povejte, da dostava ne bo improvizacija. Drugi pokaže, " +
+          "kaj loči tri masažne bazene po ceni: med prvima dvema je razlika " +
+          "predvsem večja školjka, med drugim in tretjim pa druga masažna črpalka " +
+          "in trinajst šob več. Tretji izračuna, zakaj izklop pozimi ni prihranek — " +
+          "koliko kilovatnih ur potrebuje 1.800 litrov za trideset stopinj in " +
+          "koliko ur to pomeni pri 3-kilovatnem grelcu.",
         "Številke v vseh treh so iz specifikacij modelov, ne iz ocen; kjer " +
           "odgovora nimamo, to piše. Kar se ne da odgovoriti na daljavo — ali " +
           "podlaga zdrži in ali model pride do mesta postavitve — pogledamo na " +
@@ -59,18 +74,26 @@ export const GUIDES: Page = {
     // nowhere else: a reader choosing between three titles was being asked to
     // guess.
     //
-    // ⚠️ AND audit-seo.mjs WILL GO ON CALLING THIS PAGE THIN, WHATEVER IS
-    // WRITTEN HERE. It counts the words in <main> with <nav> stripped out —
-    // deliberately, so that shared chrome cannot make a thin page look
-    // substantial — and a links block IS a <nav>, because it is navigation.
-    // So every word below is invisible to that count by design, and the
-    // number it reports (40) is the lead paragraph alone.
+    // ⚠️ THE NOTE THAT STOOD HERE BLAMED THE PAGE FOR A BUG IN THE SCRIPT.
+    // It said audit-seo.mjs "will go on calling this page thin, whatever is
+    // written here", because the count strips <nav> and a links block IS a
+    // <nav> — so "every word below is invisible to that count by design" and
+    // the reported number was the lead alone.
     //
-    // That is the right outcome twice over: the block is correctly marked up,
-    // and /vodniki is not a page that needs to rank. It exists to give the
-    // nav's "VODNIKI" a destination and to hand three guides their internal
-    // links. Padding an index to three hundred words to satisfy a threshold
-    // would make it worse for the only person who opens it.
+    // The premise was right and the conclusion was not. Stripping <nav> is
+    // there so shared chrome cannot inflate a thin page, and taking <main>
+    // already achieves that: the header and footer are outside it. What the
+    // extra strip removed was this block, which a reader reads. The script
+    // now removes only .st-page-toc, the section index that restates the
+    // page's own headings, and this page measures 224 words rather than 132
+    // — the same page, counted honestly.
+    //
+    // The rest of the old note still holds: /vodniki exists to give the nav's
+    // "VODNIKI" a destination and to hand three guides their internal links,
+    // and padding an index to clear a threshold would make it worse for the
+    // one person who opens it. The paragraph added above is not padding — it
+    // names the three figures the guides were rewritten around, which is the
+    // one thing a reader choosing between three titles cannot see.
     {
       kind: "links",
       h: "Vsi vodniki",
