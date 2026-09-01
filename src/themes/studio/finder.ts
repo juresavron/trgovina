@@ -116,11 +116,45 @@ export const STUDIO_FINDER_CSS = `
    *
    * A BORDER, NOT A RING. commerce.ts has the note: forced-colours mode drops
    * box-shadow, so a card drawn with one has no edge there at all. */
-  /* The skip list stays a narrow, quiet column — it is the escape hatch, and
-   * the cards above it are the offer. The RESULT cards do not: see
-   * .st-fnd-hit, where the band is used by the card's own layout. */
+  /* ⚠️ THE SKIP LIST IS STRUCTURE, AND IT WAS CAPPED AT A SENTENCE'S WIDTH.
+   *
+   * The note that stood here argued the cap: the list is the escape hatch and
+   * the cards above it are the offer, so it stays a narrow, quiet column.
+   * Quiet is right and 38rem is the wrong instrument for it — quiet is what
+   * the type rung and the hairline are already doing. What the cap actually
+   * did was hold the one list of everything the shop sells to 608px, which on
+   * a 2560px screen is 24% of the band it sits in, under an answer grid that
+   * spans the whole of it.
+   *
+   * Columns rather than an uncapped row, because finder.ts's own note above
+   * records what the full band did to the ANSWER rows before they became
+   * cards: a title on the left with its arrow a thousand pixels away, reading
+   * as page furniture rather than as that row's affordance. Two columns keep
+   * the rows short AND use the band.
+   *
+   * The breakpoint is arithmetic, not the wide tier's: a row needs about
+   * 460px for "SWIM 580 HIDRO / 5,80 x 2,28 m - 38 sob" plus its arrow
+   * without wrapping, so two of them plus the gutter want ~1000px of band —
+   * which is a 1100px viewport. Below that the list is one column, which is
+   * what it has always been. The third column arrives with the top rung and
+   * is in wide.ts with the rest of that tier.
+   *
+   * The hairlines need no change: the top rule is on the ul so it spans the
+   * first row, and each li's bottom rule draws under its own cell, which is
+   * the top edge of the cell below it. Nothing doubles.
+   *
+   * The RESULT cards were never capped and still are not: see .st-fnd-hit,
+   * where the band is used by the card's own layout. */
   :root[data-theme="studio"] .st-fnd-list {
     max-inline-size: 38rem;
+  }
+  @media (min-width: 1100px) {
+    :root[data-theme="studio"] .st-fnd-list {
+      max-inline-size: none;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: clamp(32px, 3vw, 72px);
+    }
   }
   :root[data-theme="studio"] .st-fnd-opts {
     list-style: none;

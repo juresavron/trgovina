@@ -29,6 +29,7 @@ import { STUDIO_PAGE_CSS } from "./page";
 import { STUDIO_BLOG_CSS } from "./blog";
 import { STUDIO_JS } from "./behaviour";
 import { STUDIO_FINDER_CSS } from "./finder";
+import { STUDIO_WIDE_CSS } from "./wide";
 import { STUDIO_FONT_FACE_CSS } from "./fonts";
 import {
   STUDIO_CLOSING_CSS,
@@ -65,7 +66,12 @@ export const STUDIO_CSS =
   // its body, and only adds to it.
   STUDIO_BLOG_CSS +
   STUDIO_CLOSING_CSS +
-  STUDIO_EFFECTS_CSS;
+  STUDIO_EFFECTS_CSS +
+  // ⚠️ LAST, AND THE FILE SAYS WHY AT LENGTH. Every wide-screen width lives
+  // in wide.ts, and a media query adds no specificity — so the only thing
+  // that can make these rules reliably win is being the last declaration in
+  // the sheet. Nothing may be appended after it.
+  STUDIO_WIDE_CSS;
 
 export { renderStudioHeader, renderStudioFooter, renderStudioPdp, STUDIO_JS };
 
