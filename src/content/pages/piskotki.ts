@@ -83,7 +83,12 @@ export const COOKIES: Page = {
       h: "Kaj pa osebni podatki?",
       p: "Kdo je upravljavec, kaj obdelujemo, na kateri podlagi in kakšne pravice imate.",
       label: "Zasebnost",
-      href: "/zasebnost",
+      // ⚠️ AN INTERNAL ROUTE KEY, NOT A SLUG. This page is one of the six any
+      // shop can publish unchanged, and it used to link to this shop's
+      // Slovenian URL — which is a dead link on any shop that spells it
+      // differently. render/sections.ts resolveHref() turns the key into
+      // whatever the serving shop calls the page.
+      href: "/privacy",
     },
   ],
 };

@@ -165,7 +165,12 @@ export const PRIVACY: Page = {
       h: "Piškotkov ni",
       p: "Ta stran ne nalaga piškotkov in ne meri obiska. Kaj to pomeni in kaj se vseeno zabeleži.",
       label: "Piškotki",
-      href: "/piskotki",
+      // ⚠️ AN INTERNAL ROUTE KEY, NOT A SLUG. This page is one of the six any
+      // shop can publish unchanged, and it used to link to this shop's
+      // Slovenian URL — which is a dead link on any shop that spells it
+      // differently. render/sections.ts resolveHref() turns the key into
+      // whatever the serving shop calls the page.
+      href: "/cookies",
     },
   ],
 };

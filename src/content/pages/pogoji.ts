@@ -160,7 +160,12 @@ export const TERMS: Page = {
       h: "Vračilo v 14 dneh",
       p: "Rok, postopek, vračilo plačila in obrazec za odstop od pogodbe.",
       label: "Odstop od pogodbe",
-      href: "/odstop-od-pogodbe",
+      // ⚠️ AN INTERNAL ROUTE KEY, NOT A SLUG. This page is one of the six any
+      // shop can publish unchanged, and it used to link to this shop's
+      // Slovenian URL — which is a dead link on any shop that spells it
+      // differently. render/sections.ts resolveHref() turns the key into
+      // whatever the serving shop calls the page.
+      href: "/withdrawal",
     },
   ],
 };
