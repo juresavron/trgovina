@@ -46,6 +46,25 @@ export function filterAreaText(sf: number): string {
  * one screen under editorial copy that wrote "1.500 kilogramov" - two
  * spellings of one number on one page.
  */
+/**
+ * The water a shell holds, in litres, as the difference between its filled and
+ * dry masses.
+ *
+ * ⚠️ IT IS ARITHMETIC THIS SITE ALREADY PUBLISHES, not a new claim. /primerjava
+ * states it outright — "Razlika med prazno in napolnjeno težo je voda… od
+ * 1.200 do 1.800 litrov" — and the figures check: 1.500 − 300 = 1.200 and
+ * 2.210 − 410 = 1.800, the exact range that page prints. One litre of water is
+ * one kilogram, so the subtraction is the conversion.
+ *
+ * Rounded to the nearest ten, because both inputs are supplier figures given
+ * to the nearest ten and a litre count ending in 7 would claim a precision
+ * neither of them has.
+ */
+export function litresText(dryKg: number, filledKg: number): string {
+  const l = Math.round((filledKg - dryKg) / 10) * 10;
+  return String(l).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "\u00a0litrov";
+}
+
 export function kgText(n: number): string {
   return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ".") + "\u00a0kg";
 }
