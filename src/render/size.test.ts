@@ -162,10 +162,27 @@ describe("the stylesheet stays within budget", () => {
    * matters moved 19.0 -> 19.29 of 20 KB brotli, so there is about 0.7 KB of
    * wire left and the rail is worth 0.45 of it. The third raise should not be
    * a raise.
+   *
+   * ⚠️ 176 -> 179, AND IT IS THE RAISE THE LINE ABOVE SAID NOT TO MAKE. What
+   * bought it: themes/studio/wide.ts, the wide tier — the site was frozen at
+   * 1640px on every display bigger than that, 85% of a 1920 screen and 64% of
+   * a 2560 one, and it was reported five times. Two thirds of the module is
+   * one selector list per rung; the module also ABSORBED the block that used
+   * to sit at the end of page.ts, so the growth is smaller than the file.
+   *
+   * It was trimmed before the number moved — five media blocks merged into
+   * three, a duplicate .st-fnd-note selector dropped, and a .st-page-qa
+   * column rule removed once measuring showed it made the FAQ narrower rather
+   * than wider (the reasoning is in wide.ts, kept because it looked right).
+   *
+   * The wire went 19.29 -> 19.62 of 20 KB brotli. THAT LEAVES 0.38 KB, which
+   * is less than the rail is worth, so the next feature of any size has a
+   * decision to make rather than a budget to spend. The raw number here is
+   * still not the one that will stop you.
    */
   it("has not grown without anyone noticing", () => {
     const kb = BASE_CSS.length / 1024;
-    expect(kb, "the raw sheet is " + kb.toFixed(1) + " KB").toBeLessThan(176);
+    expect(kb, "the raw sheet is " + kb.toFixed(1) + " KB").toBeLessThan(179);
   });
 
   it("still emits the rules that matter after minification", async () => {

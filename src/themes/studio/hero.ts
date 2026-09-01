@@ -706,14 +706,28 @@ export const STUDIO_HERO_CSS = `
      * is the defect this pass started from. At 1440 it fills 94% and looks
      * correct, which is why it survived: the fault only exists above ~1900px.
      *
-     * Now the content is capped at --studio-container (1560px), so the
-     * ceiling has to be the largest size at which the LONGEST shop name still
-     * sets on one line inside 1560. Measured: this name runs 1783px at 144px,
-     * so it needs 126px or less; 7.5rem (120px) gives 1486px, which is the
-     * same 95% of its container that the vw term produces at 1440. A longer
-     * name than this shop's wraps instead of overflowing — overflow-wrap
-     * below is the belt, and the band is min-height so a second line fits. */
-    font-size: clamp(2.5rem, 7.6vw, 7.5rem);
+     * Now the content is capped at --studio-container, so the ceiling has to
+     * be the largest size at which the LONGEST shop name still sets on one
+     * line inside it. Measured: this name runs 1783px at 144px — 12.38px of
+     * width per px of type — so filling 95% of the container needs
+     * C x 0.95 / 12.38, which is C / 13.03. A longer name than this shop's
+     * wraps instead of overflowing; overflow-wrap below is the belt, and the
+     * band is min-height so a second line fits.
+     *
+     * ⚠️ DERIVED FROM THE CONTAINER, NOT A CONSTANT, AND THAT IS THE SECOND
+     * TIME. It was 9rem, sized against a viewport, and froze while the band
+     * kept widening; then it was 7.5rem (120px), sized against a container
+     * that was itself a constant 1560px — and the moment tokens.ts's wide
+     * tier let the container follow the screen, 120px was the old bug back
+     * again: 1486px of name in a 2320px band at 2560, a 64% fill with an
+     * 834px hole down the right, which is verbatim what the note above this
+     * one was written to fix.
+     *
+     * C / 13.03 reproduces today's value exactly wherever the container is
+     * 1560 (119.7px against 120), so nothing steps at the seam and the ratio
+     * cannot drift out of date again. Re-measure the 12.38 if the display
+     * face changes. */
+    font-size: clamp(2.5rem, 7.6vw, calc(var(--studio-container) / 13.03));
     letter-spacing: var(--ls-h1);
     line-height: var(--lh-h1);
     text-transform: uppercase;

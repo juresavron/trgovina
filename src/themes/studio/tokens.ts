@@ -266,6 +266,19 @@ export const STUDIO_TOKENS = `
      * where the empty space actually was. pdp.ts's header comment has claimed
      * 1560 for some time and was wrong about the token; it is right now. */
     --studio-container: 1560px;
+    /** THE READING MEASURE, DECLARED HERE SO IT IS NEVER UNDECLARED.
+     *
+     * themes/studio/wide.ts raises this on the prose roots at each wide rung
+     * and every capped element reads it. The base value belongs here rather
+     * than only there, and the reason is a silent failure rather than tidiness:
+     * max-inline-size: var(--nothing) is invalid at computed-value time, and
+     * for a non-inherited property that resolves to the INITIAL value, which
+     * for max-inline-size is "none". So a capped element rendered outside a
+     * root that declares it would not fall back to its old width — it would go
+     * full-bleed, on a wide screen, with nothing in the stylesheet to explain
+     * it. Declared at the theme root, the worst case is 38rem: the measure
+     * every one of those elements was written against. */
+    --wide-measure: 38rem;
     /** Text measures the source uses inside that container. */
     --studio-read: 863px;
     --studio-read-narrow: 620px;
@@ -325,6 +338,58 @@ export const STUDIO_TOKENS = `
     --ls-label: 0.06em;
 
     --shadow: 0 24px 60px rgba(21, 21, 21, 0.12);
+  }
+
+  /* ---- Wide tier: ≥1640px — THE PAGE STOPS AT 1640 AND THE SCREEN DOES NOT
+   *
+   * ⚠️ THIS IS THE FIFTH ROUND OF "the site does not use the screen", and the
+   * four before it all worked one layer too far in. They widened the reading
+   * measure inside the band, then the type with it, then the blocks that hold
+   * the tables — while the BAND ITSELF was a constant. --studio-container was
+   * 1560px, so above a 1640px viewport every page on this site froze at 1640
+   * and everything past that was margin:
+   *
+   *     1920 →  1640 / 1920 = 85%   (140px of white each side)
+   *     2560 →  1640 / 2560 = 64%   (460px of white each side)
+   *
+   * Measured on /izbira at 2560 the questionnaire's own band was 61% of the
+   * display and the answers inside it 30%. No measure inside the band can fix
+   * that, which is why four rounds of measure work did not.
+   *
+   * So the container follows the viewport above the width where it used to
+   * stop, and the gutter grows with it so the page still has edges. The
+   * arithmetic is continuous at the seam BY CONSTRUCTION — at exactly 1640px
+   * the clamp's floor is the 40px gutter the desktop tier already sets and
+   * min() picks 1640 - 80 = 1560px, which is the old constant to the pixel.
+   * Resize across the breakpoint and nothing steps.
+   *
+   *     1920 →  gutter 110, content 1700 (89%)
+   *     2560 →  gutter 120, content 2320 (91%)
+   *     2880 →  gutter 120, content 2400 (83%, the ceiling binds)
+   *
+   * ⚠️ THE CEILING IS THE POINT, NOT AN OVERSIGHT. Without min() a 3440px
+   * ultrawide would set a 3200px band, and the three-across product grid would
+   * draw 1050px cards of a 480px photograph. 2400px is where this layout's
+   * widest compositions — .st-grid's product cards and the footer's five
+   * tracks — still have honest proportions. Past it the band centres, which
+   * is what the margin-inline:auto in layout.ts has always done.
+   *
+   * ⚠️ 100vw INCLUDES THE CLASSIC SCROLLBAR in this engine, so on a desktop
+   * that draws one, --studio-container over-reads by ~15px. That cannot
+   * overflow: layout.ts sets inline-size:100% beside the cap, and 100% is the
+   * real content box. It costs at most half a scrollbar of gutter asymmetry,
+   * and the alternative — 100% in a token, which resolves against :root — is
+   * simply wrong.
+   *
+   * Everything downstream keeps working because it is all expressed in these
+   * two tokens: layout.ts's one container arithmetic, the .st-rail bleed's
+   * max((100% - container)/2), hero.ts's own cap. That is what having one
+   * declaration site buys. */
+  @media (min-width: 1640px) {
+    :root[data-theme="studio"] {
+      --studio-gutter: clamp(40px, calc(40px + (100vw - 1640px) / 4), 120px);
+      --studio-container: min(2400px, calc(100vw - 2 * var(--studio-gutter)));
+    }
   }
 
   /* ---- Tablet tier: 810–1199px ------------------------------------------ */
