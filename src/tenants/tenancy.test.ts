@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { SHOPS, isValidRouteSlug, isValidStatementDescriptor } from "./index";
 import { handleRequest } from "../worker";
 import { CONTENT } from "../content";
+import { UNIVERSAL_PAGES } from "../content/pages";
 import type { InternalRouteKey } from "./types";
 
 /**
@@ -288,4 +289,99 @@ describe("every shop's own pages", () => {
       }
     });
   }
+});
+
+/**
+ * THE SIX PAGES THAT TRAVEL, CHECKED FOR THINGS THAT DO NOT.
+ *
+ * content/pages.ts separates the pages any shop can publish unchanged — the
+ * basket, the checkout and the four legal notices, all parameterised from
+ * ShopConfig — from the seven that are hot-tub copy. The split is only worth
+ * anything if the universal six really are portable, and when it was drawn
+ * they were not: all six cross-referenced each other by this shop's Slovenian
+ * slug.
+ *
+ *   /kosarica          -> "/pogoji-poslovanja", "/trgovina"
+ *   /pogoji-poslovanja -> "/odstop-od-pogodbe"
+ *   /zasebnost         -> "/piskotki"
+ *   /piskotki          -> "/zasebnost"
+ *   /odstop-od-pogodbe -> "/pogoji-poslovanja"
+ *
+ * Five dead links on any shop that spells those differently, in the pages
+ * where a dead cross-reference costs most: the withdrawal notice pointing at
+ * the terms and the privacy notice pointing at the cookie notice are
+ * references the law expects to resolve.
+ *
+ * They are internal route keys now, resolved per shop by resolveHref(). This
+ * is what stops the next one being written as a slug — the mistake is
+ * invisible on the shop the tests run against, because there the key and the
+ * slug resolve to the same page.
+ */
+describe("the pages every shop can publish", () => {
+  /** Slugs this shop uses, as a set — what a portable page must NOT contain. */
+  const slugs = new Set(Object.values(SHOPS[KEYS[0]!]!.routeSlugs));
+  const keys = new Set(Object.keys(SHOPS[KEYS[0]!]!.routeSlugs));
+
+  for (const page of UNIVERSAL_PAGES) {
+    it(page.key + ": links by route key rather than by this shop's URL", () => {
+      const hrefs: string[] = [];
+      for (const b of page.blocks) {
+        if (b.kind === "cta") hrefs.push(b.href);
+        if (b.kind === "links") for (const [, href] of b.items) hrefs.push(href);
+      }
+      const local = hrefs.filter((h) => !keys.has(h) && slugs.has(h));
+      expect(
+        local,
+        page.key + " hardcodes this shop's URLs: " + local.join(" ") +
+          " — use the internal route key (see resolveHref)",
+      ).toEqual([]);
+    });
+  }
+
+  it("does not let a shop ship without the four legal pages", () => {
+    // ⚠️ THE WITHDRAWAL NOTICE IS NO LONGER IN THE UNIVERSAL LIST, so nothing
+    // else puts it on a shop. It is not optional: a distance seller in the EU
+    // must give the withdrawal information (Directive 2011/83 Art. 6(1)(h)),
+    // the privacy notice is GDPR Art. 13, and the terms and the cookie notice
+    // are the other two the site publishes.
+    //
+    // Checked on the SHOP'S OWN LIST rather than on any registry, because that
+    // is the thing the router serves — a shop is free to assemble it from
+    // UNIVERSAL_PAGES, from its own modules, or from both, and this holds
+    // either way.
+    const required: InternalRouteKey[] = ["/terms", "/privacy", "/cookies", "/withdrawal"];
+    for (const key of KEYS) {
+      const have = new Set(CONTENT[key]!.pages.map((p) => p.key));
+      const missing = required.filter((r) => !have.has(r));
+      expect(missing, key + " publishes no " + missing.join(" ")).toEqual([]);
+    }
+  });
+
+  it("carries no page that is about what this shop sells", () => {
+    // ⚠️ THE OTHER HALF OF PORTABLE. A page can link correctly and still be
+    // unusable: the keyword is what makes /vodniki the bazen shop's page, not
+    // its hrefs. This is a coarse check on purpose — it looks for the shop's
+    // own head term in the text a universal page renders, which is exactly the
+    // signal that a hot-tub page has been filed under the wrong list.
+    const shop = SHOPS[KEYS[0]!]!;
+    const needle = shop.keyword.primary.toLowerCase();
+    const offenders: string[] = [];
+    for (const page of UNIVERSAL_PAGES) {
+      const text = [
+        page.h1,
+        page.lead ?? "",
+        ...page.blocks.flatMap((b) => {
+          if (b.kind === "prose") return b.p;
+          if (b.kind === "qa" || b.kind === "steps") return b.items.flat();
+          if (b.kind === "cta") return [b.h, b.p];
+          return [];
+        }),
+      ].join(" ").toLowerCase();
+      if (text.includes(needle)) offenders.push(page.key);
+    }
+    expect(
+      offenders,
+      "universal pages naming \"" + needle + "\": " + offenders.join(" "),
+    ).toEqual([]);
+  });
 });

@@ -20,7 +20,7 @@
  * instead of hiding it inside plausible-looking sentences.
  */
 
-import { esc, type RenderCtx } from "../../render/sections";
+import { esc, resolveHref, type RenderCtx } from "../../render/sections";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 import type { Block, Page } from "../../content/pages";
 import { decorativeImg, productImg, sitePhoto } from "./media";
@@ -2197,7 +2197,8 @@ function links(ctx: RenderCtx, b: Extract<Block, { kind: "links" }>, id?: string
         ([label, href, blurb]) =>
           // ctx.q, like cta() and onward(): the QA/theme override query
           // was dropped through every link of a links block.
-          '<li><a href="' + esc(href) + esc(ctx.q) + '">' + esc(label) + "</a>" +
+          '<li><a href="' + esc(resolveHref(ctx.shop, href)) + esc(ctx.q) + '">' +
+          esc(label) + "</a>" +
           (blurb ? '<span class="st-page-onward-d">' + esc(blurb) + "</span>" : "") +
           "</li>",
       )
@@ -3007,7 +3008,11 @@ function block(ctx: RenderCtx, b: Block, id?: string): string {
                   : '<div class="st-page-cta">' +
                   '<h2 class="st-page-cta-h">' + esc(b.h) + "</h2>" +
                   '<p class="st-page-cta-p">' + esc(b.p) + "</p>" +
-                  '<a class="st-page-cta-a" href="' + esc(b.href) + esc(ctx.q) + '">' +
+                  // resolveHref: a cta may name an internal route key rather
+                  // than a slug, which is how the legal pages cross-reference
+                  // each other without hardcoding one shop's Slovenian URLs.
+                  '<a class="st-page-cta-a" href="' + esc(resolveHref(ctx.shop, b.href)) +
+                  esc(ctx.q) + '">' +
                   esc(b.label) + "</a></div>";
   return (
     '<div class="st-page-block' + (isWide(b) ? " st-page-block--wide" : "") + '">' +

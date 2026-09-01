@@ -1,4 +1,4 @@
-import type { ShopConfig } from "../tenants/types";
+import type { InternalRouteKey, ShopConfig } from "../tenants/types";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
 import type { ShopContent, ArtKey, ProductCard, UtilCard, PdpContent } from "../content/types";
 import type { SectionKey } from "../themes/shared/sections";
@@ -498,4 +498,41 @@ export function renderFooter(ctx: RenderCtx): string {
     ) +
     "</div></div></footer>"
   );
+}
+
+/**
+ * A page's link target, resolved against the shop that is serving it.
+ *
+ * ⚠️ THE "UNIVERSAL" PAGES WERE NOT UNIVERSAL, AND THIS IS THE HALF THAT WAS
+ * LEFT. content/pages.ts now separates the six pages any shop can publish
+ * unchanged — the basket, the checkout and the four legal notices, all
+ * parameterised from ShopConfig — from the seven that are hot-tub copy. Except
+ * that all six of the universal ones CROSS-REFERENCE each other by literal
+ * Slovenian slug:
+ *
+ *   /kosarica          -> "/pogoji-poslovanja", "/trgovina"
+ *   /pogoji-poslovanja -> "/odstop-od-pogodbe"
+ *   /zasebnost         -> "/piskotki"
+ *   /piskotki          -> "/zasebnost"
+ *   /odstop-od-pogodbe -> "/pogoji-poslovanja"
+ *
+ * A shop that calls its terms /agb gets five dead links inside the pages where
+ * a dead cross-reference costs the most: the withdrawal notice pointing at the
+ * terms and the privacy notice pointing at the cookie notice are references
+ * the law expects to resolve, not decoration.
+ *
+ * ⚠️ THE KEY SPACE AND THE SLUG SPACE ARE THE SAME SHAPE, AND THAT IS WHY THIS
+ * NEEDS NO NEW TYPE. Both are "/word". So an href that IS a key in routeSlugs
+ * resolves through it, and anything else is used as written — which leaves
+ * /vodnik/masazni-bazen-pozimi, /bazen/mali-195 and every other real path
+ * untouched, because none of them is a key.
+ *
+ * The collision case is benign by construction: an English shop that really
+ * does call its terms page /terms has routeSlugs["/terms"] === "/terms", so
+ * resolution is the identity. A shop whose /products slug is something else
+ * gets its own — which is what a link written as "/products" meant.
+ */
+export function resolveHref(shop: ShopConfig, href: string): string {
+  const slug = shop.routeSlugs[href as InternalRouteKey];
+  return typeof slug === "string" && slug !== "" ? slug : href;
 }

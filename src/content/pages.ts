@@ -275,17 +275,20 @@ import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
 /**
  * The pages any shop on this Worker can publish unchanged.
  *
- * All six are parameterised from ShopConfig — the basket and the checkout are
- * mechanism, and the four legal pages state the seller, the controller and the
- * withdrawal right from the company fields rather than from the catalogue. A
- * sauna shop's terms are this shop's terms with a different company in them.
+ * All five are parameterised from ShopConfig — the basket and the checkout are
+ * mechanism, and the three legal notices state the seller and the controller
+ * from the company fields rather than from the catalogue. A sauna shop's terms
+ * are this shop's terms with a different company in them.
+ *
+ * The withdrawal notice is NOT among them, and the note on BAZEN_PAGES says
+ * why: it is the one legal page that makes a commitment about the goods.
  *
  * Exported so a new shop can spread them into its own ShopContent.pages
  * instead of copying thirteen imports and quietly picking up the seven that
  * are about hot tubs.
  */
 export const UNIVERSAL_PAGES: readonly Page[] = [
-  CART, CHECKOUT, TERMS, PRIVACY, COOKIES, WITHDRAWAL,
+  CART, CHECKOUT, TERMS, PRIVACY, COOKIES,
 ];
 
 /**
@@ -301,6 +304,22 @@ export const UNIVERSAL_PAGES: readonly Page[] = [
  */
 export const BAZEN_PAGES: readonly Page[] = [
   ABOUT, CONTACT, DELIVERY, GUIDES, FAQ, COMPARE, SHOWROOM,
+  // ⚠️ THE WITHDRAWAL NOTICE IS HERE AND NOT ABOVE, AND IT IS NOT AN OVERSIGHT.
+  //
+  // It is the one legal page that is not a template. Its second step promises
+  // "odvoz izvedemo mi" and justifies it with this shop's goods — "masažni
+  // bazen tehta od 300 do 410 kilogramov, swim spa več kot tono". Both halves
+  // are per-shop, and the first is a COMMITMENT: Art. 14(1) of Directive
+  // 2011/83 puts the cost of returning goods on the consumer unless the trader
+  // agreed to bear it, and the step above it drops the withholding right for
+  // the same reason (Art. 13(3)). A shop selling postable goods would not make
+  // either concession, and inheriting them by accident is agreeing to them.
+  //
+  // So a second shop writes its own — from the reasoning in ./odstop.ts, which
+  // is where the citations live. What it may NOT do is ship without one: see
+  // the launch gate in tenancy.test.ts, which requires all four legal keys in
+  // a shop's own page list however that shop assembles it.
+  WITHDRAWAL,
 ];
 
 /**

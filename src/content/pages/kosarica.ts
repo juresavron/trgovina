@@ -47,9 +47,20 @@ export const CART: Page = {
     {
       kind: "cta",
       h: "Poglejte ponudbo",
-      p: "Trije masažni bazeni in trije swim spa bazeni: mere, specifikacije in cene.",
+      // ⚠️ NO CATALOGUE IN A PAGE THAT TRAVELS. This read "Trije masažni
+      // bazeni in trije swim spa bazeni" — a product name AND a census, in
+      // one of the six pages any shop on this Worker can publish unchanged.
+      // On a second shop it would have been wrong twice over, and the count
+      // is wrong here the day a seventh model is added. The hub it links to
+      // states both, in the one place that can keep them true.
+      p: "Vsi modeli: mere, specifikacije in cene.",
       label: "V trgovino",
-      href: "/trgovina",
+      // ⚠️ AN INTERNAL ROUTE KEY, NOT A SLUG. This page is one of the six any
+      // shop can publish unchanged, and it used to link to this shop's
+      // Slovenian URL — which is a dead link on any shop that spells it
+      // differently. render/sections.ts resolveHref() turns the key into
+      // whatever the serving shop calls the page.
+      href: "/products",
     },
   ],
 };
@@ -96,7 +107,7 @@ export const CHECKOUT: Page = {
       h: "Celotni pogoji",
       p: "Kako nastane pogodba, kaj cena vključuje in vaše pravice pri odstopu.",
       label: "Pogoji poslovanja",
-      href: "/pogoji-poslovanja",
+      href: "/terms",
     },
   ],
 };
