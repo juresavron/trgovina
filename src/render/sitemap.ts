@@ -9,10 +9,8 @@
  * nine on another.
  */
 
-import { GUIDE_PAGES } from "../content/pages/vodnik";
 import type { ShopConfig } from "../tenants/types";
 import type { ShopContent } from "../content/types";
-import { PAGES } from "../content/pages";
 
 /**
  * Every URL path this shop wants crawled, in the order it wants them read.
@@ -26,10 +24,15 @@ import { PAGES } from "../content/pages";
  * collections and the models, and stopped — /vodniki, /dostava-in-montaza,
  * /o-nas, the FAQ, every page written to answer a query a model page cannot,
  * all left to be found by crawl on a domain with no inbound links yet.
- * Deriving from PAGES means a page added to the registry is in the sitemap
- * the same day, and a page flagged noindex (the basket, the checkout) is
- * excluded by the same flag the robots meta reads — the two can never
- * disagree about what a crawler is invited to.
+ * Deriving from the registry means a page added to it is in the sitemap the
+ * same day, and a page flagged noindex (the basket, the checkout) is excluded
+ * by the same flag the robots meta reads — the two can never disagree about
+ * what a crawler is invited to.
+ *
+ * ⚠️ AND THE REGISTRY IS THE SHOP'S, NOT THE MODULE'S. This imported PAGES and
+ * GUIDE_PAGES from content/pages — the bazen shop's — so a second shop's
+ * sitemap would have advertised the first shop's guides under its own domain.
+ * They come off ShopContent now; see the note there.
  */
 export function sitemapPaths(
   shop: ShopConfig,
@@ -70,8 +73,8 @@ export function sitemapPaths(
     // ⚠️ THE GUIDES, ONE URL EACH. They were three sections of /vodniki and
     // therefore one sitemap entry; docs/SEO.md §1 calls this ladder the
     // topical-authority mechanism, and a mechanism with one URL is a page.
-    ...GUIDE_PAGES.map((g) => shop.routeSlugs["/guide"] + "/" + g.slug),
-    ...PAGES.filter((p) => !p.noindex)
+    ...content.guidePages.map((g) => shop.routeSlugs["/guide"] + "/" + g.slug),
+    ...content.pages.filter((p) => !p.noindex)
       .map((p) => shop.routeSlugs[p.key as keyof typeof shop.routeSlugs])
       .filter((slug): slug is string => typeof slug === "string" && slug !== ""),
   ];
