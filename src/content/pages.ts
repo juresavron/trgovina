@@ -272,10 +272,49 @@ import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
  * by `key` against the shop's own route slugs, so the Slovenian URLs stay in
  * tenants/bazen.ts where the rest of the routing lives.
  */
-export const PAGES: readonly Page[] = [
-  ABOUT, CONTACT, DELIVERY, GUIDES, FAQ, COMPARE, SHOWROOM,
+/**
+ * The pages any shop on this Worker can publish unchanged.
+ *
+ * All six are parameterised from ShopConfig — the basket and the checkout are
+ * mechanism, and the four legal pages state the seller, the controller and the
+ * withdrawal right from the company fields rather than from the catalogue. A
+ * sauna shop's terms are this shop's terms with a different company in them.
+ *
+ * Exported so a new shop can spread them into its own ShopContent.pages
+ * instead of copying thirteen imports and quietly picking up the seven that
+ * are about hot tubs.
+ */
+export const UNIVERSAL_PAGES: readonly Page[] = [
   CART, CHECKOUT, TERMS, PRIVACY, COOKIES, WITHDRAWAL,
 ];
+
+/**
+ * The seven that are NOT universal, and are the bazen shop's.
+ *
+ * ⚠️ THEY LOOK SHARED AND ARE NOT. Every one is hot-tub copy: /vodniki
+ * indexes three guides about masažni bazeni, /primerjava compares two families
+ * this shop happens to sell, the FAQ opens with "Je masažni bazen isto kot
+ * jacuzzi?", /dostava-in-montaza describes carrying a shell through a garden
+ * gate. They live under ./pages/ beside the universal six because that is
+ * where the router's page vocabulary lives, not because a second shop can use
+ * them.
+ */
+export const BAZEN_PAGES: readonly Page[] = [
+  ABOUT, CONTACT, DELIVERY, GUIDES, FAQ, COMPARE, SHOWROOM,
+];
+
+/**
+ * ⚠️ PAGES IS NO LONGER WHAT THE ROUTER READS.
+ *
+ * It used to be: worker.ts looped over this array and render/sitemap.ts listed
+ * it, so the registry WAS the site's page set for every shop on the Worker.
+ * That is the defect ShopContent.pages exists to fix — see the note there.
+ *
+ * It survives as the bazen shop's own list, which is what it always contained,
+ * and as the thing legalPagesReady() and the legal-page tests iterate. Nothing
+ * new should read it: a shop's pages come from that shop's content.
+ */
+export const PAGES: readonly Page[] = [...BAZEN_PAGES, ...UNIVERSAL_PAGES];
 
 /**
  * Whether the pages that state rights and obligations may be published.

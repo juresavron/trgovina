@@ -1,3 +1,5 @@
+import type { GuidePage, Page } from "./pages";
+
 /**
  * Shop storefront content — everything the SSR renderer needs beyond
  * ShopConfig. Per shop, hand-written Slovenian; NEVER templated across
@@ -580,6 +582,40 @@ export interface ShopContent {
    * heading and would silently drift the day someone rewords it.
    */
   guides: [string, string, string][];
+  /**
+   * THE EDITORIAL AND LEGAL PAGES THIS SHOP PUBLISHES.
+   *
+   * ⚠️ THIS WAS A GLOBAL IMPORT, AND IT IS THE REASON A SECOND SHOP COULD NOT
+   * SHIP. worker.ts looped over a module-level PAGES registry and render/
+   * sitemap.ts listed the same one, so every domain on this Worker served the
+   * bazen shop's pages: a sauna shop would have published "Vodniki za nakup
+   * masažnega bazena" at /vodniki, a comparison of swim spas at /primerjava,
+   * and an FAQ answering "Je masažni bazen isto kot jacuzzi?" — each at 200,
+   * each in the sitemap, each written about a product it does not sell.
+   *
+   * Nothing could have caught that. tsc saw a valid array, the router matched
+   * on route slugs the new shop had to declare anyway, and every audit in this
+   * repo runs against `bazen`.
+   *
+   * ⚠️ REQUIRED, NOT OPTIONAL, AND THAT IS THE WHOLE POINT. An optional field
+   * with a fallback to the bazen set would reproduce the bug for exactly the
+   * shop most likely to hit it — the one added in a hurry. Required means the
+   * compiler asks the question, and a compile error beats a test.
+   *
+   * The pages themselves still live in ./pages/, and the six that are genuinely
+   * universal (basket, checkout, terms, privacy, cookies, withdrawal — all
+   * parameterised from ShopConfig) are exported as UNIVERSAL_PAGES for a new
+   * shop to spread into its own list. The other seven are hot-tub copy and are
+   * this shop's.
+   */
+  pages: readonly Page[];
+  /**
+   * The buying guides at /vodnik/<slug>, for the same reason and with the same
+   * history: worker.ts imported GUIDE_PAGES straight from the bazen shop's
+   * module, so the three most commercial long-tail URLs on any second shop's
+   * domain would have been about somebody else's product.
+   */
+  guidePages: readonly GuidePage[];
   /** The flagship: the model the home page leads with. */
   pdp: PdpContent;
   /**

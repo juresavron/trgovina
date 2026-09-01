@@ -23,6 +23,8 @@ import type { PolaModel } from "../catalog/pola";
 import { jetsText } from "../catalog/count";
 import { catalogPricingReady } from "../catalog/pricing";
 import { filterAreaText, kgText, litresText } from "../catalog/count";
+import { PAGES } from "./pages";
+import { GUIDE_PAGES } from "./pages/vodnik";
 import {
   CABINET_FINISHES,
   OFFERED_MODELS,
@@ -1507,6 +1509,15 @@ export const bazenContent: ShopContent = {
       ],
     },
   ],
+  // Every editorial and legal page this shop serves, and the three buying
+  // guides at /vodnik/<slug>.
+  //
+  // ⚠️ NAMED HERE RATHER THAN IMPORTED BY THE ROUTER. worker.ts and
+  // render/sitemap.ts used to read the global registries directly, which made
+  // the bazen shop's pages every shop's pages — see ShopContent.pages for what
+  // that would have published on a sauna shop's domain.
+  pages: PAGES,
+  guidePages: GUIDE_PAGES,
   pdp: pdpFor(flagship),
   // Both families' pages. The router matches any slug in here, so the swim
   // spa cards link at real pages rather than at a 404.

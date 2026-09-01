@@ -16,8 +16,7 @@ import { SHOPS, resolveShop, isDevHost, type ShopConfig } from "./tenants";
 import type { InternalRouteKey } from "./tenants/types";
 import type { PdpContent, ShopContent } from "./content/types";
 import { CONTENT } from "./content";
-import { PAGES, type Page } from "./content/pages";
-import { GUIDE_PAGES } from "./content/pages/vodnik";
+import { type Page } from "./content/pages";
 import { THEME_CATALOG, type ThemeKey } from "./themes/catalog";
 import {
   buildCtx,
@@ -752,7 +751,10 @@ export function handleRequest(
   // page that renders something else.
   const guideBase = shop.routeSlugs["/guide"] + "/";
   if (path.startsWith(guideBase)) {
-    const guide = GUIDE_PAGES.find((g) => g.slug === path.slice(guideBase.length));
+    // ⚠️ THE SHOP'S OWN GUIDES, NOT THE MODULE'S. This read GUIDE_PAGES
+    // straight out of content/pages/vodnik.ts, so /vodnik/masazni-bazen-pozimi
+    // would have answered on every domain this Worker serves.
+    const guide = content.guidePages.find((g) => g.slug === path.slice(guideBase.length));
     if (guide) {
       const noindex = dev || !shop.live;
       const doc = renderDocument({
@@ -803,7 +805,10 @@ export function handleRequest(
     }
   }
 
-  for (const page of PAGES) {
+  // ⚠️ content.pages, NOT THE GLOBAL REGISTRY. See ShopContent.pages: this
+  // loop over a module-level array is what made every shop on this Worker
+  // publish the bazen shop's editorial pages at its own URLs.
+  for (const page of content.pages) {
     if (path !== shop.routeSlugs[page.key as InternalRouteKey]) continue;
     // Pre-live the whole site is noindex anyway; once live, the basket and
     // the checkout stay out of the index because they are per-visitor
