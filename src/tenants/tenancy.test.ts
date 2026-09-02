@@ -89,21 +89,24 @@ describe("every registered shop", () => {
     });
 
     it(key + ": has a catalogue for the route its own nav points at", () => {
-      // ⚠️ /trgovina IS A 200 THAT SAYS "Stran je v pripravi." FOR A SHOP WITH
-      // NO COLLECTIONS — and it is the first item in the header nav on every
-      // page. collections is optional on ShopContent, so tsc says nothing, and
-      // the route is dropped from the sitemap while remaining the most-clicked
-      // internal link on the site. A shop may legitimately have no catalogue
-      // yet; it may not have one silently.
+      // ⚠️ COLLECTIONS ARE NOT THE CATALOGUE. This gate demanded
+      // collections.length > 0, because the hub used to render a placeholder
+      // without them — and that made the shape content/types.ts explicitly
+      // allows (a single `pdp`, no `pdps`, nothing to group) unable to pass
+      // the suite. The hub lists a groupless catalogue flat now (commerce.ts
+      // flatHub), so what a shop must have is a model and a card to show it
+      // by, not a family to file it under. And the flagship counts: `pdps`
+      // may be omitted for a one-model shop, so it is read the way the router
+      // reads it.
       const content = CONTENT[key]!;
-      const collections = content.collections ?? [];
-      const pdps = content.pdps ?? [];
+      const pdps = content.pdps ?? [content.pdp];
+      expect(pdps.length, key + " serves no product page").toBeGreaterThan(0);
+      const cards = content.products.filter((p) => !("util" in p));
       expect(
-        collections.length > 0,
-        key + " has no collections, so " + shop.routeSlugs["/products"] +
-          " renders a coming-soon stub at 200 while the nav points at it",
-      ).toBe(true);
-      expect(pdps.length, key + " has collections but no product pages").toBeGreaterThan(0);
+        cards.length,
+        key + " has product pages but no card to show them by — the home grid and " +
+          "a groupless hub both draw content.products",
+      ).toBeGreaterThan(0);
     });
 
     it(key + ": every product a collection lists has a page", () => {
@@ -568,6 +571,38 @@ describe("the QA host", () => {
       // And an unknown production host stays unknown whatever the query says.
       const url = new URL("https://not-a-shop.example/?shop=" + key);
       expect(resolveShop("not-a-shop.example", url)).toBeNull();
+    }
+  });
+});
+
+/**
+ * A CATALOGUE WITH NOTHING TO GROUP IT BY STILL HAS A HUB.
+ *
+ * content/types.ts allows a shop to omit `collections` (and `pdps`, for a
+ * one-model shop). The hub used to render nothing for that shape and the
+ * worker served a "Stran je v pripravi" placeholder at the URL the header's
+ * first item points to. commerce.ts flatHub() lists such a catalogue from the
+ * same cards the home grid draws. Rendered directly, with the registered
+ * shop's own content minus its families, because the router resolves content
+ * by shop key and a fixture shop cannot be injected there.
+ */
+describe("the hub for a shop with no collections", () => {
+  it("lists the models flat instead of rendering nothing", async () => {
+    const { renderShopHub } = await import("../render/page");
+    const shop = SHOPS[KEYS[0]!]!;
+    // Omitted, not set to undefined: exactOptionalPropertyTypes is on, and
+    // that is the shape a real groupless shop has anyway.
+    const { collections: _families, ...content } = CONTENT[KEYS[0]!]!;
+    void _families;
+    const html = renderShopHub(shop, content, "", shop.design.theme);
+    expect(html).not.toContain("wrap placeholder");
+    expect(html).toContain('class="st-grid"');
+    // The head is the shop's own word for the page, not a literal.
+    expect(html).toContain("<h1 class=\"st-sec-h\">" + content.nav[0] + "</h1>");
+    // Every product card the home page shows is here too.
+    for (const p of content.products) {
+      if ("util" in p) continue;
+      expect(html, "hub is missing " + p.name).toContain(p.name);
     }
   });
 });

@@ -584,7 +584,9 @@ export function handleRequest(
           // The family is looked up rather than assumed: a model that belongs
           // to no collection gets the two-step trail, which is still true.
           breadcrumbJsonLd(shop, [
-            { name: "Trgovina", path: shop.routeSlugs["/products"] },
+            // The shop's own word for its hub — the same string the header
+            // shows — rather than a literal the type could not see.
+            { name: content.nav[0], path: shop.routeSlugs["/products"] },
             ...((content.collections ?? [])
               .filter((c) => c.products.some((p) => "slug" in p && p.slug === pdp.slug))
               .slice(0, 1)
@@ -637,7 +639,13 @@ export function handleRequest(
   // The shop hub — every family on one page. A real page, indexable, so
   // "Trgovina" in the nav answers "what do you sell?" rather than redirecting
   // to whichever family happens to be first.
-  if (path === shop.routeSlugs["/products"] && (content.collections ?? []).length > 0) {
+  // ⚠️ THE HUB RENDERS WHETHER OR NOT THE SHOP HAS FAMILIES. It used to need
+  // collections.length > 0, and a shop without them fell through to the
+  // "Stran je v pripravi" placeholder — at 200, noindex, and linked from the
+  // first item of the header on every page, from the home grid's "Vsi
+  // modeli", from every 404 and from the basket. A one-model shop has no
+  // families to group; it still has a catalogue, and this is its page.
+  if (path === shop.routeSlugs["/products"]) {
     const doc = renderDocument({
       shop,
       content,
@@ -663,7 +671,7 @@ export function handleRequest(
         organizationJsonLd(shop),
         // Two items with a linked root, because a one-item trail is inert:
         // Google renders nothing for it, so the hub's SERP line stayed a URL.
-        breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: "Trgovina" }]),
+        breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: content.nav[0] }]),
         // ⚠️ THE HUB CARRIES EVERY MODEL AND EMITTED NO LIST. Both collection
         // pages got an ItemList when that gap was found; the page that holds
         // the WHOLE catalogue was missed, so to a crawler the shop's index was
@@ -719,7 +727,7 @@ export function handleRequest(
       jsonLd: [
         organizationJsonLd(shop),
         breadcrumbJsonLd(shop, [
-          { name: "Trgovina", path: shop.routeSlugs["/products"] },
+          { name: content.nav[0], path: shop.routeSlugs["/products"] },
           { name: collection.navLabel },
         ]),
         // These two pages are what the shop is built to rank, and to a

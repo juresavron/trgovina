@@ -55,7 +55,9 @@ export function sitemapPaths(
     // The shop hub and every collection. These are the pages built to rank —
     // "masažni bazen" and "swim spa" are different queries — so leaving them
     // out would hide the two most important URLs after home.
-    ...((content.collections ?? []).length > 0 ? [shop.routeSlugs["/products"]] : []),
+    // Unconditional now: the hub renders for a shop with no families too
+    // (worker.ts), listing its models flat, so the URL is always a page.
+    shop.routeSlugs["/products"],
     ...(content.collections ?? []).map((c) => c.path),
     ...(content.pdps ?? [content.pdp]).map((d) => shop.routeSlugs["/product"] + "/" + d.slug),
     // ⚠️ THE BLOG INDEX ONLY ONCE SOMETHING IS PUBLISHED, and it used to be

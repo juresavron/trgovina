@@ -2596,19 +2596,22 @@ function artOf(ctx: RenderCtx): ArtKey | null {
  * be added later WITHOUT the visible trail and the markup disagreeing (see
  * the note in renderStudioPdp about where that belongs).
  *
- * Nothing renders where a shop has no collections: the hub route itself only
- * exists when it has some (src/worker.ts), so a two-crumb trail to a 404 is
- * the one outcome worse than no trail.
+ * The hub crumb ALWAYS renders now: the hub is a page for every shop, with
+ * families or without (worker.ts, commerce.ts flatHub). The family crumb is
+ * the one that depends on the model belonging to a collection — a model in no
+ * family gets a two-crumb trail, hub then itself, which is still a way back
+ * up. The note that stood here said nothing renders without collections
+ * because the hub route "only exists when it has some"; that is no longer
+ * how the hub works.
  */
 function crumbs(ctx: RenderCtx): string {
   const fam = family(ctx);
-  if (!fam) return "";
   const hub = ctx.shop.routeSlugs["/products"];
   // The nav's own word for the hub, so the crumb and the chrome bar can never
   // drift apart — the same argument the configurator's labels take.
   const trail: readonly (readonly [string, string])[] = [
     [hub, ctx.content.nav[0]],
-    [fam.path, fam.navLabel],
+    ...(fam ? [[fam.path, fam.navLabel] as const] : []),
   ];
   return (
     '<nav class="st-pdp-crumbs" aria-label="Drobtinice"><ol>' +

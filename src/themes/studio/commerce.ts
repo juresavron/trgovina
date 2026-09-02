@@ -2643,12 +2643,21 @@ function hubChoice(ctx: RenderCtx): string {
 
 export function renderStudioShopHub(ctx: RenderCtx): string {
   const cols = ctx.content.collections ?? [];
-  if (cols.length === 0) return "";
+  // ⚠️ A SHOP WITH NO FAMILIES STILL HAS A HUB. This returned "" for it, and
+  // the worker then served a placeholder at the most-linked URL on the site.
+  // The families are a way of GROUPING a catalogue; a catalogue that is one
+  // model, or a handful with nothing to group them by, is listed flat from
+  // the same cards the home page shows, under the same head and with the
+  // same closing prose. One page, two shapes.
+  if (cols.length === 0) return flatHub(ctx);
   return (
     '<section class="st-shop st-shop--title"><div class="st-shop-in">' +
     '<div class="st-shop-head"><div class="st-shop-title">' +
     '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
-    '<h1 class="st-sec-h">Trgovina</h1>' +
+    // nav[0] rather than a literal: the header calls this page whatever the
+    // shop calls it, and the h1 was saying "Trgovina" on a shop whose menu
+    // said "Ponudba".
+    '<h1 class="st-sec-h">' + esc(ctx.content.nav[0]) + "</h1>" +
     "</div>" +
     // The hub's own sentence, not its meta description: a page that answers
     // "what do you sell?" has to answer it on the page, and this one opened
@@ -2688,6 +2697,33 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
           "</div></section>",
       )
       .join("") +
+    hubOutro(ctx)
+  );
+}
+
+/**
+ * The hub for a shop that groups nothing: head, the flat card grid, outro.
+ *
+ * The cards are ctx.content.products — the same list the home page's grid
+ * draws — because a shop with no collections has no other statement of "what
+ * do you sell?", and two statements of it would be the duplication the hub
+ * bands were trimmed of. The util tile in that list stays: it is the enquiry
+ * prompt beside the goods, and a hub of one card wants it more, not less.
+ */
+function flatHub(ctx: RenderCtx): string {
+  const cards = ctx.content.products;
+  return (
+    '<section class="st-shop st-shop--title"><div class="st-shop-in">' +
+    '<div class="st-shop-head"><div class="st-shop-title">' +
+    '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
+    '<h1 class="st-sec-h">' + esc(ctx.content.nav[0]) + "</h1>" +
+    "</div>" +
+    (ctx.content.hubIntro
+      ? '<p class="st-shop-intro">' + esc(ctx.content.hubIntro) + "</p>"
+      : "") +
+    "</div>" +
+    (cards.length > 0 ? '<div class="st-grid">' + productCards(ctx, cards, "h2") + "</div>" : "") +
+    "</div></section>" +
     hubOutro(ctx)
   );
 }
