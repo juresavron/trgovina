@@ -687,24 +687,33 @@ export function handleRequest(
         itemListJsonLd(
           shop,
           content,
-          "Vsi modeli",
+          // The same word the title and the h1 use: a list named for a
+          // catalogue, over a shop with one model, is a false statement to
+          // the one reader that takes it literally.
+          (content.pdps ?? [content.pdp]).length > 1 ? "Vsi modeli" : content.nav[0],
           // Derived from the collections rather than listed here, so the hub's
           // list cannot drift from the two category lists that are built from
           // the same arrays. Deduped by slug: a model in two families would
           // otherwise appear twice in one ItemList.
+          //
+          // A shop with no families lists its models flat — the same records
+          // the hub draws (commerce.ts flatHub). It emitted numberOfItems: 0
+          // for such a shop, a list of nothing under a heading that named it.
           (() => {
             const seen = new Set<string>();
             const out = [];
+            const all = content.pdps ?? [content.pdp];
             for (const c of content.collections ?? []) {
               for (const p of c.products) {
                 if (!("slug" in p) || typeof p.slug !== "string") continue;
                 if (seen.has(p.slug)) continue;
-                const d = (content.pdps ?? []).find((x) => x.slug === p.slug);
+                const d = all.find((x) => x.slug === p.slug);
                 if (!d) continue;
                 seen.add(p.slug);
                 out.push(d);
               }
             }
+            if (!content.collections) for (const d of all) if (!seen.has(d.slug)) { seen.add(d.slug); out.push(d); }
             return out;
           })(),
         ),

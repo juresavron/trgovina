@@ -56,7 +56,7 @@ export const CART: Page = {
       // On a second shop it would have been wrong twice over, and the count
       // is wrong here the day a seventh model is added. The hub it links to
       // states both, in the one place that can keep them true.
-      p: "Vsi modeli: mere, specifikacije in cene.",
+      p: "Mere, specifikacije in cene na enem mestu.",
       label: "V trgovino",
       // ⚠️ AN INTERNAL ROUTE KEY, NOT A SLUG. This page is one of the six any
       // shop can publish unchanged, and it used to link to this shop's

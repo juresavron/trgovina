@@ -859,7 +859,7 @@ export function renderPlaceholder(
     '<a href="' + esc(shop.routeSlugs["/products"] + q) + '">' +
     esc((content.pdps ?? [content.pdp]).length > 1 ? "Vsi modeli" : content.nav[0]) + "</a>" +
     // ⚠️ THE SHOP'S OWN LABEL, AND ONLY WHERE THE ROUTE EXISTS. This said
-    // "Kateri bazen je pravi za vas?" on every 404 of every shop on the
+    // the finder's 'which one is right for you?' on every 404 of every shop on the
     // Worker; nav[6] is what the shop calls its guided choice, and the route
     // is optional (tenants/types.ts).
     (shop.routeSlugs["/finder"]

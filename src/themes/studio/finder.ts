@@ -661,7 +661,11 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     // sentence with either optional clause gone.
     '<p class="st-fnd-more">' +
     (shop.routeSlugs["/compare"]
-      ? "Za odločitev med masažnim bazenom in swim spa bazenom je " +
+      // Product-neutral on purpose: this module renders for every shop that
+      // declares a finder, and the ratchet in scripts/audit-shared-copy.mjs
+      // counts the shop's words here. "Med modeli" is true wherever there is
+      // a comparison page at all.
+      ? "Za odločitev med modeli je " +
         '<a href="' + esc(shop.routeSlugs["/compare"]) + '">primerjava</a> ' +
         "krajša pot kot ta vprašalnik; cel katalog s cenami je v "
       : "Cel katalog s cenami je v ") +

@@ -57,7 +57,7 @@ const VOCAB =
   /bazen|bazeni|bazenu|bazenom|bazenov|školjk|šob|ležalnik|swim spa|masažn|protitočn|vzorčnik/i;
 
 /** ⚠️ THIS ONLY EVER GOES DOWN. See the note at the top of the file. */
-const BUDGET = 69;
+const BUDGET = 67;
 
 function walk(dir, out) {
   for (const name of readdirSync(dir)) {

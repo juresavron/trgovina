@@ -1,9 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { DEV_SHOP, SHOPS, isValidRouteSlug, isValidStatementDescriptor, resolveShop } from "./index";
 import { handleRequest } from "../worker";
 import { CONTENT } from "../content";
 import { UNIVERSAL_PAGES } from "../content/pages";
 import { OPTIONAL_ROUTE_KEYS, type InternalRouteKey, type ShopConfig } from "./types";
+import type { ShopContent } from "../content/types";
+import { sitemapPaths } from "../render/sitemap";
 
 /**
  * THE GATE A SECOND SHOP HAS TO PASS.
@@ -608,6 +610,153 @@ describe("the hub for a shop with no collections", () => {
     for (const p of content.products) {
       if ("util" in p) continue;
       expect(html, "hub is missing " + p.name).toContain(p.name);
+    }
+  });
+});
+
+/**
+ * A SHOP THAT SELLS ONE MODEL.
+ *
+ * Every gate above runs against the registered shop, which sells six models
+ * in two families, so a template that assumes a catalogue passes all of them.
+ * The first one-model probe found what that assumption costs: "Vsi modeli"
+ * over a single card, "šest modelov" in the finder of a shop with one, a
+ * rail repeating the only product under the grid that already showed it, a
+ * hub whose two-column chooser had one entry, a lone card stretched to the
+ * width of three. None of it was a crash. All of it was a page.
+ *
+ * So a one-model shop is registered for the length of this block — the
+ * registered shop's own copy, its catalogue cut to the first model, no
+ * families, no optional routes — and every route it declares is rendered
+ * through the worker, the way a visitor would reach it. The fixture is
+ * derived rather than written so that it tracks the content types: a field
+ * added to ShopContent tomorrow is on this shop too.
+ */
+describe("a shop that sells one model", () => {
+  const PROBE = "__one_model__";
+  const base = CONTENT[KEYS[0]!]!;
+  const baseShop = SHOPS[KEYS[0]!]!;
+  const card = base.products.find((p) => !("util" in p));
+  if (!card || !("slug" in card)) throw new Error("the registered shop has no model card");
+  const pdp = (base.pdps ?? [base.pdp]).find((d) => d.slug === card.slug);
+  if (!pdp) throw new Error("no product page for " + card.slug);
+
+  // Required routes only. The optional five are exactly the ones a one-model
+  // shop has no use for — there is nothing to compare, nothing to guide a
+  // choice between — and every place that links to them has to cope.
+  const routeSlugs = Object.fromEntries(
+    Object.entries(baseShop.routeSlugs).filter(
+      ([k]) => !(OPTIONAL_ROUTE_KEYS as readonly string[]).includes(k),
+    ),
+  ) as ShopConfig["routeSlugs"];
+  const {
+    collections: _c, pdps: _p, categories: _k, hubChoice: _hc, hubOutro: _ho, ...rest
+  } = base;
+  void _c; void _p; void _k; void _hc; void _ho;
+  // The utility cards are the shop's own copy and point where the shop
+  // chooses; the registered shop's "book a visit" card points at its showroom
+  // page, which this shop does not have. A shop without the page would not
+  // write the card, so the fixture keeps only the cards whose href it serves.
+  const serves = new Set(Object.values(routeSlugs));
+  const content: ShopContent = {
+    ...rest,
+    products: base.products.filter((p) =>
+      "util" in p ? !p.href || p.href.startsWith("#") || serves.has(p.href) : p === card,
+    ),
+    pdp,
+    guides: [],
+    guidePages: [],
+    pages: base.pages.filter((pg) => typeof routeSlugs[pg.key as InternalRouteKey] === "string"),
+  };
+  const shop: ShopConfig = { ...baseShop, key: PROBE, routeSlugs };
+
+  beforeAll(() => {
+    (SHOPS as Record<string, ShopConfig>)[PROBE] = shop;
+    CONTENT[PROBE] = content;
+  });
+  afterAll(() => {
+    delete (SHOPS as Record<string, ShopConfig>)[PROBE];
+    delete CONTENT[PROBE];
+  });
+
+  const get = (path: string) =>
+    handleRequest(
+      new Request("https://trgovina.workers.dev" + path + "?shop=" + PROBE, {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+  const NOT_PAGES = new Set(["/product", "/guide", "/order-success", "/blog"]);
+  const routes = () => {
+    const r = new Set(["/"]);
+    for (const [k, slug] of Object.entries(routeSlugs)) if (!NOT_PAGES.has(k)) r.add(slug);
+    r.add(routeSlugs["/product"] + "/" + pdp.slug);
+    return [...r];
+  };
+
+  it("renders every route it declares as its own page", async () => {
+    for (const path of routes()) {
+      const res = get(path);
+      expect(res.status, path).toBe(200);
+      const html = await res.text();
+      expect(html, path).toContain('data-shop="' + PROBE + '"');
+      expect(html, path + " is a placeholder").not.toContain("wrap placeholder");
+    }
+  });
+
+  it("never promises more models than it has", async () => {
+    // The literal every catalogue label used to be. On a shop with one model
+    // it is a false statement on the page and a dead promise in the link.
+    for (const path of routes()) {
+      const html = await get(path).text();
+      expect(html, path).not.toContain("Vsi modeli");
+    }
+  });
+
+  it("lists its one model on the hub, under its own heading", async () => {
+    const html = await get(routeSlugs["/products"]).text();
+    expect(html).toContain('<h1 class="st-sec-h">' + content.nav[0] + "</h1>");
+    expect(html).toContain(card.name);
+    expect(html).toContain('href="' + routeSlugs["/product"] + "/" + pdp.slug + '"');
+  });
+
+  it("does not repeat the only model under the grid that shows it", async () => {
+    // The home page drew the product grid AND a rail of the same cards. With
+    // six models the rail is a second angle; with one it is the same card
+    // twice, one above the other.
+    const html = await get("/").text();
+    const n = html.split('href="' + routeSlugs["/product"] + "/" + pdp.slug + '"').length - 1;
+    expect(n, "links to the one model on the home page").toBeLessThanOrEqual(2);
+  });
+
+  it("links from its chrome only to pages it has", async () => {
+    const html = await get("/").text();
+    const hrefs = [...html.matchAll(/<a\b[^>]*?href="(\/[^"#?]*)"/g)].map((m) => m[1]!);
+    const skip = (h: string) =>
+      h === "" ||
+      h.startsWith("/media/") ||
+      h.startsWith("/assets/") ||
+      h === routeSlugs["/blog"] ||
+      h.startsWith(routeSlugs["/blog"] + "/");
+    const dead: string[] = [];
+    for (const h of [...new Set(hrefs)]) {
+      if (skip(h)) continue;
+      const res = get(h);
+      if (res.status !== 200) { dead.push(h + " (" + res.status + ")"); continue; }
+      if ((await res.text()).includes("wrap placeholder")) dead.push(h + " (placeholder)");
+    }
+    expect(dead, "one-model shop links to: " + dead.join(" ")).toEqual([]);
+  });
+
+  it("puts its one model in the sitemap once and none of the routes it lacks", () => {
+    // The route answers 404 on the QA host by design (a sitemap is only ever
+    // served live, on the shop's own domain), so the path list is asked
+    // directly — it is the one source the route and the blog layer share.
+    const paths = sitemapPaths(shop, content, false);
+    const url = routeSlugs["/product"] + "/" + pdp.slug;
+    expect(paths.filter((p) => p === url).length, url).toBe(1);
+    for (const k of OPTIONAL_ROUTE_KEYS) {
+      const slug = baseShop.routeSlugs[k];
+      if (slug) expect(paths, k).not.toContain(slug);
     }
   });
 });

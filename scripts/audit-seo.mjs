@@ -42,13 +42,26 @@ const { CONTENT } = await bundle("src/content/index.ts", "content");
 // Every finding the guides carry today — over-long titles cut mid-brand, body
 // copy under the thin-copy floor, no outbound link to a single product page —
 // was invisible for exactly this reason.
-const { GUIDE_PAGES } = await bundle("src/content/pages/vodnik.ts", "guides");
+// They are read from the shop's own content rather than from the bazen
+// module, so the list audited is the list the router serves for KEY.
 // See the note in audit-site.mjs: /blog is served by the async layer because
 // posts are rows, so the synchronous handler would hand this audit a 404.
 const { blogIndexDoc } = await bundle("src/blog/routes.ts", "blog");
 
-const SHOP = SHOPS["bazen"];
-const C = CONTENT["bazen"];
+// ⚠️ THE SHOP UNDER AUDIT IS A PARAMETER, NOT A LITERAL. Every audit in this
+// directory read SHOPS["bazen"] and CONTENT["bazen"] and sent ?shop=bazen,
+// which meant a second shop could pass every test in src/ and still ship
+// with its titles, descriptions, heading trees and dead links unaudited —
+// there was no way to point the audit at it. AUDIT_SHOP=<key> picks the
+// shop; an unknown key fails here rather than auditing the default shop
+// under the wrong name.
+const KEY = process.env.AUDIT_SHOP || "bazen";
+if (!SHOPS[KEY] || !CONTENT[KEY]) {
+  console.error("AUDIT_SHOP=" + KEY + " is not a registered shop with content");
+  process.exit(2);
+}
+const SHOP = SHOPS[KEY];
+const C = CONTENT[KEY];
 const HOST = "https://trgovina.workers.dev";
 const NOT_PAGES = new Set(["/product", "/guide", "/order-success"]);
 
@@ -65,7 +78,9 @@ function routes() {
   }
   for (const c of C.collections ?? []) r.add(c.path);
   for (const p of C.pdps ?? []) r.add(SHOP.routeSlugs["/product"] + "/" + p.slug);
-  for (const g of GUIDE_PAGES) r.add(SHOP.routeSlugs["/guide"] + "/" + g.slug);
+  if (SHOP.routeSlugs["/guide"]) {
+    for (const g of C.guidePages) r.add(SHOP.routeSlugs["/guide"] + "/" + g.slug);
+  }
   return [...r].filter((p) => p && p.startsWith("/"));
 }
 
@@ -85,7 +100,7 @@ const get = async (path) => {
     return { status: 200, headers: new Headers(), html };
   }
   const res = handleRequest(
-    new Request(HOST + path + (path.includes("?") ? "&" : "?") + "shop=bazen", {
+    new Request(HOST + path + (path.includes("?") ? "&" : "?") + "shop=" + KEY, {
       headers: { host: "trgovina.workers.dev" },
     }),
   );

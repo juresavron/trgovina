@@ -2189,7 +2189,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
       ...families,
       [s.routeSlugs["/products"], c.nav[0]] as const,
       // ⚠️ THE SHOP'S OWN LABELS, NOT LITERALS. This column printed
-      // "Primerjava modelov" and "Kateri bazen?" for every shop on the Worker
+      // 'Primerjava modelov' and the finder's 'which one?' for every shop on the Worker
       // — the second one is a hot-tub noun in the footer of every page a
       // sauna shop would serve, including its legal pages. nav[5] and nav[6]
       // are the same two routes' labels, already the shop's, already what
