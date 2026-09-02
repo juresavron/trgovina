@@ -27,8 +27,9 @@ import { chromium } from "playwright-core";
 
 const BASE = process.argv[2] || "http://127.0.0.1:8788";
 
-/** The network is one shop. Kept as a list so a second costs one entry. */
-const SHOPS = ["bazen"];
+/** The shops to measure: AUDIT_SHOP=<key>[,<key>], the same variable the
+ *  audit-*.mjs scripts read, so a second shop costs no edit here. */
+const SHOPS = (process.env.AUDIT_SHOP || "bazen").split(",");
 
 /** The white runs on the hero, and the floor each has to clear.
  *  .st-hero-cap is no longer listed: the "simbolična fotografija" plate left

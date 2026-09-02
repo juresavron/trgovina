@@ -51,7 +51,7 @@ const NOT=new Set(["/product","/guide","/order-success"]);
 const R=new Set(["/"]); for(const [k,v] of Object.entries(shop.routeSlugs)) if(!NOT.has(k)) R.add(v);
 for(const c of content?.collections??[]) R.add(c.path);
 const ROUTES=[...R].filter(p=>p&&p.startsWith("/"));
-for(const d of (content?.pdps??[])) ROUTES.push(shop.routeSlugs["/product"]+"/"+d.slug);
+for(const d of (content?.pdps??[content.pdp])) ROUTES.push(shop.routeSlugs["/product"]+"/"+d.slug);
 const BLOG=shop.routeSlugs["/blog"];
 const OUT="/tmp/fill", PORT=8921, HOST="https://trgovina.worldfans.workers.dev";
 rmSync(OUT,{recursive:true,force:true}); mkdirSync(join(OUT,"media"),{recursive:true});

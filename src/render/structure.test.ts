@@ -557,7 +557,7 @@ describe("rich results", () => {
       expect(item["@context"]).toBeUndefined();
       const slug = String(item.url).split("/").pop();
       expect(
-        (content.pdps ?? []).some((p) => p.slug === slug),
+        (content.pdps ?? [content.pdp]).some((p) => p.slug === slug),
         item.url + " names no product",
       ).toBe(true);
     }

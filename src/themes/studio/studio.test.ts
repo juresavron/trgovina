@@ -63,7 +63,7 @@ describe("studio renders a self-consistent sheet", () => {
   };
 
   it("ships verified faces from a single origin", async () => {
-    const html = await render("savna").text();
+    const html = await render("bazen").text();
     // CSS comments never reach the wire (minify strips them), so the sheet is
     // exactly what renders.
     const sheet = await sheetOf(html);
@@ -112,7 +112,7 @@ describe("studio renders a self-consistent sheet", () => {
   });
 
   it("counters carry their final value as text, not just as data", async () => {
-    const html = await render("savna").text();
+    const html = await render("bazen").text();
     const m = [...html.matchAll(/data-st-count="(\d+)"[^>]*>([^<]+)</g)];
     expect(m.length).toBeGreaterThan(0);
     for (const [, target, shown] of m) {
@@ -261,7 +261,7 @@ describe("the collection comparison table", () => {
       const content = CONTENT["bazen"]!;
       const col = (content.collections ?? []).find((c) => c.path === path)!;
       const specs = col.products.map(
-        (p) => (content.pdps ?? []).find((d) => d.slug === p.slug)!,
+        (p) => (content.pdps ?? [content.pdp]).find((d) => d.slug === p.slug)!,
       );
       // Every label and every value on the page, in the shop's own words.
       for (const d of specs) {
@@ -307,10 +307,10 @@ describe("the collection comparison table", () => {
 
     // Sanity: the real catalogue does produce a table, or the negative below
     // would pass for the wrong reason.
-    expect(renderStudioCollection(ctx(content.pdps ?? []), col)).toContain("st-cmp-table");
+    expect(renderStudioCollection(ctx(content.pdps ?? [content.pdp]), col)).toContain("st-cmp-table");
 
     // One model's first spec label renamed — nothing else touched.
-    const skewed = (content.pdps ?? []).map((d) =>
+    const skewed = (content.pdps ?? [content.pdp]).map((d) =>
       d.slug === col.products[1]?.slug
         ? {
             ...d,
@@ -323,7 +323,7 @@ describe("the collection comparison table", () => {
     expect(renderStudioCollection(ctx(skewed), col)).not.toContain("st-cmp-table");
 
     // And a model with no product page of its own.
-    const missing = (content.pdps ?? []).filter((d) => d.slug !== col.products[0]?.slug);
+    const missing = (content.pdps ?? [content.pdp]).filter((d) => d.slug !== col.products[0]?.slug);
     expect(renderStudioCollection(ctx(missing), col)).not.toContain("st-cmp-table");
   });
 });

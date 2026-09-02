@@ -56,12 +56,39 @@ export function tubLoadRangeText(): string {
   return lo === hi ? String(lo) : "od " + lo + " do " + hi;
 }
 
+/**
+ * "X, Y in Z" — and "X" for a list of one. Both list sentences below joined
+ * with a typed " in " and printed " in 3,80" the day the catalogue held one
+ * model: the guide said "Naši modeli stojijo na  in 3,80 kvadratnega metra".
+ */
+function listAnd(items: readonly string[]): string {
+  if (items.length <= 1) return items[0] ?? "";
+  return items.slice(0, -1).join(", ") + " in " + items[items.length - 1];
+}
+
+/**
+ * "Naši trije modeli stojijo na" — the subject and verb of the guide's
+ * footprint sentence, agreeing with however many tubs are offered. It was
+ * typed as "trije" beside a list that is derived, so the day the catalogue
+ * held one model the sentence read "Naši trije modeli stojijo na 3,80".
+ * Words up to four, as the guide had it; numerals from five, where Slovenian
+ * switches to the genitive and a singular verb ("Naših 6 modelov stoji na").
+ */
+export function tubCountLeadText(): string {
+  const n = OFFERED_MODELS.length;
+  if (n === 1) return "Naš model stoji na";
+  if (n === 2) return "Naša dva modela stojita na";
+  if (n === 3) return "Naši trije modeli stojijo na";
+  if (n === 4) return "Naši štirje modeli stojijo na";
+  return "Naših " + n + " modelov stoji na";
+}
+
 /** The footprint of each offered tub in m², smallest first — "3,80, 4,41 in 5,29". */
 export function tubAreaListText(): string {
   const areas = OFFERED_MODELS.map((m) => (m.mm[0]! / 1000) * (m.mm[1]! / 1000))
     .sort((a, b) => a - b)
     .map((a) => a.toFixed(2).replace(".", ","));
-  return areas.slice(0, -1).join(", ") + " in " + areas[areas.length - 1];
+  return listAnd(areas);
 }
 
 /**
@@ -88,7 +115,7 @@ export function tubFootprintListText(): string {
   const list = [...OFFERED_MODELS]
     .sort((a, b) => a.mm[0]! - b.mm[0]!)
     .map(footprint);
-  return list.slice(0, -1).join(", ") + " in " + list[list.length - 1];
+  return listAnd(list);
 }
 
 /** The shell height range in centimetres — "82 do 88". */

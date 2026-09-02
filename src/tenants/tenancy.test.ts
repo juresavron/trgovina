@@ -730,9 +730,16 @@ describe("a shop that sells one model", () => {
     expect(n, "links to the one model on the home page").toBeLessThanOrEqual(2);
   });
 
-  it("links from its chrome only to pages it has", async () => {
-    const html = await get("/").text();
-    const hrefs = [...html.matchAll(/<a\b[^>]*?href="(\/[^"#?]*)"/g)].map((m) => m[1]!);
+  it("links, from every route it renders, only to pages it has", async () => {
+    // EVERY ROUTE, not the home page alone. The chrome is the same on all of
+    // them, but the hub's cards, the product page's crumbs and the closing
+    // band's control are not, and each of those was a link site that had to
+    // learn what a one-model shop lacks.
+    const hrefs: string[] = [];
+    for (const path of routes()) {
+      const html = await get(path).text();
+      hrefs.push(...[...html.matchAll(/<a\b[^>]*?href="(\/[^"#?]*)"/g)].map((m) => m[1]!));
+    }
     const skip = (h: string) =>
       h === "" ||
       h.startsWith("/media/") ||
