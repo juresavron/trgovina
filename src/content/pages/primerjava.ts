@@ -201,7 +201,10 @@ export const COMPARE: Page = {
       // navigated to "/BAZEN%20195". The proofread caught it; the structure
       // test below the fragment sweep now pins the direction.
       items: [
-        ["Kateri je pravi za vas? — dve do tri vprašanja", "/izbira"],
+        // The ROUTE KEY, resolved per shop by render/sections.ts resolveHref()
+        // — the same rule the universal pages follow, so a rename of the
+        // finder's slug cannot leave this page pointing at a 404.
+        ["Kateri je pravi za vas? — dve do tri vprašanja", "/finder"],
         ["BAZEN 195", "/bazen/mali-195"],
         ["BAZEN 210", "/bazen/srednji-210"],
         ["BAZEN 230", "/bazen/veliki-230"],
