@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { SHOPS, isValidRouteSlug, isValidStatementDescriptor } from "./index";
+import { DEV_SHOP, SHOPS, isValidRouteSlug, isValidStatementDescriptor, resolveShop } from "./index";
 import { handleRequest } from "../worker";
 import { CONTENT } from "../content";
 import { UNIVERSAL_PAGES } from "../content/pages";
-import type { InternalRouteKey } from "./types";
+import type { InternalRouteKey, ShopConfig } from "./types";
 
 /**
  * THE GATE A SECOND SHOP HAS TO PASS.
@@ -446,4 +446,91 @@ describe("the guided choice", () => {
         .toEqual([]);
     });
   }
+});
+
+/**
+ * THE QA HOST HONOURS ?shop=, AND FOR A WHILE IT DID NOT.
+ *
+ * Every per-shop gate in this file drives the QA host with ?shop=<key>, and
+ * so does every audit script. The override that made that mean something went
+ * with the theme switcher; the worker's note recorded that unknown query
+ * parameters are ignored, which was true, and with one registered shop the
+ * page rendered was the same page either way. The day a second shop was
+ * registered — a throwaway one, in a worktree, built to probe exactly this —
+ * "every page it publishes actually renders" and "the chrome never points at
+ * a placeholder" both PASSED for it while rendering the bazen shop's pages
+ * under its slugs. A gate that cannot address the shop it names is worse
+ * than no gate: it reports the wrong shop as sound.
+ *
+ * This is the assertion that keeps every other one in this file honest.
+ */
+describe("the QA host", () => {
+  const qa = (path: string, key: string) =>
+    handleRequest(
+      new Request("https://trgovina.workers.dev" + path + "?shop=" + key, {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+
+  for (const key of KEYS) {
+    it("renders " + key + " when asked to", async () => {
+      // data-shop on <html> is the render pipeline's own statement of which
+      // shop it drew — the same attribute the admin and the audits read.
+      const html = await qa("/", key).text();
+      expect(html).toContain('data-shop="' + key + '"');
+    });
+  }
+
+  it("resolves a shop that is NOT the development shop when asked for it", () => {
+    // ⚠️ WITH ONE REGISTERED SHOP THE RENDER TESTS ABOVE CANNOT FAIL. Asking
+    // for the development shop and being ignored produce the same page, so
+    // the assertion that keeps every other gate honest would itself have been
+    // decoration — measured: removing the override left all of them green.
+    //
+    // So a second shop is registered for the length of this test. SHOPS is
+    // the object the resolver reads at call time (the Host map is built at
+    // import and the override path does not consult it), which is exactly
+    // what lets this be a unit test rather than a fixture: the entry exists
+    // only between the two lines below, and a throw in between still removes
+    // it.
+    const key = "__probe_shop__";
+    (SHOPS as Record<string, ShopConfig>)[key] = { ...DEV_SHOP, key };
+    try {
+      const url = new URL("https://trgovina.workers.dev/?shop=" + key);
+      expect(resolveShop("trgovina.workers.dev", url)?.key).toBe(key);
+      expect(resolveShop("localhost:8787", url)?.key).toBe(key);
+      // And the production fence holds for the probe too.
+      expect(resolveShop(DEV_SHOP.domain, url)?.key).toBe(DEV_SHOP.key);
+    } finally {
+      delete (SHOPS as Record<string, ShopConfig>)[key];
+    }
+  });
+
+  it("falls back to the development shop for a key it does not know", async () => {
+    // Validated against the registry, never reflected: ?shop=<garbage> is
+    // exactly ?shop=<nothing>, and the value must not appear in the page.
+    const res = qa("/", "no-such-shop-x9");
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain('data-shop="' + DEV_SHOP.key + '"');
+    expect(html).not.toContain("no-such-shop-x9");
+  });
+
+  it("is the ONLY place the override applies", () => {
+    // On a real domain ?shop= must do nothing — it would let anyone render
+    // shop B under shop A's canonicals. Pre-live that domain answers 503;
+    // live it answers its own pages; in neither case does the query pick the
+    // shop. resolveShop() is the single decision point, so it is asserted
+    // directly rather than through a render that live/pre-live would blur.
+    for (const key of KEYS) {
+      const shop = SHOPS[key]!;
+      for (const other of KEYS) {
+        const url = new URL("https://" + shop.domain + "/?shop=" + other);
+        expect(resolveShop(shop.domain, url)?.key, shop.domain + "?shop=" + other).toBe(key);
+      }
+      // And an unknown production host stays unknown whatever the query says.
+      const url = new URL("https://not-a-shop.example/?shop=" + key);
+      expect(resolveShop("not-a-shop.example", url)).toBeNull();
+    }
+  });
 });

@@ -234,7 +234,7 @@ export function handleRequest(
   const url = new URL(request.url);
   const host = request.headers.get("host") ?? url.hostname;
 
-  let shop = resolveShop(host);
+  let shop = resolveShop(host, url);
   if (!shop) {
     // Bare text, full headers: an unknown host earns nothing, but the
     // response it does get should still refuse sniffing and caching.
@@ -336,8 +336,16 @@ export function handleRequest(
   // forty call sites.
   //
   // Unknown query parameters are simply ignored, as they always were — the
-  // overrides were validated against known keys and never reflected raw, and
-  // that property is now trivially true.
+  // overrides were validated against known keys and never reflected raw.
+  //
+  // ⚠️ EXCEPT ?shop=, ON DEV HOSTS, WHICH IS BACK — in resolveShop() rather
+  // than here, so the enquiry POST and the blog resolve the same shop as the
+  // page. It went with the switcher and nothing noticed, because with one
+  // registered shop "ignored" and "honoured" render the same page; every
+  // ?shop= in the test suite and the audits was decoration. See the note in
+  // tenants/index.ts. `q` stays empty: the override is for tests, audits and
+  // a reviewer typing a URL, and propagating it through forty hrefs is the
+  // switcher machinery this note says was removed on purpose.
   const theme: ThemeKey = shop.design.theme;
   const q = "";
 
@@ -954,7 +962,7 @@ async function handleEnquiry(
 } | null> {
   if (request.method !== "POST") return null;
   const url = new URL(request.url);
-  const shop = resolveShop(request.headers.get("host") ?? url.hostname);
+  const shop = resolveShop(request.headers.get("host") ?? url.hostname, url);
   if (!shop) return null;
   if (url.pathname !== shop.routeSlugs["/contact"]) return null;
   const content = CONTENT[shop.key];
