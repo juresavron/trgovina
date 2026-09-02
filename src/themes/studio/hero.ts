@@ -1394,8 +1394,12 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
     // The finder, and now the words above it agree: the foot names the range
     // and the button chooses within it. "Which one is mine?" is the question
     // a brand statement leaves a reader with.
-    '<a class="st-btn-light" href="' + esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
-    '">Kateri je pravi za vas?</a>' +
+    // The guided choice is an optional route; a shop with one model has no
+    // question to ask here, and the foot ends on the range.
+    (ctx.shop.routeSlugs["/finder"]
+      ? '<a class="st-btn-light" href="' + esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
+        '">Kateri je pravi za vas?</a>'
+      : "") +
     "</div></section>"
   );
 }

@@ -247,8 +247,10 @@ describe("every rendered page is structurally sound", () => {
         "/",
         shop.routeSlugs["/products"],
         shop.routeSlugs["/contact"],
-        shop.routeSlugs["/finder"],
-        shop.routeSlugs["/compare"],
+        // Optional routes: a shop without them contributes nothing here.
+        ...[shop.routeSlugs["/finder"], shop.routeSlugs["/compare"]].filter(
+          (r): r is string => typeof r === "string",
+        ),
         ...(content.collections ?? []).map((c) => c.path),
       ];
       const pdps = (content.pdps ?? [content.pdp]).map(

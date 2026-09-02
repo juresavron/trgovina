@@ -41,6 +41,33 @@ export type InternalRouteKey =
   | "/cookies"
   | "/withdrawal"; // 14-day right-of-withdrawal notice (mandatory, EU distance selling)
 
+/**
+ * THE ROUTES A SHOP MAY NOT HAVE.
+ *
+ * ⚠️ EVERY KEY USED TO BE REQUIRED, AND THAT FORCED A ONE-PRODUCT SHOP TO LIE.
+ * routeSlugs was Record<InternalRouteKey, string>, so a shop with a single
+ * model had to declare a URL for the guided choice (three questions choosing
+ * between models it does not have), for the comparison (of one thing with
+ * nothing), for a guides index it may not write and for a site-visit page it
+ * may not offer — and the chrome linked all four unconditionally, so each was
+ * either somebody else's page or a "Stran je v pripravi" placeholder at 200
+ * in the header of every page. Measured on a throwaway sauna shop: 27 of 27
+ * routes carried a link to a placeholder, and the guided choice recommended
+ * five hot tubs.
+ *
+ * These five are optional. Leaving one out is how a shop says "I do not have
+ * this", and every place that links to one of them has to cope with its
+ * absence — which is what making the type `string | undefined` enforces at
+ * compile time, in the twenty-odd places that used to assume it.
+ *
+ * ⚠️ /guide AND /guides TRAVEL TOGETHER: an article segment with no index, or
+ * an index with no segment, is asserted against in tenancy.test.ts rather
+ * than here, because the type cannot say "both or neither".
+ */
+export const OPTIONAL_ROUTE_KEYS = ["/finder", "/compare", "/guides", "/guide", "/showroom"] as const;
+export type OptionalRouteKey = (typeof OPTIONAL_ROUTE_KEYS)[number];
+export type RequiredRouteKey = Exclude<InternalRouteKey, OptionalRouteKey>;
+
 export type ShopConfig = {
   /** Stable shop key — matches shops.id in the database ('savna', 'krio', …). */
   key: string;
@@ -270,7 +297,7 @@ export type ShopConfig = {
    * only (č→c, š→s, ž→z), immutable after launch — slugs are SEO capital and
    * changing one burns its history. The identity mapping is valid.
    */
-  routeSlugs: Record<InternalRouteKey, string>;
+  routeSlugs: Record<RequiredRouteKey, string> & Partial<Record<OptionalRouteKey, string>>;
 };
 
 /**

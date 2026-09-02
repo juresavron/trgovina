@@ -1395,7 +1395,11 @@ function quoteCard(r: {
 export function renderStudioGuides(ctx: RenderCtx): string {
   const guides = ctx.content.guides;
   if (!guides.length) return "";
-  const base = ctx.shop.routeSlugs["/guide"] + "/";
+  // The article segment is an optional route; cards with no segment to
+  // point at are cards to a 404, so the band stands down with it.
+  const seg = ctx.shop.routeSlugs["/guide"];
+  if (!seg) return "";
+  const base = seg + "/";
   return (
     '<section class="st-gd" id="vodniki"><div class="st-gd-in">' +
     '<h2 class="st-gd-h">Preden kupite ' + esc(ctx.shop.keyword.accusative) + "</h2>" +

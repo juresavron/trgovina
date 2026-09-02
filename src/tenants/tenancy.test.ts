@@ -3,7 +3,7 @@ import { DEV_SHOP, SHOPS, isValidRouteSlug, isValidStatementDescriptor, resolveS
 import { handleRequest } from "../worker";
 import { CONTENT } from "../content";
 import { UNIVERSAL_PAGES } from "../content/pages";
-import type { InternalRouteKey, ShopConfig } from "./types";
+import { OPTIONAL_ROUTE_KEYS, type InternalRouteKey, type ShopConfig } from "./types";
 
 /**
  * THE GATE A SECOND SHOP HAS TO PASS.
@@ -146,11 +146,17 @@ describe("every registered shop", () => {
     expect(new Set(d).size, "duplicate descriptor in: " + d.join(" | ")).toBe(d.length);
   });
 
-  it("every shop declares the whole internal route tree", () => {
-    // The router indexes routeSlugs by InternalRouteKey without a fallback, so
-    // a missing key is `undefined` compared against a path — every route below
-    // it silently stops matching.
-    const required = Object.keys(SHOPS[KEYS[0]!]!.routeSlugs) as InternalRouteKey[];
+  it("every shop declares every REQUIRED route", () => {
+    // ⚠️ REQUIRED, NOT "WHOLE". This used to take the first shop's key set as
+    // the definition of the tree, which made every key mandatory for every
+    // shop — including the five in OPTIONAL_ROUTE_KEYS that a one-model shop
+    // has no page for. The required set is the type's now, and the type also
+    // refuses a missing one at compile time; this names the shop when the
+    // registry is edited without tsc.
+    const optional = new Set<string>(OPTIONAL_ROUTE_KEYS);
+    const required = (Object.keys(SHOPS[KEYS[0]!]!.routeSlugs) as InternalRouteKey[]).filter(
+      (k) => !optional.has(k),
+    );
     for (const key of KEYS) {
       const have = Object.keys(SHOPS[key]!.routeSlugs);
       expect(required.filter((r) => !have.includes(r)), key + " is missing route keys").toEqual(
@@ -158,6 +164,35 @@ describe("every registered shop", () => {
       );
     }
   });
+
+  for (const key of KEYS) {
+    it(key + ": an optional route it declares has a page behind it", () => {
+      // ⚠️ THE OTHER HALF OF OPTIONAL. Leaving a key out is how a shop says
+      // "I do not have this"; declaring it and publishing nothing is the
+      // placeholder-in-the-header defect with a step added. /compare,
+      // /guides and /showroom are pages in content.pages; /guide is a
+      // segment that needs guidePages; /finder is covered by its own gate
+      // below. And the segment and the index travel together.
+      const shop = SHOPS[key]!;
+      const content = CONTENT[key]!;
+      const pageKeys = new Set(content.pages.map((p) => p.key));
+      for (const k of ["/compare", "/guides", "/showroom"] as const) {
+        if (typeof shop.routeSlugs[k] === "string") {
+          expect(pageKeys.has(k), key + " declares " + k + " and publishes no page for it").toBe(
+            true,
+          );
+        }
+      }
+      const seg = typeof shop.routeSlugs["/guide"] === "string";
+      const idx = typeof shop.routeSlugs["/guides"] === "string";
+      expect(seg, key + ": /guide and /guides must be declared together").toBe(idx);
+      if (seg) {
+        expect(content.guidePages.length, key + " declares /guide and has no guides").toBeGreaterThan(0);
+      } else {
+        expect(content.guidePages.length, key + " has guides but no /guide segment").toBe(0);
+      }
+    });
+  }
 });
 
 /**
@@ -274,6 +309,8 @@ describe("every shop's own pages", () => {
 
     it(key + ": every buying guide it publishes resolves under its own segment", () => {
       const base = shop.routeSlugs["/guide"];
+      // Guarded above: a shop with guides declares the segment.
+      if (!base) return;
       const slugs = content.guidePages.map((g) => g.slug);
       expect(new Set(slugs).size, key + " repeats a guide slug: " + slugs.join(" ")).toBe(
         slugs.length,

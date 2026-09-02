@@ -2446,9 +2446,13 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
     // visitor to pick a family; the finder exists for the visitor who cannot,
     // and until now it was reachable only from the hub and the comparison —
     // two pages further in than where the question is actually asked.
-    '<p class="st-cat-help"><a href="' +
-    esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
-    '">Ne veste, kateri? Odgovorite na dve do tri vprašanja →</a></p>' +
+    // Only where there is a choice to guide: the route is optional, and a
+    // catalogue of one has nothing for three questions to choose between.
+    (ctx.shop.routeSlugs["/finder"] && models > 1
+      ? '<p class="st-cat-help"><a href="' +
+        esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
+        '">Ne veste, kateri? Odgovorite na dve do tri vprašanja →</a></p>'
+      : "") +
     "</div>" +
     '<ul class="st-cat-row">' + cards + "</ul>" +
     "</section>"
@@ -2655,9 +2659,11 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
     // The guided choice, offered exactly where indecision lives: a visitor
     // reading a hub of two families and six models is the visitor the three
     // questions were built for.
-    '<p class="st-shop-intro"><a class="st-fnd-link" href="' +
-    esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
-    '">Ne veste, kateri? Odgovorite na dve do tri vprašanja <span aria-hidden="true">→</span> predlagamo model.</a></p>' +
+    (ctx.shop.routeSlugs["/finder"] && (ctx.content.pdps ?? [ctx.content.pdp]).length > 1
+      ? '<p class="st-shop-intro"><a class="st-fnd-link" href="' +
+        esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
+        '">Ne veste, kateri? Odgovorite na dve do tri vprašanja <span aria-hidden="true">→</span> predlagamo model.</a></p>'
+      : "") +
     "</div>" +
     hubChoice(ctx) +
     "</div></section>" +

@@ -1825,14 +1825,20 @@ export function renderStudioHeader(ctx: RenderCtx): string {
   //
   // It remains in the footer, which is where a visitor looks for an address
   // and a company anyway, and every page's own CTA still points at it.
-  const links = [
-    ["/products", c.nav[0]],
-    ["/compare", c.nav[5]],
-    ["/finder", c.nav[6]],
-    ["/guides", c.nav[2]],
-    ["/delivery", c.nav[3]],
-    ["/about", c.nav[1]],
-  ] as const;
+  // ⚠️ ONLY THE ROUTES THIS SHOP DECLARES. /compare, /finder and /guides are
+  // optional keys (tenants/types.ts OPTIONAL_ROUTE_KEYS), and a shop with one
+  // model leaves them out; a menu item pointing at an undeclared route was a
+  // link to a placeholder on every page of that shop.
+  const links = (
+    [
+      ["/products", c.nav[0]],
+      ["/compare", c.nav[5]],
+      ["/finder", c.nav[6]],
+      ["/guides", c.nav[2]],
+      ["/delivery", c.nav[3]],
+      ["/about", c.nav[1]],
+    ] as const
+  ).filter(([k]) => typeof s.routeSlugs[k] === "string");
 
   // WHERE YOU ARE, said by the server. ctx.path is the canonical path each
   // renderer states about itself, so the attribute needs no script — and it
@@ -1861,7 +1867,8 @@ export function renderStudioHeader(ctx: RenderCtx): string {
       if (p.startsWith(s.routeSlugs["/product"] + "/")) return "true";
       if ((c.collections ?? []).some((col) => col.path === p)) return "true";
     }
-    if (key === "/guides" && p.startsWith(s.routeSlugs["/guide"] + "/")) return "true";
+    const guide = s.routeSlugs["/guide"];
+    if (key === "/guides" && guide && p.startsWith(guide + "/")) return "true";
     return null;
   };
 
@@ -1893,7 +1900,7 @@ export function renderStudioHeader(ctx: RenderCtx): string {
     links
       .map(
         ([k, label]) =>
-          '<a href="' + esc(s.routeSlugs[k] + ctx.q) + '"' +
+          '<a href="' + esc(s.routeSlugs[k]! + ctx.q) + '"' +
           ((cur) => (cur ? ' aria-current="' + cur + '"' : ""))(current(k)) +
           // The last of the uppercase-into-the-accessible-name fixes: these
           // six are the menu, on every page, and "O NAS" is short enough for
@@ -2078,7 +2085,11 @@ export function renderStudioFooter(ctx: RenderCtx): string {
   const col = (
     id: string,
     title: string,
-    items: readonly (readonly [string, string])[],
+    // An undefined href is a route this shop does not declare (the optional
+    // keys in tenants/types.ts); the row is dropped rather than rendered as a
+    // link to "/undefined". A column whose rows are all undeclared still
+    // stands, empty, so the grid does not reflow — no shop has one today.
+    items: readonly (readonly [string | undefined, string])[],
   ): string =>
     // aria-label for the same reason the skip link and the on-page navs carry
     // one: the heading is uppercased by CSS, it NAMES the list beside it, and
@@ -2088,6 +2099,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     esc(title) + "</h2>" +
     '<ul aria-labelledby="' + id + '">' +
     items
+      .filter((row): row is readonly [string, string] => typeof row[0] === "string")
       .map(
         ([href, label]) =>
           '<li><a href="' + esc(href + ctx.q) + '">' + esc(label) + "</a></li>",
@@ -2176,7 +2188,13 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     col("st-foot-c1", "Ponudba", [
       ...families,
       [s.routeSlugs["/products"], c.nav[0]] as const,
-      [s.routeSlugs["/compare"], "Primerjava modelov"] as const,
+      // ⚠️ THE SHOP'S OWN LABELS, NOT LITERALS. This column printed
+      // "Primerjava modelov" and "Kateri bazen?" for every shop on the Worker
+      // — the second one is a hot-tub noun in the footer of every page a
+      // sauna shop would serve, including its legal pages. nav[5] and nav[6]
+      // are the same two routes' labels, already the shop's, already what
+      // the header shows; the footer now says what the header says.
+      [s.routeSlugs["/compare"], c.nav[5]] as const,
       // The guided choice, sitewide: it sits under Ponudba because it IS the
       // offer, approached from the other end — the visitor who knows what
       // they want reads the families, the one who does not answers three
@@ -2187,7 +2205,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
       // repeats the h1. A footer link whose words are absent from its
       // destination makes the reader check whether they clicked the right
       // thing.
-      [s.routeSlugs["/finder"], "Kateri bazen?"] as const,
+      [s.routeSlugs["/finder"], c.nav[6]] as const,
     ]) +
     col("st-foot-c2", "Pomoč", [
       [s.routeSlugs["/delivery"], "Dostava in montaža"],

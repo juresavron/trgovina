@@ -602,7 +602,10 @@ export function handleRequest(
   // pravi zame", and the terminal views link real model pages; the answer
   // permutations canonicalize to the entry so six leaf URLs cannot compete
   // with it in an index.
-  if (path === shop.routeSlugs["/finder"]) {
+  // Optional route (tenants/types.ts): a shop with one model declares no
+  // guided choice, and the path comparison must not match `undefined`.
+  const finderPath = shop.routeSlugs["/finder"];
+  if (finderPath !== undefined && path === finderPath) {
     const p = url.searchParams;
     const answers = {
       ...(p.get("namen") ? { namen: p.get("namen")! } : {}),
@@ -757,8 +760,9 @@ export function handleRequest(
   // Modelled on the product route above: a segment, a slug, and a hard 404 for
   // one that does not resolve. An unknown guide must never fall through to a
   // page that renders something else.
-  const guideBase = shop.routeSlugs["/guide"] + "/";
-  if (path.startsWith(guideBase)) {
+  const guideSeg = shop.routeSlugs["/guide"];
+  const guideBase = guideSeg === undefined ? null : guideSeg + "/";
+  if (guideBase !== null && path.startsWith(guideBase)) {
     // ⚠️ THE SHOP'S OWN GUIDES, NOT THE MODULE'S. This read GUIDE_PAGES
     // straight out of content/pages/vodnik.ts, so /vodnik/masazni-bazen-pozimi
     // would have answered on every domain this Worker serves.
@@ -792,7 +796,12 @@ export function handleRequest(
           organizationJsonLd(shop),
           breadcrumbJsonLd(shop, [
             { name: "Domov", path: "/" },
-            { name: "Vodniki", path: shop.routeSlugs["/guides"] },
+            // The index is optional in the type and paired with the segment
+            // by a tenancy gate, so this is belt and braces — a trail must
+            // never carry a crumb whose href is "undefined".
+            ...(shop.routeSlugs["/guides"]
+              ? [{ name: "Vodniki", path: shop.routeSlugs["/guides"] }]
+              : []),
             { name: guide.h1 },
           ]),
           // ⚠️ THE GUIDES WERE THE ONE PAGE TYPE THAT ASKED QUESTIONS AND DID

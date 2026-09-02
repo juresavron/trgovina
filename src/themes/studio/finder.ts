@@ -544,7 +544,11 @@ function stepHtml(
   a: FinderAnswers,
   step: FinderStep,
 ): string {
-  const base = shop.routeSlugs["/finder"];
+  // Declared by construction: the worker renders this module only when the
+  // request matched the shop's own finder route. The key is optional in the
+  // type because a shop may have NO guided choice — not because a page that
+  // is being rendered by it might lack the route it is being rendered at.
+  const base = shop.routeSlugs["/finder"]!;
   // ⚠️ ONLY ANSWERS THE TREE ACCEPTED — walk() replays the branch and drops
   // everything else. Counting raw query entries did two wrong things at
   // once: a stray ?osebe=nonsense made `answered` non-zero, which hid the
@@ -643,12 +647,22 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
       )
       .join("") +
     "</ul>" +
-    '<p class="st-fnd-more">Za odločitev med masažnim bazenom in swim spa ' +
-    'bazenom je <a href="' + esc(shop.routeSlugs["/compare"]) + '">primerjava</a> ' +
-    'krajša pot kot ta vprašalnik; cel katalog s cenami je v <a href="' +
-    esc(shop.routeSlugs["/products"]) + '">trgovini</a>, ' +
-    'kaj je pred dostavo treba pripraviti pa piše v <a href="' +
-    esc(shop.routeSlugs["/guides"]) + '">vodnikih</a>.</p>' +
+    // Three clauses, each only where the route behind it exists. The
+    // comparison and the guides are optional routes (tenants/types.ts); the
+    // catalogue is not. The sentence is assembled so it still reads as one
+    // sentence with either optional clause gone.
+    '<p class="st-fnd-more">' +
+    (shop.routeSlugs["/compare"]
+      ? "Za odločitev med masažnim bazenom in swim spa bazenom je " +
+        '<a href="' + esc(shop.routeSlugs["/compare"]) + '">primerjava</a> ' +
+        "krajša pot kot ta vprašalnik; cel katalog s cenami je v "
+      : "Cel katalog s cenami je v ") +
+    '<a href="' + esc(shop.routeSlugs["/products"]) + '">trgovini</a>' +
+    (shop.routeSlugs["/guides"]
+      ? ', kaj je pred dostavo treba pripraviti pa piše v <a href="' +
+        esc(shop.routeSlugs["/guides"]) + '">vodnikih</a>.'
+      : ".") +
+    "</p>" +
     // WHAT THE TOOL IS AND IS NOT, said before it is used rather than after.
     // A recommender that does not explain itself is asking to be read as a
     // sales funnel — and this one has an honest answer, because it maps a
@@ -670,8 +684,12 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     "potujejo v naslovni vrstici, zato lahko povezavo do predloga tudi shranite ali " +
     "pošljete naprej. Predlog tudi ni ponudba — ali model pri vas gre skozi in ali " +
     "podlaga zdrži, se pokaže šele na " +
-    '<a href="' + esc(shop.routeSlugs["/showroom"]) + '">ogledu lokacije</a>, ' +
-    "ki je brezplačen in ga opravimo pred ponudbo.</p>" +
+    // The site visit is an optional route; without it the words stay and the
+    // anchor goes — the sentence is about what a recommendation cannot know.
+    (shop.routeSlugs["/showroom"]
+      ? '<a href="' + esc(shop.routeSlugs["/showroom"]) + '">ogledu lokacije</a>'
+      : "ogledu lokacije") +
+    ", ki je brezplačen in ga opravimo pred ponudbo.</p>" +
     // NO BUDGET QUESTION, and the omission is deliberate enough to say out
     // loud: a quiz that asks what you can spend and then recommends up to it
     // is doing something other than matching a catalogue. The price is on
@@ -739,10 +757,13 @@ function resultHtml(
     // exactly the one whose next question is "but does it fit at my place?"
     // — and the free site check is the shop's real differentiator, so the
     // recommendation ends by naming it rather than by trailing off.
-    '<p class="st-fnd-visit">Niste prepričani, ali model pri vas gre skozi in ' +
-    'ali podlaga zdrži? <a href="' + esc(shop.routeSlugs["/showroom"]) +
-    '">Ogled lokacije je brezplačen</a> in vas k ničemur ne zavezuje.</p>' +
-    '<a class="st-fnd-back" href="' + esc(shop.routeSlugs["/finder"]) +
+    (shop.routeSlugs["/showroom"]
+      ? '<p class="st-fnd-visit">Niste prepričani, ali model pri vas gre skozi in ' +
+        'ali podlaga zdrži? <a href="' + esc(shop.routeSlugs["/showroom"]) +
+        '">Ogled lokacije je brezplačen</a> in vas k ničemur ne zavezuje.</p>'
+      : "") +
+    // Declared by construction — see stepHtml().
+    '<a class="st-fnd-back" href="' + esc(shop.routeSlugs["/finder"]!) +
     '">← Začnite znova</a>'
   );
 }

@@ -69,11 +69,13 @@ export function sitemapPaths(
     ...(blogHasPosts ? [shop.routeSlugs["/blog"]] : []),
     // The guided choice — stable, indexable entry content; the answered
     // permutations all canonicalize back to this URL.
-    shop.routeSlugs["/finder"],
+    ...(shop.routeSlugs["/finder"] ? [shop.routeSlugs["/finder"]] : []),
     // ⚠️ THE GUIDES, ONE URL EACH. They were three sections of /vodniki and
     // therefore one sitemap entry; docs/SEO.md §1 calls this ladder the
     // topical-authority mechanism, and a mechanism with one URL is a page.
-    ...content.guidePages.map((g) => shop.routeSlugs["/guide"] + "/" + g.slug),
+    ...(shop.routeSlugs["/guide"]
+      ? content.guidePages.map((g) => shop.routeSlugs["/guide"] + "/" + g.slug)
+      : []),
     ...content.pages.filter((p) => !p.noindex)
       .map((p) => shop.routeSlugs[p.key as keyof typeof shop.routeSlugs])
       .filter((slug): slug is string => typeof slug === "string" && slug !== ""),

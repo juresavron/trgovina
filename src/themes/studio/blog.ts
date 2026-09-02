@@ -285,15 +285,22 @@ export function renderStudioBlogIndex(
         // was a promise the shop cannot keep about questions it has not been
         // asked yet, on the page whose lead says it makes no promises it
         // cannot keep.
+        // Both the guides and the comparison are optional routes
+        // (tenants/types.ts); each clause exists only with its page.
         '<p class="st-blog-empty">Prvi zapis pripravljamo. Do takrat na vprašanja ' +
-        "odgovorimo po telefonu ali e-pošti — v " +
-        '<a href="' + esc(ctx.shop.routeSlugs["/guides"] + ctx.q) + '">vodnikih</a> ' +
-        "pa je že zdaj zapisano, kaj je treba pripraviti pred dostavo, kako " +
-        "poteka priklop in koliko prostora model zares potrebuje. Če se " +
-        "odločate med masažnim bazenom in swim spa bazenom, je to razloženo v " +
-        '<a href="' + esc(ctx.shop.routeSlugs["/compare"] + ctx.q) + '">primerjavi</a>; ' +
-        'cel katalog s cenami je v <a href="' +
-        esc(ctx.shop.routeSlugs["/products"] + ctx.q) + '">trgovini</a>.</p>'
+        "odgovorimo po telefonu ali e-pošti" +
+        (ctx.shop.routeSlugs["/guides"]
+          ? " — v " +
+            '<a href="' + esc(ctx.shop.routeSlugs["/guides"] + ctx.q) + '">vodnikih</a> ' +
+            "pa je že zdaj zapisano, kaj je treba pripraviti pred dostavo, kako " +
+            "poteka priklop in koliko prostora model zares potrebuje."
+          : ".") +
+        (ctx.shop.routeSlugs["/compare"]
+          ? " Če se odločate med masažnim bazenom in swim spa bazenom, je to razloženo v " +
+            '<a href="' + esc(ctx.shop.routeSlugs["/compare"] + ctx.q) + '">primerjavi</a>;' +
+            " cel katalog s cenami je v "
+          : " Cel katalog s cenami je v ") +
+        '<a href="' + esc(ctx.shop.routeSlugs["/products"] + ctx.q) + '">trgovini</a>.</p>'
       : // A POST INDEX IS A NAVIGATION PAGE, and left as a bare list of cards
         // it is also the site's only indexable page that says nothing in its
         // own voice — the reader gets three headlines and no idea what the
@@ -305,10 +312,18 @@ export function renderStudioBlogIndex(
         "teže, števila mest in šob — namesto vtisov. Kjer odgovora ni, to " +
         "piše; porabe elektrike na primer ne navajamo, ker je odvisna od " +
         "temperature, uporabe, pokrova in vremena." +
-        ' Praktični del pred dostavo je zbran v <a href="' +
-        esc(ctx.shop.routeSlugs["/guides"] + ctx.q) + '">vodnikih</a>, ' +
-        'odločitev med družinama pa v <a href="' +
-        esc(ctx.shop.routeSlugs["/compare"] + ctx.q) + '">primerjavi</a>.</p>' +
+        (ctx.shop.routeSlugs["/guides"]
+          ? ' Praktični del pred dostavo je zbran v <a href="' +
+            esc(ctx.shop.routeSlugs["/guides"] + ctx.q) + '">vodnikih</a>' +
+            (ctx.shop.routeSlugs["/compare"]
+              ? ', odločitev med družinama pa v <a href="' +
+                esc(ctx.shop.routeSlugs["/compare"] + ctx.q) + '">primerjavi</a>.'
+              : ".")
+          : ctx.shop.routeSlugs["/compare"]
+            ? ' Odločitev med družinama je razložena v <a href="' +
+              esc(ctx.shop.routeSlugs["/compare"] + ctx.q) + '">primerjavi</a>.'
+            : "") +
+        "</p>" +
         // ⚠️ --wide OR THE WHOLE INDEX IS 608px WIDE. page.ts narrows a solo
         // grid that carries no wide block to the 38rem reading measure,
         // which is right for a column of prose and wrong for a two-column
