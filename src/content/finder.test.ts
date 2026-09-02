@@ -30,7 +30,7 @@ describe("the finder's tree", () => {
 });
 
 describe("the finder's verdicts", () => {
-  const pdps = CONTENT["bazen"]!.pdps ?? [];
+  const pdps = CONTENT["bazen"]!.pdps ?? [CONTENT["bazen"]!.pdp];
   const slugs = new Set(pdps.map((d) => d.slug));
 
   it("recommends only products that exist, for every leaf of the tree", () => {

@@ -190,7 +190,7 @@ describe("the stylesheet stays within budget", () => {
     // (render/assets.ts) — so the assertions read it directly, and the
     // request below only proves the page actually references it.
     const res = handleRequest(
-      new Request("https://trgovina.workers.dev/?shop=savna&theme=studio", {
+      new Request("https://trgovina.workers.dev/?shop=bazen&theme=studio", {
         headers: { host: "trgovina.workers.dev" },
       }),
     );

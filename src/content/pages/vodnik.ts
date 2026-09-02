@@ -5,6 +5,7 @@ import {
   reheatKWhText,
   tubAddonRangeText,
   tubAreaListText,
+  tubCountLeadText,
   tubFootprintListText,
   tubHeightRangeText,
   tubLitreRangeText,
@@ -115,7 +116,7 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
       p: [
         "Skupna teža sama pove malo — 2.210 kilogramov je veliko na balkonu in nič " +
           "posebnega na betonski plošči. Uporabna postane, ko jo razdelite na površino, " +
-          "na kateri bazen stoji. Naši trije modeli stojijo na " + tubAreaListText() +
+          "na kateri bazen stoji. " + tubCountLeadText() + " " + tubAreaListText() +
           " kvadratnega metra, kar pri polni vodi pomeni " + tubLoadRangeText() +
           " kilogramov na kvadratni meter — in to preden vanj kdo stopi. Pet odraslih " +
           "po 80 kilogramov doda še 400.",

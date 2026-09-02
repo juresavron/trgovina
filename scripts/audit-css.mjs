@@ -88,7 +88,10 @@ function routes() {
     r.add(slug);
   }
   for (const c of C.collections ?? []) r.add(c.path);
-  for (const p of C.pdps ?? []) r.add(SHOP.routeSlugs["/product"] + "/" + p.slug);
+  // ?? [C.pdp], not ?? []: a shop that carries its one model as `pdp` alone
+  // otherwise has its only product page — the densest page it has — skipped
+  // by an audit that then reports zero errors over the routes it did open.
+  for (const p of C.pdps ?? [C.pdp]) r.add(SHOP.routeSlugs["/product"] + "/" + p.slug);
   return [...r].filter((p) => p && p.startsWith("/"));
 }
 

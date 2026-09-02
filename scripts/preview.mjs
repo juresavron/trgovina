@@ -65,6 +65,9 @@ const OUT = process.env.PREVIEW_DIR || "/tmp/preview";
 // Several polish agents run this harness at once, so the port must be theirs
 // to pick and the page list theirs to extend ("file.html=/path,..." pairs).
 const PORT = Number(process.env.PREVIEW_PORT || 8791);
+// The shop, from the same variable the audit-*.mjs scripts read. The default
+// page list below is that shop's; PREVIEW_PAGES replaces it for another.
+const KEY = process.env.AUDIT_SHOP || "bazen";
 const PAGES = process.env.PREVIEW_PAGES
   ? Object.fromEntries(process.env.PREVIEW_PAGES.split(",").map((e) => e.split("=")))
   : {
@@ -84,7 +87,7 @@ if (existsSync("public")) cpSync("public", OUT, { recursive: true });
 const html = {};
 for (const [file, path] of Object.entries(PAGES)) {
   const res = handleRequest(
-    new Request("https://trgovina.worldfans.workers.dev" + path + "?shop=bazen"),
+    new Request("https://trgovina.worldfans.workers.dev" + path + "?shop=" + KEY),
   );
   html[file] = await res.text();
   writeFileSync(join(OUT, file), html[file]);

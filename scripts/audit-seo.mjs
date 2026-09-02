@@ -77,7 +77,10 @@ function routes() {
     r.add(slug);
   }
   for (const c of C.collections ?? []) r.add(c.path);
-  for (const p of C.pdps ?? []) r.add(SHOP.routeSlugs["/product"] + "/" + p.slug);
+  // ?? [C.pdp], not ?? []: a shop that carries its one model as `pdp` alone
+  // otherwise has its only product page — the densest page it has — skipped
+  // by an audit that then reports zero errors over the routes it did open.
+  for (const p of C.pdps ?? [C.pdp]) r.add(SHOP.routeSlugs["/product"] + "/" + p.slug);
   if (SHOP.routeSlugs["/guide"]) {
     for (const g of C.guidePages) r.add(SHOP.routeSlugs["/guide"] + "/" + g.slug);
   }
@@ -355,7 +358,7 @@ for (const route of PAGES) {
 
 /* --- structured data coverage, per page kind -------------------------- */
 const T = (r) => kinds[r] || [];
-const productPaths = (C.pdps ?? []).map((p) => SHOP.routeSlugs["/product"] + "/" + p.slug);
+const productPaths = (C.pdps ?? [C.pdp]).map((p) => SHOP.routeSlugs["/product"] + "/" + p.slug);
 const collectionPaths = (C.collections ?? []).map((c) => c.path);
 
 for (const r of productPaths) {
@@ -398,7 +401,7 @@ const KWP = fold(SHOP.keyword.plural);
 // It is not a loophole. family comes from the catalogue, not from whoever
 // wrote the title, so a page can only pass on a term the shop actually sells
 // under; a title carrying neither still warns.
-const FAMILIES = [...new Set((C.pdps ?? []).map((d) => d.family))].map(fold);
+const FAMILIES = [...new Set((C.pdps ?? [C.pdp]).map((d) => d.family))].map(fold);
 const money = ["/", SHOP.routeSlugs["/products"], ...collectionPaths, ...productPaths];
 for (const r of money) {
   const html = docs[r] || "";
