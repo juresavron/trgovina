@@ -642,7 +642,10 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     (pdps.length === 1
       ? "<p>En model v ponudbi, z merami in ceno na njegovi strani. Vprašanja " +
         "zgoraj niso pogoj — če veste, kaj iščete, pojdite naravnost nanj.</p>"
-      : "<p>Vseh " + counted(shop.locale.intl, pdps.length, ["model", "modela", "modeli", "modelov"]) +
+      // ACCUSATIVE forms, because the count is the object of "obsega" — and
+      // no determiner in front of it: "Vseh 2 modela" put a genitive-plural
+      // "vseh" on a dual noun, which only agreed with itself from five up.
+      : "<p>Ponudba obsega " + counted(shop.locale.intl, pdps.length, ["model", "modela", "modele", "modelov"]) +
         " v ponudbi, z merami in ceno na strani vsakega. Vprašanja zgoraj niso " +
         "pogoj — če veste, kaj iščete, pojdite naravnost na model.</p>") +
     '<ul class="st-fnd-list">' +
@@ -693,7 +696,8 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     // said "6 modelov" from the same list, and a seventh model would have
     // made a liar of the one that was typed.
     "črpalk. Ponudba šteje " +
-    counted(shop.locale.intl, (content.pdps ?? [content.pdp]).length, ["model", "modela", "modeli", "modelov"]) +
+    // Accusative after "šteje": 2 modela, 3 modele, 6 modelov.
+    counted(shop.locale.intl, (content.pdps ?? [content.pdp]).length, ["model", "modela", "modele", "modelov"]) +
     ", zato preslikave ni treba ocenjevati — " +
     "vsak odgovor vodi do modela, ki tem merilom ustreza, in ob predlogu piše, " +
     "zakaj prav ta. Vsako številko lahko preverite na strani modela.</p>" +

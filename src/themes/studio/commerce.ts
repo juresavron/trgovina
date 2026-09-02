@@ -2407,7 +2407,10 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
   // Both figures come from what this band and this catalogue actually hold —
   // families from the row being rendered, models from the shop's own list.
   const families = cats.length;
-  const models = (ctx.content.pdps ?? []).length;
+  // ?? [pdp], not ?? []: a shop that carries its one model as `pdp` alone —
+  // the shape content/types.ts allows — headed this rail "1 družina, 0
+  // modelov" above a card whose own meta said it holds one.
+  const models = (ctx.content.pdps ?? [ctx.content.pdp]).length;
   const cards = cats
     .map((c, i) => {
       // A photograph where the family has one, its drawing where it does not.

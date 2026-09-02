@@ -1278,7 +1278,12 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
   // rule — and to the stricter half of it: it may say "verified" only when
   // EVERY quote under it has been checked, because it speaks for all of them.
   const allVerified = reviews.every((r) => r.verified === true && !r.placeholder);
-  const heading = allVerified ? "Preverjena mnenja strank" : "Mnenja strank";
+  // Singular over a single quote: a shop with one review — every shop, the
+  // week its first one arrives — was headed "Mnenja strank" over one voice.
+  const heading =
+    reviews.length === 1
+      ? allVerified ? "Preverjeno mnenje stranke" : "Mnenje stranke"
+      : allVerified ? "Preverjena mnenja strank" : "Mnenja strank";
 
   // ⚠️ A GRID, NOT A SLIDER, and the reason is what a testimonial band is for.
   //
