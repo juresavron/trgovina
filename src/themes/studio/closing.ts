@@ -696,11 +696,18 @@ export function renderStudioMembership(ctx: RenderCtx): string {
     // no site visit declares no route, and this button — which promises one
     // — is the thing that must not render for it. The band's own sentence is
     // the shop's (membershipBody) and stays.
+    //
+    // AND A BAND WITH NO CONTROL IS NOT A CLOSING BAND. Without the showroom
+    // route this was a heading and a sentence — "we help you choose" and no
+    // way to ask. The enquiry page is a required route on every shop, so it
+    // is the control a shop without a site visit ends on.
     (ctx.shop.routeSlugs["/showroom"]
       ? '<a class="st-btn-light" href="' +
         esc(ctx.shop.routeSlugs["/showroom"] + ctx.q) +
         '">Naročite brezplačen ogled</a>'
-      : "") +
+      : '<a class="st-btn-light" href="' +
+        esc(ctx.shop.routeSlugs["/contact"] + ctx.q) +
+        '">Pošljite povpraševanje</a>') +
     "</div></section>"
   );
 }

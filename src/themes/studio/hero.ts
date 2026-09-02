@@ -1374,14 +1374,21 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
   // "Masažni bazeni in Swim spa bazeni" — a capital in the middle of a
   // Slovenian sentence, which is an English habit. Lowercased through the
   // shop's own locale, because casing is not the same operation everywhere.
+  // ONE MODEL: THE FOOT NAMES IT. With one model and no families the foot
+  // read "1 model" beside the keyword's plural — a count of one next to a
+  // plural, and nothing else, because the finder button rightly goes. The
+  // range of a one-model shop is the model, so the foot says its name and
+  // drops the chip that would only count it.
   const title =
-    families.length >= 2
-      ? families
-          .map((f, i) =>
-            i === 0 ? f : f.charAt(0).toLocaleLowerCase(ctx.shop.locale.intl) + f.slice(1),
-          )
-          .join(" in ")
-      : ctx.shop.keyword.plural;
+    models === 1
+      ? ctx.content.pdp.title
+      : families.length >= 2
+        ? families
+            .map((f, i) =>
+              i === 0 ? f : f.charAt(0).toLocaleLowerCase(ctx.shop.locale.intl) + f.slice(1),
+            )
+            .join(" in ")
+        : ctx.shop.keyword.plural;
   return (
     '<section class="st-band" aria-label="' + esc(ctx.shop.name) + " — " + esc(title) + '">' +
     '<div class="st-band-photo" aria-hidden="true"></div>' +
@@ -1400,7 +1407,7 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
     // ticker and the impact band, where it is read rather than pointed at.
     "" +
     '<div class="st-band-foot">' +
-    '<span class="st-band-chip">' + esc(chip) + "</span>" +
+    (models === 1 ? "" : '<span class="st-band-chip">' + esc(chip) + "</span>") +
     '<span class="st-band-title">' + esc(title) + "</span>" +
     // The finder, and now the words above it agree: the foot names the range
     // and the button chooses within it. "Which one is mine?" is the question
