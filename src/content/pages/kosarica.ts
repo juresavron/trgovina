@@ -29,8 +29,11 @@ export const CART: Page = {
   lead:
     "Spletno naročanje še ni odprto. Povpraševanje lahko oddate prek obrazca, " +
     "sprejemamo pa tudi klice in e-pošto.",
+  // ⚠️ NO PRODUCT NOUN: this is a universal page (content/pages.ts), and it
+  // said "masažnih bazenov" in the description of every shop's basket. The
+  // universal-page gate now reads the meta as well as the body.
   metaDescription:
-    "Spletno naročanje masažnih bazenov še ni odprto. Naročilo in ponudbo uredimo po telefonu " +
+    "Spletno naročanje še ni odprto. Naročilo in ponudbo uredimo po telefonu " +
     "ali e-pošti, po ogledu lokacije.",
   noindex: true,
   blocks: [

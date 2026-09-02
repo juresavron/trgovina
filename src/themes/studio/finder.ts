@@ -23,6 +23,7 @@ import {
   type FinderStep,
 } from "../../content/finder";
 import { esc } from "../../render/sections";
+import { counted } from "../../lib/plural";
 import type { RenderCtx } from "../../render/sections";
 import { renderStudioHeader, renderStudioFooter } from "./chrome";
 
@@ -634,9 +635,16 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     // what "ne pogoj" already says. So the claim about which route is quicker
     // is made in exactly one place — the note below, which names the one
     // decision the table genuinely settles faster.
-    "<p>Vseh " + pdps.length + " modelov v ponudbi, z merami in ceno na strani " +
-    "vsakega. Vprašanja zgoraj niso pogoj — če veste, kaj iščete, " +
-    "pojdite naravnost na model.</p>" +
+    // ⚠️ counted(), NOT "+ n + ' modelov'". The genitive plural was typed, so
+    // a one-model shop printed "Vseh 1 modelov"; Slovenian has four forms
+    // and src/lib/plural.ts knows them. The one-model sentence is its own,
+    // because "Vseh 1 model" is not a sentence either.
+    (pdps.length === 1
+      ? "<p>En model v ponudbi, z merami in ceno na njegovi strani. Vprašanja " +
+        "zgoraj niso pogoj — če veste, kaj iščete, pojdite naravnost nanj.</p>"
+      : "<p>Vseh " + counted(shop.locale.intl, pdps.length, ["model", "modela", "modeli", "modelov"]) +
+        " v ponudbi, z merami in ceno na strani vsakega. Vprašanja zgoraj niso " +
+        "pogoj — če veste, kaj iščete, pojdite naravnost na model.</p>") +
     '<ul class="st-fnd-list">' +
     pdps
       .map(
@@ -677,7 +685,12 @@ function skipHtml(shop: ShopConfig, content: ShopContent): string {
     '<h2 class="st-fnd-note-h">Na čem temelji predlog</h2>' +
     '<p class="st-fnd-note">Vprašanja zožijo izbiro na podlagi tega, kar o modelih ' +
     "piše v specifikaciji: mere školjke, število mest in ležalnikov, število šob in " +
-    "črpalk. Ponudba šteje šest modelov, zato preslikave ni treba ocenjevati — " +
+    // Derived: this said "šest modelov" in words while the chip in the hero
+    // said "6 modelov" from the same list, and a seventh model would have
+    // made a liar of the one that was typed.
+    "črpalk. Ponudba šteje " +
+    counted(shop.locale.intl, (content.pdps ?? [content.pdp]).length, ["model", "modela", "modeli", "modelov"]) +
+    ", zato preslikave ni treba ocenjevati — " +
     "vsak odgovor vodi do modela, ki tem merilom ustreza, in ob predlogu piše, " +
     "zakaj prav ta. Vsako številko lahko preverite na strani modela.</p>" +
     '<p class="st-fnd-note">Ničesar ne vpišete in ničesar ne shranimo: odgovori ' +

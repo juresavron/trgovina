@@ -339,7 +339,7 @@ export const STUDIO_PDP_CSS = `
     margin: 0;
     /* THE FRAME IS THE SHAPE OF THE PRODUCT IN IT, not one shape for the
      * catalogue. --st-pdp-ar is set on the gallery from the model's own art
-     * key (content/types.ts ArtKey, "pool" | "swimspa"), which is the one
+     * key (content/types.ts ArtKey, "pool" | "swimspa" | "none"), which is the one
      * place the content layer already says which of the two families a model
      * belongs to.
      *
@@ -2470,7 +2470,9 @@ function shot(ctx: RenderCtx, variant = 0, photo?: PdpPhoto): string {
       "</span>"
     );
   }
-  const art = productArt(ctx.shop.key, variant);
+  // The model's own art key where its card carries one, else the shop's —
+  // never the shop KEY, which product-art.ts explains.
+  const art = productArt(artOf(ctx) ?? ctx.content.artKey, variant);
   return (
     '<span class="st-pdp-shot" aria-hidden="true">' +
     (art ? '<span class="st-pdp-shot-art">' + art + "</span>" : '<span class="st-pdp-shot-mass"></span>') +
@@ -2552,7 +2554,7 @@ function family(ctx: RenderCtx): Collection | null {
 
 /**
  * WHICH OF THE TWO FAMILIES THIS MODEL IS, as the content layer already
- * records it: content/types.ts ArtKey, "pool" | "swimspa".
+ * records it: content/types.ts ArtKey, "pool" | "swimspa" | "none".
  *
  * The gallery frame's aspect ratio is the one thing on this page that cannot
  * be the same for both — a hot tub is square (2,30 × 2,30 m) and a swim spa
@@ -2568,7 +2570,7 @@ function family(ctx: RenderCtx): Collection | null {
  */
 function artOf(ctx: RenderCtx): ArtKey | null {
   const own: unknown = (ctx.pdp as { art?: unknown }).art;
-  if (own === "pool" || own === "swimspa") return own;
+  if (own === "pool" || own === "swimspa" || own === "none") return own;
   const slug = ctx.pdp.slug;
   for (const c of ctx.content.collections ?? []) {
     const card = c.products.find((x) => x.slug === slug);

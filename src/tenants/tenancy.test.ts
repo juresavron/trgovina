@@ -407,8 +407,13 @@ describe("the pages every shop can publish", () => {
     const needle = shop.keyword.primary.toLowerCase();
     const offenders: string[] = [];
     for (const page of UNIVERSAL_PAGES) {
+      // ⚠️ THE HEAD TOO. This scanned the body and let "Spletno naročanje
+      // masažnih bazenov še ni odprto" ship as the meta and og:description of
+      // every shop's basket page.
       const text = [
         page.h1,
+        page.seoTitle ?? "",
+        page.metaDescription ?? "",
         page.lead ?? "",
         ...page.blocks.flatMap((b) => {
           if (b.kind === "prose") return b.p;

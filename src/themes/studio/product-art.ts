@@ -1,5 +1,5 @@
 /**
- * Per-shop product illustrations.
+ * Product-family illustrations.
  *
  * WHY THIS EXISTS. Every product slot on the storefront was a rounded
  * rectangle at 12% opacity with a soft shadow under it — which is to say, an
@@ -11,7 +11,7 @@
  * The honest options were a photograph or a drawing. A photograph we do not
  * have — the source theme's bundle is furniture, and a dining chair standing in
  * for a sauna is not a placeholder, it is a false claim about the goods (see
- * media.ts). So: a drawing, per shop, of the thing that shop actually sells.
+ * media.ts). So: a drawing, per product family, of the thing actually sold.
  *
  * A line drawing is the right register for this. It reads instantly as an
  * illustration rather than as a photograph, so it cannot be mistaken for the
@@ -24,7 +24,7 @@
  *
  *   - side or three-quarter elevation, never plan view;
  *   - asymmetric composition — symmetry plus two round shapes is a face;
- *   - one recognisable silhouette per shop, carried by the outline alone;
+ *   - one recognisable silhouette per family, carried by the outline alone;
  *   - detail only where it names the product (a sauna's heater, a plunge
  *     tub's chiller, a table's pockets), never texture for its own sake.
  *
@@ -33,10 +33,21 @@
  * panel. Stroke is currentColor so the host controls ink; the panel sets it.
  */
 
-/** Shop keys that have their own drawing. */
-export type ProductArtKey = "bazen" | "swimspa";
+import type { ArtKey } from "../../content/types";
 
-const ART: Record<ProductArtKey, string> = {
+/**
+ * Keyed by the CARD's art key (content/types.ts ArtKey), not by shop key.
+ *
+ * It was keyed by shop key — `bazen` — which held while one shop sold one
+ * kind of thing and broke the day it sold two: the key named the tenant, the
+ * drawing named a product, and the two agreed by coincidence. A second shop
+ * registering under any other key got no drawing at all, and a shop selling
+ * something these drawings do not show had no honest key to claim.
+ *
+ * Partial so a family with no drawing ("none", or a key added before its
+ * drawing) falls back to the neutral panel rather than to the wrong product.
+ */
+const ART: Partial<Record<ArtKey, string>> = {
   /* Hot tub — a SQUARE acrylic spa in three-quarter view.
    *
    * It was an oval rim on a rectangular cabinet, and the photography that
@@ -55,7 +66,7 @@ const ART: Record<ProductArtKey, string> = {
    * The headrests and the control panel are drawn open-bottomed so they sit ON
    * the rim rather than crossing it — unfilled line art has no occlusion, and
    * anything drawn over the shell shows through and reads as a mistake. */
-  bazen:
+  pool:
     // top rim, a square plan in three-quarter view. Deliberately NOT a
     // symmetric diamond: the back corner sits right of the front one, so the
     // two visible faces are different widths and the shape reads as an object
@@ -139,17 +150,18 @@ const VARIANTS: readonly string[] = [
 ];
 
 /**
- * The illustration for a shop, or null when that shop has none.
+ * The illustration for a product family, or null when it has none.
  *
- * Returning null rather than a generic box is deliberate: a shop with no
+ * Returning null rather than a generic box is deliberate: a family with no
  * drawing should fall back to the neutral panel, not to a picture of something
- * it does not sell.
+ * the shop does not sell. Null and undefined are accepted so a call site with
+ * no key to offer reads the same as one whose key has no drawing.
  *
  * `variant` cycles through the presentations above; pass a card's index and
  * neighbouring cards will differ.
  */
-export function productArt(shopKey: string, variant = 0): string | null {
-  const art = ART[shopKey as ProductArtKey];
+export function productArt(key: ArtKey | null | undefined, variant = 0): string | null {
+  const art = key ? ART[key] : undefined;
   if (!art) return null;
   const g = VARIANTS[((variant % VARIANTS.length) + VARIANTS.length) % VARIANTS.length];
   return (

@@ -244,6 +244,12 @@ export type ShopConfig = {
      *
      * Every theme can render every key, so any order is safe. Length is capped
      * by MAX_SECTIONS_PER_PAGE at the render site.
+     *
+     * TWO SHOPS MAY NOT SHARE AN ORDER. tenants/composition.test.ts refuses
+     * it (the site-network defence, docs/SEO.md §6), and a shop that omits
+     * this takes the theme's one default order — so at most one shop in the
+     * network can leave it unset. The second shop to register fails that
+     * gate, not the render, and the gate is the earliest place it shows.
      */
     composition?: SectionKey[];
   };

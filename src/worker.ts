@@ -659,7 +659,11 @@ export function handleRequest(
       // page that lists EVERY model with its price, and that is what it says.
       // The term is not lost either way — shop.name is "Masažni bazeni
       // Vrelec", so every title on this site carries it in the suffix.
-      title: "Vsi modeli in cene | " + shop.name,
+      // "Vsi modeli in cene" above one model promises a list; the page is
+      // then simply what the shop calls it.
+      title:
+        ((content.pdps ?? [content.pdp]).length > 1 ? "Vsi modeli in cene" : content.nav[0]) +
+        " | " + shop.name,
       // NOT content.metaDescription: that is the home page's, and two
       // indexable pages sharing one description give a search engine nothing
       // to tell them apart. Falls back only if a shop has not written one.

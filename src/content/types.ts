@@ -20,8 +20,14 @@ import type { GuidePage, Page } from "./pages";
  * as a 2 m square is the same error as a photograph of the wrong model, and
  * the two sit side by side in the category rail where the difference is the
  * only thing the row is trying to say.
+ *
+ * "none" is the honest key for a family with no drawing. Without it a shop
+ * whose product is neither of these had to claim "pool" to satisfy the type,
+ * and a square hot tub standing in for whatever it sells is exactly the
+ * wrong picture the paragraph above warns about. It renders the neutral
+ * panel — the same thing product-art.ts returns null for.
  */
-export type ArtKey = "pool" | "swimspa";
+export type ArtKey = "pool" | "swimspa" | "none";
 
 /**
  * A LISTING PAGE — one product family, at its own URL.
