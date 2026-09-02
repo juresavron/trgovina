@@ -70,7 +70,10 @@ function faqFor(page: Page): object[] {
 function modelParam(url: URL, content: ShopContent): PdpContent | undefined {
   const slug = url.searchParams.get("model");
   if (!slug) return undefined;
-  return (content.pdps ?? []).find((p) => p.slug === slug);
+  // ?? [pdp]: a shop that carries its one model as `pdp` alone sends
+  // ?model=<flagship> from its own product page, and this answered as if no
+  // model had been named.
+  return (content.pdps ?? [content.pdp]).find((p) => p.slug === slug);
 }
 
 /**
@@ -622,7 +625,11 @@ export function handleRequest(
       path,
       title: "Kateri bazen je pravi za vas? | " + shop.name,
       description:
-        "Tri vprašanja — namen, število oseb in prostor — in predlagamo " +
+        // "Dve do tri", the number the tree actually asks (content/finder.ts
+        // nextStep: the swim-spa branch asks two), the same figure the page's
+        // own lead and the hub's link state. This said three and named the
+        // hot-tub branch's questions as if every path asked them.
+        "Dve do tri vprašanja — namen, velikost in moč masaže — in predlagamo " +
         "model iz naše ponudbe, z razlogi, ki jih lahko preverite v " +
         "specifikacijah.",
       noindex: dev,
@@ -755,7 +762,7 @@ export function handleRequest(
           collection.products
             .map((p) => ("slug" in p ? p.slug : undefined))
             .filter((x): x is string => typeof x === "string")
-            .map((slug) => (content.pdps ?? []).find((d) => d.slug === slug))
+            .map((slug) => (content.pdps ?? [content.pdp]).find((d) => d.slug === slug))
             .filter((d): d is NonNullable<typeof d> => d !== undefined),
         ),
       ],

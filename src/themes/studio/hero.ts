@@ -1407,7 +1407,10 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
     // a brand statement leaves a reader with.
     // The guided choice is an optional route; a shop with one model has no
     // question to ask here, and the foot ends on the range.
-    (ctx.shop.routeSlugs["/finder"]
+    // AND MORE THAN ONE MODEL. A one-model shop that keeps the finder
+    // declared printed a chip saying "1 model" beside a button asking which
+    // one is right — the same question the chip had just answered.
+    (ctx.shop.routeSlugs["/finder"] && models > 1
       ? '<a class="st-btn-light" href="' + esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
         '">Kateri je pravi za vas?</a>'
       : "") +

@@ -2309,7 +2309,12 @@ export function renderStudioRail(ctx: RenderCtx): string {
   // terrace and a buyer with a garden are not choosing between neighbouring
   // options, so the models are the wrong first question by a wide margin.
   const cats = ctx.content.categories ?? [];
-  if (cats.length > 0) return renderCategoryRail(ctx, cats);
+  // TWO OR MORE. One family is not a kind to choose between, and a shop
+  // with one category printed a rail of one family card headed "1 družina,
+  // 1 model" directly above the grid that shows the same model. With one
+  // family the models are the right second act, and the rail below decides
+  // for itself whether there are enough of them to be one.
+  if (cats.length > 1) return renderCategoryRail(ctx, cats);
 
   const items = ctx.content.products.filter(
     (p: ProductCard | UtilCard): p is ProductCard => !("util" in p),
@@ -2541,7 +2546,7 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
  * under a "Filtracija" heading.
  */
 function compareTable(ctx: RenderCtx, c: Collection): string {
-  const pdps = ctx.content.pdps ?? [];
+  const pdps = ctx.content.pdps ?? [ctx.content.pdp];
   const rows: PdpContent[] = [];
   for (const p of c.products) {
     if (!p.slug) return "";

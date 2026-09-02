@@ -115,7 +115,9 @@ describe("every registered shop", () => {
       // A card without a resolvable slug is a link to a 404 on the one page
       // whose whole job is to send visitors to products.
       const content = CONTENT[key]!;
-      const slugs = new Set((content.pdps ?? []).map((p) => p.slug));
+      // ?? [pdp]: the one-model shape carries its page as `pdp` alone, and
+      // the router serves it — this gate failed that shop for a page it has.
+      const slugs = new Set((content.pdps ?? [content.pdp]).map((p) => p.slug));
       const dangling: string[] = [];
       for (const c of content.collections ?? []) {
         for (const p of c.products) {
