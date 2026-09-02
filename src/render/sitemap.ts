@@ -55,7 +55,9 @@ export function sitemapPaths(
     // The shop hub and every collection. These are the pages built to rank —
     // "masažni bazen" and "swim spa" are different queries — so leaving them
     // out would hide the two most important URLs after home.
-    ...((content.collections ?? []).length > 0 ? [shop.routeSlugs["/products"]] : []),
+    // Unconditional now: the hub renders for a shop with no families too
+    // (worker.ts), listing its models flat, so the URL is always a page.
+    shop.routeSlugs["/products"],
     ...(content.collections ?? []).map((c) => c.path),
     ...(content.pdps ?? [content.pdp]).map((d) => shop.routeSlugs["/product"] + "/" + d.slug),
     // ⚠️ THE BLOG INDEX ONLY ONCE SOMETHING IS PUBLISHED, and it used to be
@@ -69,11 +71,13 @@ export function sitemapPaths(
     ...(blogHasPosts ? [shop.routeSlugs["/blog"]] : []),
     // The guided choice — stable, indexable entry content; the answered
     // permutations all canonicalize back to this URL.
-    shop.routeSlugs["/finder"],
+    ...(shop.routeSlugs["/finder"] ? [shop.routeSlugs["/finder"]] : []),
     // ⚠️ THE GUIDES, ONE URL EACH. They were three sections of /vodniki and
     // therefore one sitemap entry; docs/SEO.md §1 calls this ladder the
     // topical-authority mechanism, and a mechanism with one URL is a page.
-    ...content.guidePages.map((g) => shop.routeSlugs["/guide"] + "/" + g.slug),
+    ...(shop.routeSlugs["/guide"]
+      ? content.guidePages.map((g) => shop.routeSlugs["/guide"] + "/" + g.slug)
+      : []),
     ...content.pages.filter((p) => !p.noindex)
       .map((p) => shop.routeSlugs[p.key as keyof typeof shop.routeSlugs])
       .filter((slug): slug is string => typeof slug === "string" && slug !== ""),

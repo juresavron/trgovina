@@ -856,8 +856,15 @@ export function renderPlaceholder(
     // contact is the shop's whole conversion path. Quiet links under the
     // button — the page stays an apology, not a sitemap.
     '<p class="placeholder-links">' +
-    '<a href="' + esc(shop.routeSlugs["/products"] + q) + '">Vsi modeli</a>' +
-    '<a href="' + esc(shop.routeSlugs["/finder"] + q) + '">Kateri bazen je pravi za vas?</a>' +
+    '<a href="' + esc(shop.routeSlugs["/products"] + q) + '">' +
+    esc((content.pdps ?? [content.pdp]).length > 1 ? "Vsi modeli" : content.nav[0]) + "</a>" +
+    // ⚠️ THE SHOP'S OWN LABEL, AND ONLY WHERE THE ROUTE EXISTS. This said
+    // the finder's 'which one is right for you?' on every 404 of every shop on the
+    // Worker; nav[6] is what the shop calls its guided choice, and the route
+    // is optional (tenants/types.ts).
+    (shop.routeSlugs["/finder"]
+      ? '<a href="' + esc(shop.routeSlugs["/finder"] + q) + '">' + esc(content.nav[6]) + "</a>"
+      : "") +
     '<a href="' + esc(shop.routeSlugs["/contact"] + q) + '">Kontakt</a>' +
     "</p>" +
     "</div></div></section></main>" +

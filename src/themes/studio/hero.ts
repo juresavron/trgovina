@@ -981,7 +981,11 @@ function photoSlot(ctx: RenderCtx): string {
   // showed to be an empty grey box sitting where the product should be. A
   // shop with no drawing keeps the neutral mass rather than borrowing another
   // shop's goods.
-  const art = productArt(ctx.shop.key);
+  // Keyed on what the shop SELLS (content.artKey), not on who the shop is:
+  // a drawing looked up by shop key returned null for every shop but the one
+  // whose key happened to match, and would draw a hot tub for a shop whose
+  // key collided with the art's.
+  const art = productArt(ctx.content.artKey);
   return (
     '<div class="st-photo" aria-hidden="true">' +
     (art ? '<span class="st-photo-art">' + art + "</span>" : '<span class="st-photo-mass"></span>') +
@@ -1284,19 +1288,22 @@ export function renderStudioHero(ctx: RenderCtx): string {
     "</div>" +
     // WHAT CAN BE CHECKED, in its own block: a rating this shop did not
     // collect and three facts each backed by a page of its own.
-    '<div class="st-hero-proof">' +
-    // THE RATING, WHERE IT IS CHECKABLE OR NOT AT ALL. See googleRating in
-    // tenants/types.ts: unset by default, and all four fields or nothing.
-    googleRatingHtml(ctx) +
-    // THE PROOF ROW. See heroTrust in content/types.ts for why this list is
-    // not `trust`: every item here is confirmed and backed by another page,
-    // and the price is derived from the offered models rather than typed.
-    (c.heroTrust
-      ? '<ul class="st-hero-trust">' +
-        c.heroTrust.map((t) => "<li>" + esc(t) + "</li>").join("") +
-        "</ul>"
-      : "") +
-    "</div>" +
+    // The wrapper only where it wraps something: a shop with no rating and no
+    // proof row rendered an empty <div class="st-hero-proof"> under its CTA.
+    ((proof) => (proof ? '<div class="st-hero-proof">' + proof + "</div>" : ""))(
+      // THE RATING, WHERE IT IS CHECKABLE OR NOT AT ALL. See googleRating in
+      // tenants/types.ts: unset by default, and all four fields or nothing.
+      googleRatingHtml(ctx) +
+        // THE PROOF ROW. See heroTrust in content/types.ts for why this list
+        // is not `trust`: every item here is confirmed and backed by another
+        // page, and the price is derived from the offered models rather than
+        // typed.
+        (c.heroTrust
+          ? '<ul class="st-hero-trust">' +
+            c.heroTrust.map((t) => "<li>" + esc(t) + "</li>").join("") +
+            "</ul>"
+          : ""),
+    ) +
     "</div>" +
     // Bottom-right, out of the reading path but on the same frame as the
     // photograph it qualifies — and absent entirely once the photograph is
@@ -1352,7 +1359,11 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
   // were the half that could move. So the foot now states what the shop
   // sells — the count and the two families, both derived from the catalogue
   // rather than typed — and the button chooses between them.
-  const models = ctx.content.pdps?.length ?? 0;
+  // ⚠️ pdps ?? [pdp], THE WAY THE ROUTER COUNTS. `pdps?.length ?? 0` read a
+  // one-model shop — which may omit pdps and carry the model as `pdp` — as
+  // ZERO models, so the chip fell back to the keyword and the band printed
+  // the same two words twice ("finske savne / finske savne").
+  const models = (ctx.content.pdps ?? [ctx.content.pdp]).length;
   const families = (ctx.content.collections ?? []).map((c) => c.h1);
   const chip =
     models > 0
@@ -1394,8 +1405,15 @@ export function renderStudioWordmarkBand(ctx: RenderCtx): string {
     // The finder, and now the words above it agree: the foot names the range
     // and the button chooses within it. "Which one is mine?" is the question
     // a brand statement leaves a reader with.
-    '<a class="st-btn-light" href="' + esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
-    '">Kateri je pravi za vas?</a>' +
+    // The guided choice is an optional route; a shop with one model has no
+    // question to ask here, and the foot ends on the range.
+    // AND MORE THAN ONE MODEL. A one-model shop that keeps the finder
+    // declared printed a chip saying "1 model" beside a button asking which
+    // one is right — the same question the chip had just answered.
+    (ctx.shop.routeSlugs["/finder"] && models > 1
+      ? '<a class="st-btn-light" href="' + esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
+        '">Kateri je pravi za vas?</a>'
+      : "") +
     "</div></section>"
   );
 }

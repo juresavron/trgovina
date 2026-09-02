@@ -64,6 +64,18 @@ const { CONTENT } = await bundle("src/content/index.ts");
 // contrast.
 const { blogIndexDoc } = await bundle("src/blog/routes.ts");
 
+// ⚠️ THE SHOP UNDER AUDIT IS A PARAMETER, NOT A LITERAL. Every audit in this
+// directory read SHOPS["bazen"] and CONTENT["bazen"] and sent ?shop=bazen,
+// which meant a second shop could pass every test in src/ and still ship
+// with its titles, descriptions, heading trees and dead links unaudited —
+// there was no way to point the audit at it. AUDIT_SHOP=<key> picks the
+// shop; an unknown key fails here rather than auditing the default shop
+// under the wrong name.
+const KEY = process.env.AUDIT_SHOP || "bazen";
+if (!SHOPS[KEY] || !CONTENT[KEY]) {
+  console.error("AUDIT_SHOP=" + KEY + " is not a registered shop with content");
+  process.exit(2);
+}
 const OUT = process.env.AUDIT_DIR || "/tmp/site-audit";
 const PORT = Number(process.env.AUDIT_PORT || 8890);
 const HOST = "https://trgovina.worldfans.workers.dev";
@@ -82,7 +94,7 @@ const NOT_PAGES = new Set(["/product", "/guide", "/order-success"]);
 
 /** Every route the site serves, derived rather than hand-listed. */
 function routes() {
-  const shop = SHOPS["bazen"];
+  const shop = SHOPS[KEY];
   const r = new Set(["/"]);
   for (const [key, slug] of Object.entries(shop.routeSlugs)) {
     if (NOT_PAGES.has(key)) continue;
@@ -94,7 +106,7 @@ function routes() {
   // how an h1 -> h3 skip on both of them survived this audit's first run.
   // The lesson generalises: derive the list from every place a route can be
   // declared, or the audit's coverage quietly tracks one of them.
-  for (const c of CONTENT["bazen"]?.collections ?? []) r.add(c.path);
+  for (const c of CONTENT[KEY]?.collections ?? []) r.add(c.path);
   return [...r].filter((p) => p && p.startsWith("/"));
 }
 
@@ -105,27 +117,27 @@ if (existsSync("public")) cpSync("public", OUT, { recursive: true });
 
 const docs = {};
 const statuses = {};
-const BLOG = SHOPS["bazen"].routeSlugs["/blog"];
+const BLOG = SHOPS[KEY].routeSlugs["/blog"];
 for (const path of PAGES) {
   if (path === BLOG) {
     statuses[path] = 200;
-    docs[path] = blogIndexDoc(SHOPS["bazen"], CONTENT["bazen"], [], true);
+    docs[path] = blogIndexDoc(SHOPS[KEY], CONTENT[KEY], [], true);
     continue;
   }
-  const res = handleRequest(new Request(HOST + path + "?shop=bazen"));
+  const res = handleRequest(new Request(HOST + path + "?shop=" + KEY));
   statuses[path] = res.status;
   docs[path] = await res.text();
 }
 // Every product page. Two used to be "enough to catch a template fault",
 // which is true only for faults the template has everywhere; a spec row or a
 // numeral that is wrong on ONE model is exactly what a sample misses.
-const shopCfg = SHOPS["bazen"];
-const content0 = CONTENT["bazen"];
+const shopCfg = SHOPS[KEY];
+const content0 = CONTENT[KEY];
 const productPaths = (content0?.pdps ?? (content0 ? [content0.pdp] : [])).map(
   (d) => shopCfg.routeSlugs["/product"] + "/" + d.slug,
 );
 for (const p of productPaths) {
-  const res = handleRequest(new Request(HOST + p + "?shop=bazen"));
+  const res = handleRequest(new Request(HOST + p + "?shop=" + KEY));
   statuses[p] = res.status;
   docs[p] = await res.text();
   PAGES.push(p);

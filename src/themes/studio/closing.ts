@@ -691,9 +691,16 @@ export function renderStudioMembership(ctx: RenderCtx): string {
     // It is the shop's own now — ShopContent.membershipBody — and the heading
     // above it was already correct, taking the keyword in the accusative.
     '<p class="st-mem-p">' + esc(ctx.content.membershipBody) + "</p>" +
-    '<a class="st-btn-light" href="' +
-    esc(ctx.shop.routeSlugs["/showroom"] + ctx.q) +
-    '">Naročite brezplačen ogled</a>' +
+    // ⚠️ THE NOTE ABOVE SAID THE SHOWROOM ROUTE "is required on every
+    // ShopConfig". It is optional now (tenants/types.ts): a shop that offers
+    // no site visit declares no route, and this button — which promises one
+    // — is the thing that must not render for it. The band's own sentence is
+    // the shop's (membershipBody) and stays.
+    (ctx.shop.routeSlugs["/showroom"]
+      ? '<a class="st-btn-light" href="' +
+        esc(ctx.shop.routeSlugs["/showroom"] + ctx.q) +
+        '">Naročite brezplačen ogled</a>'
+      : "") +
     "</div></section>"
   );
 }

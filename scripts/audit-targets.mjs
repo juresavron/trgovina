@@ -87,8 +87,20 @@ const { CONTENT } = await bundle("src/content/index.ts", "content");
 // pure, and its empty state is exactly what ships while there are no posts.
 const { blogIndexDoc } = await bundle("src/blog/routes.ts", "blog");
 
-const SHOP = SHOPS["bazen"];
-const C = CONTENT["bazen"];
+// ⚠️ THE SHOP UNDER AUDIT IS A PARAMETER, NOT A LITERAL. Every audit in this
+// directory read SHOPS["bazen"] and CONTENT["bazen"] and sent ?shop=bazen,
+// which meant a second shop could pass every test in src/ and still ship
+// with its titles, descriptions, heading trees and dead links unaudited —
+// there was no way to point the audit at it. AUDIT_SHOP=<key> picks the
+// shop; an unknown key fails here rather than auditing the default shop
+// under the wrong name.
+const KEY = process.env.AUDIT_SHOP || "bazen";
+if (!SHOPS[KEY] || !CONTENT[KEY]) {
+  console.error("AUDIT_SHOP=" + KEY + " is not a registered shop with content");
+  process.exit(2);
+}
+const SHOP = SHOPS[KEY];
+const C = CONTENT[KEY];
 const HOST = "trgovina.workers.dev";
 const NOT_PAGES = new Set(["/product", "/guide", "/order-success"]);
 
@@ -112,7 +124,7 @@ for (const path of ROUTES) {
   }
   // ⚠️ THE HOST HEADER IS THE TENANCY KEY — without it every route 404s.
   const res = handleRequest(
-    new Request("https://" + HOST + path + "?shop=bazen", { headers: { host: HOST } }),
+    new Request("https://" + HOST + path + "?shop=" + KEY, { headers: { host: HOST } }),
   );
   html[path] = await res.text();
 }

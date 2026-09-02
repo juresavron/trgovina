@@ -41,14 +41,17 @@ describe("the testimonial band's claims", () => {
     const html = withReviews([R()]);
     expect(html).toContain("BAZEN 230");
     expect(html).not.toContain("Preverjen nakup");
-    expect(html).not.toContain("Preverjena mnenja strank");
-    expect(html).toContain("Mnenja strank");
+    // One review, one heading: the singular is the same 23b claim in the
+    // singular, and it must be as absent as the plural.
+    expect(html).not.toContain("Preverjeno mnenje");
+    expect(html).not.toContain("Preverjena mnenja");
+    expect(html).toContain("Mnenje stranke");
   });
 
   it("claims it only when the operator ticked verified", () => {
     const html = withReviews([R({ verified: true })]);
     expect(html).toContain("Preverjen nakup · BAZEN 230");
-    expect(html).toContain("Preverjena mnenja strank");
+    expect(html).toContain("Preverjeno mnenje stranke");
   });
 
   it("never claims it for a placeholder, even one marked verified", () => {
@@ -56,7 +59,8 @@ describe("the testimonial band's claims", () => {
     // test: invented content can never be a checked purchase.
     const html = withReviews([R({ verified: true, placeholder: true })]);
     expect(html).not.toContain("Preverjen nakup");
-    expect(html).not.toContain("Preverjena mnenja strank");
+    expect(html).not.toContain("Preverjeno mnenje");
+    expect(html).not.toContain("Preverjena mnenja");
   });
 
   it("HEADS THE BAND AS VERIFIED ONLY WHEN EVERY QUOTE UNDER IT IS", () => {
@@ -135,6 +139,7 @@ describe("the testimonial band's claims", () => {
     const html = withReviews([]);
     expect(html).not.toContain("st-tst-q");
     expect(html).not.toContain("Mnenja strank");
+    expect(html).not.toContain("Mnenje stranke");
   });
 
   it("carries no photograph", () => {

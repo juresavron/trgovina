@@ -1278,7 +1278,12 @@ export function renderStudioTestimonials(ctx: RenderCtx): string {
   // rule — and to the stricter half of it: it may say "verified" only when
   // EVERY quote under it has been checked, because it speaks for all of them.
   const allVerified = reviews.every((r) => r.verified === true && !r.placeholder);
-  const heading = allVerified ? "Preverjena mnenja strank" : "Mnenja strank";
+  // Singular over a single quote: a shop with one review — every shop, the
+  // week its first one arrives — was headed "Mnenja strank" over one voice.
+  const heading =
+    reviews.length === 1
+      ? allVerified ? "Preverjeno mnenje stranke" : "Mnenje stranke"
+      : allVerified ? "Preverjena mnenja strank" : "Mnenja strank";
 
   // ⚠️ A GRID, NOT A SLIDER, and the reason is what a testimonial band is for.
   //
@@ -1395,7 +1400,11 @@ function quoteCard(r: {
 export function renderStudioGuides(ctx: RenderCtx): string {
   const guides = ctx.content.guides;
   if (!guides.length) return "";
-  const base = ctx.shop.routeSlugs["/guide"] + "/";
+  // The article segment is an optional route; cards with no segment to
+  // point at are cards to a 404, so the band stands down with it.
+  const seg = ctx.shop.routeSlugs["/guide"];
+  if (!seg) return "";
+  const base = seg + "/";
   return (
     '<section class="st-gd" id="vodniki"><div class="st-gd-in">' +
     '<h2 class="st-gd-h">Preden kupite ' + esc(ctx.shop.keyword.accusative) + "</h2>" +

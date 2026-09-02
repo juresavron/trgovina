@@ -437,6 +437,17 @@ export const STUDIO_COMMERCE_CSS = `
     gap: 0;
     padding: var(--bw-line);
   }
+  /* ⚠️ A GRID OF ONE IS NOT ONE CELL THE WIDTH OF THE TABLE. flex-grow hands a
+   * lone card the whole line: measured on a one-model shop at 1440, a
+   * 1358 × 1284px card whose photograph area was a ~1000px grey square,
+   * against the 453 × 529 the same card is at in a row of three. The card
+   * keeps the width it would have as one of three, and the table's rule
+   * closes around it. Only above the phone tier, where there ARE columns. */
+  @media (min-width: 810px) {
+    :root[data-theme="studio"] .st-grid > .st-card:only-child {
+      flex: 0 0 calc(100% / 3);
+    }
+  }
 
   :root[data-theme="studio"] .st-card {
     display: flex; flex-direction: column;
@@ -945,6 +956,12 @@ export const STUDIO_COMMERCE_CSS = `
     :root[data-theme="studio"] .st-hub-choice {
       grid-template-columns: 1fr 1fr;
     }
+    /* content/types.ts describes hubChoice as "two cards" and the type
+     * accepts one; with one, the fixed pair of tracks left the right half of
+     * the band blank beside it. One entry, one track. */
+    :root[data-theme="studio"] .st-hub-choice:has(> :only-child) {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
   :root[data-theme="studio"] .st-hub-card-a {
     display: flex;
@@ -1194,6 +1211,12 @@ export const STUDIO_COMMERCE_CSS = `
     display: grid;
     flex: 1 1 min(100%, 340px);
     min-width: 0;
+  }
+  /* Same fault, same fix, one band up: a lone family card grew to the whole
+   * row (~1300px wide, ~1000px tall on a one-family shop). It keeps its basis
+   * and stops growing. */
+  :root[data-theme="studio"] .st-cat-item:only-child {
+    flex-grow: 0;
   }
   :root[data-theme="studio"] .st-cat-card {
     display: flex; flex-direction: column;
@@ -2053,7 +2076,8 @@ function shot(
   // A drawing of the wrong shape of product is the same error as a photograph
   // of the wrong model, and it is harder to spot because a drawing already
   // looks approximate.
-  const art = productArt(artKey === "swimspa" ? "swimspa" : ctx.shop.key, variant);
+  // By the card's own art key — see product-art.ts for why not by shop key.
+  const art = productArt(artKey, variant);
   return (
     '<span class="st-shot" aria-hidden="true">' +
     (art ? '<span class="st-shot-art">' + art + "</span>" : '<span class="st-shot-mass"></span>') +
@@ -2224,6 +2248,8 @@ function productCards(
 
 export function renderStudioProducts(ctx: RenderCtx): string {
   const cards = productCards(ctx, ctx.content.products);
+  // How many models the shop actually serves, the way the router counts.
+  const models = (ctx.content.pdps ?? [ctx.content.pdp]).length;
 
   return (
     '<section class="st-shop" id="izbor"><div class="st-shop-in">' +
@@ -2232,7 +2258,9 @@ export function renderStudioProducts(ctx: RenderCtx): string {
     // statement about sales data, and this shop has none yet — asserting one
     // is a misleading practice under UCPD Art. 6 / ZVPot-1, the same doctrine
     // that keeps invented reviews off the page.
-    '<p class="st-eyebrow">Izbrani modeli</p>' +
+    // "Izbrani modeli" is a selection FROM a range; a shop with one model has
+    // made no selection and the eyebrow says what the band holds.
+    '<p class="st-eyebrow">' + (models > 1 ? "Izbrani modeli" : "Model") + "</p>" +
     // The heading is the shop's own hand-written CTA line, not a templated
     // sentence: four shops on this baseline must not share a visible line.
     '<h2 class="st-sec-h">' + esc(ctx.content.cta) + "</h2>" +
@@ -2240,8 +2268,12 @@ export function renderStudioProducts(ctx: RenderCtx): string {
     // The way to the OTHER two. This band shows four of six models and ended
     // on the util tile: a visitor whose model was not among the four had no
     // route to the rest from the band that asked them to choose.
+    // "Vsi modeli" above one model is a promise of more; the hub still
+    // exists for that shop (commerce.ts flatHub), so the link stays and takes
+    // the shop's own name for the page.
     '<p class="st-shop-more st-shop-more--head"><a class="st-btn-line" href="' +
-    esc(ctx.shop.routeSlugs["/products"] + ctx.q) + '">Vsi modeli</a></p>' +
+    esc(ctx.shop.routeSlugs["/products"] + ctx.q) + '">' +
+    esc(models > 1 ? "Vsi modeli" : ctx.content.nav[0]) + "</a></p>" +
     "</div>" +
     // The grid element is what carries the ruled table's 1px padding, so an
     // EMPTY one is not an empty box — it is a 2px grey hairline sitting under
@@ -2277,13 +2309,23 @@ export function renderStudioRail(ctx: RenderCtx): string {
   // terrace and a buyer with a garden are not choosing between neighbouring
   // options, so the models are the wrong first question by a wide margin.
   const cats = ctx.content.categories ?? [];
-  if (cats.length > 0) return renderCategoryRail(ctx, cats);
+  // TWO OR MORE. One family is not a kind to choose between, and a shop
+  // with one category printed a rail of one family card headed "1 družina,
+  // 1 model" directly above the grid that shows the same model. With one
+  // family the models are the right second act, and the rail below decides
+  // for itself whether there are enough of them to be one.
+  if (cats.length > 1) return renderCategoryRail(ctx, cats);
 
   const items = ctx.content.products.filter(
     (p: ProductCard | UtilCard): p is ProductCard => !("util" in p),
   );
   // An empty rail would render a heading and a nav row that lead nowhere.
-  if (items.length === 0) return "";
+  // ⚠️ AND A RAIL OF ONE IS THE GRID BELOW IT, SAID TWICE. Measured on a
+  // one-model shop: the same card in an 883px band headed "Ponudba", then
+  // again in the 1642px "Izbrani modeli" grid directly under it. The rail
+  // exists to offer a choice between things; below two it offers nothing the
+  // next band does not.
+  if (items.length <= 1) return "";
 
   const href = pdpHref(ctx);
   const title = capFirst(ctx.shop.keyword.plural, ctx.shop.locale.intl);
@@ -2370,13 +2412,16 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
   // Both figures come from what this band and this catalogue actually hold —
   // families from the row being rendered, models from the shop's own list.
   const families = cats.length;
-  const models = (ctx.content.pdps ?? []).length;
+  // ?? [pdp], not ?? []: a shop that carries its one model as `pdp` alone —
+  // the shape content/types.ts allows — headed this rail "1 družina, 0
+  // modelov" above a card whose own meta said it holds one.
+  const models = (ctx.content.pdps ?? [ctx.content.pdp]).length;
   const cards = cats
     .map((c, i) => {
       // A photograph where the family has one, its drawing where it does not.
       // Never the other family's picture: the whole row exists to show that
       // these two are different sizes of thing.
-      const art = c.art ? productArt(c.art === "swimspa" ? "swimspa" : ctx.shop.key, i) : null;
+      const art = c.art ? productArt(c.art, i) : null;
       const visual = c.photo
         ? productImg(
             c.photo,
@@ -2446,9 +2491,13 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
     // visitor to pick a family; the finder exists for the visitor who cannot,
     // and until now it was reachable only from the hub and the comparison —
     // two pages further in than where the question is actually asked.
-    '<p class="st-cat-help"><a href="' +
-    esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
-    '">Ne veste, kateri? Odgovorite na dve do tri vprašanja →</a></p>' +
+    // Only where there is a choice to guide: the route is optional, and a
+    // catalogue of one has nothing for three questions to choose between.
+    (ctx.shop.routeSlugs["/finder"] && models > 1
+      ? '<p class="st-cat-help"><a href="' +
+        esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
+        '">Ne veste, kateri? Odgovorite na dve do tri vprašanja →</a></p>'
+      : "") +
     "</div>" +
     '<ul class="st-cat-row">' + cards + "</ul>" +
     "</section>"
@@ -2497,7 +2546,7 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
  * under a "Filtracija" heading.
  */
 function compareTable(ctx: RenderCtx, c: Collection): string {
-  const pdps = ctx.content.pdps ?? [];
+  const pdps = ctx.content.pdps ?? [ctx.content.pdp];
   const rows: PdpContent[] = [];
   for (const p of c.products) {
     if (!p.slug) return "";
@@ -2639,12 +2688,21 @@ function hubChoice(ctx: RenderCtx): string {
 
 export function renderStudioShopHub(ctx: RenderCtx): string {
   const cols = ctx.content.collections ?? [];
-  if (cols.length === 0) return "";
+  // ⚠️ A SHOP WITH NO FAMILIES STILL HAS A HUB. This returned "" for it, and
+  // the worker then served a placeholder at the most-linked URL on the site.
+  // The families are a way of GROUPING a catalogue; a catalogue that is one
+  // model, or a handful with nothing to group them by, is listed flat from
+  // the same cards the home page shows, under the same head and with the
+  // same closing prose. One page, two shapes.
+  if (cols.length === 0) return flatHub(ctx);
   return (
     '<section class="st-shop st-shop--title"><div class="st-shop-in">' +
     '<div class="st-shop-head"><div class="st-shop-title">' +
     '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
-    '<h1 class="st-sec-h">Trgovina</h1>' +
+    // nav[0] rather than a literal: the header calls this page whatever the
+    // shop calls it, and the h1 was saying "Trgovina" on a shop whose menu
+    // said "Ponudba".
+    '<h1 class="st-sec-h">' + esc(ctx.content.nav[0]) + "</h1>" +
     "</div>" +
     // The hub's own sentence, not its meta description: a page that answers
     // "what do you sell?" has to answer it on the page, and this one opened
@@ -2655,9 +2713,11 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
     // The guided choice, offered exactly where indecision lives: a visitor
     // reading a hub of two families and six models is the visitor the three
     // questions were built for.
-    '<p class="st-shop-intro"><a class="st-fnd-link" href="' +
-    esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
-    '">Ne veste, kateri? Odgovorite na dve do tri vprašanja <span aria-hidden="true">→</span> predlagamo model.</a></p>' +
+    (ctx.shop.routeSlugs["/finder"] && (ctx.content.pdps ?? [ctx.content.pdp]).length > 1
+      ? '<p class="st-shop-intro"><a class="st-fnd-link" href="' +
+        esc(ctx.shop.routeSlugs["/finder"] + ctx.q) +
+        '">Ne veste, kateri? Odgovorite na dve do tri vprašanja <span aria-hidden="true">→</span> predlagamo model.</a></p>'
+      : "") +
     "</div>" +
     hubChoice(ctx) +
     "</div></section>" +
@@ -2678,10 +2738,39 @@ export function renderStudioShopHub(ctx: RenderCtx): string {
           "</div>" +
           '<div class="st-grid">' + productCards(ctx, c.products) + "</div>" +
           '<p class="st-shop-more"><a class="st-btn-line" href="' +
-          esc(c.path + ctx.q) + '">Vsi modeli — ' + esc(c.navLabel) + "</a></p>" +
+          esc(c.path + ctx.q) + '">' +
+          // A family of one has no "all" to see; the band already showed it.
+          esc((c.products.length > 1 ? "Vsi modeli — " : "") + c.navLabel) + "</a></p>" +
           "</div></section>",
       )
       .join("") +
+    hubOutro(ctx)
+  );
+}
+
+/**
+ * The hub for a shop that groups nothing: head, the flat card grid, outro.
+ *
+ * The cards are ctx.content.products — the same list the home page's grid
+ * draws — because a shop with no collections has no other statement of "what
+ * do you sell?", and two statements of it would be the duplication the hub
+ * bands were trimmed of. The util tile in that list stays: it is the enquiry
+ * prompt beside the goods, and a hub of one card wants it more, not less.
+ */
+function flatHub(ctx: RenderCtx): string {
+  const cards = ctx.content.products;
+  return (
+    '<section class="st-shop st-shop--title"><div class="st-shop-in">' +
+    '<div class="st-shop-head"><div class="st-shop-title">' +
+    '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
+    '<h1 class="st-sec-h">' + esc(ctx.content.nav[0]) + "</h1>" +
+    "</div>" +
+    (ctx.content.hubIntro
+      ? '<p class="st-shop-intro">' + esc(ctx.content.hubIntro) + "</p>"
+      : "") +
+    "</div>" +
+    (cards.length > 0 ? '<div class="st-grid">' + productCards(ctx, cards, "h2") + "</div>" : "") +
+    "</div></section>" +
     hubOutro(ctx)
   );
 }

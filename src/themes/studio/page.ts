@@ -3059,7 +3059,10 @@ function onward(ctx: RenderCtx, page: Page): string {
   const here = s.routeSlugs[page.key as keyof typeof s.routeSlugs];
   const links: { path: string; label: string }[] = [
     ...(ctx.content.collections ?? []).map((c) => ({ path: c.path, label: c.h1 })),
-    { path: s.routeSlugs["/products"], label: "Vsi modeli in cene" },
+    {
+      path: s.routeSlugs["/products"],
+      label: (ctx.content.pdps ?? [ctx.content.pdp]).length > 1 ? "Vsi modeli in cene" : ctx.content.nav[0],
+    },
   ].filter((l) => l.path !== here);
   if (links.length === 0) return "";
   return (

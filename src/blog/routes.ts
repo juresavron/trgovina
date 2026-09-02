@@ -121,7 +121,7 @@ export async function handlePosts(request: Request, env: Env): Promise<Response 
   const path = url.pathname;
 
   const host = request.headers.get("host") ?? url.hostname;
-  const shop = resolveShop(host);
+  const shop = resolveShop(host, url);
   if (!shop) return null;
 
   const base = shop.routeSlugs["/blog"];

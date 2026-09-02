@@ -54,7 +54,12 @@ describe("studio renders a self-consistent sheet", () => {
   const sheetOf = async (html: string): Promise<string> => {
     const m = html.match(/href="(\/assets\/site-[0-9a-f]+\.css)"/);
     expect(m, "page links no stylesheet asset").toBeTruthy();
-    return await render("savna", m![1]!).text();
+    // ⚠️ "bazen", NOT "savna". This passed "savna" — a shop deleted a year
+    // ago — and passed, because the QA host ignored ?shop= entirely and
+    // rendered the development shop whatever key it was handed. The override
+    // is honoured again (see resolveShop), so a stale key would now render a
+    // 404 for a shop that does not exist.
+    return await render("bazen", m![1]!).text();
   };
 
   it("ships verified faces from a single origin", async () => {
@@ -92,7 +97,12 @@ describe("studio renders a self-consistent sheet", () => {
     // proving the markup satisfies. Externalizing the script exposed it —
     // the home page has no slider (a shop with categories renders the static
     // rail). The gallery hooks genuinely live on the product page.
-    const html = await render("savna", "/bazen/veliki-230").text();
+    // Same stale key, and the path is derived from the shop rather than typed
+    // so this cannot drift into asserting gallery hooks on a 404.
+    const html = await render(
+      "bazen",
+      SHOPS["bazen"]!.routeSlugs["/product"] + "/" + CONTENT["bazen"]!.pdp.slug,
+    ).text();
     expect(html).toContain("data-st-slider");
     expect(html).toContain("data-st-scroll");
     expect(html).toContain("data-st-addons");

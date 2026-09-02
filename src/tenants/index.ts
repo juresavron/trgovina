@@ -76,12 +76,41 @@ for (const s of Object.values(SHOPS)) {
  * Resolve the shop for a request Host header (or client hostname).
  * Returns null for unknown production hosts — the caller must 404.
  */
-export function resolveShop(host: string | null | undefined): ShopConfig | null {
+export function resolveShop(
+  host: string | null | undefined,
+  /**
+   * The request URL, for the QA-host override below. Optional so a caller
+   * that has no URL (none today) still resolves by host alone.
+   */
+  url?: URL,
+): ShopConfig | null {
   if (!host) return null;
   const h = host.trim().toLowerCase();
   const bare = h.replace(/:\d+$/, "");
   const exact = byHost.get(bare);
+  // ⚠️ A PRODUCTION HOST NEVER READS ?shop=. The override below is the one
+  // place a request can name a shop other than the one its Host header
+  // resolves to, and it is fenced to dev hosts on purpose: on a real domain
+  // it would let anyone render shop B's pages under shop A's canonicals,
+  // which the note on DEV_SHOP calls the worst available bug.
   if (exact) return exact;
-  if (DEV_HOST_PATTERNS.some((p) => p.test(bare))) return DEV_SHOP;
+  if (DEV_HOST_PATTERNS.some((p) => p.test(bare))) {
+    // ⚠️ THIS OVERRIDE EXISTED, WAS REMOVED, AND ITS ABSENCE WAS INVISIBLE.
+    // The QA switcher went when the network narrowed to one shop, and the
+    // worker's note recorded that "unknown query parameters are simply
+    // ignored" — true, and it meant every test and audit in this repo that
+    // drives the QA host with ?shop=<key> was silently rendering DEV_SHOP
+    // whatever key it passed. With one shop that is a no-op. The day a
+    // second shop was registered (a throwaway one, in a worktree, to probe
+    // exactly this) every per-shop gate in tenancy.test.ts PASSED for it
+    // while measuring the bazen shop's pages under the new shop's slugs, and
+    // the one gate that failed did so because bazen had no such guide.
+    //
+    // Validated against the registry and never reflected: an unknown key
+    // falls through to DEV_SHOP exactly as no key does.
+    const wanted = url?.searchParams.get("shop");
+    if (wanted && Object.prototype.hasOwnProperty.call(SHOPS, wanted)) return SHOPS[wanted]!;
+    return DEV_SHOP;
+  }
   return null;
 }

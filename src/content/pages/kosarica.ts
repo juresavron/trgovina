@@ -29,8 +29,11 @@ export const CART: Page = {
   lead:
     "Spletno naročanje še ni odprto. Povpraševanje lahko oddate prek obrazca, " +
     "sprejemamo pa tudi klice in e-pošto.",
+  // ⚠️ NO PRODUCT NOUN: this is a universal page (content/pages.ts), and it
+  // said "masažnih bazenov" in the description of every shop's basket. The
+  // universal-page gate now reads the meta as well as the body.
   metaDescription:
-    "Spletno naročanje masažnih bazenov še ni odprto. Naročilo in ponudbo uredimo po telefonu " +
+    "Spletno naročanje še ni odprto. Naročilo in ponudbo uredimo po telefonu " +
     "ali e-pošti, po ogledu lokacije.",
   noindex: true,
   blocks: [
@@ -53,7 +56,7 @@ export const CART: Page = {
       // On a second shop it would have been wrong twice over, and the count
       // is wrong here the day a seventh model is added. The hub it links to
       // states both, in the one place that can keep them true.
-      p: "Vsi modeli: mere, specifikacije in cene.",
+      p: "Mere, specifikacije in cene na enem mestu.",
       label: "V trgovino",
       // ⚠️ AN INTERNAL ROUTE KEY, NOT A SLUG. This page is one of the six any
       // shop can publish unchanged, and it used to link to this shop's

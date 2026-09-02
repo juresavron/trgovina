@@ -70,7 +70,10 @@ function faqFor(page: Page): object[] {
 function modelParam(url: URL, content: ShopContent): PdpContent | undefined {
   const slug = url.searchParams.get("model");
   if (!slug) return undefined;
-  return (content.pdps ?? []).find((p) => p.slug === slug);
+  // ?? [pdp]: a shop that carries its one model as `pdp` alone sends
+  // ?model=<flagship> from its own product page, and this answered as if no
+  // model had been named.
+  return (content.pdps ?? [content.pdp]).find((p) => p.slug === slug);
 }
 
 /**
@@ -234,7 +237,7 @@ export function handleRequest(
   const url = new URL(request.url);
   const host = request.headers.get("host") ?? url.hostname;
 
-  let shop = resolveShop(host);
+  let shop = resolveShop(host, url);
   if (!shop) {
     // Bare text, full headers: an unknown host earns nothing, but the
     // response it does get should still refuse sniffing and caching.
@@ -336,8 +339,16 @@ export function handleRequest(
   // forty call sites.
   //
   // Unknown query parameters are simply ignored, as they always were — the
-  // overrides were validated against known keys and never reflected raw, and
-  // that property is now trivially true.
+  // overrides were validated against known keys and never reflected raw.
+  //
+  // ⚠️ EXCEPT ?shop=, ON DEV HOSTS, WHICH IS BACK — in resolveShop() rather
+  // than here, so the enquiry POST and the blog resolve the same shop as the
+  // page. It went with the switcher and nothing noticed, because with one
+  // registered shop "ignored" and "honoured" render the same page; every
+  // ?shop= in the test suite and the audits was decoration. See the note in
+  // tenants/index.ts. `q` stays empty: the override is for tests, audits and
+  // a reviewer typing a URL, and propagating it through forty hrefs is the
+  // switcher machinery this note says was removed on purpose.
   const theme: ThemeKey = shop.design.theme;
   const q = "";
 
@@ -576,7 +587,9 @@ export function handleRequest(
           // The family is looked up rather than assumed: a model that belongs
           // to no collection gets the two-step trail, which is still true.
           breadcrumbJsonLd(shop, [
-            { name: "Trgovina", path: shop.routeSlugs["/products"] },
+            // The shop's own word for its hub — the same string the header
+            // shows — rather than a literal the type could not see.
+            { name: content.nav[0], path: shop.routeSlugs["/products"] },
             ...((content.collections ?? [])
               .filter((c) => c.products.some((p) => "slug" in p && p.slug === pdp.slug))
               .slice(0, 1)
@@ -594,7 +607,10 @@ export function handleRequest(
   // pravi zame", and the terminal views link real model pages; the answer
   // permutations canonicalize to the entry so six leaf URLs cannot compete
   // with it in an index.
-  if (path === shop.routeSlugs["/finder"]) {
+  // Optional route (tenants/types.ts): a shop with one model declares no
+  // guided choice, and the path comparison must not match `undefined`.
+  const finderPath = shop.routeSlugs["/finder"];
+  if (finderPath !== undefined && path === finderPath) {
     const p = url.searchParams;
     const answers = {
       ...(p.get("namen") ? { namen: p.get("namen")! } : {}),
@@ -609,7 +625,11 @@ export function handleRequest(
       path,
       title: "Kateri bazen je pravi za vas? | " + shop.name,
       description:
-        "Tri vprašanja — namen, število oseb in prostor — in predlagamo " +
+        // "Dve do tri", the number the tree actually asks (content/finder.ts
+        // nextStep: the swim-spa branch asks two), the same figure the page's
+        // own lead and the hub's link state. This said three and named the
+        // hot-tub branch's questions as if every path asked them.
+        "Dve do tri vprašanja — namen, velikost in moč masaže — in predlagamo " +
         "model iz naše ponudbe, z razlogi, ki jih lahko preverite v " +
         "specifikacijah.",
       noindex: dev,
@@ -626,7 +646,13 @@ export function handleRequest(
   // The shop hub — every family on one page. A real page, indexable, so
   // "Trgovina" in the nav answers "what do you sell?" rather than redirecting
   // to whichever family happens to be first.
-  if (path === shop.routeSlugs["/products"] && (content.collections ?? []).length > 0) {
+  // ⚠️ THE HUB RENDERS WHETHER OR NOT THE SHOP HAS FAMILIES. It used to need
+  // collections.length > 0, and a shop without them fell through to the
+  // "Stran je v pripravi" placeholder — at 200, noindex, and linked from the
+  // first item of the header on every page, from the home grid's "Vsi
+  // modeli", from every 404 and from the basket. A one-model shop has no
+  // families to group; it still has a catalogue, and this is its page.
+  if (path === shop.routeSlugs["/products"]) {
     const doc = renderDocument({
       shop,
       content,
@@ -640,7 +666,11 @@ export function handleRequest(
       // page that lists EVERY model with its price, and that is what it says.
       // The term is not lost either way — shop.name is "Masažni bazeni
       // Vrelec", so every title on this site carries it in the suffix.
-      title: "Vsi modeli in cene | " + shop.name,
+      // "Vsi modeli in cene" above one model promises a list; the page is
+      // then simply what the shop calls it.
+      title:
+        ((content.pdps ?? [content.pdp]).length > 1 ? "Vsi modeli in cene" : content.nav[0]) +
+        " | " + shop.name,
       // NOT content.metaDescription: that is the home page's, and two
       // indexable pages sharing one description give a search engine nothing
       // to tell them apart. Falls back only if a shop has not written one.
@@ -652,7 +682,7 @@ export function handleRequest(
         organizationJsonLd(shop),
         // Two items with a linked root, because a one-item trail is inert:
         // Google renders nothing for it, so the hub's SERP line stayed a URL.
-        breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: "Trgovina" }]),
+        breadcrumbJsonLd(shop, [{ name: "Domov", path: "/" }, { name: content.nav[0] }]),
         // ⚠️ THE HUB CARRIES EVERY MODEL AND EMITTED NO LIST. Both collection
         // pages got an ItemList when that gap was found; the page that holds
         // the WHOLE catalogue was missed, so to a crawler the shop's index was
@@ -664,24 +694,33 @@ export function handleRequest(
         itemListJsonLd(
           shop,
           content,
-          "Vsi modeli",
+          // The same word the title and the h1 use: a list named for a
+          // catalogue, over a shop with one model, is a false statement to
+          // the one reader that takes it literally.
+          (content.pdps ?? [content.pdp]).length > 1 ? "Vsi modeli" : content.nav[0],
           // Derived from the collections rather than listed here, so the hub's
           // list cannot drift from the two category lists that are built from
           // the same arrays. Deduped by slug: a model in two families would
           // otherwise appear twice in one ItemList.
+          //
+          // A shop with no families lists its models flat — the same records
+          // the hub draws (commerce.ts flatHub). It emitted numberOfItems: 0
+          // for such a shop, a list of nothing under a heading that named it.
           (() => {
             const seen = new Set<string>();
             const out = [];
+            const all = content.pdps ?? [content.pdp];
             for (const c of content.collections ?? []) {
               for (const p of c.products) {
                 if (!("slug" in p) || typeof p.slug !== "string") continue;
                 if (seen.has(p.slug)) continue;
-                const d = (content.pdps ?? []).find((x) => x.slug === p.slug);
+                const d = all.find((x) => x.slug === p.slug);
                 if (!d) continue;
                 seen.add(p.slug);
                 out.push(d);
               }
             }
+            if (!content.collections) for (const d of all) if (!seen.has(d.slug)) { seen.add(d.slug); out.push(d); }
             return out;
           })(),
         ),
@@ -708,7 +747,7 @@ export function handleRequest(
       jsonLd: [
         organizationJsonLd(shop),
         breadcrumbJsonLd(shop, [
-          { name: "Trgovina", path: shop.routeSlugs["/products"] },
+          { name: content.nav[0], path: shop.routeSlugs["/products"] },
           { name: collection.navLabel },
         ]),
         // These two pages are what the shop is built to rank, and to a
@@ -723,7 +762,7 @@ export function handleRequest(
           collection.products
             .map((p) => ("slug" in p ? p.slug : undefined))
             .filter((x): x is string => typeof x === "string")
-            .map((slug) => (content.pdps ?? []).find((d) => d.slug === slug))
+            .map((slug) => (content.pdps ?? [content.pdp]).find((d) => d.slug === slug))
             .filter((d): d is NonNullable<typeof d> => d !== undefined),
         ),
       ],
@@ -749,8 +788,9 @@ export function handleRequest(
   // Modelled on the product route above: a segment, a slug, and a hard 404 for
   // one that does not resolve. An unknown guide must never fall through to a
   // page that renders something else.
-  const guideBase = shop.routeSlugs["/guide"] + "/";
-  if (path.startsWith(guideBase)) {
+  const guideSeg = shop.routeSlugs["/guide"];
+  const guideBase = guideSeg === undefined ? null : guideSeg + "/";
+  if (guideBase !== null && path.startsWith(guideBase)) {
     // ⚠️ THE SHOP'S OWN GUIDES, NOT THE MODULE'S. This read GUIDE_PAGES
     // straight out of content/pages/vodnik.ts, so /vodnik/masazni-bazen-pozimi
     // would have answered on every domain this Worker serves.
@@ -784,7 +824,12 @@ export function handleRequest(
           organizationJsonLd(shop),
           breadcrumbJsonLd(shop, [
             { name: "Domov", path: "/" },
-            { name: "Vodniki", path: shop.routeSlugs["/guides"] },
+            // The index is optional in the type and paired with the segment
+            // by a tenancy gate, so this is belt and braces — a trail must
+            // never carry a crumb whose href is "undefined".
+            ...(shop.routeSlugs["/guides"]
+              ? [{ name: "Vodniki", path: shop.routeSlugs["/guides"] }]
+              : []),
             { name: guide.h1 },
           ]),
           // ⚠️ THE GUIDES WERE THE ONE PAGE TYPE THAT ASKED QUESTIONS AND DID
@@ -954,7 +999,7 @@ async function handleEnquiry(
 } | null> {
   if (request.method !== "POST") return null;
   const url = new URL(request.url);
-  const shop = resolveShop(request.headers.get("host") ?? url.hostname);
+  const shop = resolveShop(request.headers.get("host") ?? url.hostname, url);
   if (!shop) return null;
   if (url.pathname !== shop.routeSlugs["/contact"]) return null;
   const content = CONTENT[shop.key];

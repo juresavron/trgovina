@@ -125,8 +125,14 @@ export const TERMS: Page = {
           "zahtevate sorazmerno znižanje kupnine ali odstopite od pogodbe in zahtevate vračilo " +
           "plačila; odstop je izključen samo, kadar je neskladnost neznatna. Stroškov " +
           "vzpostavitve skladnosti ne nosite vi.",
-        "Za modele, ki jih prodajamo, znaša garancija tri leta. Obseg je naveden v " +
-          "garancijskem listu, ki ga prejmete ob predaji. Servis in rezervne dele " +
+        // ⚠️ NO FIGURE, AND NO PLURAL. This said "Za modele, ki jih prodajamo,
+        // znaša garancija tri leta" — the first shop's supplier figure, typed
+        // into one of the pages every shop publishes unchanged, over a
+        // catalogue it assumed had several models. The term is stated where
+        // the shop states it: on the product page, beside the price, and in
+        // the warranty document handed over. This page only says where.
+        "Trajanje in obseg garancije za posamezni model sta navedena na njegovi strani " +
+          "in v garancijskem listu, ki ga prejmete ob predaji. Servis in rezervne dele " +
           "zagotavljamo prek svoje mreže.",
         "Neskladnost ali okvaro nam sporočite čim prej po odkritju, na kontakt spodaj. Opišite " +
           "napako in priložite fotografijo, če je mogoče.",

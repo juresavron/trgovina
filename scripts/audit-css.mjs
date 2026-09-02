@@ -73,8 +73,10 @@ const { CONTENT } = await bundle("src/content/index.ts", "content");
 // pure, and its empty state is exactly what ships while there are no posts.
 const { blogIndexDoc } = await bundle("src/blog/routes.ts", "blog");
 
-const SHOP = SHOPS["bazen"];
-const C = CONTENT["bazen"];
+const KEY = process.env.AUDIT_SHOP || "bazen";
+if (!SHOPS[KEY] || !CONTENT[KEY]) { console.error("AUDIT_SHOP=" + KEY + " is not a registered shop with content"); process.exit(2); }
+const SHOP = SHOPS[KEY];
+const C = CONTENT[KEY];
 const HOST = "trgovina.workers.dev";
 const NOT_PAGES = new Set(["/product", "/guide", "/order-success"]);
 
@@ -100,7 +102,7 @@ for (const path of ROUTES) {
   // ⚠️ THE HOST HEADER IS THE TENANCY KEY. Without it every route 404s and
   // the whole run measures the same styled 404 fourteen times.
   const res = handleRequest(
-    new Request("https://" + HOST + path + "?shop=bazen", { headers: { host: HOST } }),
+    new Request("https://" + HOST + path + "?shop=" + KEY, { headers: { host: HOST } }),
   );
   html[path] = await res.text();
 }

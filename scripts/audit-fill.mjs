@@ -44,7 +44,9 @@ const { handleRequest } = await bundle("src/worker.ts");
 const { SHOPS } = await bundle("src/tenants/index.ts");
 const { CONTENT } = await bundle("src/content/index.ts");
 const { blogIndexDoc } = await bundle("src/blog/routes.ts");
-const shop=SHOPS["bazen"], content=CONTENT["bazen"];
+const KEY = process.env.AUDIT_SHOP || "bazen";
+if (!SHOPS[KEY] || !CONTENT[KEY]) { console.error("AUDIT_SHOP=" + KEY + " is not a registered shop with content"); process.exit(2); }
+const shop=SHOPS[KEY], content=CONTENT[KEY];
 const NOT=new Set(["/product","/guide","/order-success"]);
 const R=new Set(["/"]); for(const [k,v] of Object.entries(shop.routeSlugs)) if(!NOT.has(k)) R.add(v);
 for(const c of content?.collections??[]) R.add(c.path);
@@ -56,7 +58,7 @@ rmSync(OUT,{recursive:true,force:true}); mkdirSync(join(OUT,"media"),{recursive:
 if (existsSync("public")) cpSync("public",OUT,{recursive:true});
 const docs={};
 for(const r of ROUTES) docs[r]= r===BLOG ? blogIndexDoc(shop,content,[],true)
-  : await handleRequest(new Request(HOST+r+"?shop=bazen")).text();
+  : await handleRequest(new Request(HOST+r+"?shop="+KEY)).text();
 const file=(p)=>(p==="/"?"index":p.replace(/[^a-z0-9]+/gi,"_"))+".html";
 for(const [r,h] of Object.entries(docs)) writeFileSync(join(OUT,file(r)),h);
 mkdirSync(join(OUT,"assets"),{recursive:true});

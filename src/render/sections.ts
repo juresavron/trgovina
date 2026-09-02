@@ -310,6 +310,9 @@ function reviews(ctx: RenderCtx): string {
 
 function guides(ctx: RenderCtx): string {
   const base = ctx.shop.routeSlugs["/guides"];
+  // An optional route (tenants/types.ts): a shop with no guides index has
+  // nothing for this band to link to, so it does not render.
+  if (!base) return "";
   return (
     '<section class="act" id="vodniki"><div class="wrap">' +
     '<div class="act-head"><div><p class="eyebrow">Vodniki</p>' +
@@ -442,7 +445,10 @@ export function renderHeader(ctx: RenderCtx): string {
     '<header class="shophead"><div class="wrap">' +
     '<a class="wordmark display" href="/' + ctx.q + '">' + esc(s.wordmark[0]) + "<em>" + esc(s.wordmark[1]) + "</em></a>" +
     '<nav class="nav" aria-label="Glavni meni">' +
-    links.map(([k, label]) => '<a href="' + s.routeSlugs[k] + ctx.q + '">' + esc(label) + "</a>").join("") +
+    links
+      .filter(([k]) => typeof s.routeSlugs[k] === "string")
+      .map(([k, label]) => '<a href="' + s.routeSlugs[k] + ctx.q + '">' + esc(label) + "</a>")
+      .join("") +
     "</nav>" +
     // Guarded, and the OPENING HOURS ARE GONE: "pon–pet, 8.00–18.00" existed
     // nowhere in any config — an invented fact in the header of a theme that
@@ -457,9 +463,12 @@ export function renderHeader(ctx: RenderCtx): string {
 export function renderFooter(ctx: RenderCtx): string {
   const s = ctx.shop;
   const c = ctx.content;
-  const col = (title: string, items: [string, string][]) =>
+  const col = (title: string, items: (readonly [string | undefined, string])[]) =>
     "<div><h4>" + esc(title) + "</h4><ul>" +
-    items.map(([href, label]) => '<li><a href="' + href + ctx.q + '">' + esc(label) + "</a></li>").join("") +
+    items
+      .filter((row): row is readonly [string, string] => typeof row[0] === "string")
+      .map(([href, label]) => '<li><a href="' + href + ctx.q + '">' + esc(label) + "</a></li>")
+      .join("") +
     "</ul></div>";
   return (
     '<footer><div class="wrap"><div class="foot-grid">' +
