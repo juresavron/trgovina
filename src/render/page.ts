@@ -333,6 +333,48 @@ export function organizationJsonLd(s: ShopConfig): object {
   }
   if (isSetVat(s.company.vatId)) org["vatID"] = s.company.vatId;
   if (isSet(s.company.legalName)) org["legalName"] = s.company.legalName;
+
+  // THE REGISTRATION NUMBER, which the footer prints on every page and the
+  // entity did not carry. For a Slovenian company the matična številka is the
+  // identifier that resolves to exactly one legal person in AJPES; vatID and
+  // legalName narrow it, this one settles it. PropertyValue is schema.org's
+  // shape for a registry number that has no dedicated property.
+  if (isSet(s.company.regNumber)) {
+    org["identifier"] = {
+      "@type": "PropertyValue",
+      name: "Matična številka",
+      value: s.company.regNumber,
+    };
+  }
+
+  // WHERE THE SHOP SELLS, said in markup as well as in prose. Every page
+  // carries "po vsej Sloveniji" in words; this is the same statement in the
+  // form a crawler can act on, and it asserts nothing the pages do not.
+  org["areaServed"] = { "@type": "Country", name: s.addressCountry };
+
+  // The telephone above is a string on the entity; a ContactPoint is what a
+  // knowledge panel hangs a call button on. Same number, same language, no
+  // new claim — and only when there is a number to point at.
+  if (isSetPhone(s.contact.phone)) {
+    org["contactPoint"] = {
+      "@type": "ContactPoint",
+      contactType: "sales",
+      telephone: s.contact.phone,
+      areaServed: s.addressCountry,
+      availableLanguage: s.locale.lang,
+    };
+  }
+
+  // ⚠️ sameAs WAS PROMISED BY THE TYPE AND READ BY NOBODY. tenants/types.ts
+  // documents `socials` as "for Organization schema sameAs"; only the footer
+  // strip consumed it, so filling the field in would have changed a row of
+  // icons and left the entity graph exactly as bare as before. It is the
+  // strongest corroboration signal an unknown merchant can offer — a name and
+  // an address with nothing to check them against is what a spam site also
+  // has — so the wiring exists now and lights up the day a profile does.
+  const sameAs = Object.values(s.socials).filter((u): u is string => isSet(u));
+  if (sameAs.length > 0) org["sameAs"] = sameAs;
+
   return org;
 }
 

@@ -186,6 +186,20 @@ export const SHOWROOM: Page = {
     // and printing it here would rebuild the very expectation this page was
     // rewritten to remove.
     { kind: "contact", h: "Dogovor za ogled", omitAddress: true },
+    // The other half of the missing edge — see the note on dostava.ts. The
+    // visit is step one of the delivery; the page that describes the rest of
+    // it is where a reader goes next.
+    {
+      kind: "links",
+      h: "Kaj sledi",
+      items: [
+        [
+          "Dostava in montaža",
+          "/delivery",
+          "Pet korakov od ogleda do prve kopeli, in kaj pripravite vi.",
+        ],
+      ],
+    },
     {
       kind: "cta",
       h: "Naročite brezplačen ogled",

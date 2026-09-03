@@ -954,8 +954,17 @@ export function handleRequest(
         theme,
         path,
         title: title + " | " + shop.name,
-        description: content.metaDescription,
+        // ⚠️ NOT content.metaDescription — THAT IS THE HOME PAGE'S. A route
+        // waiting to be built was describing the shop's whole offer, so a
+        // second URL asserted the home page's snippet word for word. The
+        // duplicate-description gate skips it because the page is noindex,
+        // which is exactly how it stayed.
+        description: title + " — stran je v pripravi. Ponudba in kontakt sta na začetni strani.",
         noindex: true,
+        // A page that tells a crawler not to file it has no business naming
+        // a preferred URL as well; the enquiry variants already pass null for
+        // the same reason. See PageOptions.canonical.
+        canonical: null,
         q,
         bodyHtml: renderPlaceholder(shop, content, title, q, theme),
       });
@@ -975,6 +984,10 @@ export function handleRequest(
     // page that says what it is costs nothing.
     description: "Zahtevana stran ne obstaja. Oglejte si ponudbo ali nas pokličite.",
     noindex: true,
+    // A 404 was declaring a canonical for the URL that does not exist. Google
+    // ignores it on a non-200, so this is tidiness rather than a bug — but the
+    // mechanism is right there and every other noindex-without-a-target uses it.
+    canonical: null,
     q,
     bodyHtml: renderPlaceholder(
       shop,
