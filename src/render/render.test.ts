@@ -144,7 +144,19 @@ describe("production domains (gated by live)", () => {
     if (LIVE) {
       expect(r.status).toBe(200);
       expect(r.headers.get("x-robots-tag")).toBeNull();
-      expect(await text(r)).not.toContain('name="robots"');
+      // ⚠️ NOT "no robots meta at all" — THIS ASSERTION WAS A LAUNCH-DAY
+      // LANDMINE. It read `not.toContain('name="robots"')`, written when the
+      // only reason to emit that tag was noindex. render/page.ts now emits
+      // `max-image-preview:large` on every indexable page, which is a
+      // PERMISSION — it lets Google show a full-size thumbnail instead of a
+      // 100px one, on a site people shop by eye. So the old form failed the
+      // moment live flipped, on a tag the site is right to send: a red suite
+      // on launch day, for a feature working as designed.
+      //
+      // What actually matters is that nothing here suppresses indexing.
+      const html = await text(r);
+      expect(html).toContain('name="robots" content="max-image-preview:large"');
+      expect(html).not.toContain("noindex");
     } else {
       expect(r.status).toBe(503);
       expect(r.headers.get("x-robots-tag")).toContain("noindex");
