@@ -24,6 +24,19 @@ export const bazen: ShopConfig = {
   // a spam domain to a person; masazni-bazeni-vrelec reads as three.
   domain: "masazni-bazeni-vrelec.si",
   siteUrl: "https://masazni-bazeni-vrelec.si",
+  // ⚠️ THE OWNER ALSO REGISTERED THE RUN-TOGETHER SPELLING, which is the one
+  // the note above argues against. Both are now owned, and owning both is the
+  // right end state whichever wins: the loser must never resolve to somebody
+  // else's site, and it must never serve these pages either.
+  //
+  // So it redirects. One host serves, every other spelling answers 301 to the
+  // same path on it — see aliasDomains in tenants/types.ts for why a canonical
+  // link tag is not enough on its own.
+  //
+  // WHICH ONE IS CANONICAL IS THIS PAIR OF LINES, and the shop is not live
+  // yet, so the swap is still free. Moving it after launch means asking a
+  // crawler to transfer a reputation it has already attached to a host.
+  aliasDomains: ["masaznibazenivrelec.si"],
   name: "Masažni bazeni Vrelec",
   // The lockup splits category from brand so the mark can weight them
   // differently — the words carry the keyword, the second half carries the

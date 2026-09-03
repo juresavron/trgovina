@@ -156,8 +156,18 @@ describe("production domains (gated by live)", () => {
     expect(get("/sitemap.xml", PROD_HOST).status).toBe(LIVE ? 200 : 404);
   });
 
-  it("www resolves to the same shop", () => {
-    expect(get("/", "www." + PROD_HOST).status).toBe(LIVE ? 200 : 503);
+  it("www redirects to the canonical host rather than serving a copy", () => {
+    // ⚠️ IT USED TO SERVE. www answered 200 with the same body and the same
+    // canonical tag as the apex, which leaves a crawler to work out for
+    // itself that the two are one page. The tag makes the right answer
+    // likely; a 301 makes it certain, and costs one response.
+    //
+    // Pre-live too: the holding page should exist at one address, so that
+    // the redirect is already in place and cached on the day the shop opens
+    // rather than being introduced on exactly the day it matters.
+    const r = get("/", "www." + PROD_HOST);
+    expect(r.status).toBe(301);
+    expect(r.headers.get("location")).toBe(SHOPS["bazen"]!.siteUrl + "/");
   });
 
   it("404s a host that is not the shop's, with no fallback", () => {

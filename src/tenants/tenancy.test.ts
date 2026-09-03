@@ -769,3 +769,91 @@ describe("a shop that sells one model", () => {
     }
   });
 });
+
+/**
+ * ONE HOST SERVES, EVERY OTHER SPELLING REDIRECTS TO IT.
+ *
+ * A shop owns more than one domain the moment its owner registers a second
+ * spelling of the name, and the failure that follows is quiet: both hosts
+ * answer 200 with the same pages, a crawler has to pick one for itself, and
+ * the shop competes with a copy of itself for its own head term. The
+ * canonical link tag makes the right outcome likely; a 301 makes it certain.
+ *
+ * So the registry names one `domain` and lists every other spelling under
+ * `aliasDomains`, and the worker answers those — and www of the canonical —
+ * with a permanent redirect to the same path on the canonical origin.
+ */
+describe("every host a shop owns but one", () => {
+  const hit = (host: string, path = "/") =>
+    handleRequest(new Request("https://" + host + path, { headers: { host } }));
+
+  for (const key of KEYS) {
+    const shop = SHOPS[key]!;
+    const others = [
+      "www." + shop.domain,
+      ...(shop.aliasDomains ?? []).flatMap((a) => [a, "www." + a]),
+    ];
+
+    it(key + ": the canonical host is the only one that serves pages", async () => {
+      const res = hit(shop.domain);
+      expect(res.status, shop.domain).not.toBe(301);
+      for (const host of others) {
+        const r = hit(host);
+        expect(r.status, host + " should redirect").toBe(301);
+        expect(r.headers.get("location"), host).toBe(shop.siteUrl + "/");
+      }
+    });
+
+    it(key + ": a redirect keeps the path and the query it was given", () => {
+      // A visitor who has an alias URL to a model page must land on that
+      // model page, not on the home page — a redirect that drops the path is
+      // a soft 404 to a crawler and a dead end to a person.
+      const path = shop.routeSlugs["/products"] + "?utm_source=tisk";
+      for (const host of others) {
+        expect(hit(host, path).headers.get("location"), host).toBe(shop.siteUrl + path);
+      }
+    });
+
+    it(key + ": the redirect fires ahead of the pre-live holding page", () => {
+      // Otherwise the "kmalu" page is served at two addresses and the
+      // redirect only starts existing on launch day, which is exactly when
+      // nobody wants to be changing what the crawler sees.
+      for (const host of others) expect(hit(host).status, host).toBe(301);
+    });
+
+    it(key + ": no alias appears in a canonical, a sitemap or a link", async () => {
+      const html = await handleRequest(
+        new Request("https://trgovina.workers.dev/?shop=" + key, {
+          headers: { host: "trgovina.workers.dev" },
+        }),
+      ).text();
+      for (const alias of shop.aliasDomains ?? []) {
+        expect(html, "the page names the alias " + alias).not.toContain(alias);
+      }
+    });
+  }
+
+  it("the QA host and localhost never redirect", () => {
+    // They are where the site is driven from; sending them to production
+    // would make every test and audit measure a domain that is not live.
+    for (const host of ["trgovina.workers.dev", "localhost:8787"]) {
+      expect(hit(host).status, host).not.toBe(301);
+    }
+  });
+
+  it("an alias may not collide with any other host the network claims", () => {
+    // The registry throws at import on a duplicate; this states the rule
+    // against the registry so the failure names the shop rather than a host.
+    const seen = new Map<string, string>();
+    for (const key of KEYS) {
+      const s = SHOPS[key]!;
+      for (const d of [s.domain, ...(s.aliasDomains ?? [])]) {
+        for (const host of [d, "www." + d]) {
+          const taken = seen.get(host);
+          expect(taken, host + " is claimed by " + taken + " and " + key).toBeUndefined();
+          seen.set(host, key);
+        }
+      }
+    }
+  });
+});
