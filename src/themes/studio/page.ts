@@ -20,6 +20,7 @@
  * instead of hiding it inside plausible-looking sentences.
  */
 
+import { OPTIONAL_ROUTE_KEYS } from "../../tenants/types";
 import { esc, resolveHref, type RenderCtx } from "../../render/sections";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../../lib/filled";
 import type { Block, Page } from "../../content/pages";
@@ -2166,10 +2167,39 @@ function list(b: Extract<Block, { kind: "list" }>, id?: string): string {
  * move and knows what it is skipping.
  */
 function links(ctx: RenderCtx, b: Extract<Block, { kind: "links" }>, id?: string): string {
-  if (b.items.length === 0) return "";
+  // ⚠️ A DESTINATION THIS SHOP DOES NOT SERVE IS DROPPED, NOT PRINTED.
+  //
+  // Items address their destination by internal route key so a shop that
+  // spells its URLs differently still lands (see resolveHref). Five of those
+  // keys are OPTIONAL — a shop may have no comparison, no guides, no site
+  // visit — and resolveHref hands back the key unchanged when the shop never
+  // declared one. Printed, that is an anchor to "/showroom": a 404 for a
+  // visitor and a dead end for a crawler, on a block whose whole job is to
+  // pass a reader onward. The one-model gate in tenancy.test.ts caught it the
+  // first time a page linked to an optional route.
+  //
+  // Filtered here rather than at each author site, because the author cannot
+  // know which shop will render their page — that is the point of the key.
+  // ⚠️ EXACTLY THE OPTIONAL KEYS, AND NOTHING ELSE. A first attempt asked
+  // "does this href resolve to something other than itself" — which is false
+  // for every literal path too, so it silently dropped the three guide links
+  // on /vodniki (/vodnik/<slug> is a real URL, not a route key) and the audit
+  // caught the page at 240 words. A required key is always declared; a
+  // literal slug is the author's own and none of this function's business.
+  const items = b.items.filter(([, href]) => {
+    const key = href.split("#")[0]!.split("?")[0]!;
+    const slugs: Partial<Record<string, string>> = ctx.shop.routeSlugs;
+    // The key itself, or a path beneath it: "/guide" is the base of
+    // "/guide/<slug>", and a shop with no guides serves neither.
+    const optional = (OPTIONAL_ROUTE_KEYS as readonly string[]).find(
+      (k) => key === k || key.startsWith(k + "/"),
+    );
+    return optional === undefined || typeof slugs[optional] === "string";
+  });
+  if (items.length === 0) return "";
   const head = b.h ?? "Oglejte si";
   const hid = (id ?? "st-links") + "-h";
-  const rich = b.items.some((it) => typeof it[2] === "string" && it[2].length > 0);
+  const rich = items.some((it) => typeof it[2] === "string" && it[2].length > 0);
   // The nav carries the section id itself. It used to sit on nothing — the
   // heading got id+"-h" and a data-anchor no selector ever consumed — so the
   // first links block with a real heading gave the TOC a fragment that
@@ -2192,7 +2222,7 @@ function links(ctx: RenderCtx, b: Extract<Block, { kind: "links" }>, id?: string
     // si" while the page still draws OGLEJTE SI.
     '<p class="st-page-onward-h" id="' + esc(hid) + '" aria-label="' + esc(head) +
     '">' + esc(head) + "</p><ul>" +
-    b.items
+    items
       .map(
         ([label, href, blurb]) =>
           // ctx.q, like cta() and onward(): the QA/theme override query

@@ -1,0 +1,33 @@
+# Headers for everything Workers Assets serves BEFORE the Worker runs.
+#
+# ⚠️ THESE PATHS NEVER REACH src/worker.ts. The asset binding in
+# wrangler.jsonc is consulted first, so neither the SECURITY headers nor the
+# cache-control the Worker sets apply to /fonts, /img or the favicons. Without
+# this file they take the platform default for non-hashed filenames —
+# "public, max-age=0, must-revalidate" — which means the six vendored woff2
+# faces are revalidated on every single navigation.
+#
+# The faces are 131 KB and change only when scripts/vendor-fonts.mjs is re-run.
+/fonts/*
+  Cache-Control: public, max-age=604800
+  X-Content-Type-Options: nosniff
+
+# ⚠️ NOT immutable, AND NOT A YEAR. The filenames are not content-hashed —
+# "chivo-500-latin.woff2" is the same name before and after a re-vendor — so
+# an immutable year would mean a corrected face could never reach anyone who
+# had already loaded the old one. A week is long enough to stop the
+# per-navigation revalidation and short enough to be recoverable. Hash the
+# names in vendor-fonts.mjs first if you want the year.
+
+/img/*
+  Cache-Control: public, max-age=604800
+  X-Content-Type-Options: nosniff
+
+/favicon.svg
+  Cache-Control: public, max-age=604800
+/favicon-32.png
+  Cache-Control: public, max-age=604800
+/favicon-96.png
+  Cache-Control: public, max-age=604800
+/apple-touch-icon.png
+  Cache-Control: public, max-age=604800

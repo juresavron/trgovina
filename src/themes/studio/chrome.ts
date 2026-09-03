@@ -1309,7 +1309,7 @@ export const STUDIO_CHROME_CSS = `
    * ramp carries ONE label tracking (0.06em); the old 0.12em was measured, and
    * the wider setting is not somewhere the source goes. 24px under it is the
    * source's gap between a column's heading and its list. */
-  :root[data-theme="studio"] .st-foot-col h2 {
+  :root[data-theme="studio"] .st-foot-col-h {
     font-family: var(--f-label);
     font-size: var(--t-label);
     font-weight: var(--w-label);
@@ -2095,8 +2095,14 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     // one: the heading is uppercased by CSS, it NAMES the list beside it, and
     // Chromium resolves the name through this element — so the four footer
     // columns announced as "PONUDBA", "POMOČ", "PODJETJE", "PRAVNO".
-    '<div class="st-foot-col"><h2 id="' + id + '" aria-label="' + esc(title) + '">' +
-    esc(title) + "</h2>" +
+    // ⚠️ <p>, NOT <h2> — AND THE aria-labelledby STILL RESOLVES. Five footer
+    // headings on 26 routes put 130 chrome entries into the document outline,
+    // and on the thin pages they were most of it: /blog outlined as one h1
+    // and five footer h2s. These are navigation labels, not sections of the
+    // document. aria-labelledby names its target by id and does not care what
+    // element carries it, so the accessible name of each column is unchanged.
+    '<div class="st-foot-col"><p class="st-foot-col-h" id="' + id + '" aria-label="' + esc(title) + '">' +
+    esc(title) + "</p>" +
     '<ul aria-labelledby="' + id + '">' +
     items
       .filter((row): row is readonly [string, string] => typeof row[0] === "string")
@@ -2149,7 +2155,7 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     // flip that opens the shop removes the block, until a real list service
     // exists to wire the form to.
     (s.live ? "" : '<div class="st-news">' +
-    '<h2 class="st-news-h">E-novice</h2>' +
+    '<p class="st-news-h">E-novice</p>' +
     '<div class="st-news-row">' +
     '<label class="st-vh" for="st-news">Vaš e-poštni naslov</label>' +
     '<input class="st-news-in" id="st-news" type="email" autocomplete="email" ' +

@@ -129,6 +129,22 @@ export const DELIVERY: Page = {
         ],
       ],
     },
+    // ⚠️ THE FIRST OF THE FIVE STEPS ABOVE IS A PAGE, AND IT WAS NOT A LINK.
+    // "Ogled lokacije" opens the list on this page and has its own page at
+    // /ogled-lokacije which describes the same visit at length; the two
+    // pages covered one operation and had no edge between them in either
+    // direction. A reader who wants the detail had to find it from the nav.
+    {
+      kind: "links",
+      h: "Podrobneje",
+      items: [
+        [
+          "Brezplačen ogled lokacije",
+          "/showroom",
+          "Kaj pogledamo, koliko časa vzame in kaj po njem veste.",
+        ],
+      ],
+    },
     {
       kind: "cta",
       h: "Dogovorimo se za ogled",

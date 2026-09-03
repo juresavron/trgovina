@@ -2188,6 +2188,22 @@ function productCards(
   ctx: RenderCtx,
   items: readonly (ProductCard | UtilCard)[],
   level: "h2" | "h3" = "h3",
+  /**
+   * Whether this grid's first card is above the fold on the page rendering
+   * it — and therefore may claim fetchpriority.
+   *
+   * ⚠️ IT USED TO BE DERIVED FROM `i === 0`, WHICH IS A FACT ABOUT THE LIST
+   * AND NOT ABOUT THE PAGE. The same function draws the collection page's
+   * grid, where the first card really is in the opening viewport, and the
+   * home page's "Izbrani modeli" band, where it was measured at y=2412 on a
+   * 900px screen — 2.7 viewports down, fetched at high priority against the
+   * hero. The hub fired it twice, once per family section.
+   *
+   * So the caller says, because only the caller knows. Default false: a grid
+   * that has not thought about it is a grid whose first card is not the
+   * page's opening image.
+   */
+  eager = false,
 ): string {
   const href = pdpHref(ctx);
   return items
@@ -2223,7 +2239,7 @@ function productCards(
         '<a class="st-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-card-panel">' +
         (p.badge ? '<span class="st-badge">' + esc(p.badge) + "</span>" : "") +
-        shot(ctx, i, p.photo, p.art, i === 0) +
+        shot(ctx, i, p.photo, p.art, eager && i === 0) +
         "</span>" +
         '<span class="st-card-body">' +
         "<" + level + ' class="st-card-name">' + esc(p.name) + "</" + level + ">" +
@@ -2354,7 +2370,9 @@ export function renderStudioRail(ctx: RenderCtx): string {
       return (
         '<li class="st-rail-item" data-st-item id="' + esc(id) + '" tabindex="-1">' +
         '<a class="st-rail-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
-        '<span class="st-rail-panel">' + shot(ctx, i, p.photo, p.art, i === 0) + "</span>" +
+        // The rail is the page's second act, under a hero that owns the
+        // opening image; nothing in it is a fetchpriority candidate.
+        '<span class="st-rail-panel">' + shot(ctx, i, p.photo, p.art, false) + "</span>" +
         '<span class="st-rail-body">' +
         '<span class="st-rail-name">' + esc(p.name) + "</span>" +
         '<span class="st-rail-meta">' + esc(p.meta) + "</span>" +
@@ -2618,7 +2636,9 @@ function compareTable(ctx: RenderCtx, c: Collection): string {
 export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
   // h2: this page's h1 is the collection name, and nothing sits between it
   // and the grid.
-  const cards = productCards(ctx, c.products, "h2");
+  // The one grid whose first card opens the page: a collection lands on its
+  // heading, its intro and the first row of models.
+  const cards = productCards(ctx, c.products, "h2", true);
   // The SIBLING FAMILY, linked from the foot of the grid.
   //
   // A collection page used to stop dead after its last card: no next step, no
