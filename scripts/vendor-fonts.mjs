@@ -51,7 +51,7 @@ const UA =
  */
 const CSS_URL =
   "https://fonts.googleapis.com/css2?family=Chivo:wght@500" +
-  "&family=DM+Sans:opsz,wght@9..40,400..500" +
+  "&family=DM+Sans:wght@400..500" +
   // ⚠️ THE AXIS, NOT THREE STATIC WEIGHTS. Asking for wght@400;500;700 made
   // Google return THREE @font-face blocks per subset pointing at three URLs —
   // and the three files are byte-identical, because Plus Jakarta Sans is a

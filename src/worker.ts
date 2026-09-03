@@ -612,6 +612,13 @@ export function handleRequest(
           // The family is looked up rather than assumed: a model that belongs
           // to no collection gets the two-step trail, which is still true.
           breadcrumbJsonLd(shop, [
+            // ⚠️ THE TRAIL STARTS AT THE ROOT, and on this page and the
+            // collections it did not. The hub says its parent is "/" (below),
+            // the finder, the guides and every editorial page say the same —
+            // and the two deepest, most commercial page types began at the
+            // hub, so the crumb a searcher sees under a product result was
+            // missing its first step for no reason anyone recorded.
+            { name: "Domov", path: "/" },
             // The shop's own word for its hub — the same string the header
             // shows — rather than a literal the type could not see.
             { name: content.nav[0], path: shop.routeSlugs["/products"] },
@@ -772,6 +779,8 @@ export function handleRequest(
       jsonLd: [
         organizationJsonLd(shop),
         breadcrumbJsonLd(shop, [
+          // Root first, as on every other trail — see the PDP's note.
+          { name: "Domov", path: "/" },
           { name: content.nav[0], path: shop.routeSlugs["/products"] },
           { name: collection.navLabel },
         ]),
