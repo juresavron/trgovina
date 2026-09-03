@@ -84,6 +84,7 @@ import { ADDON_GROUP_ORDER } from "../../catalog/pola";
 import { finishSlugOf, SHELL_FINISHES_ARE_PHOTOGRAPHED } from "../../catalog/pola";
 import { finishImageUrl, type FinishKind } from "../../catalog/finish-image";
 import { formatEur } from "../../catalog/pricing";
+import { counted } from "../../lib/plural";
 
 export const STUDIO_PDP_CSS = `
   /* ---- Values the baseline measures that tokens.ts does not carry ---- */
@@ -3037,13 +3038,66 @@ export function renderStudioPdp(ctx: RenderCtx): string {
   // rendering fault rather than as a sum. The extras line is what makes the
   // arithmetic legible: it says 0 € until something is ticked, which explains
   // why the two figures match.
+  // ⚠️ THE LIST FOLDS, AND THE SUMS DO NOT.
+  //
+  // Measured on /bazen/veliki-230 at 1440x900: the buy column ran 3.077px
+  // before the specification panels, and 904px of that — a whole screen —
+  // was thirteen unticked checkboxes. A visitor who wants the model as it
+  // comes scrolled a screen of extras they had already declined to reach the
+  // delivery terms and the technical data. The six panels under the row
+  // already answer this shape of problem with a disclosure; this is the
+  // seventh, inside the column where the length actually accrues.
+  //
+  // WHAT STAYS OUT OF THE FOLD IS THE ARITHMETIC. "Izbrana oprema" and
+  // "Skupaj" are the two figures the decision turns on, and a total that can
+  // be hidden is a price that can be missed. The fold takes the catalogue of
+  // options; it never takes the sum of what they cost.
+  //
+  // The summary names what is behind it — how many options and what they
+  // span — because a closed row saying only "Dodatna oprema" asks the
+  // visitor to open it to find out whether it is worth opening. Both halves
+  // are DERIVED: the count from the rows themselves and the range from their
+  // own printed prices, so neither can drift from the list the way a typed
+  // "od 30 do 300 EUR" would on the next supplier sheet.
+  //
+  // No new stylesheet: <details class="st-pdp-panel"> is the same disclosure
+  // the panels below use, and the label keeps .st-pdp-ao-head, the class the
+  // group headings inside the list already carry. The sheet stands at 19.6 of
+  // its 20 KB brotli budget (render/size.test.ts) and had no room for a
+  // component of its own.
+  const byPrice = [...priced].sort((a, b) => a.priceCents - b.priceCents);
+  const lo = byPrice[0];
+  const hi = byPrice[byPrice.length - 1];
+  const aoRange =
+    // "od 30 € do 300 €", not "30 €–300 €": the prices arrive already
+    // carrying their unit, so an en dash between them prints the euro sign
+    // twice with nothing to join it.
+    !lo || !hi
+      ? ""
+      : lo.price === hi.price
+        ? ", " + lo.price
+        : ", od " + lo.price + " do " + hi.price;
+  const aoSummary =
+    "Dodatna oprema · " +
+    counted(ctx.shop.locale.intl, all.length, [
+      "možnost",
+      "možnosti",
+      "možnosti",
+      "možnosti",
+    ]) +
+    aoRange;
+
   const addons =
     all.length === 0
       ? ""
       : '<fieldset class="st-pdp-ao" data-st-addons>' +
-        // Sentence case for the AX tree; the uppercase is the stylesheet's.
-        '<legend class="st-pdp-ao-legend" aria-label="Dodatna oprema">Dodatna oprema</legend>' +
-        '<ul class="st-pdp-ao-list">' + groups + "</ul>" +
+        // The fieldset still needs a name for the accessibility tree, and the
+        // summary below is the visible one — so the legend goes to the
+        // screen reader alone rather than printing the same words twice.
+        '<legend class="st-vh">Dodatna oprema</legend>' +
+        '<details class="st-pdp-panel"><summary>' +
+        '<span class="st-pdp-ao-head">' + esc(aoSummary) + "</span></summary>" +
+        '<ul class="st-pdp-ao-list">' + groups + "</ul></details>" +
         (priced.length > 0 && d.priceCents > 0
           // ⚠️ hidden UNTIL A SCRIPT CLEARS IT, and role="status" once it is.
           //
