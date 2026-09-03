@@ -70,6 +70,54 @@ for (const s of Object.values(SHOPS)) {
     }
     byHost.set(host, s);
   }
+  // An alias resolves to the shop as well, so that a request which somehow
+  // reaches the renderer without passing the redirect below still draws the
+  // right pages rather than a 404. The redirect is what visitors and
+  // crawlers actually get; this is the floor under it.
+  for (const alias of s.aliasDomains ?? []) {
+    for (const host of [alias, `www.${alias}`]) {
+      const taken = byHost.get(host);
+      if (taken) {
+        throw new Error(
+          "two shops claim the host " + host + ": " + taken.key + " and " + s.key,
+        );
+      }
+      byHost.set(host, s);
+    }
+  }
+}
+
+/**
+ * Hosts that must answer with a permanent redirect rather than with pages.
+ *
+ * ⚠️ EXACTLY ONE HOST PER SHOP SERVES CONTENT, and it is `domain`. Every
+ * other spelling the shop owns — www, and both forms of every alias — is in
+ * here and answers 301 to the same path on the canonical origin.
+ *
+ * www IS IN THIS MAP, and it did not used to be. Both www and apex answered
+ * 200 with the same body and the same canonical tag, which is a duplicate a
+ * crawler has to resolve for itself. The canonical tag made that likely to
+ * come out right; a redirect makes it certain, and costs one response.
+ */
+const redirectHosts = new Map<string, ShopConfig>();
+for (const s of Object.values(SHOPS)) {
+  const hosts = [`www.${s.domain}`];
+  for (const alias of s.aliasDomains ?? []) hosts.push(alias, `www.${alias}`);
+  for (const host of hosts) redirectHosts.set(host, s);
+}
+
+/**
+ * The shop a host should be redirected to, or null when the host serves.
+ *
+ * Dev hosts never redirect: the QA host and localhost are where the site is
+ * driven from, and sending them to the production origin would make every
+ * test and audit measure a domain that is not live yet.
+ */
+export function resolveRedirect(host: string | null | undefined): ShopConfig | null {
+  if (!host) return null;
+  const bare = host.trim().toLowerCase().replace(/:\d+$/, "");
+  if (isDevHost(bare)) return null;
+  return redirectHosts.get(bare) ?? null;
 }
 
 /**

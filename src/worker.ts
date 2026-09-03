@@ -12,7 +12,8 @@
  * stages (docs/ARCHITECTURE.md "Build order").
  */
 
-import { SHOPS, resolveShop, isDevHost, type ShopConfig } from "./tenants";
+import { SHOPS, resolveRedirect,
+  resolveShop, isDevHost, type ShopConfig } from "./tenants";
 import type { InternalRouteKey } from "./tenants/types";
 import type { PdpContent, ShopContent } from "./content/types";
 import { CONTENT } from "./content";
@@ -236,6 +237,30 @@ export function handleRequest(
 ): Response {
   const url = new URL(request.url);
   const host = request.headers.get("host") ?? url.hostname;
+
+  // ⚠️ BEFORE EVERYTHING, INCLUDING THE LIVE GATE. A shop owns more than one
+  // spelling of its name — www, and any alias domain the owner registered —
+  // and exactly one of them serves pages. The rest answer here, permanently,
+  // pointing at the same path on the canonical origin.
+  //
+  // Ahead of the live gate on purpose: a pre-live shop should send an alias
+  // to the canonical host and let THAT host say "kmalu", so the holding page
+  // is only ever seen at one address and the redirect is already in place
+  // and cached on the day the shop opens.
+  const redirectTo = resolveRedirect(host);
+  if (redirectTo) {
+    return new Response(null, {
+      status: 301,
+      headers: {
+        location: redirectTo.siteUrl + url.pathname + url.search,
+        // A permanent redirect that a crawler re-checks every visit is not
+        // doing its job; a day is long enough to be useful and short enough
+        // that a canonical swap before launch is not stuck in caches.
+        "cache-control": "public, max-age=86400",
+        ...SECURITY,
+      },
+    });
+  }
 
   let shop = resolveShop(host, url);
   if (!shop) {

@@ -1055,18 +1055,23 @@ const collections: Collection[] = [
     // is cheap to correct, while a title with a stale number is the line
     // Google shows.
     seoTitle: "Masažni bazeni za doma in vrt",
-    intro:
-      "Trije modeli, ki se ne razlikujejo samo po velikosti. BAZEN 195 meri " +
-      "1,95 × 1,95 m in je edini, ki se umesti tja, kamor druga dva ne gresta: " +
-      "pet mest, od tega dva ležalnika, 35 šob, ena črpalka 3 KM in 1.500 " +
-      "kilogramov, ko je poln. BAZEN 210 meri 2,10 × 2,10 m in sprejme največ " +
-      "ljudi: šest mest z enim ležalnikom in 37 šob, napolnjen 1.870 " +
-      "kilogramov. BAZEN 230 meri 2,30 × 2,30 m in ni bazen za več ljudi, " +
-      "ampak za več prostora: pet mest z dvema ležalnikoma, 50 šob, dve " +
-      "črpalki 3 KM in 2.210 kilogramov. Školjka je pri najmanjšem visoka 82 " +
-      "cm, pri drugih dveh 88. Ogrevanje 3 kW, filter z 9,3 m² površine in krmilnik " +
-      "Balboa imajo vsi trije; na teraso jih pripeljemo, priklopimo in " +
-      "zaženemo.",
+    // ⚠️ PARAGRAPHS, AND NOT THE SPEC SHEET AGAIN. This was one paragraph
+    // that recited all three models' size, seats, jets, pumps and filled
+    // weight — every figure of which the three cards directly below it
+    // already print. The reader met the catalogue twice, as a wall and then
+    // as cards, and the wall came first. What is left is what the cards
+    // cannot say: how to read the range, and the numbers that decide
+    // something and appear nowhere else.
+    intro: [
+      "Trije modeli, ki se ne razlikujejo samo po velikosti. Prva številka v " +
+        "imenu je stranica školjke.",
+      "BAZEN 195 gre tja, kamor druga dva ne. BAZEN 210 sprejme največ ljudi. " +
+        "BAZEN 230 ni bazen za več ljudi, ampak za več prostora — dva ležalnika " +
+        "in največ šob med tremi.",
+      "Ogrevanje 3 kW, filter z 9,3 m² površine in krmilnik Balboa imajo vsi " +
+        "trije. Napolnjeni tehtajo od 1.500 do 2.210 kilogramov, zato nosilnost " +
+        "terase preverimo na brezplačnem ogledu.",
+    ],
     metaDescription:
       "Masažni bazeni za 5 ali 6 oseb, od 195 do 230 cm. Akrilna školjka, " +
       "35–50 šob, ogrevanje in filtracija. Dostava, priklop in zagon po vsej Sloveniji.",
@@ -1083,43 +1088,33 @@ const collections: Collection[] = [
     // a searcher reads before clicking; it may not claim what the range does
     // not uniformly do.
     seoTitle: "Swim spa bazeni — mere in cene",
-    intro:
-      // ⚠️ THE OTHER NAMES, AS NAMES — AND THE FAMILY IS NOT RENAMED AFTER
-      // THEM. The owner asked for this family to be called "Plavalni
-      // (protitočni) bazeni", and the second word is a claim it cannot carry:
-      // protitok IS the counter-current, SWIM 450 lists swimJets: 0
-      // (catalog/swimspa.ts), swimSpaFamilyHasSwimJets() returns false, and
-      // swimspa.test.ts pins that with "does not advertise a counter-current
-      // jet the range cannot deliver". A family named after the jet asserts it
-      // for all three, and the h1 would then contradict the sentence four
-      // lines below it on the same screen; the SWIM 450 breadcrumb would carry
-      // a swimming-pool label into the SERP on the one model with no swim jet.
-      //
-      // So the words arrive the way jacuzzi and whirlpool did on the FAQ: as
-      // what people CALL the thing, in a sentence that describes usage and
-      // asserts nothing about any model. "swim spa" stays the family name and
-      // stays in all 27 internal anchors that use navLabel.
+    // ⚠️ PARAGRAPHS, AND NOT THE SPEC SHEET AGAIN. This was one paragraph
+    // that recited all three models' size, seats, jets, pumps and filled
+    // weight — every figure of which the three cards directly below it
+    // already print. The reader met the catalogue twice, as a wall and then
+    // as cards, and the wall came first. What is left is what the cards
+    // cannot say: how to read the range, and the numbers that decide
+    // something and appear nowhere else.
+    //
+    // ⚠️ THE OTHER NAMES, AS NAMES — AND THE FAMILY IS NOT RENAMED AFTER
+    // THEM. The owner asked for this family to be called "Plavalni
+    // (protitočni) bazeni", and the second word is a claim it cannot carry:
+    // protitok IS the counter-current and SWIM 450 lists swimJets: 0
+    // (catalog/swimspa.ts), so a family named after the jet asserts it for a
+    // model that has none. The words stay as what people CALL the thing, in
+    // a sentence that asserts nothing about any model.
+    intro: [
       "Swim spa bazenu se reče tudi plavalni bazen, tisti s tokom pa " +
-      "protitočni — pri nas ostaja swim spa, ker vsi trije modeli niso enaki. " +
-      "Tri školjke, pri katerih je prva številka dolžina. Od nje je odvisno, " +
-      "koliko plavanja je v bazenu in koliko vrta potrebujete zanj. SWIM 450 " +
-      "meri 4,50 × 2,28 m in je vstopni model: najkrajša školjka v ponudbi, " +
-      "tri mesta, štiri šobe in 5.750 kilogramov, ko je polna. Modela 580 sta " +
-      "dolga 5,80 m in imata sedem mest z enim ležalnikom. SWIM 580 HIDRO ima " +
-      "38 šob in tri črpalke 3 KM, napolnjen tehta 8.490 kilogramov; SWIM 580 " +
-      "MAXI ima 94 šob (največ v vsej ponudbi) in pet črpalk 3 KM, " +
-      "napolnjen pa je lažji, 7.360 kilogramov. " +
-      (swimSpaFamilyHasSwimJets()
-        ? "Tok za plavanje na mestu ustvarijo protitočne šobe, ki jih ima vsak " +
-          "od treh modelov. "
-        // ⚠️ NOT "KOLIKO JIH IMA POSAMEZEN MODEL" — that presupposes every
-        // model has some, and this branch runs precisely because one does not.
-        // The guard above knows it; the sentence under the guard did not.
-        : "Tok za plavanje na mestu ustvarijo protitočne šobe, ki jih nimajo vsi trije " +
-          "modeli: modela 580 imata po tri, za SWIM 450 pa jih dobaviteljev list ne " +
-          "navaja. ") +
-      "Swim spa praviloma stoji na betonski plošči, ne na terasi. Dostop " +
-      "in prostor za dvig preverimo na lokaciji pred potrditvijo termina.",
+        "protitočni. Pri nas ostaja swim spa, ker vsi trije modeli niso enaki.",
+      "Prva številka v imenu je dolžina, in od nje je odvisno, koliko plavanja " +
+        "je v bazenu in koliko vrta potrebujete zanj. SWIM 450 je vstopni model " +
+        "s tremi mesti, modela 580 imata sedem mest z ležalnikom.",
+      "Tok za plavanje na mestu ustvarijo protitočne šobe. Modela 580 imata po " +
+        "tri, za SWIM 450 pa jih dobaviteljev list ne navaja.",
+      "Swim spa praviloma stoji na betonski plošči, ne na terasi. Napolnjeni " +
+        "tehtajo od 5.750 do 8.490 kilogramov, zato dostop in prostor za dvig " +
+        "preverimo na lokaciji pred potrditvijo termina.",
+    ],
     metaDescription:
       // ⚠️ AND NOT "ZA PLAVANJE NA MESTU". The seoTitle six lines above
       // carries a note explaining at length why it may not say this — SWIM

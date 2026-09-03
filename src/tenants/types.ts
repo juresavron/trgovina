@@ -75,6 +75,25 @@ export type ShopConfig = {
   domain: string;
   /** Canonical origin ('https://finskasavna.si'). */
   siteUrl: string;
+  /**
+   * Other apex domains the shop owns, which REDIRECT to `domain`.
+   *
+   * ⚠️ ONE HOST SERVES, EVERY OTHER HOST REDIRECTS TO IT. A second domain
+   * that answers 200 with the same pages is the classic way to halve your
+   * own search results: two hosts, one body of content, and a crawler
+   * deciding for itself which one to keep. The canonical link tag is a hint;
+   * a 301 is not.
+   *
+   * So an owner who registers a second spelling of the name puts it here
+   * rather than in `domain`, and the worker answers it with a permanent
+   * redirect to the same path on `domain`. Both apex and www of each entry
+   * are covered, as they are for the canonical domain itself.
+   *
+   * Which of the two is canonical is exactly one line: swap `domain` and
+   * `siteUrl` with the entry here. Do that BEFORE the shop goes live —
+   * afterwards it costs the reputation the old host has accumulated.
+   */
+  aliasDomains?: readonly string[];
   /** Brand name ('Finska Savna'). */
   name: string;
   /** Wordmark split for the two-tone logo: [prefix, accent]. */

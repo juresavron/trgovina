@@ -87,17 +87,31 @@
   // ⚠️ THE PAIR BELOW NOW NAMES THE SHOP'S OWN DOMAIN. It used to name
   // masazni-bazen.si — a domain this business DOES NOT OWN (it resolves to
   // 212.44.105.63, not Cloudflare) — so following the launch steps verbatim
-  // would have attached somebody else's hostname. The tenant's domain is
-  // masazni-bazeni-vrelec.si (src/tenants/bazen.ts), and that is the only
-  // pair that may ever be uncommented here.
+  // would have attached somebody else's hostname. The tenant's domains are
+  // masazni-bazeni-vrelec.si and masaznibazenivrelec.si (src/tenants/bazen.ts),
+  // and those are the only patterns that may ever be uncommented here.
   //
   // Do NOT uncomment until that zone reads Active in THIS account: step 1
   // above is not paperwork, it is the difference between a working deploy
   // and error 10082 taking the whole deploy down.
   //
+  // ⚠️ ALL FOUR PATTERNS, NOT JUST THE CANONICAL PAIR. The worker answers
+  // www and the alias domain with a 301 to the canonical origin — but only
+  // for requests that reach it, and a hostname with no route here never
+  // does. A registered domain left unrouted is a domain that resolves to
+  // Cloudflare and returns an error page, which is worse for the brand than
+  // not owning it. Each alias needs its own zone Active in this account,
+  // exactly like the canonical one.
+  //
+  // WHICH DOMAIN IS CANONICAL is decided in src/tenants/bazen.ts, not here:
+  // this list is every host the worker must be reachable on, in either
+  // direction. Swapping the canonical needs no change to this block.
+  //
   // "routes": [
   //   { "pattern": "masazni-bazeni-vrelec.si", "custom_domain": true },
-  //   { "pattern": "www.masazni-bazeni-vrelec.si", "custom_domain": true }
+  //   { "pattern": "www.masazni-bazeni-vrelec.si", "custom_domain": true },
+  //   { "pattern": "masaznibazenivrelec.si", "custom_domain": true },
+  //   { "pattern": "www.masaznibazenivrelec.si", "custom_domain": true }
   // ],
 
   // Static assets, served from the edge before the Worker runs. Only /img/*
