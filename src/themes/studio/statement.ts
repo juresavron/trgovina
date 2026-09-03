@@ -932,8 +932,19 @@ export function renderStudioStats(ctx: RenderCtx): string {
       "</span>",
   );
   return (
-    '<section class="st-stats" aria-label="Zakaj pri nas"><div class="st-stats-in">' +
-    '<span class="st-stats-pill">Zakaj pri nas</span>' +
+    // ⚠️ NOT "Zakaj pri nas", WHICH THE BAND ABOVE HAS ALREADY SAID.
+    //
+    // editorial.ts heads the five-step band "Zakaj kupiti <keyword> pri nas"
+    // and this band opened, immediately under it, with "Zakaj pri nas" — the
+    // same promise twice in a row, the second time with nothing new attached
+    // to it. A reader scrolling past reads one argument announced twice and
+    // has to work out which of the two is which.
+    //
+    // What this band actually is, is the goods in figures: how many models,
+    // the most jets, the heater, the heaviest shell. Naming it that removes
+    // the collision and tells the reader what the numbers under it are.
+    '<section class="st-stats" aria-label="V številkah"><div class="st-stats-in">' +
+    '<span class="st-stats-pill">V številkah</span>' +
     '<p class="st-claim">' + parts.join(" ") + "</p>" +
     '<div class="st-stat-row">' +
     ctx.content.stats
