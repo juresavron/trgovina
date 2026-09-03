@@ -920,7 +920,14 @@ export const STUDIO_COMMERCE_CSS = `
    * paragraph started at neither the gutter nor the page's centre: on a
    * collection page it began 227px in from a heading that began at 40, which
    * reads as an indent nobody chose. */
+  /* A stack of paragraphs, not one. The flex slot above resolves against
+   * this element, so the paragraphs are its children and the space between
+   * them is a gap rather than the margins a reset has already removed. */
+  :root[data-theme="studio"] .st-shop-intro > p { margin: 0; }
   :root[data-theme="studio"] .st-shop-intro {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 1vw, 16px);
     margin: clamp(12px, 1.2vw, 20px) 0 0;
     max-inline-size: 40rem;
     font-family: var(--f-body);
@@ -2626,7 +2633,9 @@ export function renderStudioCollection(ctx: RenderCtx, c: Collection): string {
     '<p class="st-eyebrow">' + esc(ctx.shop.name) + "</p>" +
     '<h1 class="st-sec-h">' + esc(c.h1) + "</h1>" +
     "</div>" +
-    '<p class="st-shop-intro">' + esc(c.intro) + "</p>" +
+    '<div class="st-shop-intro">' +
+    c.intro.map((p) => "<p>" + esc(p) + "</p>").join("") +
+    "</div>" +
     "</div>" +
     (cards === "" ? "" : '<div class="st-grid">' + cards + "</div>") +
     // Between the cards and the way out: somebody still on this page after the

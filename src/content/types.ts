@@ -59,8 +59,22 @@ export interface Collection {
    * Vrelec" — the head term twice and nothing a searcher could choose on.
    */
   seoTitle?: string;
-  /** One paragraph under the H1 — what this family is and who it is for. */
-  intro: string;
+  /**
+   * The copy under the H1 — what this family is and how to choose inside it.
+   *
+   * ⚠️ PARAGRAPHS, AND IT USED TO BE ONE STRING. A single field invites a
+   * single paragraph, and a single paragraph invited every fact: the swim spa
+   * intro grew to fifteen lines that recited all three models' length, seats,
+   * jets, pumps and filled weight — every one of which the three cards
+   * directly below it already print. The reader met the catalogue twice, once
+   * as a wall and once as cards, and the wall came first.
+   *
+   * So the shape says what the copy is for. Lead with what the family is,
+   * then what separates the models in a clause each, then what they share.
+   * Numbers that are on the cards do not belong here; numbers that are NOT —
+   * a filled weight, a shell height — earn their place by deciding something.
+   */
+  intro: readonly string[];
   metaDescription: string;
   /** Short label for the nav and breadcrumbs. */
   navLabel: string;
