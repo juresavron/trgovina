@@ -1360,7 +1360,23 @@ export const bazenContent: ShopContent = {
   // The entry is the assertion — see the note on `installations` in
   // content/types.ts for why this band, alone on the site, may not fall back
   // to the shop's product photography. Town only, never an address.
-  reviewsLead: "Objavljena so tako, kot smo jih prejeli.",
+  // ⚠️ NOT "Objavljena so tako, kot smo jih prejeli." — WE RECEIVED NOTHING.
+  //
+  // The quotes below are placeholder copy (content/types.ts says so at the
+  // top of the file), and that sentence is a statement about RECEIPT: it
+  // says these words arrived from customers and were passed through
+  // unedited. Over invented text it is false, and falsity about the
+  // provenance of a review is Annex I point 23c of ZVPot-1 — the blacklist,
+  // where no weighing of circumstances applies.
+  //
+  // reviewsLeadVerified was already moved behind the verified test for
+  // exactly this reason; this line was left printing always on the argument
+  // that it "keeps what is true either way". That holds for a real review
+  // nobody has checked. It does not hold for a review nobody wrote.
+  //
+  // So the band leads with what IS true today: the shop has not published
+  // any yet. The sentence about receipt returns with the first real one.
+  reviewsLead: "Prve ocene zbiramo; ko jih prejmemo, jih objavimo tukaj.",
   reviewsLeadVerified: "Zapisali so jih stranke, ki so pri nas kupile bazen.",
   reviews: GENERATED_REVIEWS["bazen"] ?? [],
   // ⚠️ SLUGS NOW, NOT FRAGMENTS. These used to be the derived section ids on

@@ -522,13 +522,18 @@ describe("rich results", () => {
     const bc = (await ldOn("/bazen/veliki-230")).find((n) => n["@type"] === "BreadcrumbList");
     expect(bc).toBeTruthy();
     const items = bc.itemListElement;
+    // ⚠️ "Domov" LEADS, AND IT DID NOT USED TO. The hub, the finder, the
+    // guides and every editorial page all start their trail at the root; the
+    // product pages and the collections started at the hub, so the crumb a
+    // searcher sees under the two most commercial result types was missing
+    // its first step.
     expect(items.map((i: { name: string }) => i.name)).toEqual([
-      "Trgovina", "Masažni bazeni", "BAZEN 230",
+      "Domov", "Trgovina", "Masažni bazeni", "BAZEN 230",
     ]);
-    expect(items.map((i: { position: number }) => i.position)).toEqual([1, 2, 3]);
+    expect(items.map((i: { position: number }) => i.position)).toEqual([1, 2, 3, 4]);
     // Google's own guidance: the current page carries no item URL.
     expect(items[items.length - 1].item).toBeUndefined();
-    expect(items[0].item).toBe(SHOPS["bazen"]!.siteUrl + "/trgovina");
+    expect(items[0].item).toBe(SHOPS["bazen"]!.siteUrl + "/");
   });
 
   // ⚠️ THE ENTRIES NEST A PRODUCT NOW, and this test used to read el.url.
