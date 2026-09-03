@@ -119,6 +119,12 @@ jobs:
       - name: One shop's words stay out of shared render code
         run: node scripts/audit-shared-copy.mjs
 
+      # Before the deploy, not after: a page in public/ would answer on every
+      # routed host — the alias domains included — without the Worker ever
+      # running, and the smoke test below only ever asks the QA host.
+      - name: public/ ships assets, not pages
+        run: node scripts/audit-public-assets.mjs
+
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy
         env:
