@@ -252,7 +252,33 @@ export const STUDIO_EDITORIAL_CSS = `
     align-items: stretch;
     gap: var(--studio-card-gap);
   }
-  @media (max-width: 1100px) {
+  /* ⚠️ 1399, UP FROM 1100, AND THE UNIT IS CHARACTERS PER LINE — the same
+   * measure the note below uses to throw out the two-column phone tile.
+   *
+   * Five tracks divide the container, so the copy column is (container − 4
+   * gaps) / 5 − 2 × 25.92px of tile padding. Measured across the tier this
+   * rule used to cover:
+   *
+   *   1100   133px of text   ~17 characters per line
+   *   1200   153px           ~19
+   *   1280   169px           ~21
+   *   1400   193px           ~24
+   *   1440   201px           ~25   ← the width the row was designed at
+   *
+   * The captions are whole sentences — "Navodila za vašega električarja ali
+   * izvedba z našim partnerjem." — so seventeen characters is five ragged
+   * lines in a 133px column, and the reader meets five of them side by side.
+   * The row was measured and approved at 1440 and quietly kept its five
+   * tracks for another 340px below that, where the arithmetic no longer
+   * holds.
+   *
+   * So the five-across belongs to the width it was drawn for. Under it the
+   * three-across tier already existed and is roomy: 372px of text at 1399,
+   * 272 at 1100, 247 at 1024 — 31 to 46 characters. Five steps then read
+   * three-and-two, which the numbers on the tiles carry.
+   *
+   * Nothing below 1100 changes: that range was already three across. */
+  @media (max-width: 1399px) {
     :root[data-theme="studio"] .st-imp-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   }
   @media (max-width: 700px) {
