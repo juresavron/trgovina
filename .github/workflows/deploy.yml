@@ -293,7 +293,18 @@ jobs:
           # image-only check skip silently — leaving the binding unverified
           # exactly when the self-hosted FONTS became the only thing it
           # serves, and a page with no fonts is a page nobody can read.
-          ASSET=$(cd public && find . -type f ! -name '.*' | sed 's|^\./||' | sort | head -1)
+          #
+          # ⚠️ EXCEPT public/_headers AND public/_redirects. Those two are
+          # CONFIGURATION, not content: Workers Assets parses them and then
+          # refuses to serve them, by design and by documentation. Adding
+          # _headers to public/ therefore failed this deploy on its first run
+          # — the file sorts first, the check asked for it, the edge correctly
+          # answered 404, and a working deploy was reported as a broken
+          # binding. Deriving the name from the checkout is still right; the
+          # derivation just has to know which files the platform eats.
+          ASSET=$(cd public && find . -type f ! -name '.*' \
+            ! -name '_headers' ! -name '_redirects' \
+            | sed 's|^\./||' | sort | head -1)
           if [ -z "$ASSET" ]; then
             echo "public/ ships no files — nothing to check"
           else
@@ -318,6 +329,30 @@ jobs:
             if ! cmp -s /tmp/asset.bin "public/$ASSET"; then
               echo "FAIL: /$ASSET does not match the file in the repo"; exit 1
             fi
+          fi
+
+          # public/_headers actually parsed. It is unserved config, so nothing
+          # above can see it, and its whole failure mode is silence: a
+          # malformed line is skipped, the platform default
+          # ("max-age=0, must-revalidate") stays, and the six vendored faces
+          # get revalidated on every navigation forever. Nobody would notice.
+          #
+          # The font is derived, like the asset above. Checked only when the
+          # repo ships both the file and a rule for it, so deleting either one
+          # retires the assertion instead of breaking the deploy.
+          FONT=$(cd public && find fonts -type f -name '*.woff2' 2>/dev/null | sort | head -1)
+          if [ -n "$FONT" ] && grep -q '^/fonts/\*' public/_headers 2>/dev/null; then
+            echo "_headers check: /$FONT"
+            # `|| true` because the step runs under `bash -e` and grep exits
+            # 1 when the header is absent — which is precisely the failure
+            # this is here to REPORT, and without it the step would die
+            # silently on the assignment instead of printing why.
+            fcc=$(curl -sI "https://${WORKERS_DEV_HOST}/$FONT" \
+              | tr -d '\r' | grep -i '^cache-control:' | head -1 || true)
+            case "$fcc" in
+              *max-age=604800*) echo "  $fcc" ;;
+              *) echo "FAIL: /$FONT sent \"$fcc\" — public/_headers did not apply"; exit 1 ;;
+            esac
           fi
 
           # Assets must not shadow the page routes.
