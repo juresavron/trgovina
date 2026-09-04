@@ -1,6 +1,6 @@
 import { describe as suite, it, expect } from "vitest";
 import { SHOTS, SHOT_KEYS, arrange, shotLabel, shotRank, shotMenu } from "./shots";
-import { previewPath } from "./routes";
+import { previewPath } from "./media";
 import { parse } from "./describe";
 
 /**
