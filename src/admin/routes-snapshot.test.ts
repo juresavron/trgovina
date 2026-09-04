@@ -30,7 +30,19 @@ const ENV: Env = {
 } as Env;
 
 const USER = { id: "u1", email: "kdo@example.com" };
-const PRODUCTS = [{ id: "p1", shop_id: "bazen", slug: "veliki-230", title: "BAZEN 230" }];
+const PRODUCTS = [{
+  id: "p1", shop_id: "bazen", slug: "veliki-230", title: "BAZEN 230",
+  status: "published", freight_class: "pallet_xl", sort: 0,
+}];
+/**
+ * ⚠️ THE STUB MUST SERVE A SHOP NOW. The panel resolves which shop it is
+ * administering from public.shops, filtered by RLS to what this account may
+ * see, and an account that may see none gets a 403 rather than a crash. With
+ * an empty list every surface in this file correctly became that 403 — which
+ * is the resolver working, and the reason this row is here.
+ */
+const SHOPS_ROWS = [{ id: "bazen", name: "Masažni bazeni Vrelec",
+  domain: "masaznibazenivrelec.si", is_live: true }];
 const MEDIA = [
   { id: "m1", product_id: "p1", url: "bazen/veliki-230/a--0123456789abcdef0123456789abcdef.webp",
     alt: "Bazen na terasi", sort: 0, widths: [640, 1280], enhanced: true, shot: "hero" },
@@ -47,6 +59,7 @@ const POSTS = [{ id: "b1", shop: "bazen", slug: "prvi", title: "Prvi zapis", bod
 function body(url: string): unknown {
   if (url.includes("/auth/v1/user")) return USER;
   if (url.includes("/rpc/is_admin")) return true;
+  if (url.includes("shops?select") || url.includes("/rest/v1/shops")) return SHOPS_ROWS;
   if (url.includes("products?select") || url.includes("/rest/v1/products")) return PRODUCTS;
   if (url.includes("product_media")) return MEDIA;
   if (url.includes("/rest/v1/reviews")) return REVIEWS;

@@ -24,6 +24,7 @@
 
 import { seedCatalogue } from "./catalogue";
 import { listProducts } from "./db/catalogue";
+import { resolveShopChoice, shopCookie } from "./db/shop";
 export { adminModelSlugs } from "./catalogue";
 import { ERRORS, NOTICES } from "./surfaces/notices";
 import type { AdminCtx, Surface } from "./surfaces/ctx";
@@ -35,14 +36,12 @@ import { handle as reviewsSurface } from "./surfaces/reviews";
 import {
   isWebp, previewPath, slugStem, storedPaths, widthPath } from "./media";
 import { } from "../catalog/swimspa";
-import { SHOPS } from "../tenants";
 import {
   type Api,
   type Env,
   deleteMedia,
   deleteObject,
   downloadObject,
-  ensureProduct,
   insertMedia,
   listMedia,
   missingConfig,
@@ -228,9 +227,38 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // than an unauthenticated request that the database happily serves.
   const api: Api = { env, token: admin.token };
 
+  // --- which shop -------------------------------------------------------
+  //
+  // ⚠️ ONCE, HERE, AND VALIDATED AGAINST THE DATABASE. Every surface below
+  // takes the answer from AdminCtx, so no handler picks a shop for itself and
+  // none of them can be pointed at one this account may not see: the set comes
+  // from listShops(), which runs as this person and is filtered by RLS.
+  const choice = await resolveShopChoice(request, api, url);
+  if (!choice.current) {
+    // An account on the admins allowlist whose RLS grants it no shop. A
+    // permissions state, not a crash.
+    return page(
+      notFoundPage(
+        "Vaš račun nima dostopa do nobene trgovine. Obrnite se na skrbnika.",
+        admin.email,
+      ),
+      403,
+    );
+  }
+  const shopKey = choice.current.id;
+
+  // The switcher. A POST because it changes state for every later request,
+  // and a 303 back so a refresh does not re-submit it.
+  if (parts[1] === "trgovina" && request.method === "POST") {
+    const form = await request.formData();
+    const wanted = String(form.get("shop") ?? "");
+    const ok = choice.all.some((sh) => sh.id === wanted);
+    return seeOther(ok ? "/admin" : "/admin", ok ? { "set-cookie": shopCookie(wanted) } : {});
+  }
+
   // --- dashboard ---
   if (parts.length === 1) {
-    const key = "bazen";
+    const key = shopKey;
     // ⚠️ THE LIST COMES FROM THE TABLE NOW, not from a compiled array.
     //
     // It read CATALOGUE_SHOPS[key].models — OFFERED_MODELS and
@@ -252,7 +280,11 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     const shots = await Promise.all(models.map((m) => listMedia(api, m.id)));
     return page(
       indexPage(
-        SHOPS[key]!.name,
+        // ⚠️ THE ROW'S NAME, NOT THE BUNDLE'S. SHOPS[key] is the compiled
+        // tenant registry, so a shop that exists in the database but has no
+        // entry there — which is the whole point of a switcher — would have
+        // crashed on the non-null assertion. public.shops.name is the name.
+        choice.current.name,
         key,
         models.map((m, i) => ({
           shop: key,
@@ -269,6 +301,9 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
             src: "/media/" + x.key,
             group: x.group }),
         ),
+        // Every shop this account may administer. One of them and the
+        // switcher renders nothing — see the note on indexPage's `shops`.
+        choice.all.map((sh) => ({ id: sh.id, name: sh.name })),
       ),
     );
   }
@@ -461,7 +496,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         const from = proposed[i]?.from ?? "failed";
         const name = raw === "" ? "" : uniqueColourName(raw, taken);
         if (name !== "") taken.add(name.trim().toLowerCase());
-        const finish = name === "" ? null : await ensureFinish(api, "bazen", kind, name);
+        const finish = name === "" ? null : await ensureFinish(api, shopKey, kind, name);
         items.push(
           finish
             ? {
@@ -532,7 +567,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   if (parts[1] === "slike") {
     return page(
       sitePage(
-        "bazen",
+        shopKey,
         admin.email,
         SITE_IMAGES.map(
           (x): SiteSlot => ({
@@ -602,7 +637,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   //
   // First non-null answers, which is what the if-chain did — minus the shared
   // scope that made eleven surfaces one function.
-  const c: AdminCtx = { request, env, url, parts, admin, api, shopKey: "bazen" };
+  const c: AdminCtx = { request, env, url, parts, admin, api, shopKey };
   for (const surface of SURFACES) {
     const res = await surface(c);
     if (res) return res;
@@ -711,7 +746,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       // swatch just finds the row it already has.
       if (finishHere) {
         try {
-          await ensureFinish(api, "bazen", finishHere.kind, finishHere.name);
+          await ensureFinish(api, shopKey, finishHere.kind, finishHere.name);
         } catch {
           return bulk
             ? new Response("Slika je shranjena, barve pa ni bilo mogoče dodati na seznam.", { status: 502 })
