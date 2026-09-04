@@ -149,6 +149,20 @@ code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   .scrim{display:none}
 }
 
+/* The shop switcher, above the groups. Only rendered where there is more than
+   one shop — see shell() — so these rules cost nothing on a single-shop
+   panel. Full width because a shop name is long and a cramped select is how
+   somebody switches to the wrong one. */
+.shopsw{display:flex;flex-direction:column;gap:8px;margin:0 0 18px;
+  padding:0 4px 16px;border-bottom:1px solid var(--line)}
+.shopsw select{font:inherit;font-size:14px;min-height:44px;padding:10px 12px;
+  width:100%;color:var(--ink-body);background:var(--card);
+  border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl)}
+.shopsw button{font:inherit;font-size:14px;min-height:40px;padding:9px 14px;
+  cursor:pointer;color:var(--card);background:var(--ink);border:0;
+  border-radius:var(--r-ctrl)}
+.shopsw button:hover{background:#2e2e2e}
+
 .sidegrp{margin:0 0 18px}
 .sidegrp:last-child{margin-bottom:0}
 .sidegrp h2{font-size:11px;line-height:16px;letter-spacing:.09em;

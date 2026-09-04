@@ -30,7 +30,20 @@ import { shotLabel } from "./shots";
 import { SMART_JS, UPLOAD_JS } from "./client";
 import { doc, NAV_GROUPS } from "./design";
 
-export function shell(title: string, body: string, who: string, current = ""): string {
+/** What the switcher needs: where we are, and where else we could be. */
+export interface ShellShop {
+  readonly id: string;
+  readonly name: string;
+}
+
+export function shell(
+  title: string,
+  body: string,
+  who: string,
+  current = "",
+  shops: readonly ShellShop[] = [],
+  currentShop = "",
+): string {
   const nav = NAV_GROUPS.map(
     (g) =>
       '<div class="sidegrp"><h2>' + esc(g.title) + "</h2>" +
@@ -47,6 +60,29 @@ export function shell(title: string, body: string, who: string, current = ""): s
         .join("") +
       "</div>",
   ).join("");
+
+  // ⚠️ RENDERED ONLY WHERE THERE IS A CHOICE. One shop and this is a select
+  // with a single option and a button that changes nothing — chrome for a
+  // decision nobody has. It appears the day a second row lands in
+  // public.shops, and not before.
+  //
+  // A POST, because picking a shop changes what every later request means, and
+  // a GET that changes state is a GET a crawler or a prefetch can fire. It
+  // answers 303 back to the dashboard, so a refresh does not re-pick.
+  const switcher =
+    shops.length > 1
+      ? '<form class="shopsw" method="post" action="/admin/trgovina">' +
+        '<label class="vh" for="shopsw">Trgovina</label>' +
+        '<select id="shopsw" name="shop">' +
+        shops
+          .map(
+            (sh) =>
+              '<option value="' + esc(sh.id) + '"' +
+              (sh.id === currentShop ? " selected" : "") + ">" + esc(sh.name) + "</option>",
+          )
+          .join("") +
+        "</select><button type=\"submit\">Preklopi</button></form>"
+      : "";
 
   return doc(
     title,
@@ -78,7 +114,7 @@ export function shell(title: string, body: string, who: string, current = ""): s
       "</header>" +
       (who
         ? '<label class="scrim" for="navsw" aria-hidden="true"></label>' +
-          '<nav class="side" aria-label="Razdelki">' + nav + "</nav>"
+          '<nav class="side" aria-label="Razdelki">' + switcher + nav + "</nav>"
         : "") +
       '<main class="main"><div class="wrap">' + body + "</div></main>" +
     "</div>",
@@ -425,6 +461,21 @@ export function indexPage(
   models: ModelLink[],
   who = "",
   site: SiteSlot[] = [],
+  /**
+   * ⚠️ THE SWITCHER IS ON THE DASHBOARD AND NOWHERE ELSE, and that is a
+   * decision rather than a shortcut.
+   *
+   * shell() will render it for any page that passes these, so putting it in
+   * the chrome everywhere was one line. It should not be: switching shop is a
+   * navigation that discards where you are, and on /admin/blog/<id> where you
+   * are is a half-written post. A control that throws away a draft should not
+   * sit beside the draft.
+   *
+   * The dashboard is also where switching LANDS — the POST answers 303 to
+   * /admin — so the control is on the page it returns you to, which is where
+   * somebody looks for it next time.
+   */
+  shops: readonly ShellShop[] = [],
 ): string {
   // ⚠️ `site` IS ACCEPTED AND NOT RENDERED. The site pictures, the smart
   // uploader and the two colour drop zones used to sit at the bottom of this
@@ -520,6 +571,11 @@ export function indexPage(
 
       '<p class="key">Ključ trgovine: <code>' + esc(shopKey) + "</code></p>",
     who,
+    // "" for `current`: the dashboard is not one of the sidebar's groups, so
+    // no row is marked as the page you are on.
+    "",
+    shops,
+    shopKey,
   );
 }
 
