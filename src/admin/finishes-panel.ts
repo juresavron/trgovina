@@ -17,7 +17,8 @@
  * everything else.
  */
 
-import { finishDropCard, noticeHtml, shell, SMART_JS } from "./panel";
+import { finishDropCard, noticeHtml, shell } from "./panel";
+import { SMART_JS } from "./client";
 import { esc } from "../render/sections";
 import { finishImageUrl } from "../catalog/finish-image";
 import type { Finish } from "./finishes";
