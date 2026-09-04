@@ -821,6 +821,37 @@ describe("every host a shop owns but one", () => {
       for (const host of others) expect(hit(host).status, host).toBe(301);
     });
 
+    it(key + ": a redirect off an alias is never a chain", () => {
+      // The serving host 308s a path that is not lowercase-single-slash-no-
+      // trailing-slash. If the alias hands the path on verbatim, an alias URL
+      // in that shape costs TWO hops: 301 to the canonical host's bad
+      // spelling, then 308 to the good one. Crawlers follow chains and
+      // discount them, and the alias exists to consolidate, not to add a hop.
+      for (const host of others) {
+        const r = hit(host, "//" + "KONTAKT/");
+        expect(r.headers.get("location"), host).toBe(shop.siteUrl + "/kontakt");
+      }
+    });
+
+    it(key + ": a redirect off an alias keeps the request method", () => {
+      // ⚠️ 301 LETS A CLIENT REPLAY A POST AS A GET, which drops the body.
+      // On this site the body is a customer's enquiry and the destination is
+      // a table somebody reads by hand, so the loss is silent on both ends:
+      // the visitor sees a page, the shop never learns anyone wrote.
+      for (const host of others) {
+        const r = handleRequest(
+          new Request("https://" + host + "/kontakt", {
+            method: "POST",
+            headers: { host },
+          }),
+        );
+        expect(r.status, host + " POST").toBe(308);
+        expect(r.headers.get("location"), host).toBe(shop.siteUrl + "/kontakt");
+      }
+      // GET still gets the 301 crawlers consolidate on.
+      for (const host of others) expect(hit(host).status, host).toBe(301);
+    });
+
     it(key + ": no alias appears in a canonical, a sitemap or a link", async () => {
       const html = await handleRequest(
         new Request("https://trgovina.workers.dev/?shop=" + key, {

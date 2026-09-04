@@ -72,11 +72,20 @@
   //    ⚠️ Never add a route for a zone that is not Active in this account:
   //    wrangler fails the whole deploy with error 10082, taking every live
   //    shop's deploy down with it.
-  // 2. Uncomment the shop's pair below — both lines, www is not implied.
+  // 2. Uncomment EVERY pattern for that shop below — www is not implied,
+  //    and an alias domain is not implied by the canonical one.
   // 3. Deploy. Pre-live shops serve 503 + noindex, so attaching early is
   //    safe and warms TLS.
-  // 4. Zone Redirect Rule: 301 www.<domain>/* → https://<domain>/$1, and
-  //    SSL/TLS → Always Use HTTPS. Deliberately not done in the worker.
+  // 4. SSL/TLS → Always Use HTTPS.
+  //    ⚠️ AND NOTHING ELSE. This step used to read "Zone Redirect Rule: 301
+  //    www.<domain>/* → https://<domain>/$1 ... deliberately not done in the
+  //    worker", and that is no longer true: resolveRedirect() in
+  //    tenants/index.ts answers www AND every alias spelling, and
+  //    tenancy.test.ts gates it. A zone rule doing the same thing is a
+  //    second implementation of one decision, in a console, where nothing
+  //    tests it and the repo cannot see it disagree — and the canonical host
+  //    is chosen in src/tenants/<shop>.ts, so a stale zone rule would send
+  //    traffic to the loser of a swap this file says is free to make.
   // 5. When launch gates pass: set live: true in src/tenants/<shop>.ts,
   //    is_live = true on the shops row, redeploy. GSC + Bing + sitemap.
   //

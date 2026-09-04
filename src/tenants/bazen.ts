@@ -42,7 +42,7 @@ export const bazen: ShopConfig = {
   // differently — the words carry the keyword, the second half carries the
   // identity. See markHtml() in themes/studio/chrome.ts.
   wordmark: ["Masažni bazeni", "Vrelec"],
-  live: false,
+  live: true,
   // Orders arrive by telephone and e-mail, which is what /kosarica has always
   // said. Until that changes the storefront asks for an enquiry rather than
   // offering a basket it cannot fill — see ordersOnline in tenants/types.ts.

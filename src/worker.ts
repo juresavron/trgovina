@@ -182,6 +182,24 @@ const SECURITY = {
   "permissions-policy": "camera=(), microphone=(), geolocation=()",
 } as const;
 
+/**
+ * The one spelling of a path this site answers on: lowercase, interior slash
+ * runs collapsed, no trailing slash (root excepted).
+ *
+ * ⚠️ A FUNCTION BECAUSE TWO CALLERS APPLY IT AND THEY MUST NOT DISAGREE. The
+ * serving host 308s a non-canonical path here; the alias redirect below sends
+ * the path on VERBATIM. That was one rule implemented once and skipped once,
+ * which is a redirect chain: /KONTAKT/ on an alias answered 301 to the
+ * canonical host's /KONTAKT/, which answered 308 to /kontakt. Two hops, and
+ * a chain is exactly what a permanent redirect exists to avoid.
+ */
+function canonicalPathOf(pathname: string): string {
+  if (pathname === "/") return "/";
+  return (
+    pathname.replace(/\/{2,}/g, "/").replace(/\/+$/, "").toLowerCase() || "/"
+  );
+}
+
 /** Titles for placeholder routes, per internal key. */
 const PLACEHOLDER_TITLES: Partial<Record<InternalRouteKey, string>> = {
   "/products": "Ponudba",
@@ -249,10 +267,22 @@ export function handleRequest(
   // and cached on the day the shop opens.
   const redirectTo = resolveRedirect(host);
   if (redirectTo) {
+    // ⚠️ 308 FOR ANYTHING THAT IS NOT A READ. A 301 permits the client to
+    // replay the request as GET — RFC 9110 says so outright, and every
+    // browser does it — which turns a posted enquiry into a navigation and
+    // drops the body on the floor. Silently: the visitor lands on a page
+    // that looks right and nothing reaches the table this shop reads by
+    // hand, which is the same failure the PRG note further down exists to
+    // prevent. 308 is the permanent redirect that keeps the method.
+    //
+    // GET and HEAD keep 301, because that is the status crawlers consolidate
+    // on and consolidating is the whole point of owning the alias.
+    const read = request.method === "GET" || request.method === "HEAD";
     return new Response(null, {
-      status: 301,
+      status: read ? 301 : 308,
       headers: {
-        location: redirectTo.siteUrl + url.pathname + url.search,
+        // Canonicalised here, not just on arrival — see canonicalPathOf.
+        location: redirectTo.siteUrl + canonicalPathOf(url.pathname) + url.search,
         // A permanent redirect that a crawler re-checks every visit is not
         // doing its job; a day is long enough to be useful and short enough
         // that a canonical swap before launch is not stuck in caches.
@@ -382,8 +412,7 @@ export function handleRequest(
   // was the honest answer, and a doubled slash is the classic pasted-URL
   // artefact.
   let path = url.pathname;
-  const canonicalPath =
-    (path === "/" ? "/" : path.replace(/\/{2,}/g, "/").replace(/\/+$/, "")).toLowerCase() || "/";
+  const canonicalPath = canonicalPathOf(path);
   if (canonicalPath !== path) {
     // Response.redirect() cannot carry headers, and a 308 is heuristically
     // cacheable by shared caches — so the redirect states its own policy
