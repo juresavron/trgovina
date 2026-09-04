@@ -71,17 +71,6 @@ beforeEach(() => {
 });
 afterEach(() => { globalThis.fetch = real; });
 
-function h(str: string): string {
-  let a = 0x811c9dc5;
-  let b = 0x01000193;
-  for (let i = 0; i < str.length; i++) {
-    const c = str.charCodeAt(i);
-    a = Math.imul(a ^ c, 0x01000193) >>> 0;
-    b = Math.imul(b ^ ((c << 5) | (c >>> 3)), 0x85ebca6b) >>> 0;
-  }
-  return a.toString(16).padStart(8, "0") + b.toString(16).padStart(8, "0");
-}
-
 const SURFACES = [
   "/admin", "/admin/slike", "/admin/barve", "/admin/povprasevanja",
   "/admin/mnenja", "/admin/mnenja/novo", "/admin/blog", "/admin/blog/nov",
@@ -163,14 +152,6 @@ async function whoAnswered(path: string): Promise<string> {
   const html = await r.text();
   return (html.match(/<h1[^>]*>(.*?)<\/h1>/s)?.[1] ?? "").replace(/<[^>]+>/g, "").trim();
 }
-
-/** The two documents a signed-out request may ever receive. */
-const SIGNED_OUT: Record<string, string> = {
-  // The same login document either way — only the status differs, and that
-  // difference is the whole point.
-  front: "0727ee7653278346",
-  deep: "0727ee7653278346",
-};
 
 describe("every admin surface answers exactly as it did", () => {
   for (const path of SURFACES) {

@@ -17,7 +17,7 @@ import { finishListPage } from "../finishes-panel";
 import { nameColour, nameColourAvailable, uniqueColourName } from "../name-colour";
 import { BUCKET } from "../supabase";
 import type { AdminCtx } from "./ctx";
-import { json, page, seeOther } from "./ctx";
+import { page, seeOther } from "./ctx";
 
 export async function handle(c: AdminCtx): Promise<Response | null> {
   const { admin, api, env, parts, request, shopKey, url } = c;

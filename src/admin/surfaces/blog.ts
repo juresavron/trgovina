@@ -15,10 +15,10 @@ import { isWebp, slugStem } from "../media";
 import { notFoundPage } from "../panel";
 import { uploadObject } from "../supabase";
 import type { AdminCtx } from "./ctx";
-import { json, page, seeOther } from "./ctx";
+import { page, seeOther } from "./ctx";
 
 export async function handle(c: AdminCtx): Promise<Response | null> {
-  const { admin, api, env, parts, request, shopKey, url } = c;
+  const { admin, api, parts, request, shopKey, url } = c;
   // ⚠️ THE SURFACE OWNS ITS OWN GUARD. In the if-chain this was the
   // condition of the branch; extracted without it, the body ran for every
   // request and the first surface in the table answered the whole panel.
