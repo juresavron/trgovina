@@ -295,7 +295,7 @@ export const UNIVERSAL_PAGES: readonly Page[] = [
  * The seven that are NOT universal, and are the bazen shop's.
  *
  * ⚠️ THEY LOOK SHARED AND ARE NOT. Every one is hot-tub copy: /vodniki
- * indexes three guides about masažni bazeni, /primerjava compares two families
+ * indexes the guides about masažni bazeni, /primerjava compares two families
  * this shop happens to sell, the FAQ opens with "Je masažni bazen isto kot
  * jacuzzi?", /dostava-in-montaza describes carrying a shell through a garden
  * gate. They live under ./pages/ beside the universal six because that is

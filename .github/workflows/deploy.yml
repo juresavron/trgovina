@@ -22,8 +22,11 @@ env:
   # Public identifier, not a secret — same account as fans-network.
   CLOUDFLARE_ACCOUNT_ID: a92371cf91375ec80a58c86db49c4cdb
 
-  # QA + fallback host. No custom domains are routed yet (all four shops are
-  # pre-live; see wrangler.jsonc for the go-live steps and the 10082 doctrine).
+  # QA + fallback host, and the one the smoke tests below ask. The bazen shop
+  # is live on its own domain (see tenants/bazen.ts); this host stays closed to
+  # crawlers by design, which is why the SEO audit asks the shop's own host for
+  # robots.txt and the sitemap. See wrangler.jsonc for the go-live steps and
+  # the 10082 doctrine.
   WORKERS_DEV_HOST: "trgovina.worldfans.workers.dev"
 
 jobs:
@@ -137,6 +140,14 @@ jobs:
       # against each other.
       - name: Every database object the code calls is in the schema
         run: node scripts/audit-db-contract.mjs
+
+      # What a CRAWLER sees, on the shop's own host: titles that fit a SERP,
+      # one canonical per page, no duplicate title or h1, every guide in the
+      # sitemap, robots.txt open now that the shop is live. It ran only by
+      # hand until this line, which is how its robots.txt check spent the
+      # whole launch reporting a correct file as an error.
+      - name: A crawler gets a whole site
+        run: node scripts/audit-seo.mjs
 
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy

@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import { GUIDE_PAGES } from "./vodnik";
 import { handleRequest } from "../../worker";
 import { OFFERED_MODELS } from "../../catalog/pola";
-import { reheatHoursText, reheatKWhText, tubMaxLitresText } from "../price-range";
+import {
+  reheatHoursText,
+  reheatKWhText,
+  tubJetsPerPumpRangeText,
+  tubLitreSpanText,
+  tubMaxLitresText,
+} from "../price-range";
 
 /**
  * THE GUIDES MAKE ARITHMETIC CLAIMS ABOUT THE CATALOGUE, IN WORDS.
@@ -97,6 +103,70 @@ describe("the winter guide's reheat arithmetic", () => {
     // direction of error a reader could be hurt by.
     expect(text).toContain("vsaj");
     expect(text).toContain("izgube");
+  });
+});
+
+describe("the maintenance guide's claims about the three tubs", () => {
+  const text = body("vzdrzevanje-masaznega-bazena");
+
+  it("is right that one filter serves every model", () => {
+    // The whole page rests on this: the cartridge does not grow with the tub,
+    // so neither does the work. The day one model ships a different filter,
+    // four sentences on this page become false at once — including the answer
+    // to "is a bigger tub more maintenance", which is the query it ranks for.
+    expect(new Set(bySize.map((m) => m.filterSf)).size).toBe(1);
+    expect(text).toContain("enako filtrirno površino");
+    expect(text).toContain("filtrirna površina je pri vseh treh enaka");
+  });
+
+  it("quotes the water gap its own helper computes", () => {
+    // Stated three times on the page — twice as the gap and once inside the
+    // answer about a bigger tub costing more. Typing any of them would let
+    // them drift apart.
+    expect(text).toContain(tubLitreSpanText() + " litrov");
+    const litres = bySize.map((m) => m.filledKg - m.dryKg);
+    expect(litres[litres.length - 1]! - litres[0]!).toBe(600);
+  });
+});
+
+describe("the jets guide's claims about the three tubs", () => {
+  const text = body("sobe-in-crpalke");
+
+  it("is right that the largest tub has the most jets and the second pump", () => {
+    const jets = bySize.map((m) => m.jets);
+    const pumps = bySize.map((m) => m.jetPumps[0]);
+    expect(Math.max(...jets)).toBe(jets[jets.length - 1]);
+    expect(pumps).toEqual([1, 1, 2]);
+    expect(text).toContain("Ker ima drugo črpalko.");
+  });
+
+  it("is right that the second pump cannot be bought as an option", () => {
+    // The page says so twice, and it is the sentence that turns a spec into
+    // advice: a reader who wants two pumps has to buy the big shell. An
+    // add-on list that ever offers a pump makes both sentences false.
+    const addons = OFFERED_MODELS.flatMap((m) => m.addons.map((a) => a.label));
+    expect(addons.filter((n) => /črpalk/i.test(n))).toEqual([]);
+    expect(text).toContain("ni mogoče dokupiti k manjšemu");
+  });
+
+  it("is right about what CAN be chosen separately", () => {
+    // The answer to "can I add jets later" ends by naming what a buyer really
+    // does choose. Each of these is an option on at least one offered model.
+    const addons = OFFERED_MODELS.flatMap((m) => m.addons.map((a) => a.label));
+    for (const opt of [/osvetlitev/i, /zračna masaža/i, /zvočnik/i]) {
+      expect(addons.some((n) => opt.test(n)), "no add-on matches " + opt.source).toBe(true);
+    }
+    // "pri nekaterih modelih" about the air massage: some, not all.
+    const blower = OFFERED_MODELS.filter((m) =>
+      m.addons.some((a) => /zračna masaža/i.test(a.label)),
+    );
+    expect(blower.length).toBeGreaterThan(0);
+    expect(blower.length).toBeLessThan(OFFERED_MODELS.length);
+    expect(text).toContain("pri nekaterih modelih");
+  });
+
+  it("quotes the jets-per-pump range its own helper computes", () => {
+    expect(text).toContain(tubJetsPerPumpRangeText() + " šob na črpalko");
   });
 });
 

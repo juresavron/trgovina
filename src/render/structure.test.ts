@@ -389,6 +389,44 @@ describe("no in-page link points at nothing", () => {
     const orphans = GUIDE_PAGES.filter((g) => !hub.includes("/vodnik/" + g.slug));
     expect(orphans.map((g) => g.slug), "guides with no link from /vodniki").toEqual([]);
   });
+
+  /**
+   * ⚠️ THE HUB COUNTED ITS OWN GUIDES ALOUD AND GOT IT WRONG.
+   *
+   * Its lead opened "Trije vodniki:" and named three subjects. The fourth
+   * guide shipped, was linked from the list directly below that sentence, and
+   * the sentence went on saying three — on the index page whose entire job is
+   * to describe what it links to, and in the meta description Google draws
+   * under the result.
+   *
+   * The orphan test above proves every guide is LINKED. This proves the page
+   * does not contradict that in prose.
+   *
+   * It checks a numeral only where one appears, rather than demanding the lead
+   * always carry a count: an index is free to be written without one, and a
+   * test that forces a sentence shape would be a test about style. What it is
+   * not free to do is state a number that is wrong.
+   */
+  it("does not miscount the guides it lists", async () => {
+    const hub = await handleRequest(
+      new Request("https://trgovina.workers.dev/vodniki?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    ).text();
+    const text = hub.slice(hub.indexOf("<main")).replace(/<[^>]*>/g, " ");
+    // Slovenian agrees the numeral with the noun, so the phrase is matched
+    // whole rather than the digit alone. One to eight covers anything a shop
+    // would write out; a ninth guide would be "devet" and want adding here.
+    const WORDS = ["en", "dva", "trije", "štirje", "pet", "šest", "sedem", "osem"];
+    const want = WORDS[GUIDE_PAGES.length - 1];
+    const found = [...text.matchAll(/\b(\p{L}+)\s+vodnik\p{L}*/giu)]
+      .map((m) => m[1]!.toLowerCase())
+      .filter((w) => WORDS.includes(w));
+    for (const w of found) {
+      expect(w, "the hub says " + w + " guides and there are " + GUIDE_PAGES.length)
+        .toBe(want);
+    }
+  });
 });
 
 /**
