@@ -1371,23 +1371,26 @@ export const bazenContent: ShopContent = {
   // The entry is the assertion — see the note on `installations` in
   // content/types.ts for why this band, alone on the site, may not fall back
   // to the shop's product photography. Town only, never an address.
-  // ⚠️ NOT "Objavljena so tako, kot smo jih prejeli." — WE RECEIVED NOTHING.
+  // ⚠️ THE RECEIPT SENTENCE IS BACK, BECAUSE THE QUOTES ARE REAL NOW.
   //
-  // The quotes below are placeholder copy (content/types.ts says so at the
-  // top of the file), and that sentence is a statement about RECEIPT: it
-  // says these words arrived from customers and were passed through
-  // unedited. Over invented text it is false, and falsity about the
-  // provenance of a review is Annex I point 23c of ZVPot-1 — the blacklist,
-  // where no weighing of circumstances applies.
+  // This line read "Prve ocene zbiramo; ko jih prejmemo, jih objavimo tukaj."
+  // — we are collecting the first ones — and it was correct when the quotes
+  // below were placeholder copy: a sentence about RECEIPT is false over
+  // invented text, and falsity about a review's provenance is Annex I point
+  // 23c of ZVPot-1, the blacklist, where no weighing of circumstances applies.
   //
-  // reviewsLeadVerified was already moved behind the verified test for
-  // exactly this reason; this line was left printing always on the argument
-  // that it "keeps what is true either way". That holds for a real review
-  // nobody has checked. It does not hold for a review nobody wrote.
+  // Four real reviews then arrived in the table, and the sentence became the
+  // opposite kind of false: the band said the shop had received none while
+  // printing four, on the home page and all six product pages. The note that
+  // stood here predicted this — "the sentence about receipt returns with the
+  // first real one" — and this is that.
   //
-  // So the band leads with what IS true today: the shop has not published
-  // any yet. The sentence about receipt returns with the first real one.
-  reviewsLead: "Prve ocene zbiramo; ko jih prejmemo, jih objavimo tukaj.",
+  // ⚠️ IT CLAIMS RECEIPT AND NOTHING MORE. It does not say the writers bought
+  // anything: that is reviewsLeadVerified, and it stays behind the verified
+  // test because all four rows carry order_id NULL. A shop that has not
+  // checked a purchase may say a customer wrote to it; it may not say the
+  // customer bought from it. Those are 23c and 23b, and they are separate.
+  reviewsLead: "Objavljena so tako, kot smo jih prejeli.",
   reviewsLeadVerified: "Zapisali so jih stranke, ki so pri nas kupile bazen.",
   reviews: GENERATED_REVIEWS["bazen"] ?? [],
   // ⚠️ SLUGS NOW, NOT FRAGMENTS. These used to be the derived section ids on
