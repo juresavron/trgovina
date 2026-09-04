@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { isContentAddressed, isWebp, adminModelSlugs } from "./routes";
+import { adminModelSlugs } from "./routes";
+import { isContentAddressed, isWebp } from "./media";
 import { SITE_IMAGES, legacyFallback, siteImageBySlug, stemOf } from "./site-images";
 import { OFFERED_MODELS } from "../catalog/pola";
 import { OFFERED_SWIMSPAS } from "../catalog/swimspa";

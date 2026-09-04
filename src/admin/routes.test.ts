@@ -1,5 +1,6 @@
 import { describe as suite, it, expect } from "vitest";
-import { CSP, storedPaths, widthPath } from "./routes";
+import { CSP } from "./routes";
+import { storedPaths, widthPath } from "./media";
 
 /**
  * Deleting a photograph has to ask for the files that exist.

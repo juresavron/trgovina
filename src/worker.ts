@@ -38,7 +38,8 @@ import {
 import { sitemapPaths, sitemapXml } from "./render/sitemap";
 import { assetResponse } from "./render/assets";
 import { renderStudioFinder } from "./themes/studio/finder";
-import { handleAdmin, handleMedia } from "./admin/routes";
+import { handleAdmin } from "./admin/routes";
+import { handleMedia } from "./admin/media";
 import { handlePosts } from "./blog/routes";
 import type { Env } from "./admin/supabase";
 import { PROBLEM_FIELD, PROBLEM_TEXT, parseEnquiry, submitEnquiry } from "./enquiry/submit";

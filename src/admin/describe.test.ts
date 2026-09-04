@@ -1,6 +1,7 @@
 import { describe as suite, it, expect } from "vitest";
 import { describeAvailable, tidy, ALT_MAX } from "./describe";
-import { isContentAddressed, slugStem, standInAlt } from "./routes";
+import { standInAlt } from "./routes";
+import { isContentAddressed, slugStem } from "./media";
 
 /**
  * The describer is off unless a key is configured.

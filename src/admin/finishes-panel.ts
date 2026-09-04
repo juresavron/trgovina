@@ -17,7 +17,8 @@
  * everything else.
  */
 
-import { finishDropCard, noticeHtml, shell, SMART_JS } from "./panel";
+import { finishDropCard, noticeHtml, shell } from "./panel";
+import { SMART_JS } from "./client";
 import { esc } from "../render/sections";
 import { finishImageUrl } from "../catalog/finish-image";
 import type { Finish } from "./finishes";
@@ -36,7 +37,7 @@ const CSS = `<style>
   border:1px solid var(--line);background:var(--paper) center/cover no-repeat}
 .fin .nm{display:flex;gap:6px}
 .fin input[type=text]{flex:1;min-width:0;min-height:36px;padding:5px 9px;font:inherit;
-  border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl);background:#fff;color:var(--ink)}
+  border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl);background:var(--card);color:var(--ink)}
 .fin .slug{font-size:12px;color:var(--mute);word-break:break-all;margin-block-start:-2px}
 .fin .btn{min-height:36px;padding:0 12px;font-size:13px}
 .fin .acts{margin-block-start:auto;display:flex;gap:6px;flex-wrap:wrap}

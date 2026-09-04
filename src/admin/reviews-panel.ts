@@ -35,14 +35,14 @@ const CSS = `<style>
 .rv .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .pill{font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;
   padding:4px 9px;border-radius:999px;border:1px solid var(--line);
-  color:var(--mute);background:#fff;white-space:nowrap}
+  color:var(--mute);background:var(--card);white-space:nowrap}
 .pill--live{color:var(--ok);border-color:var(--ok-line);background:var(--ok-wash)}
 .pill--check{color:var(--ink);border-color:var(--ink)}
-textarea{font:inherit;width:100%;padding:11px 12px;color:var(--ink-body);background:#fff;
+textarea{font:inherit;width:100%;padding:11px 12px;color:var(--ink-body);background:var(--card);
   border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl);line-height:1.6;resize:vertical}
-textarea:hover{border-color:#6f6f6f}
+textarea:hover{border-color:var(--mute)}
 textarea:focus{border-color:var(--ink);outline:none;box-shadow:0 0 0 2px rgba(21,21,21,.12)}
-select{font:inherit;min-height:44px;padding:10px 12px;color:var(--ink-body);background:#fff;
+select{font:inherit;min-height:44px;padding:10px 12px;color:var(--ink-body);background:var(--card);
   border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl)}
 .tick{display:flex;align-items:flex-start;gap:10px;min-height:44px;margin:16px 0 0;
   font-size:14px;font-weight:500;color:var(--ink);cursor:pointer}
