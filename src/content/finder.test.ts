@@ -1,7 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { nextStep, recommend } from "./finder";
 import { CONTENT } from "./index";
+import { SHOPS } from "../tenants";
 import { handleRequest } from "../worker";
+
+/**
+ * Read from the registry, never typed here. A test that spells the domain out
+ * is asserting a fact about one registration rather than the behaviour it
+ * exists to prove — so it fails on the day the domain changes, which is
+ * exactly the day nobody wants a red suite for a non-defect. This one did:
+ * the canonical moved to the spelling the owner actually holds and this line
+ * failed while the page was correct.
+ */
+const SITE = SHOPS["bazen"]!.siteUrl;
 
 /**
  * The guided choice. The tree is data and the verdicts are claims, so the
@@ -77,7 +88,7 @@ describe("the finder route", () => {
     // The answered URL renders the verdict but claims the ENTRY as canonical,
     // so the permutations cannot compete with the page in an index.
     expect(leaf).toContain("SWIM 580 MAXI");
-    expect(leaf).toContain('rel="canonical" href="https://masazni-bazeni-vrelec.si/izbira"');
+    expect(leaf).toContain('rel="canonical" href="' + SITE + '/izbira"');
     expect(leaf).toContain("/kontakt?model=swim-580-maxi");
   });
 
