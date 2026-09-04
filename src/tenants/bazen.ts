@@ -18,25 +18,38 @@ export const bazen: ShopConfig = {
   // the category keeps the exact keyword in the domain while making the
   // whole string ownable.
   //
-  // Hyphenated deliberately. Search engines treat a hyphen as a word
-  // separator and a run-together string as one token, so
-  // masaznibazenivrelec reads as a single nonsense word to a crawler and as
-  // a spam domain to a person; masazni-bazeni-vrelec reads as three.
-  domain: "masazni-bazeni-vrelec.si",
-  siteUrl: "https://masazni-bazeni-vrelec.si",
-  // ⚠️ THE OWNER ALSO REGISTERED THE RUN-TOGETHER SPELLING, which is the one
-  // the note above argues against. Both are now owned, and owning both is the
-  // right end state whichever wins: the loser must never resolve to somebody
-  // else's site, and it must never serve these pages either.
+  // ⚠️ RUN-TOGETHER, BECAUSE THAT IS THE DOMAIN THAT EXISTS.
   //
-  // So it redirects. One host serves, every other spelling answers 301 to the
-  // same path on it — see aliasDomains in tenants/types.ts for why a canonical
-  // link tag is not enough on its own.
+  // This pair used to read masazni-bazeni-vrelec.si, on the argument that a
+  // crawler treats a hyphen as a word separator and a run-together string as
+  // one token — so the hyphenated spelling reads as three words and this one
+  // reads as a single nonsense word. That argument is sound and it lost to a
+  // fact: masazni-bazeni-vrelec.si answers DNS_PROBE_FINISHED_NXDOMAIN. It is
+  // not registered, or has no nameservers. Nothing resolves there.
   //
-  // WHICH ONE IS CANONICAL IS THIS PAIR OF LINES, and the shop is not live
-  // yet, so the swap is still free. Moving it after launch means asking a
-  // crawler to transfer a reputation it has already attached to a host.
-  aliasDomains: ["masaznibazenivrelec.si"],
+  // The cost of getting this wrong was not cosmetic. `domain` is the host
+  // that SERVES; every other spelling the shop owns answers 301 to it. So the
+  // one domain actually sitting in Cloudflare — this one — was redirecting
+  // every visitor to a host that does not exist, and the shop's own owner hit
+  // it in a browser: type masaznibazenivrelec.si, watch hyphens appear, land
+  // on "This site can't be reached". A canonical pointing at a domain nobody
+  // owns is not a preference, it is an outage.
+  //
+  // The note that used to sit here said the swap was free while pre-live.
+  // This is that swap, spent on exactly what it was saved for.
+  domain: "masaznibazenivrelec.si",
+  siteUrl: "https://masaznibazenivrelec.si",
+  // ⚠️ EMPTY UNTIL A SECOND SPELLING IS PROVEN OWNED. It listed
+  // masazni-bazeni-vrelec.si, which is what made this shop's live domain
+  // redirect into nowhere. An alias is a claim of ownership with routing
+  // behind it: tenants/index.ts maps it to this shop, wrangler.jsonc wants an
+  // Active zone for it, and the worker sends real traffic at it. None of that
+  // may rest on a domain nobody has confirmed is registered.
+  //
+  // If the hyphenated one IS owned, add it back here — one line, and the
+  // redirect starts working the moment its zone goes Active. Do not add it
+  // back on the strength of intending to buy it.
+  aliasDomains: [],
   name: "Masažni bazeni Vrelec",
   // The lockup splits category from brand so the mark can weight them
   // differently — the words carry the keyword, the second half carries the
@@ -134,7 +147,24 @@ export const bazen: ShopConfig = {
   // the last unset identity field.
   contact: {
     phone: "+386 40 202 488",
-    email: "info@masazni-bazeni-vrelec.si",
+    // ⚠️ EMPTY ON PURPOSE — THE OWNER'S CALL, AND THE HONEST ONE.
+    //
+    // It read info@masazni-bazeni-vrelec.si, on the domain that answers
+    // NXDOMAIN. No DNS record means no MX record, so every message sent
+    // there was refused at the sender's own server: the customer got a
+    // bounce, the shop got nothing. It was printed in the footer of every
+    // page, wired to a mailto: in the chrome, and published as
+    // Organization.email in the graph.
+    //
+    // Not replaced with info@ on the new domain. That mailbox does not
+    // exist, and a made-up address is worse than none: a bounce at least
+    // tells the customer to try again, while an address nobody reads leaves
+    // them believing they have written. Empty, every reader of this field
+    // (footer, chrome, contact page, JSON-LD) drops it through isSet() and
+    // the site offers the telephone number, which is verified and answered.
+    //
+    // Fill it in when a real mailbox exists.
+    email: "",
     // ⚠️ THE SEAT IS ŠKOFIJE, NOT KOPER, and this field said Koper until the
     // owner sent the AJPES record on 31 Aug 2026.
     //
