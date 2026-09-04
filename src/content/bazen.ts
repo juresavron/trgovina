@@ -1047,7 +1047,15 @@ const collections: Collection[] = [
   {
     path: "/masazni-bazeni",
     navLabel: "Masažni bazeni",
-    h1: "Masažni bazeni",
+    // ⚠️ QUALIFIED, so this page stops being a second bid for the bare head
+    // term. It read "Masažni bazeni" — the exact term, as an H1, on the page
+    // whose slug is also the exact term, linked sixteen times with the exact
+    // term as anchor text. Against a home page that is bigger, older in link
+    // terms and the one every external link will land on, that is a shop
+    // outranking itself with its own weaker page. The category is still what
+    // this page is about; it is now the "which of the three" page, and the
+    // home page is the one bidding for the category.
+    h1: "Masažni bazeni za doma in vrt",
     // The h1 names the page; the title has to win a result list. "Masažni
     // bazeni | Masažni bazeni Vrelec" printed the category noun twice and
     // offered a searcher nothing to choose on. No figures here on purpose:
@@ -1172,7 +1180,10 @@ export const bazenContent: ShopContent = {
   // /dostava-in-montaza, and the hero was the one place not making it.
   // Five words now do: the noun for the crawler, the promise for the reader.
   // The seat counts move to the sub, where a spec belongs.
-  h1: "Masažni bazen, ki ga postavimo mi.",
+  // Plural, to match the title above it and the term a buyer types. It read
+  // "Masažni bazen, ki ga postavimo mi." — singular, so the home page's one
+  // H1 missed the head term while the collection's H1 was that term exactly.
+  h1: "Masažni bazeni, ki jih postavimo mi.",
   // No price in the hero copy even now that COST_INPUTS is set. A figure in
   // an h1's sub is the one a customer remembers, and it would go stale the
   // day the inputs move — the cards and the PDPs derive theirs and this line
