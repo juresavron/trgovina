@@ -179,6 +179,34 @@ polices (doorway/site-network). The defense is genuine differentiation:
   cannot justify real content depth, it does not launch — a thin shop risks
   the network, not just itself.
 
+### What is enforced, and what is merely true
+
+The four rules above were prose until `src/tenants/cross-shop.test.ts`. It
+gates, for every PAIR of registered shops: no shared sentence of eight words
+or more, no shop naming a sibling's domain anywhere in its markup, no two
+shops chasing the same head term, and no review appearing under two
+companies. The predicates are tested against a synthesised second shop, so
+they are not vacuous while only one is registered.
+
+**What is deliberately NOT chased.** Measured on a rendered page, every shop
+on this Worker serves the same `/assets/site-<hash>.css` and `.js` filenames
+(the sheet is shared, so its content hash is), the same `public/favicon.svg`
+bytes, and the same `data-theme` where two shops pick the same theme. One
+Cloudflare account and one IP are shared too.
+
+None of that is a ranking signal. Google does not penalise shared hosting, a
+shared stylesheet or a shared favicon; what it acts on is duplicate and
+templated content, thin doorway pages, and link schemes — which is what the
+list above forbids and the test file gates. Making the asset filenames
+per-shop is possible and buys nothing, so it is not done. Recorded here so
+the next person does not spend a week on a footprint that costs no rank.
+
+What the site does NOT carry at all, and must not start carrying: any
+analytics, tag manager or verification snippet. A shared GA property is the
+one item on this list that WOULD tie the shops together in a way that
+matters, and `content/pages/piskotki.ts` documents the absence as the reason
+the cookie page can say what it says.
+
 ## 7. Launch sequence per shop (SEO order of operations)
 
 1. Register fresh domain → add zone → wait Active → route (10082 doctrine).
