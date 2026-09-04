@@ -1,16 +1,24 @@
 /**
- * WHICH MODELS THE PANEL CAN BE POINTED AT.
+ * THE SEED, NOT THE SOURCE.
  *
- * ⚠️ NOT THE STOREFRONT'S CATALOGUE. This is the list of slugs /admin will
- * open an upload screen for, and it is deliberately its own list: the shop's
- * catalogue is content, and a panel that derived its routes from content
- * would grow a new writable URL every time somebody added a product. Adding a
- * model here is a decision; adding one to the shop is not.
+ * ⚠️ THIS FILE USED TO DECIDE WHAT THE PANEL CONTAINED, and it should not
+ * have. The list below was the dashboard: OFFERED_MODELS and OFFERED_SWIMSPAS,
+ * compiled into the Worker, with ensureProduct() writing them into
+ * public.products afterwards. The database mirrored the bundle, so a model
+ * only existed in the back office once somebody edited a file and deployed.
  *
- * Moved out of routes.ts so the surfaces can read it without importing the
- * router that calls them — a cycle that works and reads like a mistake.
+ * db/catalogue.ts reads public.products now, and that is the source. What is
+ * left here is a SEED: it guarantees the known catalogue has rows, because an
+ * empty table would render a back office with nothing in it and that must not
+ * be a reachable state on a live shop.
+ *
+ * The direction of authority is the whole change. The seed fills gaps; it no
+ * longer says what exists. A row added straight to the database is on the
+ * dashboard at the next page load, with no deploy — which is what a compiled
+ * list could never do.
  */
 
+import { ensureProduct, type Api } from "./supabase";
 import { OFFERED_MODELS } from "../catalog/pola";
 import { OFFERED_SWIMSPAS } from "../catalog/swimspa";
 
@@ -54,4 +62,21 @@ export function adminModelSlugs(): string[] {
 
 export function adminModelBySlug(slug: string): AdminModel | undefined {
   return ADMIN_MODELS.find((m) => m.slug === slug);
+}
+
+/**
+ * Make sure every model the code knows about has a row, then get out of the
+ * way.
+ *
+ * ensureProduct() is a no-op when the row is already there — it selects by
+ * (shop_id, slug), which the table has a unique index on — so this costs one
+ * round trip per known model and inserts nothing on a warm database. It is
+ * deliberately not a sync: it never updates a title, never archives a row the
+ * code has dropped, and never removes anything. Reconciling downward would
+ * make the bundle authoritative again through the back door.
+ */
+export async function seedCatalogue(api: Api, shopId: string): Promise<void> {
+  await Promise.all(
+    ADMIN_MODELS.map((m) => ensureProduct(api, shopId, m.slug, m.name, m.freightClass)),
+  );
 }

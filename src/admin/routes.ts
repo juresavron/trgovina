@@ -22,7 +22,8 @@
  *   * /media is public and read-only, and can only ever proxy the one bucket.
  */
 
-import { CATALOGUE_SHOPS, adminModelBySlug } from "./catalogue";
+import { seedCatalogue } from "./catalogue";
+import { listProducts } from "./db/catalogue";
 export { adminModelSlugs } from "./catalogue";
 import { ERRORS, NOTICES } from "./surfaces/notices";
 import type { AdminCtx, Surface } from "./surfaces/ctx";
@@ -230,24 +231,33 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // --- dashboard ---
   if (parts.length === 1) {
     const key = "bazen";
-    const cat = CATALOGUE_SHOPS[key]!;
+    // ⚠️ THE LIST COMES FROM THE TABLE NOW, not from a compiled array.
+    //
+    // It read CATALOGUE_SHOPS[key].models — OFFERED_MODELS and
+    // OFFERED_SWIMSPAS, bundled into the Worker — and ensureProduct() then
+    // wrote those rows into public.products. The database mirrored the code,
+    // so adding a model to the back office meant a file edit and a deploy.
+    //
+    // seedCatalogue() still reconciles the code catalogue in, because an empty
+    // table would render a back office with nothing in it and that must not be
+    // a state this panel can reach. What changed is which one decides: the
+    // seed fills gaps, listProducts() says what exists. A row somebody adds in
+    // the database — a model the code has never heard of — is on the dashboard
+    // at the next page load.
+    await seedCatalogue(api, key);
+    const models = await listProducts(api, key);
     // The rows were already being fetched to count them; taking the first
     // row's url out of the same result turns the dashboard from a list of
     // names into a contact sheet at no extra request.
-    const shots = await Promise.all(
-      cat.models.map(async (m) => {
-        const id = await ensureProduct(api, key, m.slug, m.name, m.freightClass);
-        return await listMedia(api, id);
-      }),
-    );
+    const shots = await Promise.all(models.map((m) => listMedia(api, m.id)));
     return page(
       indexPage(
         SHOPS[key]!.name,
         key,
-        cat.models.map((m, i) => ({
+        models.map((m, i) => ({
           shop: key,
           slug: m.slug,
-          name: m.name,
+          name: m.title,
           count: shots[i]!.length,
           cover: shots[i]![0]?.url })),
         admin.email,
@@ -744,15 +754,21 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // --- one model ---
   const shop = parts[1]!;
   const slug = parts[2] ?? "";
-  const cat = CATALOGUE_SHOPS[shop];
-  const model = cat ? adminModelBySlug(slug) : undefined;
-  if (!cat || !model) return page(notFoundPage("Ta model ne obstaja.", admin.email), 404);
+  // Resolved against the table, for the same reason the dashboard is: a model
+  // that exists as a row but not in the bundle had no page here, so the only
+  // way to photograph it was to ship a deploy first.
+  //
+  // The seed runs before the lookup so a first visit to a known model still
+  // works on a fresh database, exactly as ensureProduct() used to guarantee.
+  await seedCatalogue(api, shop);
+  const model = (await listProducts(api, shop)).find((m) => m.slug === slug);
+  if (!model) return page(notFoundPage("Ta model ne obstaja.", admin.email), 404);
 
-  const productId = await ensureProduct(api, shop, model.slug, model.name, model.freightClass);
+  const productId = model.id;
   const action = parts[3];
 
   if (action === "upload" && request.method === "POST") {
-    return await upload(request, api, shop, model.slug, model.name, productId);
+    return await upload(request, api, shop, model.slug, model.title, productId);
   }
 
   if (action === "update" && request.method === "POST") {
@@ -811,7 +827,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       const bytes = await downloadObject(api, previewPath(row.url, row.widths));
       if (bytes === null) { left++; continue; }
       looked++;
-      const seen = await describe(api.env, bytes, "image/webp", model.name);
+      const seen = await describe(api.env, bytes, "image/webp", model.title);
       if (seen?.shot) {
         await updateMedia(api, row.id, { shot: seen.shot });
         (row as { shot: string | null }).shot = seen.shot;
@@ -873,7 +889,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
     modelPage(
       shop,
       model.slug,
-      model.name,
+      model.title,
       rows.map((r): MediaView => ({
         id: r.id, url: r.url, alt: r.alt, sort: r.sort,
         widths: r.widths ?? [], enhanced: r.enhanced === true, shot: r.shot ?? null })),
