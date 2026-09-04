@@ -11,6 +11,7 @@ import {
   tubLitreRangeText,
   tubLoadRangeText,
   tubMaxLitresText,
+  tubSeatingLines,
 } from "../price-range";
 
 /**
@@ -344,6 +345,115 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
       p: "Na vprašanja o dostopu, podlagi in priklopu odgovorimo po telefonu, brez obveznosti.",
       label: "Kontakt",
       href: "/kontakt",
+    },
+    ],
+  },
+  {
+    slug: "velikost-masaznega-bazena",
+    key: "/guide",
+    faqPage: true,
+    h1: "Katera velikost masažnega bazena",
+    // 60 characters is where Google stops drawing a title and the brand is
+    // nine of them, so the head is at most 51. "koliko prostora" was in here
+    // and took the rendered line to 67; the description carries it instead.
+    seoTitle: "Velikost masažnega bazena — koliko oseb",
+    lead:
+      // ⚠️ THE LEAD STATES THE COUNTER-INTUITION, because it is the reason the
+      // page exists. A reader who already believes bigger means more people
+      // does not need a guide; they need the models, and those are one click
+      // away. This one is for the reader whose intuition is about to cost
+      // them the wrong tub.
+      "Več sedežev ni večji bazen. Pri nas sedi največ ljudi v srednjem modelu, " +
+      "ne v največjem.",
+    metaDescription:
+      "Velikost masažnega bazena: koliko oseb sprejme kateri model, koliko " +
+      "kvadratnih metrov zasede in zakaj največji bazen ni tisti z največ sedeži.",
+    blocks: [
+    {
+      kind: "prose",
+      p: [
+        "Velikost masažnega bazena se meri na tri načine in vsi trije odločajo o " +
+          "nečem drugem: koliko ljudi gre vanj hkrati, koliko prostora zasede pri " +
+          "vas doma, in koliko vode je treba greti. Redko se izidejo v isto smer.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Trije modeli, drug ob drugem",
+      p: [
+        // Derived from the catalogue — see tubSeatingLines() on why this is
+        // not typed out.
+        ...tubSeatingLines("sl-SI"),
+        "Srednji model sprejme največ ljudi. Največji ima namesto šestega sedeža " +
+          "drugi ležalnik in polovico več šob od preostalih dveh. To ni pomanjkljivost " +
+          "in ni napaka v ponudbi: ležalnik zasede prostor dveh sedečih mest, ker se v " +
+          "njem leži.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Koliko prostora zasede",
+      p: [
+        tubCountLeadText() + " " + tubAreaListText() + " kvadratnega metra, visoki " +
+          "pa so od " + tubHeightRangeText() + " centimetrov. To je mera školjke in " +
+          "ne mera prostora, ki ga potrebujete: okoli bazena je treba priti do vseh " +
+          "štirih strani, pokrov se odpira navzgor in nazaj, servisna vratca pa " +
+          "zahtevajo dostop do ene stranice.",
+        "Zato je uporabna mera tista, ki jo izmerimo pri vas, ne tista v " +
+          "katalogu. Ogled lokacije je brezplačen in traja pol ure.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Koliko vode in kaj to pomeni",
+      p: [
+        "Modeli držijo " + tubLitreRangeText() + " litrov. Razlika med najmanjšim " +
+          "in največjim je približno tretjina prostornine, in to je edina številka " +
+          "med naštetimi, ki se pozna vsak mesec: več vode pomeni več vode za greti " +
+          "in večjo gladino, skozi katero toplota uhaja.",
+        "Koliko to znese v elektriki, je vprašanje zase — odgovor je v vodniku o " +
+          "ceni in obratovanju.",
+      ],
+    },
+    {
+      kind: "qa",
+      h: "Pogosta vprašanja o velikosti",
+      items: [
+        [
+          "Kateri model sprejme največ oseb?",
+          "Srednji, BAZEN 210, s šestimi sedeži. Največji model, BAZEN 230, jih ima " +
+            "pet, ker ima namesto šestega sedeža drugi ležalnik.",
+        ],
+        [
+          "Koliko prostora moram imeti okoli bazena?",
+          "Toliko, da pridete do vseh štirih strani in da se pokrov odpre navzgor in " +
+            "nazaj. Koliko je to pri vas, izmerimo na brezplačnem ogledu — odvisno je " +
+            "od tega, kje bazen stoji in s katere strani je servisna stranica.",
+        ],
+        [
+          "Ali je manjši bazen cenejši za obratovanje?",
+          "Ima manj vode za greti in manjšo gladino, skozi katero toplota uhaja, zato " +
+            "praviloma da. Kolikšna je razlika pri vas, je odvisno od pokrova, mesta " +
+            "postavitve in tega, kako pogosto se bazen uporablja.",
+        ],
+      ],
+    },
+    {
+      kind: "links",
+      h: "Naprej",
+      items: [
+        ["Vsi trije modeli s cenami", "/products"],
+        ["Koliko stane masažni bazen", "/guide/koliko-stane-masazni-bazen"],
+        ["Masažni bazen na terasi", "/guide/masazni-bazen-na-terasi"],
+      ],
+    },
+    {
+      kind: "cta",
+      h: "Ne veste, kateri model gre k vam?",
+      p: "Pridemo pogledat, izmerimo pot in podlago in povemo, kateri modeli pridejo " +
+        "v poštev. Ogled je brezplačen in vas k ničemur ne zavezuje.",
+      href: "/kontakt",
+      label: "Naročite brezplačen ogled",
     },
     ],
   },

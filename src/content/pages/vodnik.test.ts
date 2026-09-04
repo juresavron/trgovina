@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GUIDE_PAGES } from "./vodnik";
+import { handleRequest } from "../../worker";
 import { OFFERED_MODELS } from "../../catalog/pola";
 import { reheatHoursText, reheatKWhText, tubMaxLitresText } from "../price-range";
 
@@ -115,6 +116,32 @@ describe("every guide", () => {
         expect(q.trim().length, "empty question").toBeGreaterThan(10);
         expect(a.trim().length, "empty answer to: " + q).toBeGreaterThan(40);
       }
+    });
+  }
+});
+
+describe("a guide's title fits the result it has to win", () => {
+  /**
+   * ⚠️ 60 CHARACTERS, RENDERED — brand included, not the seoTitle alone.
+   *
+   * worker.ts already records 60 as where Google stops drawing a title, and
+   * the three original guides land at 55, 57 and 60 without anything holding
+   * them there. The fourth was written at 67 and nothing said so: a title
+   * that gets cut loses its last words, which are the ones a writer put last
+   * because they were the qualifier.
+   *
+   * The brand suffix is nine characters, so a guide's own half has 51.
+   */
+  const LIMIT = 60;
+  for (const g of GUIDE_PAGES) {
+    it(g.slug + " renders a title Google will not cut", async () => {
+      const html = await handleRequest(
+        new Request("https://trgovina.workers.dev/vodnik/" + g.slug + "?shop=bazen", {
+          headers: { host: "trgovina.workers.dev" },
+        }),
+      ).text();
+      const title = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? "";
+      expect(title.length, title).toBeLessThanOrEqual(LIMIT);
     });
   }
 });

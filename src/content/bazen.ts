@@ -1408,6 +1408,8 @@ export const bazenContent: ShopContent = {
     // cost question has its own guide one card above.
     ["Pozimi", "Masažni bazen pozimi: zakaj deluje bolje kot poleti.",
       "masazni-bazen-pozimi"],
+    ["Velikost", "Katera velikost: koliko oseb in koliko prostora.",
+      "velikost-masaznega-bazena"],
   ],
   categories,
   collections,

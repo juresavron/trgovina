@@ -1,6 +1,7 @@
 import { OFFERED_MODELS, modelPriceCents, addonPriceCents, footprint } from "../catalog/pola";
 import { OFFERED_SWIMSPAS, modelPriceCents as swimPriceCents } from "../catalog/swimspa";
 import { formatEur } from "../catalog/pricing";
+import { counted } from "../lib/plural";
 
 /**
  * The price range of a family, as words, derived from the price list.
@@ -81,6 +82,35 @@ export function tubCountLeadText(): string {
   if (n === 3) return "Naši trije modeli stojijo na";
   if (n === 4) return "Naši štirje modeli stojijo na";
   return "Naših " + n + " modelov stoji na";
+}
+
+/**
+ * One line per tub, smallest first: what it seats, how much of that is a
+ * lounger, and how many jets.
+ *
+ * ⚠️ DERIVED, BECAUSE SEATS DO NOT TRACK SIZE AND THE READER'S INTUITION SAYS
+ * THEY DO. The middle model seats the most people and is not the biggest; the
+ * biggest trades a seat for a second lounger and the most jets. That is the
+ * whole point of the size guide, it is only true of THIS catalogue, and typing
+ * it out would make it a sentence that goes quietly wrong the day a model is
+ * added or a supplier changes a shell.
+ *
+ * Slovenian counts in four forms and every one of these numbers can land on a
+ * different one, so counted() does the agreement rather than a plural "s".
+ */
+export function tubSeatingLines(locale: string): string[] {
+  return [...OFFERED_MODELS]
+    .sort((a, b) => a.mm[0]! * a.mm[1]! - b.mm[0]! * b.mm[1]!)
+    .map((m) => {
+      const seats = counted(locale, m.seats, ["sedež", "sedeža", "sedeže", "sedežev"]);
+      const jets = counted(locale, m.jets, ["šoba", "šobi", "šobe", "šob"]);
+      const lounge =
+        m.lounges === 0
+          ? "brez ležalnika"
+          : counted(locale, m.lounges, ["ležalnik", "ležalnika", "ležalnike", "ležalnikov"]);
+      return m.name + ": " + footprint(m) + ", " + seats + ", od tega " + lounge +
+        ", " + jets + ".";
+    });
 }
 
 /** The footprint of each offered tub in m², smallest first — "3,80, 4,41 in 5,29". */

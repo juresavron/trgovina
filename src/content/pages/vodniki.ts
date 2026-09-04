@@ -111,6 +111,12 @@ export const GUIDES: Page = {
             "zneska za obratovanje ne navajamo nikjer.",
         ],
         [
+          "Katera velikost masažnega bazena",
+          "/vodnik/velikost-masaznega-bazena",
+          "Koliko oseb sprejme kateri model, koliko kvadratnih metrov zasede in zakaj " +
+            "največji bazen pri nas ni tisti z največ sedeži.",
+        ],
+        [
           "Masažni bazen pozimi",
           "/vodnik/masazni-bazen-pozimi",
           "Zakaj je zima za bazen najboljši letni čas in zakaj je prazen bazen v mrazu " +
