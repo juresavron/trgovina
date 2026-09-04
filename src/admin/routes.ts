@@ -22,23 +22,22 @@
  *   * /media is public and read-only, and can only ever proxy the one bucket.
  */
 
+import { CATALOGUE_SHOPS, adminModelBySlug } from "./catalogue";
+export { adminModelSlugs } from "./catalogue";
+import { ERRORS, NOTICES } from "./surfaces/notices";
+import type { AdminCtx, Surface } from "./surfaces/ctx";
+import { handle as blogSurface } from "./surfaces/blog";
+import { handle as enquiriesSurface } from "./surfaces/enquiries";
+import { handle as finishesSurface } from "./surfaces/finishes";
+import { handle as reviewsSurface } from "./surfaces/reviews";
+
 import {
-  isContentAddressed, isWebp, previewPath, slugStem, storedPaths, widthPath,
-} from "./media";
-import {
-  CABINET_FINISHES_ARE_PHOTOGRAPHED,
-  OFFERED_MODELS,
-  SHELL_FINISHES_ARE_PHOTOGRAPHED,
-  TRANSCRIBED_CABINET_FINISHES,
-  TRANSCRIBED_SHELL_FINISHES,
-} from "../catalog/pola";
-import { OFFERED_SWIMSPAS } from "../catalog/swimspa";
-import { aliasTarget, encodeBucketKey } from "../media-aliases";
+  isWebp, previewPath, slugStem, storedPaths, widthPath } from "./media";
+import { } from "../catalog/swimspa";
 import { SHOPS } from "../tenants";
 import {
   type Api,
   type Env,
-  BUCKET,
   deleteMedia,
   deleteObject,
   downloadObject,
@@ -47,8 +46,7 @@ import {
   listMedia,
   missingConfig,
   updateMedia,
-  uploadObject,
-} from "./supabase";
+  uploadObject } from "./supabase";
 import {
   indexPage,
   sitePage,
@@ -58,103 +56,33 @@ import {
   notFoundPage,
   siteImagePage,
   type MediaView,
-  type SiteSlot,
-} from "./panel";
+  type SiteSlot } from "./panel";
 import { SESSION_TTL_SECONDS, currentAdmin, sessionCookie, signIn, readCookie, SESSION_COOKIE } from "./auth";
 import {
   SITE_IMAGES,
-  legacyFallback,
-  siteImageByKey,
   siteImageBySlug,
   stemOf,
-  type SiteImage,
-} from "./site-images";
-import { deleteEnquiry, isStatus, listEnquiries, updateEnquiry } from "./enquiries";
+  type SiteImage } from "./site-images";
 import {
-  deleteFinish,
   ensureFinish,
-  listFinishes,
-  nameFromFilename,
-  renameFinish,
-} from "./finishes";
-import { enquiryListPage } from "./enquiries-panel";
-import { finishListPage } from "./finishes-panel";
+  nameFromFilename } from "./finishes";
+import { } from "./enquiries-panel";
+import { } from "./finishes-panel";
 import {
   assignSlots,
   classify,
-  slotOptions,
-} from "./assign";
-import { finishImageKey, type FinishKind } from "../catalog/finish-image";
+  slotOptions } from "./assign";
+import { type FinishKind } from "../catalog/finish-image";
 import { enhance, enhanceAvailable } from "./enhance";
 import {
   looksLikeColourName,
   nameColour,
   nameColourAvailable,
-  uniqueColourName,
-} from "./name-colour";
+  uniqueColourName } from "./name-colour";
 import { describe, describeAvailable } from "./describe";
 import { arrange } from "./shots";
-import { blogEditPage, blogListPage } from "./blog-panel";
-import { reviewEditPage, reviewListPage } from "./reviews-panel";
-import {
-  createReview,
-  deleteReview,
-  getReview,
-  listReviews,
-  updateReview,
-} from "./reviews";
-import {
-  createPost,
-  deletePost,
-  freeSlug,
-  getById,
-  listAll,
-  setStatus,
-  updatePost,
-} from "../blog/store";
-import { excerptFrom } from "../blog/post";
+import { } from "../blog/post";
 
-/** Shops whose catalogue this panel can manage. */
-/**
- * Every product the panel can manage, as the panel needs it.
- *
- * ⚠️ THIS USED TO BE THE HOT TUBS ONLY. The list was OFFERED_MODELS and the
- * lookup was polaBySlug, so the three swim spas — half the catalogue, and the
- * half with the largest tickets — had no page in the panel and no way to
- * change a photograph. Nothing errored; they were simply not on the
- * dashboard, which is the quietest way for a tool to be incomplete.
- *
- * The two model types are separate on purpose (a Pola shell and a 5.8 m swim
- * spa share almost no specification) but they agree on the three fields this
- * panel needs, so the panel takes that intersection rather than either type.
- */
-interface AdminModel {
-  readonly slug: string;
-  readonly name: string;
-  /** Out-of-gauge freight is not the same problem as a pallet. */
-  readonly freightClass: string;
-}
-
-const ADMIN_MODELS: readonly AdminModel[] = [
-  ...OFFERED_MODELS.map((m) => ({ slug: m.slug, name: m.name, freightClass: "pallet_xl" })),
-  // The enum has no out-of-gauge class; white_glove is the honest closest fit
-  // for a 4.5-5.8 m shell delivered by a team, and is flagged as such where
-  // the products row is written.
-  ...OFFERED_SWIMSPAS.map((m) => ({ slug: m.slug, name: m.name, freightClass: "white_glove" })),
-];
-
-const CATALOGUE_SHOPS: Record<string, { models: readonly AdminModel[] }> = {
-  bazen: { models: ADMIN_MODELS },
-};
-
-/** Every slug the panel can manage — the dashboard's coverage, as data. */
-export function adminModelSlugs(): string[] {
-  return ADMIN_MODELS.map((m) => m.slug);
-}
-
-function adminModelBySlug(slug: string): AdminModel | undefined {
-  return ADMIN_MODELS.find((m) => m.slug === slug);
-}
 
 /** Exported so a test can hold it to account; see the note on PRIVATE. */
 export const CSP =
@@ -185,8 +113,7 @@ const PRIVATE = {
   // createImageBitmap. On that browser this directive is the difference
   // between converting a photograph and refusing it.
   "content-security-policy": CSP,
-  "referrer-policy": "no-referrer",
-};
+  "referrer-policy": "no-referrer" };
 
 function page(body: string, status = 200, extra: Record<string, string> = {}): Response {
   return new Response(body, { status, headers: { ...PRIVATE, ...extra } });
@@ -203,9 +130,7 @@ function json(v: unknown, status = 200): Response {
     headers: {
       "content-type": "application/json; charset=utf-8",
       "cache-control": "no-store",
-      "x-content-type-options": "nosniff",
-    },
-  });
+      "x-content-type-options": "nosniff" } });
 }
 
 function seeOther(location: string, extra: Record<string, string> = {}): Response {
@@ -213,6 +138,21 @@ function seeOther(location: string, extra: Record<string, string> = {}): Respons
 }
 
 /* ---- /media ------------------------------------------------------------ */
+
+/**
+ * The surfaces, in the order the if-chain asked them.
+ *
+ * ⚠️ ORDER IS BEHAVIOUR. These match on parts[1] and the first non-null wins,
+ * so a surface added above one that shares a prefix takes its requests. Add to
+ * the end unless you mean otherwise, and routes-snapshot.test.ts will say so
+ * if you did not.
+ */
+const SURFACES: readonly Surface[] = [
+  finishesSurface,
+  enquiriesSurface,
+  reviewsSurface,
+  blogSurface,
+];
 
 export async function handleAdmin(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
@@ -250,9 +190,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
           method: "POST",
           headers: {
             apikey: env.SUPABASE_ANON_KEY ?? "",
-            authorization: "Bearer " + token,
-          },
-        });
+            authorization: "Bearer " + token } });
       } catch {
         // The cookie still clears; the token dies at its own expiry.
       }
@@ -311,8 +249,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
           slug: m.slug,
           name: m.name,
           count: shots[i]!.length,
-          cover: shots[i]![0]?.url,
-        })),
+          cover: shots[i]![0]?.url })),
         admin.email,
         SITE_IMAGES.map(
           (x): SiteSlot => ({
@@ -320,8 +257,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
             label: x.label,
             note: x.note,
             src: "/media/" + x.key,
-            group: x.group,
-          }),
+            group: x.group }),
         ),
       ),
     );
@@ -364,9 +300,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         "cache-control": "no-store",
         // done.mime is whatever the model's API claimed — nosniff keeps the
         // browser from second-guessing it into something executable.
-        "x-content-type-options": "nosniff",
-      },
-    });
+        "x-content-type-options": "nosniff" } });
   }
 
   // --- smart sorting: which slot does each dropped picture belong to ---
@@ -538,8 +472,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
                         (modelOff
                           ? "samodejno poimenovanje ni nastavljeno."
                           : "barve ni bilo mogoče prepoznati na sliki.") +
-                        " Popravite ga na strani Barve.",
-              }
+                        " Popravite ga na strani Barve." }
             : {
                 i,
                 stem: null,
@@ -549,8 +482,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
                 exact: false,
                 reason: "Imena barve ni bilo mogoče določiti — ne iz imena " +
                   "datoteke ne iz same slike. Datoteko poimenujte po barvi " +
-                  "(npr. »Oyster Opal.jpg«) in poskusite znova.",
-              },
+                  "(npr. »Oyster Opal.jpg«) in poskusite znova." },
         );
       }
       return json({ items });
@@ -579,9 +511,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
         ar: a.slot?.ratio ? a.slot.ratio[0] + ":" + a.slot.ratio[1] : null,
         max: a.slot ? a.slot.maxWidth : null,
         exact: a.slot?.exact === true,
-        reason: a.reason,
-      })),
-    });
+        reason: a.reason })) });
   }
 
   // --- the storefront's own pictures ---
@@ -600,8 +530,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
             label: x.label,
             note: x.note,
             src: "/media/" + x.key,
-            group: x.group,
-          }),
+            group: x.group }),
         ),
       ),
     );
@@ -614,85 +543,6 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // would put a tile on six product pages with nothing behind it, which is
   // precisely the arrangement this inverted. What the page offers is the
   // list, a rename for a typo, and a delete.
-  if (parts[1] === "barve") {
-    const shopKey = "bazen";
-    const id = parts[2];
-
-    if (id && request.method === "POST") {
-      if (parts[3] === "izbris") {
-        await deleteFinish(api, shopKey, id);
-        return seeOther("/admin/barve?m=fin-deleted");
-      }
-      // ⚠️ NAMING AN EXISTING COLOUR FROM ITS OWN SWATCH, so a colour that
-      // came in badly named can be fixed without re-uploading the file.
-      //
-      // Six swatches went in called "Screenshot 2026-08-28 at 10.20.46". The
-      // naming that would have caught them shipped in a deploy that finished
-      // fifty seconds BEFORE they were uploaded, and there is no reason the
-      // only cure for that should be delete-everything-and-drag-it-again.
-      //
-      // Safe to redo at any time because renameFinish changes the NAME and
-      // not the slug: the swatch stays at the bucket key it was written to,
-      // and a rename cannot orphan a picture.
-      if (parts[3] === "ime") {
-        const rows = await listFinishes(api, shopKey);
-        const row = rows.find((f) => f.id === id);
-        if (!row) return seeOther("/admin/barve?e=fin-none");
-        if (!nameColourAvailable(env)) return seeOther("/admin/barve?e=fin-noai");
-        const url2 =
-          env.SUPABASE_URL + "/storage/v1/object/public/" + BUCKET + "/" +
-          encodeBucketKey(finishImageKey(row.kind, row.slug));
-        let bytes: ArrayBuffer;
-        try {
-          const r = await fetch(url2);
-          if (!r.ok) return seeOther("/admin/barve?e=fin-noimg");
-          bytes = await r.arrayBuffer();
-        } catch {
-          return seeOther("/admin/barve?e=fin-noimg");
-        }
-        const proposal = await nameColour(env, bytes, "image/webp", row.kind);
-        if (!proposal) return seeOther("/admin/barve?e=fin-noname");
-        const others = new Set(
-          rows.filter((f) => f.id !== id).map((f) => f.name.trim().toLowerCase()),
-        );
-        await renameFinish(api, shopKey, id, uniqueColourName(proposal, others));
-        return seeOther("/admin/barve?m=fin-named");
-      }
-      const form = await request.formData();
-      await renameFinish(api, shopKey, id, String(form.get("name") ?? ""));
-      return seeOther("/admin/barve?m=fin-saved");
-    }
-
-    const notice = url.searchParams.get("m")
-      ? ({
-          kind: "ok",
-          text:
-            (Object.hasOwn(NOTICES, url.searchParams.get("m")!)
-              ? NOTICES[url.searchParams.get("m")!]
-              : undefined) ?? "Shranjeno.",
-        } as const)
-      : url.searchParams.get("e")
-        ? ({
-            kind: "err",
-            text:
-              (Object.hasOwn(ERRORS, url.searchParams.get("e")!)
-                ? ERRORS[url.searchParams.get("e")!]
-                : undefined) ?? "Ni uspelo.",
-          } as const)
-        : undefined;
-    // The fallback lists go WITH the rows, because the page has to describe
-    // what the storefront is showing, not what the table holds. On a shop
-    // that has uploaded nothing those are two different answers: the table is
-    // empty and every product page is rendering the transcription.
-    return page(
-      finishListPage(await listFinishes(api, shopKey), admin.email, notice, {
-        shell: TRANSCRIBED_SHELL_FINISHES,
-        cabinet: TRANSCRIBED_CABINET_FINISHES,
-        shellPhotographed: SHELL_FINISHES_ARE_PHOTOGRAPHED,
-        cabinetPhotographed: CABINET_FINISHES_ARE_PHOTOGRAPHED,
-      }, enhanceAvailable(env)),
-    );
-  }
 
   // --- enquiries ---
   //
@@ -708,38 +558,6 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // execute; this route reads and patches AS THE SIGNED-IN ADMIN, so the
   // database decides what an operator may see rather than this code being
   // trusted to only ask for the right rows.
-  if (parts[1] === "povprasevanja") {
-    const shopKey = "bazen";
-    const id = parts[2];
-
-    if (id && request.method === "POST") {
-      if (parts[3] === "izbris") {
-        await deleteEnquiry(api, shopKey, id);
-        return seeOther("/admin/povprasevanja?m=enq-deleted");
-      }
-      const form = await request.formData();
-      const statusRaw = String(form.get("status") ?? "");
-      await updateEnquiry(api, shopKey, id, {
-        // An unknown status is DROPPED rather than defaulted: a select whose
-        // value did not survive the round trip should leave the row alone,
-        // not quietly move it to "nova".
-        ...(isStatus(statusRaw) ? { status: statusRaw } : {}),
-        note: String(form.get("note") ?? ""),
-      });
-      return seeOther("/admin/povprasevanja?m=enq-saved");
-    }
-
-    const notice = url.searchParams.get("m")
-      ? ({
-          kind: "ok",
-          text:
-            (Object.hasOwn(NOTICES, url.searchParams.get("m")!)
-              ? NOTICES[url.searchParams.get("m")!]
-              : undefined) ?? "Shranjeno.",
-        } as const)
-      : undefined;
-    return page(enquiryListPage(await listEnquiries(api, shopKey), admin.email, notice));
-  }
 
   // --- customer reviews ---
   //
@@ -747,101 +565,6 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // the two Annex I entries; what matters here is that "published" and
   // "verified" are separate decisions and the second one refuses to save
   // without the order number that justifies it.
-  if (parts[1] === "mnenja") {
-    const shopKey = "bazen";
-    const notice = url.searchParams.get("m")
-      ? ({ kind: "ok", text: (Object.hasOwn(NOTICES, url.searchParams.get("m")!) ? NOTICES[url.searchParams.get("m")!] : undefined) ?? "Shranjeno." } as const)
-      : url.searchParams.get("e")
-        ? ({ kind: "err", text: (Object.hasOwn(ERRORS, url.searchParams.get("e")!) ? ERRORS[url.searchParams.get("e")!] : undefined) ?? "Ni uspelo." } as const)
-        : undefined;
-    const cat = CATALOGUE_SHOPS[shopKey]!;
-    const models = cat.models.map((m) => ({ slug: m.slug, name: m.name }));
-
-    /**
-     * The form, with the product resolved to a real row.
-     *
-     * The model arrives as a SLUG and is matched against this shop's own
-     * catalogue before it becomes anything — a review may only ever name a
-     * product the shop actually sells. The two invented reviews this replaces
-     * named "BAZEN RELAX 5", a model that has never existed.
-     */
-    const read = async (): Promise<
-      { ok: true; draft: Parameters<typeof createReview>[2] } | { ok: false; why: string }
-    > => {
-      const form = await request.formData();
-      const body = String(form.get("body") ?? "").trim();
-      const authorName = String(form.get("who") ?? "").trim();
-      if (!body || !authorName) return { ok: false, why: "rv-empty" };
-      const orderNumber = String(form.get("order") ?? "").trim();
-      const verified = form.get("verified") !== null;
-      if (verified && orderNumber === "") return { ok: false, why: "rv-unverified" };
-      const slug = String(form.get("model") ?? "");
-      const model = cat.models.find((m) => m.slug === slug);
-      const productId = model
-        ? await ensureProduct(api, shopKey, model.slug, model.name, model.freightClass)
-        : null;
-      const rating = Number(form.get("rating") ?? 5);
-      return {
-        ok: true,
-        draft: {
-          body,
-          authorName,
-          rating: Number.isFinite(rating) ? rating : 5,
-          productId,
-          orderNumber,
-          verified,
-          published: form.get("published") !== null,
-        },
-      };
-    };
-
-    if (parts.length === 2 && request.method === "GET") {
-      return page(reviewListPage(await listReviews(api, shopKey), admin.email, notice));
-    }
-
-    if (parts[2] === "novo") {
-      if (request.method === "GET") {
-        return page(reviewEditPage(null, models, admin.email, notice));
-      }
-      if (request.method === "POST") {
-        const got = await read();
-        if (!got.ok) return seeOther("/admin/mnenja/novo?e=" + got.why);
-        try {
-          const made = await createReview(api, shopKey, got.draft);
-          return seeOther("/admin/mnenja/" + made.id + "?m=rv-saved");
-        } catch (err) {
-          console.error(err);
-          return seeOther("/admin/mnenja/novo?e=rv");
-        }
-      }
-    }
-
-    const rid = parts[2] ?? "";
-    if (!rid) return page(notFoundPage("To mnenje ne obstaja.", admin.email), 404);
-    const review = await getReview(api, shopKey, rid);
-    if (!review) return page(notFoundPage("To mnenje ne obstaja.", admin.email), 404);
-    const rhere = "/admin/mnenja/" + review.id;
-
-    if (parts.length === 3 && request.method === "GET") {
-      return page(reviewEditPage(review, models, admin.email, notice));
-    }
-    if (parts.length === 3 && request.method === "POST") {
-      const got = await read();
-      if (!got.ok) return seeOther(rhere + "?e=" + got.why);
-      try {
-        await updateReview(api, shopKey, review.id, got.draft);
-      } catch (err) {
-        console.error(err);
-        return seeOther(rhere + "?e=rv");
-      }
-      return seeOther(rhere + "?m=rv-saved");
-    }
-    if (parts[3] === "delete" && request.method === "POST") {
-      await deleteReview(api, shopKey, review.id);
-      return seeOther("/admin/mnenja?m=rv-deleted");
-    }
-    return page(notFoundPage("Neznano dejanje.", admin.email), 404);
-  }
 
   // --- the blog ---
   //
@@ -855,151 +578,26 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   // call in this file. There is no service key here either: `posts_admin_write`
   // is what lets these succeed, and a bug that skipped the gate above would
   // produce a request the database refuses rather than one it serves.
-  if (parts[1] === "blog") {
-    const shopKey = "bazen";
-    const notice = url.searchParams.get("m")
-      ? ({ kind: "ok", text: (Object.hasOwn(NOTICES, url.searchParams.get("m")!) ? NOTICES[url.searchParams.get("m")!] : undefined) ?? "Shranjeno." } as const)
-      : url.searchParams.get("e")
-        ? ({ kind: "err", text: (Object.hasOwn(ERRORS, url.searchParams.get("e")!) ? ERRORS[url.searchParams.get("e")!] : undefined) ?? "Ni uspelo." } as const)
-        : undefined;
-    const siteUrl = SHOPS[shopKey]?.siteUrl ?? "";
-
-    /** Title, excerpt and body off the form, with the excerpt derived if blank. */
-    const readForm = async (): Promise<{ title: string; excerpt: string; source: string } | null> => {
-      const form = await request.formData();
-      const title = String(form.get("title") ?? "").trim();
-      if (!title) return null;
-      const source = String(form.get("body") ?? "");
-      // A post with no summary still needs one: it is the card's standfirst
-      // and the meta description, and an empty description is a search result
-      // Google writes for you out of whatever it finds.
-      const excerpt = String(form.get("excerpt") ?? "").trim() || excerptFrom(source);
-      return { title, excerpt, source };
-    };
-
-    // The list.
-    if (parts.length === 2 && request.method === "GET") {
-      return page(blogListPage(await listAll(api, shopKey), admin.email, notice));
-    }
-
-    // A new one. GET draws the empty editor; POST creates a DRAFT and lands
-    // on its own page, so the operator is where the cover form and the
-    // publish button are.
-    if (parts[2] === "nov") {
-      if (request.method === "GET") return page(blogEditPage(null, admin.email, siteUrl, notice));
-      if (request.method === "POST") {
-        const fields = await readForm();
-        if (!fields) return seeOther("/admin/blog/nov?e=title");
-        const slug = await freeSlug(api, shopKey, slugStem(fields.title));
-        const made = await createPost(api, shopKey, { slug, ...fields });
-        return seeOther("/admin/blog/" + made.id + "?m=post-saved");
-      }
-    }
-
-    const id = parts[2] ?? "";
-    if (!id) return page(notFoundPage("Ta zapis ne obstaja.", admin.email), 404);
-    const post = await getById(api, shopKey, id);
-    if (!post) return page(notFoundPage("Ta zapis ne obstaja.", admin.email), 404);
-    const here = "/admin/blog/" + post.id;
-
-    // The editor.
-    if (parts.length === 3 && request.method === "GET") {
-      return page(blogEditPage(post, admin.email, siteUrl, notice));
-    }
-
-    // Save, and optionally publish or withdraw in the same press. One button
-    // rather than two pages: an operator who has just finished writing wants
-    // to publish what they wrote, not what was saved a moment ago.
-    if (parts.length === 3 && request.method === "POST") {
-      const form = await request.formData();
-      const title = String(form.get("title") ?? "").trim();
-      if (!title) return seeOther(here + "?e=title");
-      const source = String(form.get("body") ?? "");
-      const excerpt = String(form.get("excerpt") ?? "").trim() || excerptFrom(source);
-      // The slug FOLLOWS THE TITLE ONLY WHILE THE POST IS A DRAFT. Once it is
-      // published the URL is out in the world — in somebody's history, in a
-      // search index, in a message — and renaming it because a typo was fixed
-      // breaks every one of those links silently.
-      const slug =
-        post.status === "draft" && slugStem(title) !== post.slug
-          ? await freeSlug(api, shopKey, slugStem(title), post.id)
-          : post.slug;
-      try {
-        await updatePost(api, shopKey, post.id, { slug, title, excerpt, source });
-      } catch (err) {
-        console.error(err);
-        return seeOther(here + "?e=post");
-      }
-      const then = String(form.get("then") ?? "");
-      if (then === "publish") {
-        await setStatus(api, shopKey, post.id, "published", post.publishedAt === null);
-        return seeOther(here + "?m=post-published");
-      }
-      if (then === "unpublish") {
-        await setStatus(api, shopKey, post.id, "draft", false);
-        return seeOther(here + "?m=post-unpublished");
-      }
-      return seeOther(here + "?m=post-saved");
-    }
-
-    if (parts[3] === "delete" && request.method === "POST") {
-      await deletePost(api, shopKey, post.id);
-      return seeOther("/admin/blog?m=post-deleted");
-    }
-
-    // The cover. Stored under a content-addressed key so a replacement is a
-    // new URL and no cache anywhere serves the old picture — the reason the
-    // product photographs are addressed the same way, and the reason the site
-    // slots (which cannot be) get a short cache instead.
-    if (parts[3] === "cover" && request.method === "POST") {
-      const form = await request.formData();
-      const part = form.get("file");
-      const alt = String(form.get("alt") ?? "").trim();
-      if (!(part instanceof File) || part.size === 0) return seeOther(here + "?e=file");
-      const bytes = await part.arrayBuffer();
-      if (!isWebp(bytes)) return seeOther(here + "?e=type");
-      const key = "blog/" + post.slug + "--" + crypto.randomUUID() + ".webp";
-      try {
-        await uploadObject(api, key, bytes, "image/webp");
-      } catch (err) {
-        console.error(err);
-        return seeOther(here + "?e=store");
-      }
-      await updatePost(api, shopKey, post.id, {
-        slug: post.slug,
-        title: post.title,
-        excerpt: post.excerpt,
-        source: post.source,
-        coverUrl: "/media/" + key,
-        coverAlt: alt || post.title,
-      });
-      return seeOther(here + "?m=cover-set");
-    }
-
-    if (parts[3] === "cover-clear" && request.method === "POST") {
-      // The row loses the picture; the object stays. A cover that has been
-      // published is in somebody's cache and in a share card, and the storage
-      // cost of a stray WebP is not worth a broken image on a link that was
-      // sent last week. Product photographs are deleted because they are
-      // MANAGED — there is a page listing them — and a blog cover is not.
-      await updatePost(api, shopKey, post.id, {
-        slug: post.slug,
-        title: post.title,
-        excerpt: post.excerpt,
-        source: post.source,
-        coverUrl: null,
-        coverAlt: "",
-      });
-      return seeOther(here + "?m=cover-cleared");
-    }
-
-    return page(notFoundPage("Neznano dejanje.", admin.email), 404);
-  }
 
   // --- one site image ---
   //
   // Before the model lookup, because "site" is not a shop key and would
   // otherwise fall through to "this model does not exist".
+  // --- the surfaces -------------------------------------------------------
+  //
+  // ⚠️ EVERYTHING ABOVE THIS LINE IS THE GATE, AND IT STAYS ABOVE IT. The
+  // session, the admins allowlist and the cross-site refusal all run before a
+  // context exists, so a surface cannot forget to check: it is only ever
+  // called with an AdminCtx, and an AdminCtx is only built here.
+  //
+  // First non-null answers, which is what the if-chain did — minus the shared
+  // scope that made eleven surfaces one function.
+  const c: AdminCtx = { request, env, url, parts, admin, api, shopKey: "bazen" };
+  for (const surface of SURFACES) {
+    const res = await surface(c);
+    if (res) return res;
+  }
+
   if (parts[1] === "site") {
     // ⚠️ A COLOUR'S SLOT DOES NOT EXIST UNTIL THE COLOUR DOES, and that is the
     // whole point of the inversion.
@@ -1038,8 +636,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
             optional: true,
             ratio: [1, 1],
             maxWidth: 400,
-            exact: true,
-          }
+            exact: true }
         : undefined);
     if (!slot) return page(notFoundPage("Ta slika ne obstaja.", admin.email), 404);
 
@@ -1279,8 +876,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
       model.name,
       rows.map((r): MediaView => ({
         id: r.id, url: r.url, alt: r.alt, sort: r.sort,
-        widths: r.widths ?? [], enhanced: r.enhanced === true, shot: r.shot ?? null,
-      })),
+        widths: r.widths ?? [], enhanced: r.enhanced === true, shot: r.shot ?? null })),
       notice,
       admin.email,
       enhanceAvailable(env),
@@ -1289,75 +885,7 @@ export async function handleAdmin(request: Request, env: Env): Promise<Response>
   );
 }
 
-/**
- * Why an upload was refused, in the operator's language.
- *
- * One message for every `e` used to render regardless of cause — it always
- * said the alt text was missing — so the day a second failure existed the
- * panel would have confidently reported the wrong one.
- */
-const ERRORS: Record<string, string> = {
-  // Kept for links that may still carry it; nothing emits it any more — an
-  // upload is no longer refused for want of a description.
-  alt: "Opis slike je obvezen.",
-  file: "Nobena slika ni bila izbrana.",
-  "fin-none": "Te barve ni na seznamu.",
-  "fin-noai": "Samodejno poimenovanje ni nastavljeno (manjka ključ za AI).",
-  "fin-noimg": "Vzorca te barve ni v shrambi, zato ga model ne more pogledati.",
-  "fin-noname": "Model barve ni znal poimenovati. Ime vpišite sami v polje.",
-  fin: "Vzorec je shranjen, barve pa ni bilo mogoče dodati na seznam barv. " +
-    "Poskusite znova; če se ponovi, jo naložite prek strani Barve.",
-  // The panel converts every upload itself, in the browser, before it sends
-  // anything — so this message is about the CONVERSION not having run, not
-  // about the operator's file being the wrong kind. Naming JavaScript first
-  // is the useful half: with script on, no browser this panel supports
-  // reaches here.
-  type: "Slika ni bila pretvorjena v WebP. To se zgodi le, če je JavaScript " +
-    "izklopljen — vklopite ga in poskusite znova.",
-  // The page said one thing and the database said another, so nothing was
-  // deleted. The operator gets to look before deciding again.
-  stale: "Seznam fotografij se je med tem spremenil, zato ni bilo nič " +
-    "izbrisano. Osvežite stran in poskusite znova.",
-  "no-ai": "Razvrščanje potrebuje GEMINI_API_KEY, ki ni nastavljen.",
-  store: "Slike ni bilo mogoče shraniti. Poskusite znova; če se ponovi, " +
-    "je težava pri shrambi in ne pri vaši sliki.",
-  title: "Zapis potrebuje naslov.",
-  post: "Zapisa ni bilo mogoče shraniti. Poskusite znova.",
-  rv: "Mnenja ni bilo mogoče shraniti. Poskusite znova.",
-  "rv-empty": "Mnenje potrebuje besedilo in podpis.",
-  // The tick was offered, the evidence was not. See reviews.ts: the chip is a
-  // claim under Annex I 23b and the order number is the check behind it.
-  "rv-unverified": "Za oznako »preverjen nakup« vpišite številko naročila.",
-};
 
-const NOTICES: Record<string, string> = {
-  saved: "Shranjeno.",
-  deleted: "Fotografija je izbrisana.",
-  uploaded: "Fotografija je naložena.",
-  cleared: "Vse fotografije tega modela so izbrisane.",
-  arranged: "Fotografije so razvrščene po vrsti posnetka.",
-  // Honest rather than tidy: some were placed, some were not, and pressing
-  // the button again continues where this left off.
-  "arranged-partly": "Del fotografij je razvrščen. Pritisnite »Razvrsti z UI« " +
-    "še enkrat, da se razvrstijo tudi ostale.",
-  // Not an error: the operator asked for an empty set and the set is empty.
-  "deleted-none": "Ta model ni imel fotografij.",
-  "post-saved": "Zapis je shranjen.",
-  "enq-saved": "Povpraševanje je posodobljeno.",
-  "enq-deleted": "Povpraševanje je izbrisano.",
-  "fin-saved": "Ime barve je shranjeno.",
-  "fin-named": "Barva je poimenovana po odtenku na vzorcu. Če ime ni pravo, ga popravite v polju.",
-  "fin-uploaded":
-    "Vzorci so naloženi. Spodaj je seznam barv, ki jih trgovina lahko pokaže.",
-  "fin-deleted": "Barva je odstranjena s seznama.",
-  "post-published": "Zapis je objavljen in je na spletni strani.",
-  "post-unpublished": "Zapis je umaknjen s spletne strani.",
-  "post-deleted": "Zapis je izbrisan.",
-  "cover-set": "Naslovna slika je naložena.",
-  "cover-cleared": "Naslovna slika je odstranjena.",
-  "rv-saved": "Mnenje je shranjeno. Na strani se pokaže ob naslednji posodobitvi.",
-  "rv-deleted": "Mnenje je izbrisano.",
-};
 
 /**
  * Which stored file to show the model when classifying an existing photograph.
