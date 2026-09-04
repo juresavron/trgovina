@@ -125,6 +125,12 @@ jobs:
       - name: public/ ships assets, not pages
         run: node scripts/audit-public-assets.mjs
 
+      # The admin's colours come from design.ts or they are not colours the
+      # panel is allowed to have — see the file's own note on why a grey
+      # nobody chose is a contrast ratio nobody checked.
+      - name: The admin speaks one vocabulary
+        run: node scripts/audit-admin-design.mjs
+
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy
         env:

@@ -41,12 +41,12 @@ const CSS = `<style>
    that decides whether the public can read the post. */
 .pill{font-size:12px;font-weight:600;letter-spacing:.02em;text-transform:uppercase;
   padding:4px 9px;border-radius:999px;border:1px solid var(--line);
-  color:var(--mute);background:#fff;white-space:nowrap}
+  color:var(--mute);background:var(--card);white-space:nowrap}
 .pill--live{color:var(--ok);border-color:var(--ok-line);background:var(--ok-wash)}
 textarea{font:inherit;width:100%;padding:11px 12px;color:var(--ink-body);
-  background:#fff;border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl);
+  background:var(--card);border:1px solid var(--line-ctrl);border-radius:var(--r-ctrl);
   line-height:1.6;resize:vertical}
-textarea:hover{border-color:#6f6f6f}
+textarea:hover{border-color:var(--mute)}
 textarea:focus{border-color:var(--ink);outline:none;
   box-shadow:0 0 0 2px rgba(21,21,21,.12)}
 /* The body field is the page. 22 rows is about a screen on a laptop, which is
@@ -56,7 +56,7 @@ textarea:focus{border-color:var(--ink);outline:none;
   border-left:2px solid var(--ink);border-radius:0 var(--r-ctrl) var(--r-ctrl) 0;
   color:var(--ink-body);font-size:13px;line-height:1.7}
 .syntax code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
-  font-size:12px;background:#fff;border:1px solid var(--line);
+  font-size:12px;background:var(--card);border:1px solid var(--line);
   border-radius:4px;padding:1px 5px}
 .acts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;
   margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}

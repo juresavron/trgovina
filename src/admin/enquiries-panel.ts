@@ -28,7 +28,7 @@ const CSS = `<style>
 .eq-reach{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .eq-reach a{display:inline-flex;align-items:center;min-height:36px;padding:0 12px;
   border:1px solid var(--line);border-radius:999px;text-decoration:none;color:var(--ink);
-  font-size:14px;background:#fff}
+  font-size:14px;background:var(--card)}
 .eq-reach a:hover{border-color:var(--ink)}
 .eq-reach .pref{border-color:var(--ink);font-weight:600}
 .eq-cfg{margin:12px 0 0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;
@@ -43,7 +43,7 @@ const CSS = `<style>
 .eq-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:14px;
   padding-top:14px;border-top:1px solid var(--line)}
 .eq-form select,.eq-form input{min-height:38px;padding:6px 10px;border:1px solid var(--line);
-  border-radius:var(--r-ctrl);font:inherit;background:#fff;color:var(--ink)}
+  border-radius:var(--r-ctrl);font:inherit;background:var(--card);color:var(--ink)}
 .eq-form input{flex:1;min-width:180px}
 .eq-del{margin-left:auto}
 .eq-meta{margin-top:10px;font-size:12px;color:var(--mute);line-height:1.5}
