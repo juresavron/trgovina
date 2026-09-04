@@ -570,8 +570,21 @@ export function handleRequest(
       // interpolated and "cena in dostava" was typed, on the single
       // highest-value string the site emits. The tail is now the shop's own —
       // see ShopContent.homeTitleTail.
+      // ⚠️ plural, NOT primary. This line asked for the SINGULAR form of the
+      // shop's own keyword while the term it is trying to win is the plural,
+      // so the highest-value string on the site did not contain the head
+      // term at all. The only page that did was the family collection: exact
+      // slug, bare exact H1, sixteen exact-match anchors pointing at it. The
+      // shop was competing with itself and fielding the weaker page — 483
+      // words against 929, on a URL no external link will ever land on.
+      //
+      // Slovenian is inflected and a searcher types the plural for a
+      // category. keyword.primary stays singular because prose needs it
+      // inflected that way; a TITLE is a label for a category, and the label
+      // is plural. Both forms are already in ShopConfig.keyword — this line
+      // was simply reading the wrong one.
       title:
-        cap(shop.keyword.primary) + " — " + content.homeTitleTail + " | " + shop.name,
+        cap(shop.keyword.plural) + " — " + content.homeTitleTail + " | " + shop.name,
       description: content.metaDescription,
       noindex: dev,
       q,
