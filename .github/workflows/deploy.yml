@@ -131,6 +131,13 @@ jobs:
       - name: The admin speaks one vocabulary
         run: node scripts/audit-admin-design.mjs
 
+      # A dependency on the database is invisible from the TypeScript: the
+      # call compiles and every stubbed test passes whether or not the object
+      # exists. This is the only thing that reads src/ and db/schema.sql
+      # against each other.
+      - name: Every database object the code calls is in the schema
+        run: node scripts/audit-db-contract.mjs
+
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy
         env:
