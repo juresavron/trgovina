@@ -20,6 +20,7 @@
  * stack trace from indexing [0] of an empty array.
  */
 
+import { SHOPS } from "../../tenants";
 import type { Api } from "../supabase";
 import { listShops, type CatalogueShop } from "./catalogue";
 
@@ -51,8 +52,39 @@ function cookie(request: Request, name: string): string | null {
  * two tabs on two shops is the thing a switcher is for, and a cookie alone
  * makes the second tab silently change the first.
  */
+/**
+ * The compiled tenant registry, in the shape the switcher wants.
+ *
+ * ⚠️ THIS IS THE FALLBACK, AND IT EXISTS BECAUSE THE TABLE-ONLY VERSION TOOK
+ * THE LIVE PANEL DOWN. public.shops has row-level security, and the policies on
+ * it do not grant an administrator SELECT — the panel could read products,
+ * enquiries, reviews and posts, but asking for shops came back empty. So the
+ * resolver saw an account with access to nothing and rendered the 403 it was
+ * written to render, correctly, on every page, for the owner.
+ *
+ * Reading the table first is still right: it is the only thing that knows about
+ * a shop nobody has compiled in. But a panel that goes dark because one
+ * SELECT is not granted is worse than a panel that falls back to the list it
+ * used for its entire life before this change.
+ *
+ * ⚠️ THE FALLBACK IS NOT AN AUTHORISATION BYPASS. Nothing here grants access
+ * to data: every read and write the panel makes still runs as this person and
+ * still meets RLS on the table it touches. This decides which shop the panel
+ * is POINTED AT, and pointing it at a shop whose rows the database will not
+ * return produces an empty screen, not a leak.
+ */
+function registryShops(): CatalogueShop[] {
+  return Object.values(SHOPS).map((s) => ({
+    id: s.key,
+    name: s.name,
+    domain: s.domain,
+    isLive: s.live,
+  }));
+}
+
 export async function resolveShopChoice(request: Request, api: Api, url: URL): Promise<ShopChoice> {
-  const all = await listShops(api);
+  const rows = await listShops(api);
+  const all = rows.length > 0 ? rows : registryShops();
   if (all.length === 0) return { current: null, all };
   const asked = url.searchParams.get("shop") ?? cookie(request, SHOP_COOKIE);
   const found = asked === null ? undefined : all.find((s) => s.id === asked);

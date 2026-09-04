@@ -27,8 +27,18 @@ export interface AdminCtx {
   readonly admin: AdminUser;
   /** Supabase, acting as this person. There is no service key to fall back to. */
   readonly api: Api;
-  /** The shop being administered. One today; read from here, never typed in. */
+  /** The shop being administered. Resolved once in routes.ts, never typed in. */
   readonly shopKey: string;
+  /** Its display name, from public.shops — not from the compiled registry. */
+  readonly shopName: string;
+  /**
+   * Every shop this account may administer, for the switcher.
+   *
+   * ⚠️ ALREADY FILTERED BY RLS. routes.ts builds this from listShops(), which
+   * runs as this person, so a surface may render the whole list without
+   * checking anything — there is nothing in it they may not see.
+   */
+  readonly shops: readonly { readonly id: string; readonly name: string }[];
 }
 
 /**
