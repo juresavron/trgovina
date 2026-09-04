@@ -219,3 +219,107 @@ function reheatKWh(deltaK: number): number {
   const l = tubLitres().sort((a, b) => a - b);
   return (l[l.length - 1]! * 4.186 * deltaK) / 3600;
 }
+
+/**
+ * The filtration surface the offered tubs carry, as a whole sentence.
+ *
+ * ⚠️ THE SENTENCE, NOT THE NUMBER, BECAUSE THE ARGUMENT DEPENDS ON THEM BEING
+ * EQUAL. The maintenance guide's point is that filtration does not scale with
+ * the tub: all three models carry the same filter and the biggest holds nearly
+ * half as much water again, so the same cartridge works harder on the big one.
+ * A helper that returned "100" would leave "vsi trije nosijo enak filter"
+ * typed beside it, and the day one model shipped with a smaller cartridge the
+ * page would state the new number inside the old claim — the exact failure
+ * mode every derived figure in this module exists to prevent.
+ *
+ * So the shape of the sentence is derived too: equal filters get the claim,
+ * unequal ones get a range and no claim.
+ *
+ * Square feet is the supplier's unit and it is the one printed on the
+ * cartridge a buyer will re-order, so it leads; the metric conversion follows
+ * in brackets for a reader who has no feel for it.
+ */
+export function tubFilterAreaText(locale: string): string {
+  const sf = [...new Set(OFFERED_MODELS.map((m) => m.filterSf))].sort((a, b) => a - b);
+  const feet = (n: number) =>
+    counted(locale, n, [
+      "kvadratni čevelj",
+      "kvadratna čevlja",
+      "kvadratne čevlje",
+      "kvadratnih čevljev",
+    ]);
+  // 1 sq ft = 0,09290304 m², rounded to one decimal — the precision the
+  // supplier's own round figure supports.
+  const m2 = (n: number) => (n * 0.09290304).toFixed(1).replace(".", ",");
+  if (sf.length === 1) {
+    const n = sf[0]!;
+    return "Vsi naši modeli nosijo enako veliko filtrirno površino: " + feet(n) +
+      ", to je " + m2(n) + " kvadratnega metra.";
+  }
+  const lo = sf[0]!;
+  const hi = sf[sf.length - 1]!;
+  return "Filtrirna površina se med modeli razlikuje: od " + feet(lo) + " do " +
+    feet(hi) + ", to je od " + m2(lo) + " do " + m2(hi) + " kvadratnega metra.";
+}
+
+/**
+ * One line per tub, smallest first: jets, jet pumps, and jets per pump.
+ *
+ * ⚠️ THE RATIO IS THE WHOLE POINT AND IT IS ARITHMETIC, NOT A MEASUREMENT.
+ * Jet count is the number this category is compared on and the one that tells
+ * a buyer least: the biggest tub carries the most jets AND the fewest per
+ * pump, because it carries a second pump. Dividing one published figure by the
+ * other is the cheapest way to see that, and the guide says in as many words
+ * that it is a ratio off the spec table rather than a pressure anybody
+ * measured.
+ *
+ * The circulation pump is deliberately NOT in this division. It runs the
+ * filter, not the jets, and folding it in would flatter the small models with
+ * a pump that drives nothing a bather feels.
+ */
+export function tubJetPumpLines(locale: string): string[] {
+  return [...OFFERED_MODELS]
+    .sort((a, b) => a.mm[0]! * a.mm[1]! - b.mm[0]! * b.mm[1]!)
+    .map((m) => {
+      const [count, hp] = m.jetPumps;
+      const jets = counted(locale, m.jets, ["šoba", "šobi", "šobe", "šob"]);
+      const pumps = counted(locale, count, [
+        "masažna črpalka",
+        "masažni črpalki",
+        "masažne črpalke",
+        "masažnih črpalk",
+      ]);
+      const power = String(hp).replace(".", ",");
+      const per = Math.round(m.jets / count);
+      // "približno" only when the division is not exact: three of three models
+      // divide evenly today, and hedging a figure that is exact reads as a
+      // figure nobody checked.
+      const about = m.jets % count === 0 ? "" : "približno ";
+      return m.name + ": " + jets + ", " + pumps + " (" + power + " KM) — " +
+        about + per + " šob na črpalko.";
+    });
+}
+
+/**
+ * The water between the smallest and the largest tub, in litres — "600".
+ *
+ * The size guide states the same gap as a fraction of the biggest tub
+ * ("približno tretjina prostornine"), which is the right unit there: it is
+ * about choosing between models. The maintenance guide needs the absolute
+ * figure, because its argument is that one filter cartridge handles both.
+ * Deriving it stops the two pages from drifting into stating different gaps.
+ */
+export function tubLitreSpanText(): string {
+  const l = tubLitres().sort((a, b) => a - b);
+  return groupThousands(l[l.length - 1]! - l[0]!);
+}
+
+/** Jets per massage pump, fewest first — "25 do 37". */
+export function tubJetsPerPumpRangeText(): string {
+  const per = OFFERED_MODELS.map((m) => Math.round(m.jets / m.jetPumps[0])).sort(
+    (a, b) => a - b,
+  );
+  const lo = per[0]!;
+  const hi = per[per.length - 1]!;
+  return lo === hi ? String(lo) : lo + " do " + hi;
+}

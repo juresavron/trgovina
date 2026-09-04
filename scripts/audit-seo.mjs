@@ -110,6 +110,26 @@ const get = async (path) => {
   return { status: res.status, headers: res.headers, html: await res.text() };
 };
 
+/**
+ * The same fetch, through the shop's OWN host.
+ *
+ * ⚠️ TWO ROUTES CANNOT BE AUDITED THROUGH THE QA HOST, because their whole
+ * content is decided by which host asked. robots.txt is closed on any dev host
+ * by design (worker.ts: `const open = shop.live && !dev`) and the sitemap is
+ * not served there at all — so the moment this shop went live, the audit
+ * started reporting that a correct robots.txt "closes the site on a LIVE
+ * shop", and the sitemap block below had been silently skipping itself for as
+ * long as it had existed.
+ *
+ * Everything else stays on the QA host on purpose: see the note on `indexable`
+ * above for why the page checks must not read the live noindex flag.
+ */
+const getLive = async (path) => {
+  const host = new URL(SHOP.siteUrl).host;
+  const res = handleRequest(new Request("https://" + host + path, { headers: { host } }));
+  return { status: res.status, headers: res.headers, html: await res.text() };
+};
+
 const one = (re, s) => { const m = re.exec(s); return m ? m[1] : null; };
 const all = (re, s) => [...s.matchAll(re)].map((m) => m[1]);
 const text = (s) => s.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
@@ -120,6 +140,8 @@ const warn = (route, msg) => WARN.push([route, msg]);
 const note = (route, msg) => NOTE.push([route, msg]);
 
 const PAGES = routes();
+/** Routes judged indexable in the loop below — filled as it goes. */
+const INDEXABLE = new Set();
 const seenTitle = new Map(), seenDesc = new Map(), seenH1 = new Map();
 const docs = {};
 const kinds = {};
@@ -166,6 +188,10 @@ for (const route of PAGES) {
   // the audit would report a clean site by measuring nothing.
   const selfNoindex = route === BLOG && /<meta name="robots" content="noindex/.test(html);
   const indexable = !PRIVATE.has(route) && !selfNoindex;
+  // The sitemap check at the foot of this file needs the same judgement, and
+  // it cannot re-derive it from the QA host's markup — there every page is
+  // noindex. See the note there.
+  if (indexable) INDEXABLE.add(route);
 
   /* --- the three strings a SERP is built from ------------------------- */
   const title = one(/<title>([^<]*)<\/title>/, html);
@@ -466,7 +492,7 @@ for (const r of PAGES) {
 }
 
 /* --- robots.txt and sitemap.xml --------------------------------------- */
-const rb = await get("/robots.txt");
+const rb = await getLive("/robots.txt");
 if (rb.status !== 200) {
   err("/robots.txt", "serves " + rb.status);
 } else {
@@ -482,17 +508,24 @@ if (rb.status !== 200) {
     err("/robots.txt", "is open but points at no sitemap");
   }
 }
-const sm = await get("/sitemap.xml");
+const sm = await getLive("/sitemap.xml");
 if (sm.status !== 200) {
   note("/sitemap.xml", "serves " + sm.status + " (pre-live shops have no sitemap)");
 } else {
+  // ⚠️ THE ROUTE'S INTENT, NOT THE QA HOST'S MARKUP. This used to read the
+  // robots meta out of `docs[r]` — pages fetched through trgovina.workers.dev,
+  // where every page is noindex because the host is a dev host. Paired with a
+  // sitemap that was never fetched (the dev host serves none), the whole block
+  // did nothing. Now the sitemap is real and the judgement is the one the loop
+  // above made: the basket, the checkout, the confirmation and an empty blog
+  // stay out; everything else belongs in.
   const locs = all(/<loc>([^<]*)<\/loc>/g, sm.html);
   for (const r of PAGES) {
     const url = SHOP.siteUrl + (r === "/" ? "/" : r);
-    const html = docs[r] || "";
-    const indexable = !/noindex/i.test(one(/<meta name="robots" content="([^"]*)"/, html) || "");
-    if (indexable && !locs.includes(url)) warn("/sitemap.xml", "omits " + r);
-    if (!indexable && locs.includes(url)) err("/sitemap.xml", "lists " + r + ", which is noindex");
+    if (INDEXABLE.has(r) && !locs.includes(url)) warn("/sitemap.xml", "omits " + r);
+    if (!INDEXABLE.has(r) && locs.includes(url)) {
+      err("/sitemap.xml", "lists " + r + ", which is not meant to be indexed");
+    }
   }
   if (!/<lastmod>/.test(sm.html)) note("/sitemap.xml", "carries no lastmod dates");
 }

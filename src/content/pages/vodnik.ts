@@ -10,6 +10,10 @@ import {
   tubHeightRangeText,
   tubLitreRangeText,
   tubLoadRangeText,
+  tubFilterAreaText,
+  tubJetPumpLines,
+  tubJetsPerPumpRangeText,
+  tubLitreSpanText,
   tubMaxLitresText,
   tubSeatingLines,
 } from "../price-range";
@@ -384,8 +388,14 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
         // Derived from the catalogue — see tubSeatingLines() on why this is
         // not typed out.
         ...tubSeatingLines("sl-SI"),
+        // ⚠️ THIRTEEN, NOT HALF AGAIN. This said the biggest tub carries
+        // polovico več šob than the other two: it carries 50 against 37 and
+        // 35, which is 35% and 43% more. The figure the cost guide states is
+        // the difference itself and vodnik.test.ts already pins it, so the
+        // sentence now says the number two pages agree on instead of a
+        // fraction that flattered it.
         "Srednji model sprejme največ ljudi. Največji ima namesto šestega sedeža " +
-          "drugi ležalnik in polovico več šob od preostalih dveh. To ni pomanjkljivost " +
+          "drugi ležalnik in trinajst šob več od srednjega modela. To ni pomanjkljivost " +
           "in ni napaka v ponudbi: ležalnik zasede prostor dveh sedečih mest, ker se v " +
           "njem leži.",
       ],
@@ -443,8 +453,15 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
       h: "Naprej",
       items: [
         ["Vsi trije modeli s cenami", "/products"],
-        ["Koliko stane masažni bazen", "/guide/koliko-stane-masazni-bazen"],
-        ["Masažni bazen na terasi", "/guide/masazni-bazen-na-terasi"],
+        // ⚠️ THE GUIDE'S OWN PATH, NOT ITS ROUTE KEY. resolveHref() resolves an
+        // href that IS a key ("/products" -> "/trgovina") and hands back
+        // anything else as written — so "/guide/koliko-stane-masazni-bazen",
+        // which only LOOKS like a key with a slug on it, rendered verbatim and
+        // 404'd. Both of these shipped dead. The sibling guides and the hub
+        // have always written the resolved path, and links.test.ts now walks
+        // the site so the next one cannot ship.
+        ["Koliko stane masažni bazen", "/vodnik/koliko-stane-masazni-bazen"],
+        ["Masažni bazen na terasi", "/vodnik/masazni-bazen-na-terasi"],
       ],
     },
     {
@@ -582,6 +599,262 @@ export const GUIDE_PAGES: readonly GuidePage[] = [
       p: "Na vprašanja o dostopu, podlagi in priklopu odgovorimo po telefonu, brez obveznosti.",
       label: "Kontakt",
       href: "/kontakt",
+    },
+    ],
+  },
+  {
+    slug: "vzdrzevanje-masaznega-bazena",
+    key: "/guide",
+    // The qa block below is eligible for an FAQ rich result; worker.ts reads
+    // this opt-in flag exactly as it does for /pogosta-vprasanja.
+    faqPage: true,
+    h1: "Vzdrževanje masažnega bazena",
+    // 51 characters is the head's budget (60 less the nine-character brand),
+    // and this is 46.
+    seoTitle: "Vzdrževanje masažnega bazena: kaj je res treba",
+    lead:
+      // ⚠️ THE LEAD SPLITS THE JOB IN TWO, because that split is the answer.
+      // The query behind this page is really "how much work is it", and the
+      // useful reply is that most of it is not work at all: the filtration
+      // runs whether or not anybody thinks about it, and what is left is a
+      // short list. A lead that promised tips would be the fourth such page
+      // in the results and the reader would learn nothing from ours.
+      "Filtriranje teče samo. Vam ostanejo kemija vode, filtrski vložek in pokrov " +
+      "— in ta seznam je pri vseh treh modelih enak.",
+    metaDescription:
+      "Vzdrževanje masažnega bazena: kaj opravi obtočna črpalka s filtrom, kaj " +
+      "ostane vam in zakaj je pri večjem modelu dela enako, vode pa več.",
+    blocks: [
+    {
+      kind: "prose",
+      p: [
+        "Vzdrževanje masažnega bazena je krajši seznam, kot si ga večina " +
+          "predstavlja, in razpade na dvoje: na tisto, kar bazen dela sam, in na " +
+          "tisto, kar naredite vi. Prvo teče, dokler ima bazen elektriko, in ga ni " +
+          "treba načrtovati. Drugo je kratek, a reden opravek.",
+        "Kateri model imate, na ta seznam skoraj ne vpliva. Tehnika je pri vseh " +
+          "treh naših modelih ista; drugačna je količina vode, ki gre skoznjo.",
+      ],
+    },
+    {
+      // ⚠️ THE FILTER AREA IS THE FACT THIS PAGE IS BUILT ON, and it is in the
+      // spec table of every model on the site without ever having been
+      // explained. It is also the one figure that makes the maintenance
+      // question answerable in a sentence: the cartridge does not get bigger
+      // with the tub, so the work does not either.
+      kind: "prose",
+      h: "Kaj bazen naredi sam",
+      p: [
+        "Bazen filtrira sam. Obtočna črpalka teče ločeno od masažnih šob in vodo " +
+          "vleče skozi filtrski vložek, tudi kadar bazen miruje. Ta del " +
+          "vzdrževanja se zgodi brez vas.",
+        // Derived from the catalogue — see tubFilterAreaText() on why the
+        // whole sentence is derived and not just the number in it.
+        tubFilterAreaText("sl-SI") + " Vložek je torej isti, ne glede na to, kateri " +
+          "model izberete. Vode pa ni enako: modeli držijo " + tubLitreRangeText() +
+          " litrov, kar je " + tubLitreSpanText() + " litrov razlike med skrajnima " +
+          "modeloma skozi enako veliko filtrirno površino.",
+      ],
+    },
+    {
+      kind: "steps",
+      h: "Kaj ostane vam",
+      items: [
+        [
+          "Kemija vode",
+          "Filter zadrži delce; vsega, kar pride v vodo z ljudmi, ne. Za to sta " +
+            "dezinfekcija in uravnavanje kislosti vode. Tega dela z dražjim modelom ni " +
+            "mogoče odpraviti — pri vseh treh je enak.",
+        ],
+        [
+          "Filtrski vložek",
+          "Vložek se občasno spere in sčasoma zamenja. Kako pogosto, je odvisno od " +
+            "tega, koliko se bazen uporablja in koliko ljudi je v njem, ne od " +
+            "modela: filtrirna površina je pri vseh treh enaka.",
+        ],
+        [
+          "Pokrov",
+          "Pokrov ni samo toplotna izolacija. Kar v vodo ne pade, ni treba " +
+            "filtrirati, zato pokrit bazen ostane čist dlje. Pri vzdrževanju se ga " +
+            "podcenjuje enako pogosto kot pri porabi.",
+        ],
+        [
+          "Dostop do tehnike",
+          "Do črpalk, grelca in filtra se pride skozi servisno stranico ohišja. " +
+            "Bazen, postavljen tesno ob zid s te strani, je treba ob vsakem posegu " +
+            "premikati — zato je to vprašanje postavitve in ne vzdrževanja, čeprav " +
+            "se pokaže šele pri prvem posegu.",
+        ],
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Zakaj večji bazen ni več dela",
+      p: [
+        "Delo je isto: ista kemija, isti vložek, isti pokrov. Drugačna je " +
+          "količina. " + tubLitreSpanText() + " litrov razlike med najmanjšim in " +
+          "največjim modelom pomeni ob istem odmerku na liter sorazmerno več " +
+          "sredstva in daljše polnjenje — ne pa pogostejšega opravila.",
+        "Tudi to je razlog, da se pri izbiri modela splača gledati vodo in ne " +
+          "vzdrževanja: prostornina se pozna vsak mesec, seznam opravil pa se z " +
+          "modelom ne spremeni.",
+      ],
+    },
+    {
+      kind: "qa",
+      h: "Pogosta vprašanja o vzdrževanju",
+      items: [
+        [
+          "Koliko dela je z masažnim bazenom?",
+          "Filtriranje teče samo. Vam ostanejo kemija vode, spiranje in menjava " +
+            "filtrskega vložka ter pokrov. Kako pogosto, je odvisno od uporabe; " +
+            "model na to skoraj ne vpliva, ker imajo vsi trije enako filtrirno " +
+            "površino.",
+        ],
+        [
+          "Ali je vzdrževanje pri večjem bazenu dražje?",
+          "Dela je enako, vode je več — največji model drži " + tubLitreSpanText() +
+            " litrov več od najmanjšega. Ob istem odmerku na liter to pomeni " +
+            "sorazmerno več sredstva in daljše polnjenje. Filtrski vložek je isti.",
+        ],
+        [
+          "Kaj, če bazena dlje časa ne bom uporabljal?",
+          "Če bazen dela in je pokrit, obtočna črpalka vodo še naprej poganja skozi " +
+            "filter in to je najmanj zahtevno stanje. Tvegano je nasprotno: " +
+            "izklopljen bazen, poln vode, ki se ne premika. Kako ga pravilno " +
+            "pripraviti, je opisano v vodniku o zimi.",
+        ],
+      ],
+    },
+    {
+      kind: "links",
+      h: "Naprej",
+      items: [
+        ["Masažni bazen pozimi", "/vodnik/masazni-bazen-pozimi"],
+        ["Šobe in črpalke", "/vodnik/sobe-in-crpalke"],
+        // The route KEY, resolved per shop by resolveHref(). The two guide
+        // links above are real paths and stay written out.
+        ["Vsi modeli in cene", "/products"],
+      ],
+    },
+    {
+      kind: "cta",
+      h: "Vprašanje o vzdrževanju vašega modela?",
+      p: "Povejte nam, kateri model vas zanima, in povemo, kaj vzdrževanje pri njem " +
+        "v resnici pomeni. Brez obveznosti.",
+      href: "/kontakt",
+      label: "Kontakt",
+    },
+    ],
+  },
+  {
+    slug: "sobe-in-crpalke",
+    key: "/guide",
+    // The qa block below is eligible for an FAQ rich result; worker.ts reads
+    // this opt-in flag exactly as it does for /pogosta-vprasanja.
+    faqPage: true,
+    h1: "Šobe in črpalke masažnega bazena",
+    // 42 characters, inside the 51 the head has once the brand is added.
+    seoTitle: "Šobe in črpalke: koliko jih res potrebujete",
+    lead:
+      "Število šob je podatek, ki se najlažje primerja in pove najmanj. Kar " +
+      "določa masažo, je razmerje med šobami in črpalkami.",
+    metaDescription:
+      "Koliko šob potrebuje masažni bazen, koliko jih poganja ena črpalka, kaj " +
+      "prinese druga masažna črpalka in zakaj obtočna črpalka ne šteje.",
+    blocks: [
+    {
+      kind: "prose",
+      p: [
+        "Masažni bazeni se oglašujejo s številom šob, ker je to edini podatek, ki " +
+          "ga je mogoče primerjati, ne da bi kdo kamorkoli šel. Pove pa manj kot " +
+          "skoraj katerakoli druga vrstica v specifikaciji: šoba je odprtina, in " +
+          "kar iz nje naredi masažo, je voda pod tlakom, ki do nje pride.",
+        "Vodo pod tlakom dela masažna črpalka. Zato je uporabno vprašanje, koliko " +
+          "šob poganja ena črpalka, in ne, koliko šob je vseh skupaj.",
+      ],
+    },
+    {
+      // Derived from the catalogue — see tubJetPumpLines() on why the ratio is
+      // computed rather than typed, and on why the circulation pump is not in
+      // this division.
+      kind: "prose",
+      h: "Koliko šob poganja ena črpalka",
+      p: [
+        ...tubJetPumpLines("sl-SI"),
+        "To je razmerje iz specifikacije in ne meritev tlaka na posamezni šobi. " +
+          "Koliko voda potisne, je odvisno tudi od premera šobe, razporeditve po " +
+          "sedežih in dolžine cevi do nje. Razmerje pa je edino, kar se da med " +
+          "modeli primerjati brez preizkusa.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Zakaj ima največji model najmanj šob na črpalko",
+      p: [
+        "Ker ima drugo črpalko. Največji model nosi največ šob in dve masažni " +
+          "črpalki, oba manjša pa svoje šobe na eni. Na prvi pogled je to videti, " +
+          "kot da ima največji model preprosto več vsega; razlika, ki jo občutite, " +
+          "pa je v tem, da vsaka od dveh črpalk poganja manj šob.",
+        "Druga črpalka je pri nas del največjega modela in se je ne da dokupiti k " +
+          "manjšemu. Zato razlika med srednjim in največjim modelom ni samo v " +
+          "školjki — kar je podrobneje razčlenjeno v vodniku o ceni.",
+      ],
+    },
+    {
+      kind: "prose",
+      h: "Obtočna črpalka ni masažna",
+      p: [
+        "V specifikaciji je poleg masažnih črpalk še obtočna, 0,35 KM. Ta ne dela " +
+          "masaže: vodo poganja skozi filter in teče takrat, ko šobe mirujejo. Kdor " +
+          "šteje črpalke, jo zlahka prišteje k masaži, čeprav v tem seštevku nima " +
+          "kaj iskati.",
+        "Podobno je z zračno masažo, ki je pri nekaterih modelih na voljo kot " +
+          "dodatek: zrak ne prihaja iz masažne črpalke in v to številko ne sodi.",
+      ],
+    },
+    {
+      kind: "qa",
+      h: "Pogosta vprašanja o šobah",
+      items: [
+        [
+          "Koliko šob potrebuje masažni bazen?",
+          "Toliko, kolikor jih ena črpalka lahko poganja s tlakom, ki ga občutite. " +
+            "Pri naših modelih je to " + tubJetsPerPumpRangeText() + " šob na " +
+            "črpalko. Več šob na isto črpalko ni več masaže, ampak ista voda, " +
+            "razdeljena na več odprtin.",
+        ],
+        [
+          "Ali je model z dvema črpalkama boljši?",
+          "Ima več šob in vsako od njih poganja manj obremenjena črpalka. Ali je to " +
+            "za vas boljše, je odvisno od tega, kaj sicer izbirate: druga črpalka " +
+            "pride skupaj z največjo školjko in je ni mogoče dokupiti k manjšemu " +
+            "modelu.",
+        ],
+        [
+          "Ali lahko šobe dokupim pozneje?",
+          "Ne. Šobe so vgrajene v školjko in njihovo število je del modela. Posebej " +
+            "se izbirajo osvetlitev, zračna masaža, zvočniki in podobno — kaj " +
+            "natanko, je pri vsakem modelu napisano na njegovi strani.",
+        ],
+      ],
+    },
+    {
+      kind: "links",
+      h: "Naprej",
+      items: [
+        ["Katera velikost masažnega bazena", "/vodnik/velikost-masaznega-bazena"],
+        ["Koliko stane masažni bazen", "/vodnik/koliko-stane-masazni-bazen"],
+        ["Vsi modeli in cene", "/products"],
+      ],
+    },
+    {
+      kind: "cta",
+      h: "Razliko se najlažje občuti v vodi",
+      p: "Povejte nam, kateri model vas zanima, in povemo, kaj v njem dejansko " +
+        "poganja katera črpalka.",
+      href: "/kontakt",
+      label: "Kontakt",
     },
     ],
   },
