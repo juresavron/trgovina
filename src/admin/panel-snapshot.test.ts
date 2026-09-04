@@ -81,15 +81,15 @@ const PAGES: [string, () => string][] = [
 
 /** Update ONLY in the commit that changes the markup, with the diff read. */
 const PINNED: Record<string, string> = {
-  "shell": "cd71ddd2a7bcb976",
-  "login": "0727ee7653278346",
-  "login+error": "c0579394bfca823e",
-  "notFound": "d8a8090c1efaf859",
-  "notConfigured": "6cba4da6368fb436",
-  "index": "8f5948d461681fb2",
-  "site": "a46c027386412fa4",
-  "siteImage": "17fdceaccb007b1c",
-  "model": "17a58f1734c5263e",
+  "shell": "118b82874b25aeed",
+  "login": "83236f40447c7343",
+  "login+error": "e4c7643279baaea1",
+  "notFound": "4b820de180c2f15a",
+  "notConfigured": "b9579ea62eab1333",
+  "index": "a2aa5b68b56f5fcb",
+  "site": "7356f27277c8866b",
+  "siteImage": "24c3b9776f16c539",
+  "model": "0d6528b0b1cb3355",
   "notice-ok": "62cdcb0ec5a9fa57",
   "notice-none": "811c9dc501000193",
 };

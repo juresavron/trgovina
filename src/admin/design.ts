@@ -67,53 +67,110 @@ code{font:13px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
   outline:2px solid var(--ink);outline-offset:2px;border-radius:var(--r-ctrl)}
 .bar :where(a,button):focus-visible{outline-color:#fff}
 
-/* ---- chrome ---------------------------------------------------------- */
+/* ---- chrome: sidebar + topbar ----------------------------------------
+   Ported from the chassis repo's admin (components/admin/layout). Its
+   geometry is stated there as named constants and is reproduced here
+   exactly, because the numbers are the design:
 
-.bar{position:sticky;top:0;z-index:9;background:var(--ink);color:#fff}
-/* The account and the sign-out travel together: on a narrow panel they drop
-   to a second line as a pair rather than the brand wrapping mid-phrase, which
-   is what "Nadzorna / plošča" was doing at 390. */
-.bar .in{max-width:1060px;margin:0 auto;padding:9px 20px;min-height:58px;
-  display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px}
-/* 44px because it is a target like any other (WCAG 2.2 SC 2.5.8) — it was
-   23px tall, the only control in the panel under the floor. */
+     ADMIN_SIDEBAR_WIDTH        256    the column, open
+     ADMIN_SIDEBAR_MOBILE_WIDTH 280    the drawer, which is wider than the
+                                       column because a thumb needs the room
+     ADMIN_TOPBAR height        48 / 64 (mobile / md)
+     ADMIN_CONTENT_MAX_PX       1400
+     ADMIN_MOBILE_BREAKPOINT    768    below this the sidebar is a drawer
+     ADMIN_GUTTER               16 / 24 / 40
+     ADMIN_ROW regular          min-height 44, padding 12/10
+     ADMIN_RADIUS               6      (rounded-md)
+
+   ⚠️ THE DRAWER IS CSS ONLY. This panel already needs JavaScript for the
+   image pipeline, and that is the one thing it may need it for — a menu
+   that cannot open without a script is a back office nobody can navigate
+   when the script fails. A checkbox drives it, the label is the button,
+   and the whole thing works with scripting off. */
+
+.shell{display:flex;min-height:100vh}
+
+.top{position:fixed;top:0;left:0;right:0;z-index:30;height:48px;
+  background:var(--ink);color:var(--card);display:flex;align-items:center;
+  gap:12px;padding:0 16px}
+@media (min-width:768px){.top{height:64px;padding:0 24px}}
+.top :where(a,button):focus-visible{outline-color:var(--card)}
+
 .home{display:inline-flex;align-items:center;gap:10px;min-height:44px;
-  color:#fff;text-decoration:none;font-weight:600;letter-spacing:.005em;
+  color:var(--card);text-decoration:none;font-weight:600;letter-spacing:.005em;
   white-space:nowrap}
 .mark{width:22px;height:22px;display:block;flex:none}
 .acct{display:flex;align-items:center;gap:12px;margin-left:auto;min-width:0}
-.pnav{background:var(--ink);border-top:1px solid #ffffff1f}
-.pnav .in{max-width:1060px;margin:0 auto;padding:0 20px;display:flex;gap:2px;
-  overflow-x:auto;scrollbar-width:none}
-.pnav .in::-webkit-scrollbar{display:none}
-.pnav a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;
-  color:#ffffffcc;text-decoration:none;font-size:14px;white-space:nowrap;
-  border-bottom:2px solid transparent}
-.pnav a:hover{color:#fff}
-.pnav a[aria-current=page]{color:#fff;border-bottom-color:#fff}
 .who{color:var(--on-dark-mute);font-size:13px;max-width:34ch;min-width:0;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Off the screen, still in the accessible name. */
-.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
-  overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-/* ⚠️ THE WORD GOES, THE ACCOUNT STAYS. At 390 the bar could not hold the
-   brand, the account and the sign-out, and what gave way was the brand — it
-   wrapped to "Nadzorna / plošča" and made the bar 105px of sticky chrome. The
-   account is the half that has to stay legible: it is how somebody notices
-   they are signed in as a colleague before they delete a colleague's
+.out{font:inherit;font-size:14px;min-height:36px;padding:7px 13px;cursor:pointer;
+  background:transparent;color:var(--card);border:1px solid var(--on-dark-mute);
+  border-radius:var(--r-ctrl)}
+.out:hover{background:#2e2e2e}
+/* ⚠️ THE WORD GOES, THE ACCOUNT STAYS. At 390 the bar cannot hold a burger,
+   the brand, the account and the sign-out, and what gives way is the brand.
+   The account is the half that has to stay legible: it is how somebody
+   notices they are signed in as a colleague before they delete a colleague's
    photographs. The mark still links home and the link still announces its
-   name; the phone simply does not print it. */
+   name; the phone simply does not print it.
+
+   This rule was in the old top bar and I dropped it rebuilding the chrome —
+   the e-mail came back as "jur…", which is the failure it exists to stop. */
 @media (max-width:559px){
   .home span{position:absolute;width:1px;height:1px;margin:-1px;padding:0;
     border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
   .home{min-width:44px;justify-content:center}
 }
-.out{font:inherit;font-size:14px;min-height:36px;padding:7px 13px;cursor:pointer;
-  background:transparent;color:#fff;border:1px solid var(--on-dark-mute);
-  border-radius:var(--r-ctrl)}
-.out:hover{background:#2e2e2e}
 
-.wrap{max-width:1060px;margin:0 auto;padding:26px 20px 96px}
+/* The drawer's switch. Off-screen, not display:none — a hidden input is not
+   focusable, and the label that controls it has to be reachable by keyboard. */
+.navsw{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;
+  clip-path:inset(50%)}
+.burger{display:inline-flex;align-items:center;justify-content:center;
+  width:44px;height:44px;margin-left:-10px;cursor:pointer;color:var(--card);
+  border-radius:var(--r-ctrl);flex:none}
+.burger svg{width:20px;height:20px;display:block}
+.navsw:focus-visible+.burger{outline:2px solid var(--card);outline-offset:2px}
+@media (min-width:768px){.burger{display:none}}
+
+.side{position:fixed;top:48px;bottom:0;left:0;width:280px;z-index:30;
+  background:var(--card);border-right:1px solid var(--line);
+  padding:16px 12px;overflow-y:auto;
+  transform:translateX(-100%);transition:transform .18s ease}
+.navsw:checked~.shell .side{transform:none}
+.scrim{position:fixed;inset:48px 0 0;z-index:20;background:#15151566;
+  opacity:0;pointer-events:none;transition:opacity .18s ease}
+.navsw:checked~.shell .scrim{opacity:1;pointer-events:auto}
+@media (prefers-reduced-motion:reduce){
+  .side,.scrim{transition:none}
+}
+@media (min-width:768px){
+  .side{top:64px;width:256px;transform:none;padding:20px 12px}
+  .scrim{display:none}
+}
+
+.sidegrp{margin:0 0 18px}
+.sidegrp:last-child{margin-bottom:0}
+.sidegrp h2{font-size:11px;line-height:16px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--mute);margin:0 0 6px;padding:0 12px;
+  font-weight:600}
+.side a{display:flex;align-items:center;gap:10px;min-height:44px;
+  padding:10px 12px;border-radius:var(--r-ctrl);color:var(--ink-body);
+  text-decoration:none;font-size:14px;line-height:20px}
+.side a:hover{background:var(--paper)}
+.side a[aria-current=page]{background:var(--ink);color:var(--card);
+  font-weight:500}
+.side svg{width:16px;height:16px;flex:none}
+
+.main{flex:1;min-width:0;padding-top:48px}
+@media (min-width:768px){.main{padding-top:64px;padding-left:256px}}
+.wrap{max-width:1400px;margin:0 auto;padding:20px 16px 96px}
+@media (min-width:640px){.wrap{padding:24px 24px 96px}}
+@media (min-width:1024px){.wrap{padding:28px 40px 96px}}
+
+/* Off the screen, still in the accessible name. */
+.vh{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;
+  overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 
 /* ---- headings -------------------------------------------------------- */
 
@@ -517,12 +574,42 @@ export function doc(title: string, body: string): string {
  * are the daily work. Colours, site pictures and reviews are set up once and
  * touched rarely.
  */
-export const NAV: readonly (readonly [string, string, string])[] = [
-  ["povprasevanja", "/admin/povprasevanja", "Povpraševanja"],
-  ["izdelki", "/admin", "Modeli"],
-  ["blog", "/admin/blog", "Blog"],
-  ["slike", "/admin/slike", "Slike strani"],
-  ["barve", "/admin/barve", "Barve"],
-  ["mnenja", "/admin/mnenja", "Mnenja"],
+/**
+ * THE SIDEBAR, IN GROUPS.
+ *
+ * Six flat links became three named groups, which is the chassis repo's own
+ * arrangement and the reason its sidebar reads at a glance: a back office is
+ * not a menu, it is a set of jobs, and "Katalog" tells somebody where to look
+ * for a photograph without their having to read six labels first.
+ *
+ * The icon is a path in a 24-box, drawn inline — no sprite, no font, nothing
+ * to load. Each is a stroke path so it inherits currentColor and turns white
+ * on the active row without a second rule.
+ */
+export const NAV_GROUPS: readonly {
+  readonly title: string;
+  readonly items: readonly (readonly [string, string, string, string])[];
+}[] = [
+  {
+    title: "Katalog",
+    items: [
+      ["izdelki", "/admin", "Modeli", "M4 7h16M4 12h16M4 17h10"],
+      ["slike", "/admin/slike", "Slike strani", "M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5"],
+      ["barve", "/admin/barve", "Barve", "M12 3a9 9 0 1 0 0 18h2a3 3 0 0 0 0-6h-1a2 2 0 0 1 0-4h2a4 4 0 0 0-3-8Z"],
+    ],
+  },
+  {
+    title: "Vsebina",
+    items: [
+      ["blog", "/admin/blog", "Blog", "M5 4h11l3 3v13H5zM8 10h8M8 14h6"],
+      ["mnenja", "/admin/mnenja", "Mnenja", "M4 5h16v11H9l-5 4z"],
+    ],
+  },
+  {
+    title: "Stranke",
+    items: [
+      ["povprasevanja", "/admin/povprasevanja", "Povpraševanja", "M4 6h16v12H4zM4 7l8 6 8-6"],
+    ],
+  },
 ];
 

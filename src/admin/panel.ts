@@ -28,37 +28,60 @@ import { esc } from "../render/sections";
 import { brandMark } from "../themes/studio/brand";
 import { shotLabel } from "./shots";
 import { SMART_JS, UPLOAD_JS } from "./client";
-import { doc, NAV } from "./design";
+import { doc, NAV_GROUPS } from "./design";
 
 export function shell(title: string, body: string, who: string, current = ""): string {
+  const nav = NAV_GROUPS.map(
+    (g) =>
+      '<div class="sidegrp"><h2>' + esc(g.title) + "</h2>" +
+      g.items
+        .map(
+          ([k, href, label, d]) =>
+            '<a href="' + href + '"' +
+            (k === current ? ' aria-current="page"' : "") + ">" +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+            'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" ' +
+            'aria-hidden="true" focusable="false"><path d="' + d + '"/></svg>' +
+            "<span>" + esc(label) + "</span></a>",
+        )
+        .join("") +
+      "</div>",
+  ).join("");
+
   return doc(
     title,
-    '<header class="bar"><div class="in">' +
+    // ⚠️ THE SWITCH IS A SIBLING OF .shell, not a child, because the drawer is
+    // opened by `.navsw:checked ~ .shell .side` and CSS has no parent
+    // selector. Move it inside and the menu stops opening, silently, with
+    // scripting on or off.
+    (who
+      ? '<input class="navsw" type="checkbox" id="navsw" ' +
+        'aria-label="Odprite ali zaprite meni">'
+      : "") +
+    '<div class="shell">' +
+      '<header class="top">' +
+      (who
+        ? '<label class="burger" for="navsw">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+          'stroke-width="1.8" stroke-linecap="round" aria-hidden="true" ' +
+          'focusable="false"><path d="M4 7h16M4 12h16M4 17h16"/></svg></label>'
+        : "") +
       // The word is in a span of its own so a narrow bar can drop it without
       // dropping the link's accessible name with it.
       '<a class="home" href="/admin">' + brandMark("panel", "mark") +
       "<span>Nadzorna plošča</span></a>" +
-      // The account and the sign-out are one group, so a narrow bar drops the
-      // pair to a second line instead of hyphenating the brand.
       '<div class="acct">' +
       (who ? '<span class="who">' + esc(who) + "</span>" : "") +
       '<form method="post" action="/admin/logout">' +
       '<button class="out" type="submit">Odjava</button></form>' +
       "</div>" +
-      "</div>" +
-      // The nav is its own row under the brand rather than beside it: six
-      // Slovenian labels and an e-mail address do not share 1060px, and a
-      // second row is cheaper than a menu nobody can find.
+      "</header>" +
       (who
-        ? '<nav class="pnav" aria-label="Razdelki"><div class="in">' +
-          NAV.map(
-            ([k, href, label]) =>
-              '<a href="' + href + '"' +
-              (k === current ? ' aria-current="page"' : "") + ">" + esc(label) + "</a>",
-          ).join("") +
-          "</div></nav>"
+        ? '<label class="scrim" for="navsw" aria-hidden="true"></label>' +
+          '<nav class="side" aria-label="Razdelki">' + nav + "</nav>"
         : "") +
-      '</header><main class="wrap">' + body + "</main>",
+      '<main class="main"><div class="wrap">' + body + "</div></main>" +
+    "</div>",
   );
 }
 
