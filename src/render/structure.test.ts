@@ -345,7 +345,18 @@ describe("no in-page link points at nothing", () => {
       );
     const home = await get("/").text();
     const targets = [...home.matchAll(/href="(\/vodnik\/[^"?]+)/g)].map((m) => m[1]!);
-    expect(targets.length, "the home page carries no guide cards").toBe(GUIDE_PAGES.length);
+    // ⚠️ NOT toBe(GUIDE_PAGES.length), WHICH IS WHAT THIS SAID.
+    //
+    // The message is "the home page carries no guide cards", so the assertion
+    // was written to catch ZERO; GUIDE_PAGES.length was borrowed as a
+    // convenient number. They are not the same rule, and the difference bites
+    // the moment the two disagree — docs/SEO.md wants six guides or more
+    // before a shop launches, and a home page cannot carry six cards without
+    // becoming an index of itself.
+    //
+    // What the home page owes is a door to the guides. What owes a link to
+    // EVERY guide is the hub, and that is the test below.
+    expect(targets.length, "the home page carries no guide cards").toBeGreaterThan(0);
     for (const t of targets) {
       const res = get(t);
       expect(res.status, t + " does not resolve").toBe(200);
@@ -356,6 +367,27 @@ describe("no in-page link points at nothing", () => {
     }
     // And an unknown guide is a 404, not a page that renders something else.
     expect(get("/vodnik/ni-tega-vodnika").status).toBe(404);
+  });
+
+  /**
+   * ⚠️ THE HUB'S HEADING SAYS "Vsi vodniki" AND NOTHING CHECKED IT.
+   *
+   * /vodniki hand-lists its guides and so does the home band, so a guide added
+   * to GUIDE_PAGES gets a URL, a sitemap entry, and a link from nowhere. An
+   * orphan page is the shape a crawler discounts hardest and a reader never
+   * finds — and on a site whose whole strategy is guides ranking for the
+   * queries the head term cannot serve, it is the expensive kind of silence.
+   *
+   * The heading is a promise. This is the promise.
+   */
+  it("links every guide from the hub, because the hub says it does", async () => {
+    const hub = await handleRequest(
+      new Request("https://trgovina.workers.dev/vodniki?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    ).text();
+    const orphans = GUIDE_PAGES.filter((g) => !hub.includes("/vodnik/" + g.slug));
+    expect(orphans.map((g) => g.slug), "guides with no link from /vodniki").toEqual([]);
   });
 });
 
