@@ -2,6 +2,7 @@ import { GUIDE_PAGES } from "../content/pages/vodnik";
 import { describe, it, expect } from "vitest";
 import { handleRequest } from "../worker";
 import { SHOPS } from "../tenants";
+import { isSet } from "../lib/filled";
 import { MEDIA_WIDTHS } from "../themes/studio/media-widths";
 import { OWN_MEDIA } from "../themes/studio/own-media";
 import { OWN_HERO } from "../themes/studio/own-hero";
@@ -390,13 +391,24 @@ describe("the enquiry carries its model", () => {
     // that submits it, not on a reassurance beside it.
     expect(html).toContain('class="st-enq-about-m"');
     expect(html).toContain("BAZEN 230");
-    expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje — BAZEN 230"));
+    // ⚠️ THE MAILTO IS CONDITIONAL ON THE SHOP HAVING AN E-MAIL, and this
+    // shop currently has none — its old address was on a domain that does
+    // not resolve, so it was emptied rather than replaced with a guess. The
+    // subject line is worth asserting where it exists and is not the
+    // contract: the FORM carries the model, and the form is the path that
+    // reaches the shop. Asserting it unconditionally made a correct page
+    // fail for a link the shop deliberately does not offer.
+    if (isSet(SHOPS["bazen"]!.contact.email)) {
+      expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje — BAZEN 230"));
+    }
   });
 
   it("is the ordinary page with no parameter", async () => {
     const html = await get("/kontakt?shop=bazen");
     expect(html).not.toContain('class="st-enq-about"');
-    expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje"));
+    if (isSet(SHOPS["bazen"]!.contact.email)) {
+      expect(html).toContain("subject=" + encodeURIComponent("Povpraševanje"));
+    }
     // The form itself is unconditional: /kontakt without a model is still
     // the page you send an enquiry from.
     expect(html).toContain('class="st-enq"');

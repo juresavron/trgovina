@@ -2438,13 +2438,23 @@ function contact(
       isSetPhone(ctx.phoneDisplay) ? ctx.phoneHref : null,
       notes?.phone,
     ) +
-    channel(
-      "mail",
-      "E-pošta",
-      link("mailto:" + c.email, c.email, isSet(c.email)),
-      isSet(c.email) ? "mailto:" + c.email : null,
-      notes?.email,
-    ) +
+    // ⚠️ NO TILE AT ALL ON A LIVE SHOP WITH NO ADDRESS, same rule as the
+    // footer's row. "podatek še ni vpisan" is a note to the owner about an
+    // unfinished field, and it reads that way — on a shop that has opened it
+    // tells a customer standing on the CONTACT page that the shop has not
+    // finished setting itself up. An e-mail address is the one channel here
+    // a business may genuinely not offer; a phone and a seat it must have,
+    // so those keep the marker. Dropping the tile leaves auto-fit to close
+    // the gap, which is what it is for.
+    (isSet(c.email) || !ctx.shop.live
+      ? channel(
+          "mail",
+          "E-pošta",
+          link("mailto:" + c.email, c.email, isSet(c.email)),
+          isSet(c.email) ? "mailto:" + c.email : null,
+          notes?.email,
+        )
+      : "") +
     // The seat, unless the page says otherwise: on the showroom page this
     // row printed the company's registered seat as "Naslov" directly under
     // a headline about Ljubljana — the seat is not that page's address.

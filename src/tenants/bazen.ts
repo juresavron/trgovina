@@ -147,28 +147,24 @@ export const bazen: ShopConfig = {
   // the last unset identity field.
   contact: {
     phone: "+386 40 202 488",
-    // ⚠️ THIS ADDRESS IS ON A DOMAIN THAT DOES NOT RESOLVE, AND UNTIL THE
-    // OWNER CONFIRMS OTHERWISE IT CANNOT RECEIVE MAIL.
+    // ⚠️ EMPTY ON PURPOSE — THE OWNER'S CALL, AND THE HONEST ONE.
     //
-    // masazni-bazeni-vrelec.si answers NXDOMAIN. No DNS record means no MX
-    // record, so a message sent here is refused at the sender's server — the
-    // customer gets a bounce, the shop gets nothing, and neither of them
-    // learns anything from the site. It is printed in the footer of every
+    // It read info@masazni-bazeni-vrelec.si, on the domain that answers
+    // NXDOMAIN. No DNS record means no MX record, so every message sent
+    // there was refused at the sender's own server: the customer got a
+    // bounce, the shop got nothing. It was printed in the footer of every
     // page, wired to a mailto: in the chrome, and published as
-    // Organization.email in the graph, so the reach is the whole site.
+    // Organization.email in the graph.
     //
-    // ⚠️ DO NOT GUESS A REPLACEMENT. Not info@ on the new domain, which has
-    // no mailbox and a zone still Pending; not an address at the parent firm.
-    // An e-mail address on a shop is a promise that somebody reads it, and
-    // inventing one turns a bounce into silence, which is worse — the
-    // customer believes they have written. The telephone number beside it is
-    // verified and does work, which is why the pre-live page asks people to
-    // call.
+    // Not replaced with info@ on the new domain. That mailbox does not
+    // exist, and a made-up address is worse than none: a bounce at least
+    // tells the customer to try again, while an address nobody reads leaves
+    // them believing they have written. Empty, every reader of this field
+    // (footer, chrome, contact page, JSON-LD) drops it through isSet() and
+    // the site offers the telephone number, which is verified and answered.
     //
-    // Replace with the address the owner actually reads, then delete this
-    // note. isSet() already drops the whole line from footer, chrome and
-    // JSON-LD if this is emptied instead.
-    email: "info@masazni-bazeni-vrelec.si",
+    // Fill it in when a real mailbox exists.
+    email: "",
     // ⚠️ THE SEAT IS ŠKOFIJE, NOT KOPER, and this field said Koper until the
     // owner sent the AJPES record on 31 Aug 2026.
     //

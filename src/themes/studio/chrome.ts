@@ -2176,12 +2176,23 @@ export function renderStudioFooter(ctx: RenderCtx): string {
     '<div class="st-contacts">' +
     // Guarded like the phone row below: a TODO e-mail must not become a
     // live mailto: from every page. The row stays; the link and text go.
-    contact(
-      "mail",
-      isSet(s.contact.email) ? "mailto:" + s.contact.email : null,
-      "E-pošta",
-      isSet(s.contact.email) ? esc(s.contact.email) : FACT_UNSET,
-    ) +
+    //
+    // ⚠️ EXCEPT ONCE THE SHOP IS LIVE, WHEN THE ROW GOES TOO. "podatek še ni
+    // vpisan" is a note to the owner, and it belongs on a site only the
+    // owner is looking at. On a shop that has opened, it tells a customer
+    // the place is half-built — over a field that is genuinely optional. A
+    // telephone number and an address a shop must have; an e-mail address it
+    // may simply not offer, and a shop that offers only the phone reads as a
+    // deliberate choice, which is what it is. The phone and address rows keep
+    // the marker either way: those are unfinished, not absent.
+    (isSet(s.contact.email) || !s.live
+      ? contact(
+          "mail",
+          isSet(s.contact.email) ? "mailto:" + s.contact.email : null,
+          "E-pošta",
+          isSet(s.contact.email) ? esc(s.contact.email) : FACT_UNSET,
+        )
+      : "") +
     // A tel: link is what the rest of the site gives this number (the bar, the
     // pdp, the contact page), and it is what the footer gives it the moment
     // there is a number. While it is the placeholder, the ROW STAYS and the
