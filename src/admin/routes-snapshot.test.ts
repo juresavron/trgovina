@@ -89,6 +89,24 @@ const SURFACES = [
 ];
 
 /**
+ * ⚠️ SURFACES WHOSE BODY IS NOT A CONSTANT, AND MUST NOT BE PINNED AS ONE.
+ *
+ * /admin/barve renders src/catalog/finishes.generated.ts, and deploy.yml runs
+ * scripts/sync-finishes.mjs BEFORE the tests: the colour list is rebuilt from
+ * Supabase on every deploy, by design, so the owner can add a swatch without a
+ * commit. A hash over that page pins a value the build exists to change — it
+ * passed here and failed in CI on the first run, which is the harness being
+ * wrong rather than the code.
+ *
+ * So the surface stays in the suite and the hash comes off it. What is pinned
+ * instead is what is actually invariant: it answers 200, it is the finishes
+ * page and not another surface's, and signed out it is the login page like
+ * every other. The data the page draws is the deploy's business; the routing
+ * and the gate are this file's.
+ */
+const DATA_DRIVEN = new Set(["/admin/barve"]);
+
+/**
  * The one thing a hash must be blind to, named rather than assumed.
  *
  * finishes-panel.ts cache-busts each finish image with `?v=` + Date.now(), so
@@ -114,7 +132,6 @@ async function hit(path: string, signedIn = true): Promise<string> {
 const PINNED: Record<string, string> = {
   "/admin": "200 - 7cdc4eda94aeeb95",
   "/admin/slike": "200 - a2d45934942dcaff",
-  "/admin/barve": "200 - 2e31ade3df47e9af",
   "/admin/povprasevanja": "200 - ed2f2619de1ee042",
   "/admin/mnenja": "200 - 8f354dbfa61f9ea8",
   "/admin/mnenja/novo": "200 - c79244d766e2dc7e",
@@ -137,6 +154,10 @@ describe("every admin surface answers exactly as it did", () => {
   for (const path of SURFACES) {
     it(path + " is unchanged", async () => {
       const got = await hit(path);
+      if (DATA_DRIVEN.has(path)) {
+        expect(got.startsWith("200 - "), path + " => " + got).toBe(true);
+        return;
+      }
       const want = PINNED[path];
       if (want !== undefined) expect(got, path).toBe(want);
       else expect("PIN " + path + " = " + got).toBe("");
@@ -167,6 +188,24 @@ describe("every admin surface answers exactly as it did", () => {
       );
     });
   }
+
+  it("a data-driven surface is still the surface it claims to be", async () => {
+    // The hash is off /admin/barve, so this is what stops a dispatch-table
+    // reorder handing it to another surface unnoticed.
+    const r = await handleAdmin(
+      new Request("https://x.test/admin/barve", {
+        headers: { cookie: SESSION_COOKIE + "=tok" },
+      }),
+      ENV,
+    );
+    const html = await r.text();
+    expect(r.status).toBe(200);
+    // Markers from the page's BODY, not its chrome: the shell's nav lists
+    // every surface by name, so "Barve" appearing somewhere proves only that
+    // a nav rendered. The h1 and the swatch dropzone belong to this page.
+    expect(html).toContain("<h1>Barve</h1>");
+    expect(html).toContain('id="bv-drop"');
+  });
 
   it("a cross-site POST is refused before it reaches a handler", async () => {
     const r = await handleAdmin(
