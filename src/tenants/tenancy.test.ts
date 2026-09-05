@@ -718,7 +718,14 @@ describe("a shop that sells one model", () => {
     const html = await get(routeSlugs["/products"]).text();
     expect(html).toContain('<h1 class="st-sec-h">' + content.nav[0] + "</h1>");
     expect(html).toContain(card.name);
-    expect(html).toContain('href="' + routeSlugs["/product"] + "/" + pdp.slug + '"');
+    // ⚠️ THE QUERY IS PART OF THE HREF NOW. This probe fetches through the QA
+    // host with ?shop=<probe>, and internal links carry that parameter so a
+    // reviewer walking a pre-live shop does not fall back to the default one
+    // on the first click (see "the QA shop override" below). Asserting the
+    // bare path would now be asserting the bug.
+    expect(html).toContain(
+      'href="' + routeSlugs["/product"] + "/" + pdp.slug + "?shop=" + PROBE + '"',
+    );
   });
 
   it("does not repeat the only model under the grid that shows it", async () => {
@@ -925,5 +932,68 @@ describe("every host a shop owns but one", () => {
         }
       }
     }
+  });
+});
+
+/**
+ * THE QA OVERRIDE HAS TO SURVIVE A CLICK, AND MAY NOT LEAVE THE QA HOST.
+ *
+ * ⚠️ A PRE-LIVE SHOP CAN ONLY BE LOOKED AT THROUGH ?shop=. Its own domain
+ * answers 503 by design, so the QA host is the whole preview. `q` was
+ * hardcoded empty on the reasoning that the override is "for tests, audits and
+ * a reviewer typing a URL" — true with one shop registered, where every link
+ * went to the only shop there was. With two, the home page rendered the second
+ * shop and every link on it dropped the parameter, so the next click served
+ * the FIRST shop under the second shop's URL. That is the cross-shop confusion
+ * tenants/index.ts calls the worst available bug, arriving through the front
+ * door rather than through a misconfigured domain.
+ *
+ * The other three cases are why this is a test and not a one-line change: the
+ * value is reflected into markup, so it must never appear for a key that is
+ * not registered, and never on a host that does not read the parameter at all.
+ */
+describe("the QA shop override", () => {
+  const QA = "trgovina.worldfans.workers.dev";
+  const links = async (host: string, path: string): Promise<string[]> => {
+    const res = handleRequest(new Request("https://" + host + path, { headers: { host } }));
+    if (res.status !== 200) return [];
+    const html = await res.text();
+    const body = html.slice(html.indexOf("<body"));
+    return [...body.matchAll(/href="(\/[^"]*)"/g)]
+      .map((m) => m[1]!)
+      .filter((h) => !h.startsWith("/assets") && !h.startsWith("/media") && !h.startsWith("/fonts"));
+  };
+
+  it("carries the chosen shop through every internal link", async () => {
+    // Every shop, so this keeps working for the third one.
+    for (const key of KEYS) {
+      const found = await links(QA, "/?shop=" + key);
+      expect(found.length, key + ": the home page renders no internal links").toBeGreaterThan(0);
+      const dropped = found.filter((h) => !h.includes("shop=" + key));
+      expect(dropped, key + ": links that would strand a reviewer on another shop").toEqual([]);
+    }
+  });
+
+  it("adds nothing when no shop is asked for", async () => {
+    const found = await links(QA, "/");
+    expect(found.filter((h) => h.includes("shop="))).toEqual([]);
+  });
+
+  it("does not reflect a key that is not registered", async () => {
+    // The value ends up in markup. An unknown key falls through to DEV_SHOP
+    // (see resolveShop) and must not be echoed back into 40 hrefs.
+    for (const bogus of ["../evil", "<script>", "ni-tega-shopa"]) {
+      const found = await links(QA, "/?shop=" + encodeURIComponent(bogus));
+      expect(found.filter((h) => h.includes("shop=")), bogus + " was reflected").toEqual([]);
+    }
+  });
+
+  it("never carries it on a production host", async () => {
+    // Production does not read the parameter, so it must not print it either —
+    // a live page whose every link carries ?shop= is a live page publishing a
+    // second URL for each of its own routes.
+    const live = SHOPS[KEYS[0]!]!;
+    const found = await links(live.domain, "/?shop=" + KEYS[KEYS.length - 1]!);
+    expect(found.filter((h) => h.includes("shop="))).toEqual([]);
   });
 });

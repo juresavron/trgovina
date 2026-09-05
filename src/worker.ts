@@ -402,11 +402,32 @@ export function handleRequest(
   // page. It went with the switcher and nothing noticed, because with one
   // registered shop "ignored" and "honoured" render the same page; every
   // ?shop= in the test suite and the audits was decoration. See the note in
-  // tenants/index.ts. `q` stays empty: the override is for tests, audits and
-  // a reviewer typing a URL, and propagating it through forty hrefs is the
-  // switcher machinery this note says was removed on purpose.
+  // tenants/index.ts.
   const theme: ThemeKey = shop.design.theme;
-  const q = "";
+
+  // ⚠️ AND IT NOW TRAVELS, WHICH THE NOTE HERE SAID IT DELIBERATELY DID NOT.
+  //
+  // `q` was hardcoded empty, on the reasoning that the override "is for tests,
+  // audits and a reviewer typing a URL" and that propagating it was switcher
+  // machinery removed on purpose. That was written with ONE shop registered,
+  // where it cost nothing: every link went to the only shop there was.
+  //
+  // With two, it is the difference between a preview and a dead end. A
+  // pre-live shop answers 503 on its own domain by design, so the QA host is
+  // the ONLY way to look at it — and every internal link dropped the
+  // parameter, so the second page a reviewer clicked served the first shop
+  // under the second shop's URL. That is also the exact confusion the note in
+  // tenants/index.ts calls the worst available bug, arriving by the front door.
+  //
+  // Fenced to dev hosts and to a key that is actually registered, which is the
+  // same pair of conditions resolveShop() applies before honouring the
+  // override at all. On a production host this is always "" — the parameter is
+  // not read there, so it cannot be reflected here.
+  const askedShop = url.searchParams.get("shop");
+  const q =
+    dev && askedShop !== null && Object.prototype.hasOwnProperty.call(SHOPS, askedShop)
+      ? "?shop=" + encodeURIComponent(askedShop)
+      : "";
 
   // Canonicalization: lowercase path, collapsed slashes, no trailing slash
   // (root excepted). Interior runs too — "//trgovina" 404'd where one 308
