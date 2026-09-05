@@ -2235,9 +2235,24 @@ function productCards(
         );
       }
       const was = compareAt(p);
-      const stock = p.slug
-        ? ctx.content.pdps?.find((x) => x.slug === p.slug)?.stock
-        : undefined;
+      // ⚠️ THE FALLBACK LIST, LIKE EVERY OTHER READER OF pdps. ShopContent
+      // documents pdps as omittable — "a shop with one model may omit it; the
+      // router then serves pdp alone" — and every other read in the codebase
+      // spells it `pdps ?? [pdp]` (worker.ts, render/page.ts, sitemap.ts,
+      // finder.ts, hero.ts, and this file four more times). This one line did
+      // not, so on a one-model shop the lookup yielded undefined and the card
+      // printed no label at all — while worker.ts built the hub's ItemList
+      // from the fallback and published an availability from pdp.stock. The
+      // markup claimed stock the page did not, which is precisely the
+      // mismatch this feature's own notes say cannot happen.
+      //
+      // The slugless branch is the same shop's other half: ProductCard.slug is
+      // documented as "absent on shops that sell a single model", so a card
+      // with no slug on a one-model shop IS the flagship.
+      const all = ctx.content.pdps ?? [ctx.content.pdp];
+      const stock = (
+        p.slug ? all.find((x) => x.slug === p.slug) : all.length === 1 ? all[0] : undefined
+      )?.stock;
       return (
         '<a class="st-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-card-panel">' +

@@ -130,24 +130,62 @@ const rules = faces
   .join("\n");
 
 /**
- * The DISPLAY face's files, for <link rel="preload">.
+ * The files that get a <link rel="preload">: the DISPLAY face and the BODY
+ * face, both read out of the theme's own tokens.
  *
  * ⚠️ page.ts USED TO HARDCODE THIS as ["/fonts/chivo-500-latin.woff2", …].
  * The day the theme moved to the source's own faces, the page went on
  * preloading two files that no longer existed — a wasted request each, and a
  * headline that arrived later than before the "optimisation".
  *
- * The display face is the FIRST family in CSS_URL, by convention, and that
- * convention is asserted rather than trusted: if the first family changes,
- * the preload follows it.
+ * ⚠️ AND THEN IT PRELOADED THE DISPLAY FACE ALONE, on the argument — written
+ * into the generated file — that "the prose faces are discovered from the
+ * sheet a few milliseconds later and swap in without moving layout". That was
+ * never measured and it is not true. With only Chivo preloaded, scripts/
+ * audit-site.mjs reports /blog at CLS 0.1451 on mobile — past Google's 0.1
+ * "poor" boundary — and /trgovina at 0.0879 on desktop, the shift sources
+ * being the nav, the intro paragraph and the choice list moving as Plus
+ * Jakarta Sans arrives and replaces the fallback's metrics. Adding the body
+ * face to this list takes that audit to zero layout-shift findings on every
+ * route and viewport it measures.
+ *
+ * Both families are read from src/themes/studio/tokens.ts rather than named
+ * here, so the preload follows a change of typeface instead of having to be
+ * remembered. Each is asserted to be in CSS_URL: a face this script does not
+ * vendor cannot be preloaded, and a silent miss is the failure above.
+ *
+ * The label face is deliberately NOT preloaded. It sets eyebrows and meta
+ * lines, which are short, late in the reading order, and — unlike the body
+ * face — do not reflow a column of prose when they swap.
  */
-const displayFamily = faces[0].family;
-if (!CSS_URL.includes(displayFamily.replace(/ /g, "+"))) {
-  console.error("The first vendored family is not the first in CSS_URL — refusing to guess the display face.");
+const TOKENS = "src/themes/studio/tokens.ts";
+const tokensSrc = fs.readFileSync(TOKENS, "utf8");
+const familyToken = (name) => {
+  const m = new RegExp("--f-" + name + ":\\s*\"([^\"]+)\"").exec(tokensSrc);
+  if (!m) {
+    console.error("No --f-" + name + " family in " + TOKENS + " — refusing to guess.");
+    process.exit(1);
+  }
+  return m[1];
+};
+const displayFamily = familyToken("display");
+const bodyFamily = familyToken("body");
+if (faces[0].family !== displayFamily) {
+  console.error(
+    "The first vendored family is " + faces[0].family + ", but the theme's display face is " +
+      displayFamily + " — CSS_URL and tokens.ts disagree.",
+  );
   process.exit(1);
 }
+for (const family of [displayFamily, bodyFamily]) {
+  if (!CSS_URL.includes(family.replace(/ /g, "+"))) {
+    console.error("The theme asks for " + family + ", which CSS_URL does not vendor.");
+    process.exit(1);
+  }
+}
+const preloaded = new Set([displayFamily, bodyFamily]);
 const preload = faces
-  .filter((f) => f.family === displayFamily)
+  .filter((f) => preloaded.has(f.family))
   .map((f) => "/fonts/" + f.slug);
 
 const header = `/**
@@ -169,12 +207,18 @@ ${rules}
 \`;
 
 /**
- * The display face's files, preloaded by render/page.ts.
+ * The display and body faces' files, preloaded by render/page.ts.
  *
- * Only the display face: it sets the h1, which is the LCP text element on
- * every landing page. The prose faces are discovered from the sheet a few
- * milliseconds later and swap in without moving layout, and preloading every
- * file would compete with the image that shares that budget.
+ * The display face sets the h1, which is the LCP text element on every
+ * landing page. The body face sets the prose — and it is preloaded because
+ * NOT preloading it was measured, by scripts/audit-site.mjs, as CLS 0.1451 on
+ * /blog at mobile width and 0.0879 on /trgovina at desktop: the fallback's
+ * metrics lay out the nav, the intro and the lists, and every one of them
+ * moves when the real face arrives. With both preloaded that audit reports no
+ * layout shift anywhere.
+ *
+ * The label face is not preloaded: it sets eyebrows and meta lines, which do
+ * not reflow a column of prose when they swap.
  */
 export const STUDIO_PRELOAD: readonly string[] = ${JSON.stringify(preload)};
 `;

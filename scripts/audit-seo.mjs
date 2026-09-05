@@ -454,9 +454,16 @@ for (const r of PAGES) {
   // A page nobody links is a problem only if it is meant to be found. The
   // basket and the checkout are per-visitor surfaces carrying noindex, so
   // "no inbound links" is the intended state rather than a fault.
-  const html = docs[r] || "";
-  const indexable = !/noindex/i.test(one(/<meta name="robots" content="([^"]*)"/, html) || "");
-  if (indexable) warn(r, "is linked from no other page — reachable only through the sitemap");
+  //
+  // ⚠️ THE INTENT, NOT THE QA HOST'S MARKUP — the same correction the sitemap
+  // block below got, and this check was left on the old expression in the same
+  // commit. It read the rendered robots meta out of a page fetched through
+  // trgovina.workers.dev, where EVERY page is noindex because the host is a
+  // dev host. So `indexable` was false for all 31 routes, the warn() was
+  // unreachable, and an orphaned guide — the one failure this check exists for
+  // on a site whose whole strategy is guides ranking — filed itself under
+  // "noindex, intended" and read as a clean run.
+  if (INDEXABLE.has(r)) warn(r, "is linked from no other page — reachable only through the sitemap");
   else note(r, "is linked from no other page (noindex — intended)");
 }
 

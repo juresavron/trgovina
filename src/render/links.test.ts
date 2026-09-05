@@ -18,10 +18,28 @@ import { SHOPS } from "../tenants";
  * universal pages check they do not hardcode this shop's slugs. Nobody walked
  * the site.
  *
- * This does. It starts at the home page, follows every same-origin href it
- * finds, and fails on the first status that is not a redirect or a page. It is
- * the cheapest test on the site that could have caught this, and it costs
- * about two seconds.
+ * This does. It starts at the home page and follows every same-origin href it
+ * finds.
+ *
+ * ⚠️ AND THE FIRST VERSION EXEMPTED EVERY REDIRECT, WHICH IS THE HOLE THIS
+ * SITE IS SHAPED TO FALL INTO. It skipped anything that was not a 200 and
+ * failed only on 400-and-up, so a 3xx counted as alive and its target was
+ * never fetched. But worker.ts 308s on the SHAPE of a path — canonicalPathOf()
+ * strips a trailing slash, collapses doubled slashes and lowercases — and it
+ * does that BEFORE the router has any idea whether the destination exists. So
+ * /vodnik/ni-tega-vodnika/ answers 308, and a link to a guide that does not
+ * exist passed this gate as long as it carried a trailing slash, a capital
+ * letter or a doubled slash. The docstring claimed it fails on "a status that
+ * is not a redirect or a page" while never establishing that the redirect led
+ * to a page.
+ *
+ * It now follows the Location header to the end and judges the TERMINAL
+ * status, and it fails a chain that never terminates.
+ *
+ * It also reports an internal href that needs a hop at all. Nothing outside
+ * this repository decides how our own links are spelled: a link that redirects
+ * spends a crawl on an answer we could have given directly, and every one of
+ * them is a typo we can fix at the source.
  */
 describe("the site links to itself", () => {
   const shop = SHOPS.bazen!;
@@ -40,22 +58,57 @@ describe("the site links to itself", () => {
   const served = (path: string): boolean =>
     !elsewhere.some((p) => path === p || path.startsWith(p + "/"));
 
+  /** One request, on the QA host, with the shop selected. */
+  const get = (path: string): Response =>
+    handleRequest(
+      new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
+        headers: { host: "trgovina.workers.dev" },
+      }),
+    );
+
+  /**
+   * Follow Location to the end and report where it landed.
+   *
+   * Five hops is far more than this site can legitimately need — the shape
+   * redirect is one, the alias redirect is one, and worker.ts goes out of its
+   * way (see canonicalPathOf) to make sure they never stack. Exhausting the
+   * budget means a cycle, which is reported as its own failure rather than as
+   * a dead link, because the fix is a different one.
+   */
+  const LOOP = 508;
+  const MAX_HOPS = 5;
+  const follow = async (
+    from: string,
+  ): Promise<{ status: number; at: string; hops: number; body: string }> => {
+    let at = from;
+    for (let hops = 0; hops <= MAX_HOPS; hops++) {
+      const res = get(at);
+      if (res.status < 300 || res.status >= 400) {
+        return { status: res.status, at, hops, body: res.status === 200 ? await res.text() : "" };
+      }
+      const loc = res.headers.get("location");
+      // A redirect with nowhere to go is dead, whatever its status says.
+      if (loc === null) return { status: res.status, at, hops, body: "" };
+      at = new URL(loc, "https://trgovina.workers.dev").pathname;
+    }
+    return { status: LOOP, at, hops: MAX_HOPS + 1, body: "" };
+  };
+
   it("has no dead internal link on any page reachable from the home page", async () => {
     const status = new Map<string, number>();
     const source = new Map<string, string>();
+    /** Paths that answered a redirect before landing: href -> where it ended. */
+    const hopped = new Map<string, string>();
     const queue = ["/"];
 
     while (queue.length > 0) {
       const path = queue.shift()!;
-      const res = await handleRequest(
-        new Request("https://trgovina.workers.dev" + path + "?shop=bazen", {
-          headers: { host: "trgovina.workers.dev" },
-        }),
-      );
-      status.set(path, res.status);
-      if (res.status !== 200) continue;
+      const landed = await follow(path);
+      status.set(path, landed.status);
+      if (landed.hops > 0 && landed.status !== LOOP) hopped.set(path, landed.at);
+      if (landed.status !== 200) continue;
 
-      const html = await res.text();
+      const html = landed.body;
       const body = html.slice(html.indexOf("<body"));
       for (const m of body.matchAll(/href="([^"]+)"/g)) {
         const href = m[1]!;
@@ -73,10 +126,18 @@ describe("the site links to itself", () => {
       }
     }
 
-    const dead = [...status].filter(([, s]) => s >= 400);
+    const dead = [...status].filter(([, s]) => s >= 400 && s !== LOOP);
     expect(
       dead.map(([p, s]) => s + " " + p + " (linked from " + (source.get(p) ?? "?") + ")"),
       "dead internal links",
+    ).toEqual([]);
+
+    const looping = [...status].filter(([, s]) => s === LOOP).map(([p]) => p);
+    expect(looping, "internal links whose redirects never terminate").toEqual([]);
+
+    expect(
+      [...hopped].map(([p, to]) => p + " -> " + to + " (linked from " + (source.get(p) ?? "?") + ")"),
+      "internal links that redirect — link the canonical path directly",
     ).toEqual([]);
 
     // ⚠️ WITHOUT THIS THE TEST CANNOT FAIL. A crawl that finds one page and no

@@ -402,10 +402,28 @@ describe("no in-page link points at nothing", () => {
    * The orphan test above proves every guide is LINKED. This proves the page
    * does not contradict that in prose.
    *
-   * It checks a numeral only where one appears, rather than demanding the lead
-   * always carry a count: an index is free to be written without one, and a
-   * test that forces a sentence shape would be a test about style. What it is
-   * not free to do is state a number that is wrong.
+   * ⚠️ AND THE FIRST VERSION OF THIS TEST COULD NOT READ THE PAGE IT GUARDS.
+   *
+   * It matched with \\b, which JavaScript defines against ASCII \\w even under
+   * the u flag. Two of the eight Slovenian numerals begin with Š — "šest" and
+   * "štirje" — so no boundary exists before that letter, the engine started
+   * one character in and captured "est" and "tirje", neither of which is in
+   * WORDS. Both were filtered out, the loop ran over an empty list, and the
+   * test passed unconditionally on the exact page it was written for. Those
+   * two numerals are the count this hub is at now and the count it was at
+   * when the bug it exists to catch shipped.
+   *
+   * It was "proved to bite" by editing the lead to "Trije vodniki" — the one
+   * numeral in the set that starts with an ASCII letter. A mutation test is
+   * only as good as the mutation.
+   *
+   * So: anchor on a non-letter rather than a boundary, and REQUIRE a numeral.
+   * The floor is the half that stops this recurring — a regex that matches
+   * nothing looks exactly like a page that is correct, and the earlier note
+   * here argued the opposite ("checks a numeral only where one appears"),
+   * which is precisely what made it silent. An index that says how many
+   * guides it lists is the editorial contract; a rewrite that drops the count
+   * should have to say so here.
    */
   it("does not miscount the guides it lists", async () => {
     const hub = await handleRequest(
@@ -419,9 +437,10 @@ describe("no in-page link points at nothing", () => {
     // would write out; a ninth guide would be "devet" and want adding here.
     const WORDS = ["en", "dva", "trije", "štirje", "pet", "šest", "sedem", "osem"];
     const want = WORDS[GUIDE_PAGES.length - 1];
-    const found = [...text.matchAll(/\b(\p{L}+)\s+vodnik\p{L}*/giu)]
+    const found = [...text.matchAll(/(?:^|[^\p{L}])(\p{L}+)\s+vodnik\p{L}*/giu)]
       .map((m) => m[1]!.toLowerCase())
       .filter((w) => WORDS.includes(w));
+    expect(found.length, "the hub states no count — see the note above").toBeGreaterThan(0);
     for (const w of found) {
       expect(w, "the hub says " + w + " guides and there are " + GUIDE_PAGES.length)
         .toBe(want);

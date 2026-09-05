@@ -401,21 +401,38 @@ describe("availability", () => {
     }
   });
 
-  it("carries the same claim on the collection page's cards", async () => {
+  it("carries the same claim on every collection page's cards", async () => {
     // /trgovina nests a full Product per card in its ItemList, so six of the
-    // sixteen flagged items are here rather than on a product page.
-    const html = await text(get("/trgovina?shop=bazen"));
-    const found = [...html.matchAll(/"availability":"https:\/\/schema\.org\/([^"]+)"/g)]
-      .map((m) => m[1]!);
-    expect(found).toEqual(pdps.map((p) => (p.stock === "inStock" ? "InStock" : "BackOrder")));
-    // And the cards say it where a reader can see it. Counted rather than
-    // matched in order, because the grid's order is the collection's business.
-    const body = html.slice(html.indexOf("<main"));
-    for (const state of ["inStock", "toOrder"] as const) {
-      const label = c.stockLabels[state];
-      const shown = body.split(label).length - 1;
-      const want = pdps.filter((p) => p.stock === state).length;
-      expect(shown, label + " appears " + shown + " times, on " + want + " cards").toBe(want);
+    // sixteen flagged items are here rather than on a product page. The two
+    // family pages carry cards too, and had no coverage at all.
+    for (const route of ["/trgovina", "/masazni-bazeni", "/swim-spa"]) {
+      const html = await text(get(route + "?shop=bazen"));
+      const found = [...html.matchAll(/"availability":"https:\/\/schema\.org\/([^"]+)"/g)]
+        .map((m) => m[1]!);
+      if (route === "/trgovina") {
+        expect(found).toEqual(pdps.map((p) => (p.stock === "inStock" ? "InStock" : "BackOrder")));
+      }
+
+      // ⚠️ PAIRED PER CARD, NOT COUNTED ACROSS THE PAGE. This used to assert
+      // that "Na zalogi" appeared three times and "Po naročilu" three times
+      // somewhere in <main> — which two cards swapping labels satisfies
+      // exactly. The mismatch the feature exists to prevent is a claim landing
+      // on the wrong model, and a tally cannot see it. Each card is split out
+      // and its own href is resolved against its own label.
+      const body = html.slice(html.indexOf("<main"));
+      const cards = body.split('<a class="st-card"').slice(1);
+      expect(cards.length, route + " renders no cards").toBeGreaterThan(0);
+      for (const card of cards) {
+        const href = /href="([^"?#]+)/.exec(card)?.[1] ?? "";
+        const slug = href.slice(href.lastIndexOf("/") + 1);
+        const pdp = pdps.find((x) => x.slug === slug);
+        expect(pdp, route + ": card links " + href + ", which is no model").toBeTruthy();
+        const row = card.slice(card.indexOf('class="st-price-row"'));
+        const mine = c.stockLabels[pdp!.stock!];
+        const other = c.stockLabels[pdp!.stock === "inStock" ? "toOrder" : "inStock"];
+        expect(row, route + " " + slug + ": card omits " + mine).toContain(mine);
+        expect(row, route + " " + slug + ": card also claims " + other).not.toContain(other);
+      }
     }
   });
 });
