@@ -329,3 +329,93 @@ describe("canonicalization", () => {
     expect(get("/BAZEN/veliki-230").status).toBe(308);
   });
 });
+
+/**
+ * WHAT THE SHOP SAYS ABOUT GETTING ONE — IN THE MARKUP AND ON THE PAGE.
+ *
+ * Search Console reported "Missing field availability (in offers)" on all
+ * sixteen product items, and the omission was deliberate: render/page.ts
+ * refused to assert a stock position nobody had stated. The owner has now
+ * stated one, per model, and three of the six are held in stock.
+ *
+ * That makes two things checkable that were not before, and the second is the
+ * one that costs money if it breaks. A stock claim in structured data that the
+ * page does not carry is marked-up content the reader cannot see; a stock
+ * claim that CONTRADICTS the page — InStock in the head, "Po naročilu" beside
+ * the price — is the merchant mismatch a listing gets suspended for. Both are
+ * invisible in review because the two live in different files.
+ */
+describe("availability", () => {
+  const c = CONTENT["bazen"]!;
+  const pdps = c.pdps ?? [c.pdp];
+
+  /** Exactly what Google documents for the availability property. */
+  const SUPPORTED = new Set([
+    "BackOrder", "Discontinued", "InStock", "InStoreOnly", "LimitedAvailability",
+    "OnlineOnly", "OutOfStock", "PreOrder", "PreSale", "SoldOut",
+  ]);
+
+  it("states a position for every model the shop sells", () => {
+    // A model added without one publishes an Offer with no availability, which
+    // is exactly the state Search Console complained about. It is allowed —
+    // see the note in page.ts — but it should be a decision, not an omission
+    // nobody noticed.
+    const silent = pdps.filter((p) => !p.stock).map((p) => p.code);
+    expect(silent, "models with no stock position").toEqual([]);
+  });
+
+  it("holds the three models the owner named, and no others", () => {
+    // ⚠️ THE OWNER'S ANSWER, PINNED. This is not a rule about the catalogue —
+    // it is a record of a commercial fact stated on 5 September 2026, and the
+    // only thing standing between a careless edit and a false public claim
+    // about stock on three product pages. Changing the set is the owner's
+    // call; changing it here without them is not a refactor.
+    const stocked = pdps.filter((p) => p.stock === "inStock").map((p) => p.code).sort();
+    expect(stocked).toEqual(["ZR7809", "ZR804", "ZR805"]);
+  });
+
+  it("publishes only values Google reads, and one per offer", async () => {
+    for (const pdp of pdps) {
+      const html = await text(get("/bazen/" + pdp.slug + "?shop=bazen"));
+      const found = [...html.matchAll(/"availability":"https:\/\/schema\.org\/([^"]+)"/g)]
+        .map((m) => m[1]!);
+      expect(found.length, pdp.code + " emits " + found.length + " availabilities").toBe(1);
+      expect(SUPPORTED.has(found[0]!), pdp.code + " publishes " + found[0]).toBe(true);
+      expect(found[0], pdp.code).toBe(pdp.stock === "inStock" ? "InStock" : "BackOrder");
+    }
+  });
+
+  it("says the same thing beside the price as it says to a crawler", async () => {
+    for (const pdp of pdps) {
+      const html = await text(get("/bazen/" + pdp.slug + "?shop=bazen"));
+      // The price paragraph, not the whole document: a related-products band
+      // would put another model's label on this page, and the claim under
+      // test is what stands beside THIS model's number.
+      const i = html.indexOf('<p class="st-pdp-price"');
+      expect(i, pdp.code + " renders no price row").toBeGreaterThan(-1);
+      const row = html.slice(i, html.indexOf("</p>", i));
+      const mine = c.stockLabels[pdp.stock!];
+      const other = c.stockLabels[pdp.stock === "inStock" ? "toOrder" : "inStock"];
+      expect(row, pdp.code + " price row omits " + mine).toContain(mine);
+      expect(row, pdp.code + " price row also claims " + other).not.toContain(other);
+    }
+  });
+
+  it("carries the same claim on the collection page's cards", async () => {
+    // /trgovina nests a full Product per card in its ItemList, so six of the
+    // sixteen flagged items are here rather than on a product page.
+    const html = await text(get("/trgovina?shop=bazen"));
+    const found = [...html.matchAll(/"availability":"https:\/\/schema\.org\/([^"]+)"/g)]
+      .map((m) => m[1]!);
+    expect(found).toEqual(pdps.map((p) => (p.stock === "inStock" ? "InStock" : "BackOrder")));
+    // And the cards say it where a reader can see it. Counted rather than
+    // matched in order, because the grid's order is the collection's business.
+    const body = html.slice(html.indexOf("<main"));
+    for (const state of ["inStock", "toOrder"] as const) {
+      const label = c.stockLabels[state];
+      const shown = body.split(label).length - 1;
+      const want = pdps.filter((p) => p.stock === state).length;
+      expect(shown, label + " appears " + shown + " times, on " + want + " cards").toBe(want);
+    }
+  });
+});

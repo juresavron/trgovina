@@ -3445,6 +3445,22 @@ export function renderStudioPdp(ctx: RenderCtx): string {
     // when catalog/pricing.ts can derive nothing) the row read "— z DDV",
     // which states a tax treatment for a figure that does not exist.
     (d.priceCents > 0 ? '<span class="st-pdp-vat">z DDV</span>' : "") +
+    // ⚠️ THE STOCK LINE SITS WITH THE PRICE, AND IT REUSES THE "z DDV" RUNG.
+    //
+    // Two reasons, and the second one is a constraint rather than a taste.
+    // It belongs beside the number because that is where a buyer looks for it
+    // and where Google's snippet takes it from — an availability in the markup
+    // that appears nowhere a reader can see it is marked-up content the page
+    // does not carry. And .st-pdp-vat is exactly the right device: its own
+    // note calls it "a meta note beside the number, label rung, sentence
+    // case", which is what this is. A class of its own would have cost the
+    // sheet bytes it does not have — it measures 19.7 KB brotli against a
+    // 20 KB gate, and the raw cap has under 300 bytes left.
+    //
+    // The words are the shop's (content.stockLabels) and the state is the
+    // model's (PdpContent.stock) — the same field productJsonLd reads, so the
+    // sentence here and the schema.org value there cannot drift apart.
+    (d.stock ? '<span class="st-pdp-vat">' + esc(ctx.content.stockLabels[d.stock]) + "</span>" : "") +
     "</p>" +
     // The provisional disclosure, AT the price. The same sentence already
     // renders under the add-on total, ~2,000px further down and behind

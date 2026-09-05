@@ -448,34 +448,35 @@ export function productJsonLd(s: ShopConfig, c: ShopContent, pdp: PdpContent = c
       url: s.siteUrl + s.routeSlugs["/product"] + "/" + pdp.slug,
       priceCurrency: s.currency,
       price: (pdp.priceCents / 100).toFixed(2),
-      // Derived from the live flag, because the hardcoded value it replaces
-      // would have outlived its own truth: PreOrder is honest exactly while
-      // the shop is pre-launch ("na voljo ob zagonu trgovine" on the page),
-      // and on launch day every product would still have asserted it until
-      // somebody remembered this line. The flip that opens the shop is the
-      // flip that changes the claim.
-      // ⚠️ ordersOnline, NOT live, AND THE NOTE ABOVE PICKED THE WRONG FLAG.
-      // It is right that the claim must move with a flip rather than with
-      // somebody's memory; it named the flip that makes the shop VISIBLE
-      // instead of the one that makes a purchase possible. This shop is
-      // ordersOnline:false and says so on the page — /kosarica reads "Spletno
-      // naročanje še ni odprto" — so on launch day all six products would have
-      // asserted InStock at a URL whose only control is an enquiry form. That
-      // is the merchant-listing mismatch that suppresses a price snippet and
-      // fails a Merchant Center review.
+      // ⚠️ THE MODEL'S OWN POSITION, NOT THE SHOP'S FLAG. Three notes stood
+      // here arguing about which availability to assert from `live`, then from
+      // `ordersOnline`, and finally that none could be asserted at all — the
+      // last one was right on the facts it had: `ordersOnline` is false, no
+      // page said pre-order, and a site-wide InStock would have been a claim
+      // about stock nobody had made. So the property was omitted, and Search
+      // Console reported the consequence on all sixteen product items:
+      // "Missing field availability (in offers)", valid but never annotated.
       //
-      // ⚠️ AND THE FALSE BRANCH WAS STILL A CLAIM NOBODY MAKES. Both earlier
-      // notes argued about WHICH availability to assert and neither asked
-      // whether to assert one. PreOrder means the goods can be ordered now
-      // for delivery later, and Google reads it that way — it wants an
-      // availabilityStarts date behind it. No page here says pre-order and no
-      // page names a date: the product pages say "Povprašajte za ponudbo" and
-      // /kosarica says online ordering is not open. So while the shop cannot
-      // be transacted with online the property is OMITTED, not guessed.
-      // availability is recommended rather than required, so the price,
-      // currency, condition, seller and return policy all still ship and the
-      // offer stays eligible for a product snippet.
-      ...(s.ordersOnline ? { availability: "https://schema.org/InStock" } : {}),
+      // What was missing was not a value. It was the fact, and it is not a
+      // property of the shop at all: this shop stocks some of its range and
+      // orders the rest in on a confirmed offer. PdpContent.stock records that
+      // per model (see StockState), the shop's own words for the same two
+      // states sit beside it in content, and the product page and the card
+      // print the label from the same field this line reads. Markup and page
+      // cannot disagree, which is the failure this replaces rather than the
+      // missing field.
+      //
+      // A model whose position nobody has stated still publishes nothing.
+      ...(pdp.stock
+        ? {
+            availability:
+              "https://schema.org/" +
+              // BackOrder, not PreOrder: PreOrder is a product not yet
+              // released and Google wants an availabilityStarts date with it.
+              // These are goods on sale today that are not in the warehouse.
+              { inStock: "InStock", toOrder: "BackOrder" }[pdp.stock],
+          }
+        : {}),
       itemCondition:
         "https://schema.org/" +
         { new: "NewCondition", used: "UsedCondition",

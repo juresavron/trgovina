@@ -2235,6 +2235,9 @@ function productCards(
         );
       }
       const was = compareAt(p);
+      const stock = p.slug
+        ? ctx.content.pdps?.find((x) => x.slug === p.slug)?.stock
+        : undefined;
       return (
         '<a class="st-card" href="' + esc(pdpHref(ctx, p.slug)) + '">' +
         '<span class="st-card-panel">' +
@@ -2263,6 +2266,13 @@ function productCards(
             esc(was) + "</s>"
           : "") +
         '<span class="st-vat">z DDV</span>' +
+        // The same note the product page carries beside its price, on the
+        // same rung, for the same reason: /trgovina nests a full Product per
+        // card in its ItemList, so six of the sixteen items Search Console
+        // flagged are here. The state is looked up on the model's own
+        // PdpContent rather than copied onto the card, so the shop states it
+        // once.
+        (stock ? '<span class="st-vat">' + esc(ctx.content.stockLabels[stock]) + "</span>" : "") +
         "</span></span></a>"
       );
     })
