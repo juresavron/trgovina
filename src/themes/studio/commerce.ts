@@ -2499,7 +2499,11 @@ function renderCategoryRail(ctx: RenderCtx, cats: readonly Category[]): string {
           : "";
       return (
         '<li class="st-cat-item">' +
-        '<a class="st-cat-card" href="' + esc(c.href) + '">' +
+        // ⚠️ ctx.q, LIKE EVERY OTHER INTERNAL LINK ON THE SITE. The category
+        // rail was the one band that dropped it, so on the QA host a reviewer
+        // walking a pre-live shop fell back to the default shop the moment
+        // they clicked a family — the two links tenancy.test.ts now names.
+        '<a class="st-cat-card" href="' + esc(c.href + ctx.q) + '">' +
         '<span class="st-cat-panel">' +
         visual +
         "</span>" +
