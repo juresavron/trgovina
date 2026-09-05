@@ -260,11 +260,12 @@ import { GUIDES } from "./pages/vodniki";
 import { FAQ } from "./pages/faq";
 import { COMPARE } from "./pages/primerjava";
 import { SHOWROOM } from "./pages/salon";
-import { CART, CHECKOUT } from "./pages/kosarica";
-import { TERMS } from "./pages/pogoji";
+import { cartPage, CHECKOUT } from "./pages/kosarica";
+
 import { PRIVACY } from "./pages/zasebnost";
 import { COOKIES } from "./pages/piskotki";
 import { WITHDRAWAL } from "./pages/odstop";
+import { termsPage } from "./pages/pogoji";
 import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
 
 /**
@@ -287,8 +288,19 @@ import { isSet, isSetPhone, isSetVat, isSetZip } from "../lib/filled";
  * instead of copying thirteen imports and quietly picking up the seven that
  * are about hot tubs.
  */
+/**
+ * ⚠️ THE TERMS PAGE LEFT THIS LIST, and it is not a demotion — it is the one
+ * page here that was never universal. pages/pogoji.ts is a FUNCTION now: a
+ * shop passes the paragraphs saying what its own price covers, and the
+ * statutory sections around them stay identical because the law is the same
+ * for both sellers. See the note on termsPage() for the promise of a free
+ * site survey that a pouch shop published on its own terms page.
+ *
+ * What is left in here really is universal: a basket, a checkout, and two
+ * notices whose entire content is ZVPot-1 and the GDPR.
+ */
 export const UNIVERSAL_PAGES: readonly Page[] = [
-  CART, CHECKOUT, TERMS, PRIVACY, COOKIES,
+  CHECKOUT, PRIVACY, COOKIES,
 ];
 
 /**
@@ -302,8 +314,37 @@ export const UNIVERSAL_PAGES: readonly Page[] = [
  * where the router's page vocabulary lives, not because a second shop can use
  * them.
  */
+/**
+ * What a hot tub's price covers, in this shop's own words — the section
+ * termsPage() takes as its argument. It is verbatim what the page has said
+ * since it was written; the only change is that it now belongs to the shop
+ * that means it rather than to every shop that renders the page.
+ */
+const BAZEN_CART = cartPage({
+  lead:
+    "Spletno naročanje še ni odprto. Povpraševanje lahko oddate prek obrazca, " +
+    "sprejemamo pa tudi klice in e-pošto.",
+  metaDescription:
+    "Spletno naročanje še ni odprto. Naročilo in ponudbo uredimo po telefonu " +
+    "ali e-pošti, po ogledu lokacije.",
+  why:
+    "Pred ponudbo opravimo ogled lokacije, zato naročilo tako ali tako ni sklenjeno " +
+    "v trenutku plačila. Dokler spletno plačilo ni vzpostavljeno, je pot krajša, če se za " +
+    "model, konfiguracijo in termin dogovorimo neposredno.",
+});
+
+const BAZEN_TERMS = termsPage([
+  "Cene modelov na spletni strani so v evrih in vključujejo DDV. Vključujejo zagon, " +
+    "umeritev in predajo; ogled lokacije opravimo brezplačno že pred ponudbo in ni " +
+    "zaračunan v ceni. Dostava z ekipo in opremo za " +
+    "prenos se obračuna po ponudbi, ker je odvisna od lokacije in dostopa. Cene ne " +
+    "vključujejo priprave podlage, gradbenih del in elektroinštalacije na strani kupca.",
+  "Vse stroške, ki jih kupec plača, in njihovo višino navedemo v pisni ponudbi, preden " +
+    "jo potrdite. Cena, ki velja za vaš posel, je cena iz potrjene ponudbe.",
+]);
+
 export const BAZEN_PAGES: readonly Page[] = [
-  ABOUT, CONTACT, DELIVERY, GUIDES, FAQ, COMPARE, SHOWROOM,
+  ABOUT, CONTACT, DELIVERY, GUIDES, FAQ, COMPARE, SHOWROOM, BAZEN_TERMS, BAZEN_CART,
   // ⚠️ THE WITHDRAWAL NOTICE IS HERE AND NOT ABOVE, AND IT IS NOT AN OVERSIGHT.
   //
   // It is the one legal page that is not a template. Its second step promises

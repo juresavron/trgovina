@@ -41,16 +41,39 @@ function sentences(text: string): string[] {
     .filter((s) => s.split(" ").length >= 8);
 }
 
-function prose(key: string): string {
-  // The shop's own content object, flattened — every string it would render.
+/**
+ * The shop's own content object, flattened — every string it would render.
+ *
+ * ⚠️ JOINED ON A FULL STOP, AND IT USED TO BE A SPACE. Every string in the
+ * object went into one run: block `kind` values, headings, hrefs and prose
+ * alike. sentences() then split that run on sentence punctuation, so it
+ * manufactured sentences that span fields and that no page renders — the
+ * second shop's first run reported
+ * "imprint Prodajalec prose Za koga veljajo ti pogoji Za vse nakupe pri nas"
+ * as shared copy, which is three block boundaries and a heading.
+ *
+ * It cuts both ways: a fabricated match sends somebody rewriting a page that
+ * is fine, and a real shared sentence sitting at the end of one field is
+ * swallowed into a frankenstein that matches nothing. Joining on a terminator
+ * keeps every field its own sentence.
+ *
+ * Legal pages are excluded, and that is a separate rule with its own note —
+ * see the assertion below.
+ */
+function prose(key: string, opts: { legal: boolean } = { legal: false }): string {
   const seen: string[] = [];
   const walk = (v: unknown): void => {
     if (typeof v === "string") seen.push(v);
     else if (Array.isArray(v)) v.forEach(walk);
-    else if (v && typeof v === "object") Object.values(v).forEach(walk);
+    else if (v && typeof v === "object") {
+      // A page that states rights is skipped whole — see the note on the
+      // shared-sentence assertion for why the law may be identical.
+      if (!opts.legal && (v as { legal?: boolean }).legal === true) return;
+      Object.values(v).forEach(walk);
+    }
   };
   walk(CONTENT[key]);
-  return seen.join(" ");
+  return seen.join(". ");
 }
 
 /** The shared-sentence rule, as a function, so it can be tested on two shops. */

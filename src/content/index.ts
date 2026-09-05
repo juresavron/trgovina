@@ -1,5 +1,6 @@
 import type { ShopContent } from "./types";
 import { bazenContent } from "./bazen";
+import { vreckeContent } from "./vrecke";
 
 export type { ShopContent, ProductCard, UtilCard, ArtKey } from "./types";
 
@@ -11,4 +12,5 @@ export type { ShopContent, ProductCard, UtilCard, ArtKey } from "./types";
  */
 export const CONTENT: Record<string, ShopContent> = {
   bazen: bazenContent,
+  vrecke: vreckeContent,
 };

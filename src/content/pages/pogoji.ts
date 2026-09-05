@@ -36,7 +36,30 @@ import type { Page } from "../pages";
  * declaration — whether the trader recognises an out-of-court provider — is a
  * separate duty and is still made, above.
  */
-export const TERMS: Page = {
+/**
+ * ⚠️ THE PRICE SECTION IS THE SHOP'S, AND IT USED TO BE EVERY SHOP'S.
+ *
+ * This page sat in UNIVERSAL_PAGES as a const, and its "Cene" section read:
+ * prices include commissioning, calibration and handover, a site survey is
+ * free and carried out before the quote, and delivery "z ekipo in opremo za
+ * prenos" is quoted separately. Every one of those is true of a hot tub and
+ * false of anything else — so the second shop registered on this Worker
+ * published, on its own statutory terms page, a promise of a free site visit
+ * and a commissioning service for a tin of pouches.
+ *
+ * cross-shop.test.ts caught it as two shared sentences, which is the shape the
+ * defect takes from outside; the defect itself is that a commercial promise
+ * was living on a page every shop publishes unchanged. Statutory text is
+ * shared because the law is the same for both sellers. What the price
+ * includes is not law, it is an offer, and an offer belongs to one shop.
+ *
+ * So the page is a FUNCTION now. A shop passes the paragraphs describing what
+ * its own price covers, and everything around them — contract formation,
+ * conformity, withdrawal, dispute resolution — stays identical, which is
+ * correct: those parts are ZVPot-1 and ZEPT, not marketing.
+ */
+export function termsPage(priceParagraphs: readonly string[]): Page {
+  return {
   key: "/terms",
   h1: "Pogoji poslovanja",
   lead:
@@ -88,15 +111,9 @@ export const TERMS: Page = {
     {
       kind: "prose",
       h: "Cene",
-      p: [
-        "Cene modelov na spletni strani so v evrih in vključujejo DDV. Vključujejo zagon, " +
-          "umeritev in predajo; ogled lokacije opravimo brezplačno že pred ponudbo in ni " +
-          "zaračunan v ceni. Dostava z ekipo in opremo za " +
-          "prenos se obračuna po ponudbi, ker je odvisna od lokacije in dostopa. Cene ne " +
-          "vključujejo priprave podlage, gradbenih del in elektroinštalacije na strani kupca.",
-        "Vse stroške, ki jih kupec plača, in njihovo višino navedemo v pisni ponudbi, preden " +
-          "jo potrdite. Cena, ki velja za vaš posel, je cena iz potrjene ponudbe.",
-      ],
+      // The shop's own, and the only section of this page that is. See the
+      // note at the top for what went wrong while it was not.
+      p: [...priceParagraphs],
     },
     {
       kind: "prose",
@@ -174,4 +191,5 @@ export const TERMS: Page = {
       href: "/withdrawal",
     },
   ],
-};
+  };
+}

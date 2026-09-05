@@ -149,6 +149,14 @@ jobs:
       - name: A crawler gets a whole site
         run: node scripts/audit-seo.mjs
 
+      # Every shop, not just the first. The audit takes the shop as a
+      # parameter for exactly this reason: a second storefront could otherwise
+      # ship with its titles, descriptions, heading trees and link graph
+      # unaudited, and nothing would have said so. Pre-live shops are audited
+      # too — the point is to be right BEFORE the flag flips.
+      - name: The second shop gets one too
+        run: AUDIT_SHOP=vrecke node scripts/audit-seo.mjs
+
       - name: Deploy to Cloudflare Workers
         run: npx wrangler deploy
         env:
