@@ -20,31 +20,47 @@ import type { Page } from "../pages";
  * written offer, then a written confirmation on a durable medium) is the same
  * one the terms give, so it costs nothing to repeat here where it is needed.
  */
-export const CART: Page = {
+/** How one shop takes an order while online payment is closed. */
+export interface OrderingCopy {
+  /** The standfirst under the h1. */
+  readonly lead: string;
+  /** The SERP line. */
+  readonly metaDescription: string;
+  /** One paragraph on why the order is arranged directly. */
+  readonly why: string;
+}
+
+/**
+ * ⚠️ THE BASKET WAS "UNIVERSAL" AND EXPLAINED A SITE SURVEY.
+ *
+ * Its own notes show how carefully the product NOUN was kept out of this page:
+ * the meta description had said "masažnih bazenov" and was fixed, the CTA had
+ * carried a census of hot tubs and was fixed. What nobody removed was the
+ * REASON — "pred ponudbo opravimo ogled lokacije, zato naročilo tako ali tako
+ * ni sklenjeno v trenutku plačila" — and a reason is a claim just as much as a
+ * noun is. The second shop registered on this Worker sells tins that go in the
+ * post, and its basket page told customers a survey happens before the quote.
+ *
+ * This is the third page in the "universal" set found doing it (see
+ * termsPage() and the withdrawal note in content/pages.ts), and they share one
+ * cause: universal meant written once, for the first shop. What is genuinely
+ * universal is the MECHANISM — online payment is closed, here is how to reach
+ * us, here is the catalogue — and that is what is left below.
+ */
+export function cartPage(ordering: OrderingCopy): Page {
+  return {
   key: "/cart",
   h1: "Košarica",
-  // The form exists now, so "po telefonu in e-pošti" is no longer the whole
-  // answer — and this was the one page that says you cannot order online
-  // without pointing at the thing that works.
-  lead:
-    "Spletno naročanje še ni odprto. Povpraševanje lahko oddate prek obrazca, " +
-    "sprejemamo pa tudi klice in e-pošto.",
-  // ⚠️ NO PRODUCT NOUN: this is a universal page (content/pages.ts), and it
-  // said "masažnih bazenov" in the description of every shop's basket. The
-  // universal-page gate now reads the meta as well as the body.
-  metaDescription:
-    "Spletno naročanje še ni odprto. Naročilo in ponudbo uredimo po telefonu " +
-    "ali e-pošti, po ogledu lokacije.",
+  lead: ordering.lead,
+  // ⚠️ NO PRODUCT NOUN: this page is published by every shop, and it once
+  // said "masažnih bazenov" in the description of every shop's basket.
+  metaDescription: ordering.metaDescription,
   noindex: true,
   blocks: [
     {
       kind: "prose",
-      h: "Zakaj po telefonu",
-      p: [
-        "Pred ponudbo opravimo ogled lokacije, zato naročilo tako ali tako ni sklenjeno " +
-          "v trenutku plačila. Dokler spletno plačilo ni vzpostavljeno, je pot krajša, če se za " +
-          "model, konfiguracijo in termin dogovorimo neposredno.",
-      ],
+      h: "Zakaj neposredno",
+      p: [ordering.why],
     },
     { kind: "contact", h: "Naročilo in vprašanja" },
     {
@@ -66,7 +82,8 @@ export const CART: Page = {
       href: "/products",
     },
   ],
-};
+  };
+}
 
 export const CHECKOUT: Page = {
   key: "/checkout",

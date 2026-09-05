@@ -1,5 +1,6 @@
 import type { ShopConfig } from "./types";
 import { bazen } from "./bazen";
+import { vrecke } from "./vrecke";
 
 export type { ShopConfig, InternalRouteKey } from "./types";
 export { isValidStatementDescriptor, isValidRouteSlug } from "./types";
@@ -23,6 +24,13 @@ export { isValidStatementDescriptor, isValidRouteSlug } from "./types";
  */
 export const SHOPS: Record<string, ShopConfig> = {
   bazen,
+  // ⚠️ PRE-LIVE. Registered here rather than kept on a branch on purpose: a
+  // shop that is not in this map is a shop no test, audit or gate in this
+  // repository can see, and the cross-shop rules — no shared sentence, no
+  // shared head term, no sibling domain in the markup — only mean anything
+  // with a second entry to check them against. live:false keeps it off the
+  // internet; being here keeps it honest.
+  vrecke,
 };
 
 /**
