@@ -3,7 +3,7 @@
  * The swatch framer's gate.
  *
  * WHY THIS EXISTS. Every colour tile on the storefront is composed by
- * frameSwatch() + drawSlot() in admin/panel.ts: find the sample in whatever
+ * frameSwatch() + drawSlot() in admin/client.ts: find the sample in whatever
  * the operator uploaded, then paint it at a fixed size in the middle of a
  * 400x400 tile. It is pixel code that runs only in a browser, so nothing in
  * the vitest suite can reach it — and it has been reported wrong three times
@@ -30,11 +30,20 @@ import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { chromium } from "playwright-core";
 
+// ⚠️ src/admin/client.ts, NOT panel.ts. SMART_JS moved when the 1,832-line
+// admin router was split into surfaces: panel.ts imports it from ./client and
+// does not re-export it, so this script destructured undefined off the bundle
+// and died on `SMART_JS.indexOf` — silently, because nothing runs it in CI.
+// The gate was dead for four merges. Bundling the module that OWNS the symbol
+// is also the smaller bundle and the one that cannot drift again this way.
 const out = join(tmpdir(), "fr-panel.mjs");
 execFileSync("node_modules/.bin/esbuild",
-  ["src/admin/panel.ts", "--bundle", "--format=esm", "--platform=node", "--log-level=warning", "--outfile=" + out],
+  ["src/admin/client.ts", "--bundle", "--format=esm", "--platform=node", "--log-level=warning", "--outfile=" + out],
   { stdio: "inherit" });
 const { SMART_JS } = await import(out);
+if (typeof SMART_JS !== "string") {
+  throw new Error("SMART_JS is " + typeof SMART_JS + " — has it moved again?");
+}
 
 // Pull the self-contained function out of the mounted script.
 const i = SMART_JS.indexOf("function frameSwatch(bmp){");

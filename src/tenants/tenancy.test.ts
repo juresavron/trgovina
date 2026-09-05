@@ -768,6 +768,45 @@ describe("a shop that sells one model", () => {
       if (slug) expect(paths, k).not.toContain(slug);
     }
   });
+
+  /**
+   * ⚠️ A STOCK CLAIM WITH NOTHING BEHIND IT ON THE PAGE.
+   *
+   * The availability feature reads PdpContent.stock in two places: the Offer
+   * in the head, and the label beside the price. Its own notes say the two
+   * cannot disagree because they read one field — and on THIS shop they did.
+   * The card grid resolved the state with `content.pdps?.find(...)`, the only
+   * read in the codebase that omitted the documented `?? [content.pdp]`
+   * fallback, so a shop that omits pdps got no label on any card while
+   * worker.ts built the hub's ItemList from the fallback and published
+   * InStock from pdp.stock. Six of the sixteen items Search Console flagged
+   * live on that page.
+   *
+   * The invariant is checked structurally rather than per shop: whatever a
+   * document claims to a crawler, the reader has to be able to see it. That
+   * holds for any shop, any route and any future availability value.
+   */
+  it("never claims stock in the markup that the page does not show", async () => {
+    const SCHEMA = { inStock: "InStock", toOrder: "BackOrder" } as const;
+    for (const path of routes()) {
+      const html = await get(path).text();
+      const claims = [...html.matchAll(/"availability":"https:\/\/schema\.org\/([^"]+)"/g)]
+        .map((m) => m[1]!);
+      if (claims.length === 0) continue;
+      // <main> only: the claim under test is one a READER can find, and the
+      // JSON-LD itself sits in the head.
+      const body = html.slice(html.indexOf("<main"));
+      for (const state of ["inStock", "toOrder"] as const) {
+        if (!claims.includes(SCHEMA[state])) continue;
+        expect(
+          body,
+          path + " tells a crawler " + SCHEMA[state] + " and shows no \"" +
+            content.stockLabels[state] + "\"",
+        ).toContain(content.stockLabels[state]);
+      }
+    }
+  });
+
 });
 
 /**

@@ -119,11 +119,16 @@ describe("the maintenance guide's claims about the three tubs", () => {
     expect(text).toContain("filtrirna površina je pri vseh treh enaka");
   });
 
-  it("quotes the water gap its own helper computes", () => {
-    // Stated three times on the page — twice as the gap and once inside the
-    // answer about a bigger tub costing more. Typing any of them would let
-    // them drift apart.
-    expect(text).toContain(tubLitreSpanText() + " litrov");
+  it("quotes the water gap its own helper computes, everywhere it states it", () => {
+    // ⚠️ COUNTED, NOT CONTAINED. The comment here said the figure is stated
+    // three times and that typing any of them would let them drift — and then
+    // asserted toContain over body(), which joins every block on the page into
+    // one string. One surviving call to the helper satisfied that, so the
+    // other two could be typed, and wrong, with the test still green. It
+    // asserted the opposite of what it said.
+    const gap = tubLitreSpanText() + " litrov";
+    const stated = text.split(gap).length - 1;
+    expect(stated, "the guide states the water gap " + stated + " times, not 3").toBe(3);
     const litres = bySize.map((m) => m.filledKg - m.dryKg);
     expect(litres[litres.length - 1]! - litres[0]!).toBe(600);
   });

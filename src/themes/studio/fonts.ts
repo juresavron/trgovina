@@ -22,11 +22,17 @@ export const STUDIO_FONT_FACE_CSS = `
 `;
 
 /**
- * The display face's files, preloaded by render/page.ts.
+ * The display and body faces' files, preloaded by render/page.ts.
  *
- * Only the display face: it sets the h1, which is the LCP text element on
- * every landing page. The prose faces are discovered from the sheet a few
- * milliseconds later and swap in without moving layout, and preloading every
- * file would compete with the image that shares that budget.
+ * The display face sets the h1, which is the LCP text element on every
+ * landing page. The body face sets the prose — and it is preloaded because
+ * NOT preloading it was measured, by scripts/audit-site.mjs, as CLS 0.1451 on
+ * /blog at mobile width and 0.0879 on /trgovina at desktop: the fallback's
+ * metrics lay out the nav, the intro and the lists, and every one of them
+ * moves when the real face arrives. With both preloaded that audit reports no
+ * layout shift anywhere.
+ *
+ * The label face is not preloaded: it sets eyebrows and meta lines, which do
+ * not reflow a column of prose when they swap.
  */
-export const STUDIO_PRELOAD: readonly string[] = ["/fonts/chivo-500-latin-ext.woff2","/fonts/chivo-500-latin.woff2"];
+export const STUDIO_PRELOAD: readonly string[] = ["/fonts/chivo-500-latin-ext.woff2","/fonts/chivo-500-latin.woff2","/fonts/plus-jakarta-sans-200-800-latin-ext.woff2","/fonts/plus-jakarta-sans-200-800-latin.woff2"];

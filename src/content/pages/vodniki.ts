@@ -71,7 +71,12 @@ export const GUIDES: Page = {
           "in trinajst šob več. Vodnik o zimi izračuna, zakaj izklop ni prihranek — " +
           "koliko kilovatnih ur potrebuje 1.800 litrov za trideset stopinj in " +
           "koliko ur to pomeni pri 3-kilovatnem grelcu.",
-        "Druge tri odgovarjajo na vprašanja, ki jih specifikacija zastavi in ne " +
+        // ⚠️ "DRUGI TRIJE", NOT "DRUGE TRI". The subject is the three remaining
+        // vodniki — masculine, and the next three sentences name them one by
+        // one — so the numeral takes the nominative masculine. "tri" is the
+        // accusative masculine or the nominative feminine, and neither can be
+        // the subject of "odgovarjajo".
+        "Drugi trije odgovarjajo na vprašanja, ki jih specifikacija zastavi in ne " +
           "reši. Vodnik o velikosti pove, kateri model sprejme največ ljudi — in " +
           "to ni največji. Vodnik o šobah pove, koliko šob poganja ena črpalka pri " +
           "vsakem modelu, kar je uporabnejša številka od skupnega števila šob. " +

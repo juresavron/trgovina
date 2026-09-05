@@ -218,7 +218,27 @@ const server = createServer(async (req, res) => {
 await new Promise((r) => server.listen(PORT, r));
 
 const findings = [];
-const add = (level, route, rule, detail) => findings.push({ level, route, rule, detail });
+/**
+ * ⚠️ THE LEVEL IS VALIDATED BECAUSE A TYPO IN IT IS INVISIBLE.
+ *
+ * Two of the twenty-four call sites passed "error" and "warn" in lower case —
+ * both of them the CLS gate. The reporter filters on "ERROR"/"WARN"/"INFO" and
+ * the exit code tests f.level === "ERROR", so those findings were pushed onto
+ * the list and then dropped from every section and from the exit status. The
+ * only check in this file that measures layout shift was the only one that
+ * could not report, and it was swallowing a real warning: /trgovina at CLS
+ * 0.088 on desktop, over this file's own 0.05 line.
+ *
+ * A silent level is worse than a missing check, because the run still says
+ * PASS. Now a third one throws.
+ */
+const LEVELS = new Set(["ERROR", "WARN", "INFO"]);
+const add = (level, route, rule, detail) => {
+  if (!LEVELS.has(level)) {
+    throw new Error("audit-site: level must be ERROR, WARN or INFO — got " + JSON.stringify(level));
+  }
+  findings.push({ level, route, rule, detail });
+};
 
 /* ---- document-level checks, done on the HTML string ---- */
 const titles = new Map(), descs = new Map(), canons = new Map();
@@ -313,9 +333,9 @@ for (const [label, size] of [
     // 0.1 is Google's own "good" boundary and 0.25 is where a page is called
     // poor. Both are reported as what they cost rather than as a number.
     if (cls > 0.1) {
-      add("error", route, "layout-shift", label + ": CLS " + cls + " — content jumps under the reader as it loads");
+      add("ERROR", route, "layout-shift", label + ": CLS " + cls + " — content jumps under the reader as it loads");
     } else if (cls > 0.05) {
-      add("warn", route, "layout-shift", label + ": CLS " + cls + " — approaching the 0.1 threshold");
+      add("WARN", route, "layout-shift", label + ": CLS " + cls + " — approaching the 0.1 threshold");
     }
     const r = await page.evaluate(() => {
       const out = { overflow: 0, noAlt: [], dupIds: [], skips: [], smallTargets: [], brokenImgs: [], emptyLinks: [] };
