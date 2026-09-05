@@ -478,10 +478,33 @@ function standsOut(m: PolaModel): string {
   return "";
 }
 
+/**
+ * The models this shop holds in stock, by the supplier code an order is
+ * matched on.
+ *
+ * ⚠️ THE OWNER'S STATEMENT, PER MODEL, AND NOTHING INFERS IT. Search Console
+ * reported "Missing field availability" on all sixteen product items, and the
+ * property had been omitted deliberately: a site-wide InStock would have been
+ * a claim about stock nobody had made. The owner has now made it, and made it
+ * about three models rather than six — so it is recorded here as three codes
+ * rather than as a flag on the shop.
+ *
+ * Codes, not slugs or names: the code is what an order, a warranty claim and a
+ * spare part are matched on, and it is the one identifier that survives a
+ * model being renamed on the site.
+ *
+ * WHEN THIS GOES STALE IT GOES STALE SILENTLY, which is the risk of the whole
+ * feature: a tub sold out of the warehouse leaves the page saying "Na zalogi"
+ * to every visitor and InStock to Google. Nothing in this repository can
+ * observe that. Take the code out of this set the day it stops being true.
+ */
+const IN_STOCK = new Set(["ZR805", "ZR804", "ZR7809"]);
+
 function pdpFor(m: PolaModel): PdpContent {
   return {
     slug: m.slug,
     code: m.code,
+    stock: IN_STOCK.has(m.code) ? "inStock" : "toOrder",
     family: "masažni bazen",
     // The fallback DERIVES: the old second branch asserted "Ležalnik in pet
     // sedežev" for any non-two-lounger model — including one with none.
@@ -778,6 +801,7 @@ function pdpForSwim(m: SwimSpaModel): PdpContent {
   return {
     slug: m.slug,
     code: m.code,
+    stock: IN_STOCK.has(m.code) ? "inStock" : "toOrder",
     family: "swim spa",
     eyebrow: m.tier ?? "Swim spa",
     title: m.name,
@@ -1233,6 +1257,13 @@ export const bazenContent: ShopContent = {
     "Nasveti o masažnih bazenih in swim spa bazenih: izbira velikosti, priprava " +
     "podlage in priklopa, poraba, vzdrževanje in dostava po Sloveniji.",
   swatchMessage: "Prosim za vzorčnik barv školjke.",
+  // ⚠️ "PO NAROČILU" AND NOT A LEAD TIME. The second label is the one that
+  // could quietly become a promise: "dobava v X tednih" is a figure this shop
+  // states in the confirmed offer and nowhere else (/pogoji-poslovanja), and
+  // the moment it appears beside a price on six pages it is a public
+  // commitment nobody made. What the label says is how the model is supplied,
+  // which is exactly what the schema.org value beside it says.
+  stockLabels: { inStock: "Na zalogi", toOrder: "Po naročilu" },
   trust: [
     "Dostava in zagon po vsej Sloveniji",
     "Ogled lokacije pred ponudbo",

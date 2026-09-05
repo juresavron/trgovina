@@ -107,6 +107,23 @@ export interface Category {
   art?: ArtKey;
 }
 
+/**
+ * What the shop can honestly say about supplying a model.
+ *
+ * ⚠️ TWO STATES, BECAUSE THE SHOP HAS TWO. This catalogue is not held in a
+ * warehouse in one piece: some models are stocked and can be delivered from
+ * it, and the rest are ordered from the supplier once an offer is confirmed —
+ * which is why /pogoji-poslovanja says the delivery date is stated in the
+ * confirmed offer rather than on the site. A single site-wide availability
+ * would have to be wrong about one half of the range.
+ *
+ * The renderer maps these onto schema.org: "inStock" is InStock and "toOrder"
+ * is BackOrder, which is the value Google documents for goods that can be
+ * ordered now and are not in stock. Both are supported for product snippets.
+ * Neither is a lead time, and nothing here states one.
+ */
+export type StockState = "inStock" | "toOrder";
+
 export interface ProductCard {
   name: string;
   desc: string;
@@ -225,6 +242,14 @@ export interface PdpContent {
    * so per model rather than by editing a shared renderer.
    */
   condition?: "new" | "used" | "refurbished" | "damaged";
+  /**
+   * Whether this model is held in stock or ordered in. See StockState.
+   *
+   * Optional, and its absence is not a default: a shop that has not said is a
+   * shop whose Offer publishes no availability, which is what every product on
+   * this network did until an owner stated the position per model.
+   */
+  stock?: StockState;
   /** Trade identifiers, where the product carries them. Absent on white-label
    *  goods — this catalogue's models have a supplier code and no GTIN. */
   gtin?: string;
@@ -362,6 +387,22 @@ export interface ShopContent {
    * barv školjke" is a hot-tub shell, and it lived in the router.
    */
   swatchMessage: string;
+  /**
+   * What the shop says about getting one, one label per state.
+   *
+   * ⚠️ THE WORDS BELONG TO THE SHOP AND THE CLAIM BELONGS TO THE CODE. A
+   * PdpContent carries a StockState — a machine value the renderer turns into
+   * a schema.org ItemAvailability — and this turns the same state into the
+   * sentence a reader sees. Both surfaces read one field, so the markup cannot
+   * say InStock while the page says something else: that mismatch is what
+   * Merchant Center suspends a listing for, and it is invisible in review
+   * because the two live in different files.
+   *
+   * In content rather than in the theme for the reason blogLead is: no
+   * user-visible sentence is too short to belong to a shop, and a sauna shop
+   * rendering through this theme says these words differently.
+   */
+  stockLabels: Record<StockState, string>;
   trust: string[];
   stats: [string, string][];
   /**
