@@ -3,8 +3,8 @@
 // substitute when Storage still identifies the original bytes by their ETag.
 const photos: Record<string, { etag: string; path: string }> = {
   'site/hero.webp': { etag: '10a94c74e94f858df2308c84cb2cf555', path: '/img/optimized-site/hero-c597fc3aa6ee.webp' },
-  'site/kategorija-masazni-bazeni.webp': { etag: '3efecd8cd14eef31410967c6888c2737', path: '/img/optimized-site/kategorija-masazni-bazeni-ef79fe2d7223.webp' },
-  'site/kategorija-swim-spa.webp': { etag: 'd16cc433a4645355034c4b2c43084312', path: '/img/optimized-site/kategorija-swim-spa-5567b7bf3f23.webp' },
+  'site/kategorija-masazni-bazeni.webp': { etag: '013fb9239e5542fd4f310b121e8e362f-1', path: '/img/optimized-site/kategorija-masazni-bazeni-ef79fe2d7223.webp' },
+  'site/kategorija-swim-spa.webp': { etag: '93b7e0c4763da759e8855af2e016ef03-1', path: '/img/optimized-site/kategorija-swim-spa-5567b7bf3f23.webp' },
 };
 
 type Assets = { fetch(request: Request): Promise<Response> };

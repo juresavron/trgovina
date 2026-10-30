@@ -7,8 +7,8 @@ const original = () => new Response('original', { headers: { etag: '"10a94c74e94
 describe('smaller encodings of the current site photographs', () => {
   it.each([
     ['site/hero.webp', '10a94c74e94f858df2308c84cb2cf555'],
-    ['site/kategorija-masazni-bazeni.webp', '3efecd8cd14eef31410967c6888c2737'],
-    ['site/kategorija-swim-spa.webp', 'd16cc433a4645355034c4b2c43084312'],
+    ['site/kategorija-masazni-bazeni.webp', '013fb9239e5542fd4f310b121e8e362f-1'],
+    ['site/kategorija-swim-spa.webp', '93b7e0c4763da759e8855af2e016ef03-1'],
   ])('substitutes only the captured original for %s', async (key, etag) => {
     const origin = new Response('original', { headers: { etag: `"${etag}"` } });
     const binding = assets();
