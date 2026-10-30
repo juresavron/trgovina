@@ -577,8 +577,8 @@ export function renderStudioSocial(ctx: RenderCtx): string {
     // Own id: hero.ts's ticker already owns "st-mq-pause" and both devices can
     // land on the same home page.
     '<input class="st-mq-pause" id="st-soc-pause" type="checkbox">' +
-    '<label class="st-mq-toggle st-soc-toggle" for="st-soc-pause" ' +
-    'aria-label="Ustavi ali zaženi drsenje slik"></label>' +
+    '<label class="st-mq-toggle st-soc-toggle" for="st-soc-pause">' +
+    '<span class="st-vh">Ustavi ali zaženi drsenje slik</span></label>' +
     '<div class="st-mq-viewport st-soc-viewport">' +
     '<div class="st-mq-track st-soc-track">' +
     '<div class="st-mq-group">' + group + "</div>" +
