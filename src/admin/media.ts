@@ -21,6 +21,7 @@
 import { aliasTarget, encodeBucketKey } from "../media-aliases";
 import { legacyFallback, siteImageByKey } from "./site-images";
 import { BUCKET, type Env } from "./supabase";
+import { optimizedSitePhoto } from "./optimized-site-photo";
 
 /**
  * Serve an uploaded image through the Worker.
@@ -231,6 +232,7 @@ export async function handleMedia(request: Request, env: Env): Promise<Response>
     });
   }
 
+  res = await optimizedSitePhoto(key, res, env.ASSETS);
   return new Response(res.body, {
     status: 200,
     headers: {

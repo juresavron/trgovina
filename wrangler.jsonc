@@ -132,7 +132,8 @@
   // canonical and names no shop — but it is the reason nothing HTML-shaped may
   // ever be put in this directory.
   "assets": {
-    "directory": "./public"
+    "directory": "./public",
+    "binding": "ASSETS"
   },
 
   "observability": {

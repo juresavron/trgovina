@@ -26,6 +26,7 @@
  * project URL are both public by design and both live in wrangler.jsonc.
  */
 export interface Env {
+  ASSETS?: { fetch(request: Request): Promise<Response> };
   /** https://<ref>.supabase.co — public, so it lives in wrangler.jsonc vars. */
   SUPABASE_URL?: string;
   /**
