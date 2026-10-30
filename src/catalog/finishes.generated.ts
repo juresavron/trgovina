@@ -34,7 +34,18 @@ export interface GeneratedFinish {
 }
 
 /** Shell colours, in the order the panel puts them. */
-export const GENERATED_SHELL_FINISHES: readonly GeneratedFinish[] = [];
+export const GENERATED_SHELL_FINISHES: readonly GeneratedFinish[] = [
+  { name: "Rjavo marmorirana", slug: "screenshot-2026-08-28-at-10-20-46" },
+  { name: "Sivo marmorirana", slug: "screenshot-2026-08-28-at-10-20-58" },
+  { name: "Svetlo siva zrnata", slug: "screenshot-2026-08-28-at-10-21-08" },
+  { name: "Svetlo sivo marmorirana", slug: "screenshot-2026-08-28-at-10-21-19" },
+  { name: "Črno marmorirana", slug: "screenshot-2026-08-28-at-10-21-34" },
+  { name: "Srebrno siva marmorirana", slug: "screenshot-2026-08-28-at-10-21-43" },
+];
 
 /** Cabinet colours, in the order the panel puts them. */
-export const GENERATED_CABINET_FINISHES: readonly GeneratedFinish[] = [];
+export const GENERATED_CABINET_FINISHES: readonly GeneratedFinish[] = [
+  { name: "Temno siva", slug: "temno-siva" },
+  { name: "Bela", slug: "bela" },
+  { name: "Črna", slug: "crna" },
+];
