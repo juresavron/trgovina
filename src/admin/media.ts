@@ -232,7 +232,7 @@ export async function handleMedia(request: Request, env: Env): Promise<Response>
     });
   }
 
-  res = await optimizedSitePhoto(key, res);
+  res = await optimizedSitePhoto(key, res, env.ASSETS);
   return new Response(res.body, {
     status: 200,
     headers: {

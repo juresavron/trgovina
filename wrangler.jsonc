@@ -3,7 +3,6 @@
   "name": "trgovina",
   "compatibility_date": "2026-08-01",
   "main": "src/worker.ts",
-  "rules": [{ "type": "Data", "globs": ["**/*.webp"], "fallthrough": true }],
 
   // Keep the *.workers.dev deployment alive — QA target and fallback URL,
   // same convention as fans-network and ocenagor-landing. With a `routes`
@@ -133,7 +132,8 @@
   // canonical and names no shop — but it is the reason nothing HTML-shaped may
   // ever be put in this directory.
   "assets": {
-    "directory": "./public"
+    "directory": "./public",
+    "binding": "ASSETS"
   },
 
   "observability": {
